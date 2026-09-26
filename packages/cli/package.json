@@ -17,6 +17,7 @@
   "dependencies": {
     "@remit/analysis": "workspace:*",
     "@remit/core": "workspace:*",
+    "@remit/eval": "workspace:*",
     "@remit/pipeline": "workspace:*",
     "@remit/providers": "workspace:*",
     "pino": "10.3.1"

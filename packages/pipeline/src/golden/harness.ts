@@ -160,3 +160,92 @@ export function listScenarios(): string[] {
         .sort()
     : [];
 }
+
+function findUnit(result: import('@remit/core').ReviewResult, sel: UnitSelector) {
+  return result.units.find((x) => x.file === sel.file && (!sel.symbol || x.symbol?.name === sel.symbol));
+}
+
+/**
+ * Checks a review result against a scenario's expectations and returns every failure as text (empty means the
+ * scenario passes). Used by `pnpm eval:golden`; the golden tests assert the same conditions directly.
+ */
+export function checkExpected(result: import('@remit/core').ReviewResult, e: Expected): string[] {
+  const fail: string[] = [];
+  const statuses = Object.fromEntries(result.requirementVerdicts.map((v) => [v.requirementId, v.status]));
+  const want = JSON.stringify(Object.entries(e.requirements).sort());
+  const got = JSON.stringify(Object.entries(statuses).sort());
+  if (want !== got) fail.push(`requirement statuses ${got}, expected ${want}`);
+  if (
+    e.requirementIds &&
+    JSON.stringify(result.requirements.map((r) => r.id)) !== JSON.stringify(e.requirementIds)
+  ) {
+    fail.push(
+      `requirement ids ${result.requirements.map((r) => r.id).join(',')}, expected ${e.requirementIds.join(',')}`,
+    );
+  }
+  for (const u of e.units ?? []) {
+    const unit = findUnit(result, u);
+    const role = unit ? result.unitVerdicts.find((v) => v.unitId === unit.id)?.role : undefined;
+    if (role !== u.role) fail.push(`unit ${u.file}#${u.symbol ?? ''} role ${role}, expected ${u.role}`);
+  }
+  for (const f of e.facts ?? []) {
+    const pool = f.unit ? (findUnit(result, f.unit)?.facts ?? []) : result.units.flatMap((x) => x.facts);
+    if (!pool.some((x) => x.kind === f.kind && x.severity === f.severity))
+      fail.push(`missing fact ${f.kind} ${f.severity}${f.unit ? ` in ${f.unit.file}` : ''}`);
+  }
+  for (const f of e.findings ?? []) {
+    const unit = f.unit ? findUnit(result, f.unit) : undefined;
+    const match = result.findings.find((x) => {
+      if (f.id && x.id !== f.id) return false;
+      if (f.type && x.type !== f.type) return false;
+      if (f.unit) {
+        if (!unit) return false;
+        const target =
+          x.type === 'test_integrity' || x.type === 'fact'
+            ? unit.facts.some((ff) => `F-${ff.id}` === x.id) || x.targetId === unit.id
+            : x.targetId === unit.id;
+        if (!target) return false;
+      }
+      return true;
+    });
+    if (!match) fail.push(`missing finding ${JSON.stringify(f)}`);
+    else {
+      if (match.priority !== f.priority)
+        fail.push(`${match.id} priority ${match.priority}, expected ${f.priority}`);
+      if (f.route && match.route !== f.route)
+        fail.push(`${match.id} route ${match.route}, expected ${f.route}`);
+      if (
+        f.reason &&
+        !match.reasons
+          .map((r) => r.text)
+          .join(' ')
+          .includes(f.reason)
+      )
+        fail.push(`${match.id} reason lacks "${f.reason}"`);
+    }
+  }
+  for (const p of e.noFindingsOfPriority ?? []) {
+    const extra = result.findings.filter((f) => f.priority === p).map((f) => f.id);
+    if (extra.length) fail.push(`unexpected ${p} findings ${extra.join(',')}`);
+  }
+  if (e.noFindings && result.findings.length)
+    fail.push(`unexpected findings ${result.findings.map((f) => f.id).join(',')}`);
+  for (const id of e.claimMismatch ?? [])
+    if (!result.requirementVerdicts.find((v) => v.requirementId === id)?.claimMismatch)
+      fail.push(`${id} has no claim mismatch`);
+  for (const [id, text] of Object.entries(e.reasons ?? {})) {
+    if (!result.requirementVerdicts.find((v) => v.requirementId === id)?.reasons.some((r) => r.text === text))
+      fail.push(`${id} lacks reason "${text}"`);
+  }
+  for (const w of e.warnings ?? [])
+    if (!result.warnings.join('\n').includes(w)) fail.push(`missing warning "${w}"`);
+  for (const [id, tested] of Object.entries(e.tested ?? {})) {
+    const t = result.requirementVerdicts.find((v) => v.requirementId === id)?.tested;
+    if (t !== tested) fail.push(`${id} tested ${t}, expected ${tested}`);
+  }
+  for (const f of e.filtered ?? []) {
+    const u = findUnit(result, f);
+    if (u?.filtered !== f.reason) fail.push(`${f.file} filtered ${u?.filtered}, expected ${f.reason}`);
+  }
+  return fail;
+}

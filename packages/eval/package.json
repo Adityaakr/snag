@@ -15,9 +15,10 @@
     "test": "vitest run --root ../.. --project eval"
   },
   "dependencies": {
-    "@remit/core": "workspace:*",
     "@remit/analysis": "workspace:*",
+    "@remit/core": "workspace:*",
+    "@remit/pipeline": "workspace:*",
     "@remit/providers": "workspace:*",
-    "@remit/pipeline": "workspace:*"
+    "zod": "4.6.5"
   }
 }

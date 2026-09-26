@@ -11,3 +11,7 @@ coverage/
 
 .agent/loop-logs/
 .agent/STOP
+
+# Eval reports: kept locally; important runs are added with git add -f
+eval/reports/*
+!eval/reports/.gitkeep
