@@ -8,6 +8,7 @@ import { join } from 'node:path';
 import { BRAND, type RemitConfig } from '@remit/core';
 import { type CacheMode, cacheModeFrom, FileStore } from './cache/store.js';
 import { CostTracker } from './common/budget.js';
+import { BreakerJev, BreakerLlm, type CircuitOptions, processBreaker } from './common/circuit.js';
 import type { Logger } from './common/limits.js';
 import { CachedJev } from './jev/cached.js';
 import { LiveJev } from './jev/live.js';
@@ -32,7 +33,13 @@ export function cacheDir(env: Record<string, string | undefined>): string {
 export function providersFromEnv(
   config: RemitConfig,
   env: Record<string, string | undefined>,
-  opts: { offline?: boolean; budgetUsd?: number; logger?: Logger } = {},
+  opts: {
+    offline?: boolean;
+    budgetUsd?: number;
+    logger?: Logger;
+    breakers?: boolean;
+    breakerOptions?: CircuitOptions;
+  } = {},
 ): EnvProviders {
   const notes: string[] = [];
   const cacheMode: CacheMode = opts.offline ? 'replay' : cacheModeFrom(env, 'replay_or_live');
@@ -73,7 +80,13 @@ export function providersFromEnv(
     }
   }
   const llm = liveLlm
-    ? new CachedLlm(liveLlm, store, cacheMode)
+    ? new CachedLlm(
+        opts.breakers === false
+          ? liveLlm
+          : new BreakerLlm(liveLlm, processBreaker(liveLlm.provider, opts.breakerOptions)),
+        store,
+        cacheMode,
+      )
     : opts.offline
       ? replayOnlyLlm(config, store)
       : undefined;
@@ -95,7 +108,16 @@ export function providersFromEnv(
         })
       : null;
   const jev =
-    liveJev || opts.offline ? new CachedJev(liveJev, store, cacheMode, config.jev.model) : undefined;
+    liveJev || opts.offline
+      ? new CachedJev(
+          liveJev && opts.breakers !== false
+            ? new BreakerJev(liveJev, processBreaker('jev', opts.breakerOptions))
+            : liveJev,
+          store,
+          cacheMode,
+          config.jev.model,
+        )
+      : undefined;
   if (!jev) notes.push('TYPESAFE_API_KEY is not set; Jev questions are skipped.');
 
   return {

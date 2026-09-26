@@ -7,6 +7,7 @@ import type { GitHubWriter } from '@remit/providers';
 import { z } from 'zod';
 import { confirmChecklist, invalidateChecklist, postChecklist } from './checklist.js';
 import type { JobQueue, JobSpec } from './queue.js';
+import { RateLimiter } from './session.js';
 import { loadRepoConfig } from './repo-config.js';
 import { type JobDeps, reviewPullRequest } from './review-job.js';
 import { explainMarkdown, HELP, isBotLogin, parseSlash, WRITE_ROLES } from './slash.js';
@@ -17,6 +18,8 @@ export interface AppDeps extends JobDeps {
   queue: JobQueue;
   /** Burst window for `synchronize` events (default 30 s). */
   debounceMs?: number;
+  /** Reviews per installation per hour before PR events are delayed instead of reviewed at once (M9). */
+  reviewsPerHour?: number;
   /** Nightly jobs: retention cleanup and recalibration from feedback (M8). */
   maintenance?: (kind: 'cleanup' | 'recalibrate') => Promise<void>;
 }
@@ -67,6 +70,21 @@ const InstallationReposEvent = z.object({
 export const PULL_ACTIONS = new Set(['opened', 'synchronize', 'reopened', 'ready_for_review', 'edited']);
 
 export type Handled = { handled: string } | { ignored: string };
+
+/** Per-installation review rate (M9): past the limit, events are debounced for 5 minutes instead of dropped. */
+const limiters = new WeakMap<AppDeps, RateLimiter>();
+export const RATE_LIMITED_DEBOUNCE_MS = 5 * 60_000;
+function rateDebounce(deps: AppDeps, installationId: number, debounceMs: number): number {
+  if (!deps.reviewsPerHour) return debounceMs;
+  let limiter = limiters.get(deps);
+  if (!limiter) {
+    limiter = new RateLimiter(deps.reviewsPerHour, 3600_000);
+    limiters.set(deps, limiter);
+  }
+  if (limiter.allow(String(installationId))) return debounceMs;
+  deps.metrics?.inc('remit_reviews_delayed_total');
+  return Math.max(debounceMs, RATE_LIMITED_DEBOUNCE_MS);
+}
 
 function enqueueReview(
   deps: AppDeps,
@@ -134,7 +152,11 @@ export async function handleEvent(name: string, payload: unknown, deps: AppDeps)
       // Edits matter only when the title or body changed (links may move); bursts are debounced like pushes.
       if (e.action === 'edited' && !e.changes?.title && !e.changes?.body)
         return { ignored: 'pull_request.edited (no title or body change)' };
-      const debounce = e.action === 'synchronize' || e.action === 'edited' ? (deps.debounceMs ?? 30_000) : 0;
+      const debounce = rateDebounce(
+        deps,
+        e.installation.id,
+        e.action === 'synchronize' || e.action === 'edited' ? (deps.debounceMs ?? 30_000) : 0,
+      );
       await enqueueReview(
         deps,
         e.installation.id,
@@ -281,6 +303,8 @@ async function runSlash(
             source: 'slash',
             createdAt: new Date().toISOString(),
           });
+      for (const f of found)
+        if (f) deps.metrics?.inc('remit_feedback_total', { label: cmd.name, source: 'slash' });
       const missing = cmd.ids.filter((_, i) => !found[i]);
       await reply(
         `Recorded ${cmd.name} for ${found.filter(Boolean).length} finding${found.filter(Boolean).length === 1 ? '' : 's'}.${missing.length ? ` Not found in the latest review: ${missing.map((m) => `\`${m}\``).join(', ')}.` : ''}`,

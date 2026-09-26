@@ -410,6 +410,17 @@ export class DbStore implements Store, DeliveryStore {
     const rows = await this.db.select().from(t.repositories).where(eq(t.repositories.fullName, repo));
     return rows[0]?.installationId ?? null;
   }
+  async spendToday(installationId: number, now = new Date()): Promise<number> {
+    const midnight = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    const rows = await this.db
+      .select({ total: sql<number>`coalesce(sum(${t.reviews.costUsd}), 0)::float` })
+      .from(t.reviews)
+      .innerJoin(t.repositories, eq(t.reviews.repositoryId, t.repositories.id))
+      .where(
+        and(eq(t.repositories.installationId, installationId), sql`${t.reviews.createdAt} >= ${midnight}`),
+      );
+    return Number(rows[0]?.total ?? 0);
+  }
   async installations() {
     return this.db.select().from(t.installations);
   }

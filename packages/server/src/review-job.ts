@@ -15,6 +15,7 @@ import {
   type ReviewResult,
   sanitize,
 } from '@remit/core';
+import { trace } from '@opentelemetry/api';
 import { ingestPullRequest, runReview } from '@remit/pipeline';
 import {
   CostTracker,
@@ -25,6 +26,7 @@ import {
 } from '@remit/providers';
 import { upsertSticky, withMarker } from '@remit/providers';
 import type { Metrics } from './metrics.js';
+import { type Logger, silent } from './logger.js';
 import { CONFIG_PATH, loadRepoConfig } from './repo-config.js';
 import type { ReviewRecord, Store } from './store.js';
 import { weakLabels } from './weak-labels.js';
@@ -38,6 +40,9 @@ export interface JobDeps {
   newId?: () => string;
   /** The login the App posts as (`<slug>[bot]`), so sticky comments by other bots are never edited. */
   botLogin?: string;
+  logger?: Logger;
+  /** Per-installation daily provider budget in USD (9.13); reviews past it are skipped with a notice. */
+  dailyBudgetUsd?: number;
 }
 
 export type ReviewOutcome =
@@ -47,7 +52,33 @@ export type ReviewOutcome =
 
 class Superseded extends Error {}
 
+const tracer = trace.getTracer('remit');
+
+/** One App review, traced (OpenTelemetry, a no-op unless the operator registers an SDK) and logged with its id. */
 export async function reviewPullRequest(
+  gh: GitHubWriter,
+  installationId: number,
+  ref: PullRef,
+  deps: JobDeps,
+  signal: AbortSignal = new AbortController().signal,
+): Promise<ReviewOutcome> {
+  return tracer.startActiveSpan('remit.review', async (span) => {
+    span.setAttribute('remit.repo', `${ref.owner}/${ref.repo}`);
+    span.setAttribute('remit.pr', ref.number);
+    try {
+      const out = await runPullReview(gh, installationId, ref, deps, signal);
+      span.setAttribute('remit.status', out.status);
+      return out;
+    } catch (e) {
+      span.recordException(e as Error);
+      throw e;
+    } finally {
+      span.end();
+    }
+  });
+}
+
+async function runPullReview(
   gh: GitHubWriter,
   installationId: number,
   ref: PullRef,
@@ -56,6 +87,7 @@ export async function reviewPullRequest(
 ): Promise<ReviewOutcome> {
   const repo = `${ref.owner}/${ref.repo}`;
   const reviewId = deps.newId?.() ?? `rev_${randomUUID()}`;
+  const log = (deps.logger ?? silent).child({ reviewId, repo, pr: ref.number });
   const check = (s: AbortSignal) => {
     if (s.aborted) throw new Superseded();
   };
@@ -63,6 +95,26 @@ export async function reviewPullRequest(
   const pull = await gh.getPull(ref);
   if (pull.draft && config.draft_prs === 'skip')
     return { status: 'skipped', reason: 'draft PR (draft_prs: skip)' };
+  if (deps.dailyBudgetUsd !== undefined) {
+    const spent = await deps.store.spendToday(installationId);
+    if (spent >= deps.dailyBudgetUsd) {
+      log.warn({ spent, limit: deps.dailyBudgetUsd }, 'daily budget reached; review skipped');
+      deps.metrics?.inc('remit_budget_skips_total');
+      if (config.surfaces.check_run)
+        await gh.createCheckRun(ref.owner, ref.repo, {
+          name: BRAND.checkName,
+          headSha: pull.headSha,
+          status: 'completed',
+          conclusion: 'neutral',
+          output: {
+            title: 'Daily budget reached',
+            summary: `This installation reached its daily ${BRAND.name} budget ($${deps.dailyBudgetUsd.toFixed(2)}). Reviews resume after midnight UTC; reply \`${BRAND.slashCommand} review\` then.`,
+          },
+        });
+      return { status: 'skipped', reason: 'daily budget reached' };
+    }
+  }
+  log.info({ head: pull.headSha }, 'review started');
   check(signal);
   const run = config.surfaces.check_run
     ? await gh.createCheckRun(ref.owner, ref.repo, {
@@ -144,9 +196,17 @@ export async function reviewPullRequest(
           .map((f) => f.contentKey),
       );
       for (const label of weakLabels(previous.result, result, { repo, pr: ref.number, at: record.createdAt }))
-        if (!existing.has(label.contentKey)) await deps.store.addFeedback(label);
+        if (!existing.has(label.contentKey)) {
+          await deps.store.addFeedback(label);
+          deps.metrics?.inc('remit_feedback_total', { label: label.label, source: 'implicit' });
+        }
     }
     deps.metrics?.observeReview('done', (Date.now() - started) / 1000, result.usage.costUsd, result.findings);
+    deps.metrics?.observeCalls(reviewCosts.log);
+    log.info(
+      { findings: result.findings.length, costUsd: result.usage.costUsd, latencyMs: Date.now() - started },
+      'review done',
+    );
     return { status: 'done', record };
   } catch (e) {
     if (e instanceof Superseded) {
@@ -160,6 +220,7 @@ export async function reviewPullRequest(
           },
         });
       deps.metrics?.observeReview('cancelled', (Date.now() - started) / 1000, 0, []);
+      log.info('review cancelled: a newer push superseded it');
       return { status: 'cancelled' };
     }
     if (run)
@@ -175,6 +236,7 @@ export async function reviewPullRequest(
         },
       });
     deps.metrics?.observeReview('failed', (Date.now() - started) / 1000, 0, []);
+    log.error({ error: (e as Error).message }, 'review failed');
     throw e;
   }
 }

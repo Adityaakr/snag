@@ -2,6 +2,7 @@ import { BRAND } from '@remit/core';
 
 export * from './cache/store.js';
 export * from './common/budget.js';
+export * from './common/circuit.js';
 export * from './common/errors.js';
 export * from './common/limits.js';
 export * from './common/retry.js';

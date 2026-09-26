@@ -7,7 +7,7 @@ import { PGLiteSocketServer } from '@electric-sql/pglite-socket';
 
 export async function startPgliteServer(): Promise<{ url: string; stop: () => Promise<void> }> {
   const db = await PGlite.create();
-  const server = new PGLiteSocketServer({ db, port: 0, host: '127.0.0.1' });
+  const server = new PGLiteSocketServer({ db, port: 0, host: '127.0.0.1', maxConnections: 100 });
   await server.start();
   const address = (
     server as unknown as { server?: { address(): { port: number } | string | null } }
