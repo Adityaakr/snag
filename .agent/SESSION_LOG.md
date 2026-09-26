@@ -13,3 +13,4 @@
 - M3 gate: milestone-verifier VERDICT: PASS; fixed its gaps (B3 live cassette test and blocker, architecture test scope, amendment authority, short task items). Tagged m3-done.
 - Correction: the first M3 follow-up commit carried the DECISIONS note but a failed edit script had skipped the amendment-authority and short-item code changes. Applied them with tests in the next commit and moved the local `m3-done` tag to it (nothing is pushed).
 - M4: question sets C.2 to C.7 (spec parity), retrieval (BM25, boosts, rerank, widen, base code), verdict engine and unit rules (threshold edges), routing and gate refusal, claims, runReview, golden scenarios 1 to 18 via a recording generator. All items checked; gate next.
+- M4 gate: FAIL (test strength: threshold edges, golden expectations weaker than Appendix D), fixed; re-audit FAIL (two edges), fixed with a full threshold sweep; final re-audit VERDICT: PASS. Tagged m4-done.

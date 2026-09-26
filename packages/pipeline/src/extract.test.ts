@@ -261,8 +261,25 @@ describe('extraction modes and fallbacks', () => {
         })
       ).requirements.map((r) => r.checkableInCode);
     expect(await run(0.4, 0.6)).toEqual([true, true]);
-    expect(await run(0.39, 0.61)).toEqual([true, true]);
+
     expect(await run(0.34, 0.35)).toEqual([false, true]);
+  });
+
+  it('the band edges are exclusive: with checkable 0.5, 0.39 refines to false while 0.4 keeps the extracted value', async () => {
+    const x = loadFixture('prose');
+    const config = parseConfig('thresholds:\n  checkable: 0.5\n').config;
+    const res = await extractRequirements(x.issues, {
+      llm: new FakeLlm(JSON.parse(readFileSync(join(DIR, 'prose', 'llm-script.json'), 'utf8'))),
+      jev: new FakeJev({
+        issue: {
+          R1: { ambiguous: 0.2, checkable_in_code: 0.39 },
+          R2: { ambiguous: 0.2, checkable_in_code: 0.4 },
+        },
+      }),
+      config,
+      reviewId: 'rv',
+    });
+    expect(res.requirements.map((r) => r.checkableInCode)).toEqual([false, true]);
   });
 
   it('keeps going with a warning when issue.v0 fails', async () => {
