@@ -22,3 +22,8 @@
 - Built corpora B (12 seeds, 9 G.1 operators), A (SWE-bench Verified plus PatchDiff, 1,203 items) and the C format; froze the test split (390 files, guard:split); added metrics, stability, isotonic calibration, dev threshold tuning, baselines, reports, and `remit mutate`, `remit calibrate` and `remit report`.
 - milestone-verifier: first run FAIL (10 gaps, fixed in D28), second run PASS; its notes are addressed in D29.
 - Without keys, every report is simulated and marked "Not a real measurement". B5 (live run), B6 (real seeds) and B4 (optional spot checks) are open.
+
+## 2026-09-27 M7 closed (DONE)
+- Built the GitHub writer and App auth in providers; a Hono server with signed webhooks, dedupe, a debounced and cancellable queue, the review flow, slash commands, the issue checklist, rework and gate modes, setup and metrics; a node24 Action bundle; docs/github-app.md and docs/github-action.md; integration tests (recorded payloads against FakeGitHub) and an HTTP end-to-end test.
+- security-reviewer: FAIL, then PASS (D30). milestone-verifier: FAIL (the Action never loaded a calibration), then PASS.
+- Dogfood run 3 fixed a false-positive `secret_like` on GitHub node ids.

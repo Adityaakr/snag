@@ -104,7 +104,8 @@ describe('webhook handling', () => {
     expect((await send('pull_request', bad, { 'x-github-delivery': 'retry-me' })).status).toBe(400);
     // The failed delivery was released, so GitHub's redelivery is processed, not dropped as a duplicate.
     expect((await send('pull_request', body, { 'x-github-delivery': 'retry-me' })).status).toBe(202);
-    expect((await send('pull_request', 'not json')).status).toBe(400);
+    expect((await send('pull_request', 'not json', { 'x-github-delivery': 'bad-json' })).status).toBe(400);
+    expect((await send('pull_request', body, { 'x-github-delivery': 'bad-json' })).status).toBe(202);
   });
 
   it('reviews a PR on opened: check run, sticky comment, stored result', async () => {

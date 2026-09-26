@@ -81172,7 +81172,11 @@ async function loadActionCalibration(gh, owner, repo, jevModel, opts) {
   if (!opts.bundledDir) return {};
   const path5 = join5(opts.bundledDir, jevModel.replace(/[^\w.-]+/g, "_"), `${QUESTION_SET_VERSION}.json`);
   if (!existsSync(path5)) return {};
-  return { calibration: parseCalibration(readFileSync2(path5, "utf8")) };
+  try {
+    return { calibration: parseCalibration(readFileSync2(path5, "utf8")) };
+  } catch {
+    return { note: `The calibration bundled for ${jevModel} is not valid; gate mode is refused.` };
+  }
 }
 async function runAction(io) {
   const { env, out: out2 } = io;

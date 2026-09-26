@@ -124,7 +124,11 @@ export async function loadActionCalibration(
   if (!opts.bundledDir) return {};
   const path = join(opts.bundledDir, jevModel.replace(/[^\w.-]+/g, '_'), `${QUESTION_SET_VERSION}.json`);
   if (!existsSync(path)) return {};
-  return { calibration: parseCalibration(readFileSync(path, 'utf8')) };
+  try {
+    return { calibration: parseCalibration(readFileSync(path, 'utf8')) };
+  } catch {
+    return { note: `The calibration bundled for ${jevModel} is not valid; gate mode is refused.` };
+  }
 }
 
 export async function runAction(io: ActionIo): Promise<number> {
