@@ -40,7 +40,7 @@ Status: BLOCKED-HUMAN
 - [x] `guard:tests` (3.6) runs in `pnpm verify`. (evidence: scripts/__tests__/tests-guard.test.ts; `pnpm guard` prints guard:tests: ok, 4353c0f)
 
 ## M3 Blind requirement extraction
-Status: IN_PROGRESS
+Status: DONE
 - [x] Extraction prompt v0 (Appendix B.1) is versioned `xp-0.1.0`. The extractor accepts only `IssueSnapshot`.; The architecture test and the pipeline blindness test from 6.2 pass.. (evidence: core/src/extract/extract.test.ts (spec-verbatim prompt, architecture test) + pipeline/src/extract.test.ts "never sends PR title, body or diff text", 0637168)
 - [x] Quote validation with normalization and one repair call. Unanchored items are dropped with warnings. (evidence: core extract.test.ts quote anchoring + pipeline extract.test.ts repair and drop tests, 0637168)
 - [x] The task-list fast path and all three `extraction.mode` values. (evidence: pipeline extract.test.ts modes tests + core tasklist tests, 0637168)
@@ -50,7 +50,7 @@ Status: IN_PROGRESS
 - [x] `remit extract <issue-url|file>`. (evidence: cli/src/commands/extract.test.ts; `pnpm remit extract fixtures/extraction/checklist/issue.md`, b918cf4)
 
 ## M4 Retrieval, Jev question sets, verdicts, routing
-Status: TODO
+Status: IN_PROGRESS
 - [ ] Retrieval per 6.5: the all-in shortcut; BM25 with boosts; `rerank.v0` over budget; the widen pass; test retrieval; base-code retrieval.
 - [ ] The question sets `issue.v0`, `forward.v0`, `tests.v0`, `reverse.v0`, `preexisting.v0`, `claims.v0` and `rerank.v0`, implemented exactly as in Appendix C, as `qs-0.1.0`.
 - [ ] The verdict engine and unit rules from 6.7 as pure functions. Table-driven tests cover every branch and every threshold edge.

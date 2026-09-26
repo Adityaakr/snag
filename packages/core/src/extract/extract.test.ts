@@ -106,6 +106,14 @@ describe('extraction prompt (Appendix B.1)', () => {
           }
         }
       }
+      for (const m of src.matchAll(
+        /\bfrom\s+'([^']+)'|\bimport\s*\(\s*'([^']+)'\s*\)|\brequire\(\s*'([^']+)'\s*\)/g,
+      )) {
+        const spec = (m[1] ?? m[2] ?? m[3]) as string;
+        expect(allowedModules.has(spec) || /^\.\/[a-z-]+\.js$/.test(spec), `${file} depends on ${spec}`).toBe(
+          true,
+        );
+      }
       expect(src, file).not.toMatch(/ChangeUnit|PullSnapshot|PullFile|ReviewResult|diffText|prBody/);
     }
   });
