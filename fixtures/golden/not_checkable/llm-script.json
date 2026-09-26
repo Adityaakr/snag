@@ -1,0 +1,22 @@
+{
+  "extract:acme/web#9": [
+    {
+      "requirements": [
+        {
+          "id": "R1",
+          "text": "The settings page feels less cluttered.",
+          "quote": "The settings page should feel less cluttered",
+          "source": {
+            "kind": "body"
+          },
+          "kind": "ux",
+          "explicitness": "explicit",
+          "priority": "should",
+          "examples": [],
+          "checkableInCode": false
+        }
+      ],
+      "openQuestions": []
+    }
+  ]
+}

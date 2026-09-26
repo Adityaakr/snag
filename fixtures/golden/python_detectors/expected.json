@@ -1,0 +1,31 @@
+{
+  "requirements": {
+    "R1": "done"
+  },
+  "facts": [
+    {
+      "kind": "test_skipped",
+      "severity": "high",
+      "unit": {
+        "file": "tests/test_stats.py",
+        "symbol": "test_mean_three"
+      }
+    },
+    {
+      "kind": "tolerance_widened",
+      "severity": "warn",
+      "unit": {
+        "file": "tests/test_stats.py",
+        "symbol": "test_mean_small"
+      }
+    },
+    {
+      "kind": "catch_broadened",
+      "severity": "warn",
+      "unit": {
+        "file": "src/stats.py",
+        "symbol": "load"
+      }
+    }
+  ]
+}

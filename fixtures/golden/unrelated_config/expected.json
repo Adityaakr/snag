@@ -1,0 +1,24 @@
+{
+  "requirements": {
+    "R1": "done"
+  },
+  "units": [
+    {
+      "file": "config/defaults.ts",
+      "role": "unexplained_behavioral"
+    }
+  ],
+  "findings": [
+    {
+      "unit": {
+        "file": "config/defaults.ts"
+      },
+      "type": "unit",
+      "priority": "P1",
+      "route": "reviewer_attention"
+    }
+  ],
+  "noFindingsOfPriority": [
+    "P0"
+  ]
+}

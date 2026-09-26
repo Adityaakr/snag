@@ -9,6 +9,9 @@ import { join } from 'node:path';
 import { buildUnits, detectFacts, parseDiff } from '@remit/analysis';
 import { createTwoFilesPatch } from 'diff';
 
+/** Paths holding review inputs, not Remit's own tests (DECISIONS D21). */
+export const DATA_PATHS = [/^fixtures\//, /^eval\/corpora\//];
+
 export const WEAKENING = new Set([
   'assertion_removed',
   'assertion_weakened',
@@ -58,7 +61,9 @@ export async function checkTests(root: string): Promise<{ problems: string[]; no
     },
   };
   const { units } = await buildUnits(parseDiff(text), { contents });
-  const testUnits = units.filter((u) => u.kind === 'test');
+  // Fixture trees and eval corpora are review inputs (they contain weakened tests on purpose, for example golden
+  // scenarios 15 and 16 and the weaken_assertion mutation operator); they never run as Remit's own tests.
+  const testUnits = units.filter((u) => u.kind === 'test' && !DATA_PATHS.some((re) => re.test(u.file)));
   const { units: withFacts } = await detectFacts(testUnits, { contents });
   const decisionsPath = join(root, '.agent', 'DECISIONS.md');
   const decisions = existsSync(decisionsPath) ? readFileSync(decisionsPath, 'utf8') : '';

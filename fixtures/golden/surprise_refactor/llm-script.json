@@ -1,0 +1,22 @@
+{
+  "extract:acme/app#22": [
+    {
+      "requirements": [
+        {
+          "id": "R1",
+          "text": "The greeting includes the user name.",
+          "quote": "The greeting must include the user name",
+          "source": {
+            "kind": "body"
+          },
+          "kind": "behavior",
+          "explicitness": "explicit",
+          "priority": "must",
+          "examples": [],
+          "checkableInCode": true
+        }
+      ],
+      "openQuestions": []
+    }
+  ]
+}

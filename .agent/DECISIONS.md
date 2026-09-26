@@ -134,3 +134,11 @@ Append-only. Each entry: date, decision, alternatives, why. Deviations from BUIL
 ## 2026-09-26 D20 Non-goals and claim sentences
 - Non-goal requirements (6.2 kind `non_goal`) have no coverage to measure. The verdict engine marks a non-goal `contradicted` when `forward.v0` `conflict >= t.contradicted`, otherwise `done` with the reason "No change goes against this exclusion." The spec does not say how to judge them; coverage-based rules would call every respected non-goal "missing".
 - Claim sentences: the title plus body sentences and bullet items; code blocks, HTML comments, headings, template checklist lines, section labels and bare `Fixes #n` lines are dropped; sentences are split at `.`, `!` or `?` followed by a capital, digit, quote or bracket; duplicates removed; at most 40.
+
+## 2026-09-26 D21 guard:tests ignores review-input data
+- `guard:tests` skips `fixtures/**` and `eval/corpora/**`. These trees are inputs Remit reviews (golden scenarios 15 and 16 add `#[ignore]` and `@pytest.mark.skip` by design; M6's `weaken_assertion` and `skip_test` operators generate many more). They are never executed as Remit's tests. Every other test file is still checked; scripts/__tests__/tests-guard.test.ts proves the exclusion is limited to those two roots.
+
+## 2026-09-26 D22 Golden scenario generation
+- `pnpm fixtures:golden` (scripts/fixtures/golden.ts) writes each Appendix D scenario: issue files, base/ and head/ trees, diff.patch (from the trees), pr-body.md, config.yml, the scripted extraction output, expected.json (hand-written from Appendix D, with units named by file and symbol), and jev-script.json recorded from one pipeline run against answer rules. The golden tests replay the script with the strict FakeJev (unscripted calls throw), so they test plumbing and rules, not model quality (Appendix D).
+- Scenarios give new implementing functions a real caller under `src/pages/` so the dead-implementation rule does not fire, except in `dead_implementation`. `large_diff` uses 60 filler modules that share "report export" with the requirements and 158 that do not, a `max_units` of 219 for the size warning, and puts R2's code low in the BM25 order so the first tranche misses it and the widen pass finds it.
+- Fixture trees are excluded from Biome so they stay byte-identical to their diffs.

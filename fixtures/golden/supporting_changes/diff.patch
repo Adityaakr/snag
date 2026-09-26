@@ -1,0 +1,50 @@
+diff --git a/src/index.ts b/src/index.ts
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -1,1 +1,2 @@
+ export { renderInvoice } from './invoice';
++export type { TaxedTotal } from './types';
+diff --git a/src/invoice.ts b/src/invoice.ts
+--- a/src/invoice.ts
++++ b/src/invoice.ts
+@@ -1,3 +1,7 @@
++import { withTax } from './tax';
++
+ export function renderInvoice(lines: number[]): string {
+-  return lines.join(',');
++  const net = lines.reduce((a, b) => a + b, 0);
++  const total = withTax(net, 0.2);
++  return `${lines.join(',')}\nTotal: ${total.gross}`;
+ }
+diff --git a/src/tax.ts b/src/tax.ts
+new file mode 100644
+--- /dev/null
++++ b/src/tax.ts
+@@ -0,0 +1,6 @@
++import type { TaxedTotal } from './types';
++
++export function withTax(net: number, rate: number): TaxedTotal {
++  const tax = net * rate;
++  return { net, tax, gross: net + tax };
++}
+diff --git a/src/types.ts b/src/types.ts
+new file mode 100644
+--- /dev/null
++++ b/src/types.ts
+@@ -0,0 +1,5 @@
++export interface TaxedTotal {
++  net: number;
++  tax: number;
++  gross: number;
++}
+diff --git a/test/invoice.test.ts b/test/invoice.test.ts
+new file mode 100644
+--- /dev/null
++++ b/test/invoice.test.ts
+@@ -0,0 +1,6 @@
++import { expect, it } from 'vitest';
++import { renderInvoice } from '../src/invoice';
++
++it('shows a total with tax', () => {
++  expect(renderInvoice([100])).toContain('Total: 120');
++});

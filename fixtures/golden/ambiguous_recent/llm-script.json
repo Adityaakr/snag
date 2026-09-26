@@ -1,0 +1,31 @@
+{
+  "extract:acme/shop#3": [
+    {
+      "requirements": [
+        {
+          "id": "R1",
+          "text": "The orders endpoint returns only recent orders.",
+          "quote": "only return recent orders",
+          "source": {
+            "kind": "body"
+          },
+          "kind": "behavior",
+          "explicitness": "explicit",
+          "priority": "should",
+          "examples": [],
+          "checkableInCode": true
+        }
+      ],
+      "openQuestions": [
+        {
+          "requirementId": "R1",
+          "question": "How recent is recent?",
+          "readings": [
+            "orders from the last 7 days",
+            "orders from the last 30 days"
+          ]
+        }
+      ]
+    }
+  ]
+}

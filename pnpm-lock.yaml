@@ -14,6 +14,15 @@ importers:
       '@remit/analysis':
         specifier: workspace:*
         version: link:packages/analysis
+      '@remit/core':
+        specifier: workspace:*
+        version: link:packages/core
+      '@remit/pipeline':
+        specifier: workspace:*
+        version: link:packages/pipeline
+      '@remit/providers':
+        specifier: workspace:*
+        version: link:packages/providers
       '@types/node':
         specifier: 22.20.4
         version: 22.20.4

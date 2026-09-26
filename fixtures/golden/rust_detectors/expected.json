@@ -1,0 +1,41 @@
+{
+  "requirements": {
+    "R1": "done"
+  },
+  "facts": [
+    {
+      "kind": "test_skipped",
+      "severity": "high",
+      "unit": {
+        "file": "src/lib.rs",
+        "symbol": "rejects_words"
+      }
+    },
+    {
+      "kind": "assertion_weakened",
+      "severity": "high",
+      "unit": {
+        "file": "src/lib.rs",
+        "symbol": "parses_decimal"
+      }
+    }
+  ],
+  "findings": [
+    {
+      "type": "test_integrity",
+      "unit": {
+        "file": "src/lib.rs",
+        "symbol": "rejects_words"
+      },
+      "priority": "P1"
+    },
+    {
+      "type": "test_integrity",
+      "unit": {
+        "file": "src/lib.rs",
+        "symbol": "parses_decimal"
+      },
+      "priority": "P1"
+    }
+  ]
+}

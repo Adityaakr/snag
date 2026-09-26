@@ -1,0 +1,35 @@
+{
+  "extract:acme/app#20": [
+    {
+      "requirements": [
+        {
+          "id": "R1",
+          "text": "Exports are downloadable as CSV.",
+          "quote": "Exports must be downloadable as CSV",
+          "source": {
+            "kind": "body"
+          },
+          "kind": "behavior",
+          "explicitness": "explicit",
+          "priority": "must",
+          "examples": [],
+          "checkableInCode": true
+        },
+        {
+          "id": "R2",
+          "text": "The owner gets email notifications when an export finishes.",
+          "quote": "The owner must get email notifications when an export finishes",
+          "source": {
+            "kind": "body"
+          },
+          "kind": "behavior",
+          "explicitness": "explicit",
+          "priority": "must",
+          "examples": [],
+          "checkableInCode": true
+        }
+      ],
+      "openQuestions": []
+    }
+  ]
+}

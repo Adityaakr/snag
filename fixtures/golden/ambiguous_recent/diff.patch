@@ -1,0 +1,27 @@
+diff --git a/src/orders.py b/src/orders.py
+--- a/src/orders.py
++++ b/src/orders.py
+@@ -1,2 +1,7 @@
+-def list_orders(orders):
+-    return list(orders)
++from datetime import datetime, timedelta
++
++
++def list_orders(orders, now=None):
++    now = now or datetime.utcnow()
++    cutoff = now - timedelta(days=7)
++    return [o for o in orders if o.created_at >= cutoff]
+diff --git a/tests/test_orders.py b/tests/test_orders.py
+new file mode 100644
+--- /dev/null
++++ b/tests/test_orders.py
+@@ -0,0 +1,9 @@
++from datetime import datetime, timedelta
++from src.orders import list_orders
++
++
++def test_recent_is_seven_days():
++    now = datetime(2026, 9, 10)
++    old = type("O", (), {"created_at": now - timedelta(days=8)})
++    new = type("O", (), {"created_at": now - timedelta(days=6)})
++    assert list_orders([old, new], now) == [new]

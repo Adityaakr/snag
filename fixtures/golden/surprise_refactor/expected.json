@@ -1,0 +1,20 @@
+{
+  "requirements": {
+    "R1": "done"
+  },
+  "units": [
+    {
+      "file": "src/utils/format.ts",
+      "symbol": "upper",
+      "role": "unexplained_benign"
+    },
+    {
+      "file": "src/utils/math.ts",
+      "role": "ignored"
+    }
+  ],
+  "noFindingsOfPriority": [
+    "P0",
+    "P1"
+  ]
+}

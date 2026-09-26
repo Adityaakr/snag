@@ -1,0 +1,6 @@
+diff --git a/src/settings.tsx b/src/settings.tsx
+--- a/src/settings.tsx
++++ b/src/settings.tsx
+@@ -1,1 +1,1 @@
+-export const Settings = () => <div className="settings dense">settings</div>;
++export const Settings = () => <div className="settings roomy">settings</div>;

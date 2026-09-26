@@ -1,0 +1,49 @@
+{
+  "issue": {
+    "R1": {
+      "ambiguous": 0.15,
+      "checkable_in_code": 0.92
+    }
+  },
+  "forward": {
+    "R1": {
+      "coverage": {
+        "levels": [
+          0.05,
+          0.1,
+          0.65,
+          0.2
+        ],
+        "confidence": 0.65
+      },
+      "conflict": 0.1,
+      "evidence": "U1"
+    }
+  },
+  "tests": {
+    "R1": {
+      "asserts_as_stated": 0.88,
+      "asserts_differently": 0.04,
+      "test_evidence": "U2",
+      "example_0_checked": 0.9,
+      "example_0_contradicted": 0.02,
+      "example_1_checked": 0.88,
+      "example_1_contradicted": 0.02,
+      "example_2_checked": 0.05,
+      "example_2_contradicted": 0.04
+    }
+  },
+  "reverse": {
+    "U1": {
+      "serves": "R1",
+      "plumbing": 0.1,
+      "behavior_change": 0.8
+    },
+    "U2": {
+      "serves": "R1",
+      "plumbing": 0.1,
+      "behavior_change": 0.8,
+      "loosens_test": 0.05
+    }
+  }
+}

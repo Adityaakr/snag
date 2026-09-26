@@ -1,0 +1,24 @@
+{
+  "requirements": {
+    "R1": "partial"
+  },
+  "facts": [
+    {
+      "kind": "new_symbol_unreferenced",
+      "severity": "warn",
+      "unit": {
+        "file": "src/date.ts"
+      }
+    }
+  ],
+  "reasons": {
+    "R1": "Implemented but never called."
+  },
+  "findings": [
+    {
+      "id": "F-R1",
+      "priority": "P1",
+      "route": "reviewer_attention"
+    }
+  ]
+}

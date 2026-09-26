@@ -1,0 +1,18 @@
+{
+  "requirements": {
+    "R1": "done"
+  },
+  "findings": [
+    {
+      "id": "F-R1-ambiguity",
+      "type": "ambiguity",
+      "priority": "P2",
+      "route": "ask_author",
+      "reason": "orders from the last 7 days"
+    }
+  ],
+  "noFindingsOfPriority": [
+    "P0",
+    "P1"
+  ]
+}

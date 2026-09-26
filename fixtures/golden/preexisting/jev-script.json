@@ -1,0 +1,35 @@
+{
+  "issue": {
+    "R1": {
+      "ambiguous": 0.15,
+      "checkable_in_code": 0.92
+    }
+  },
+  "forward": {
+    "R1": {
+      "coverage": {
+        "levels": [
+          0.8,
+          0.12,
+          0.05,
+          0.03
+        ],
+        "confidence": 0.8
+      },
+      "conflict": 0.03,
+      "evidence": "none"
+    }
+  },
+  "reverse": {
+    "U1": {
+      "serves": "none",
+      "plumbing": 0.1,
+      "behavior_change": 0.05
+    }
+  },
+  "preexisting": {
+    "R1": {
+      "already_implemented": 0.88
+    }
+  }
+}

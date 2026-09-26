@@ -1,0 +1,50 @@
+{
+  "issue": {
+    "R1": {
+      "ambiguous": 0.15,
+      "checkable_in_code": 0.92
+    }
+  },
+  "forward": {
+    "R1": {
+      "coverage": {
+        "levels": [
+          0.05,
+          0.15,
+          0.3,
+          0.5
+        ],
+        "confidence": 0.5
+      },
+      "conflict": 0.88,
+      "evidence": "U1"
+    }
+  },
+  "tests": {
+    "R1": {
+      "asserts_as_stated": 0.05,
+      "asserts_differently": 0.91,
+      "test_evidence": "U2"
+    }
+  },
+  "reverse": {
+    "U1": {
+      "serves": "R1",
+      "plumbing": 0.1,
+      "behavior_change": 0.8
+    },
+    "U2": {
+      "serves": "R1",
+      "plumbing": 0.1,
+      "behavior_change": 0.8,
+      "loosens_test": 0.05
+    }
+  },
+  "claims": {
+    "S1": {
+      "claims_done": 0.93,
+      "claims_deferred": 0.02,
+      "about": "R1"
+    }
+  }
+}

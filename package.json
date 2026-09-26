@@ -20,11 +20,15 @@
     "guard": "node scripts/guard.mjs",
     "progress": "node scripts/progress.mjs",
     "schemas": "tsx packages/core/src/contracts/write-schemas.ts",
-    "remit": "tsx --conditions=source packages/cli/src/bin.ts"
+    "remit": "tsx --conditions=source packages/cli/src/bin.ts",
+    "fixtures:golden": "tsx --conditions=source scripts/fixtures/golden.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.14",
     "@remit/analysis": "workspace:*",
+    "@remit/core": "workspace:*",
+    "@remit/pipeline": "workspace:*",
+    "@remit/providers": "workspace:*",
     "@types/node": "22.20.4",
     "@vitest/coverage-v8": "5.0.2",
     "diff": "9.0.0",

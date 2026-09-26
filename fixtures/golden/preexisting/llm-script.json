@@ -1,0 +1,22 @@
+{
+  "extract:acme/text#8": [
+    {
+      "requirements": [
+        {
+          "id": "R1",
+          "text": "slugify in src/text.py lowercases its output.",
+          "quote": "slugify in src/text.py must lowercase its output",
+          "source": {
+            "kind": "body"
+          },
+          "kind": "behavior",
+          "explicitness": "explicit",
+          "priority": "must",
+          "examples": [],
+          "checkableInCode": true
+        }
+      ],
+      "openQuestions": []
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "requirements": {
+    "R1": "preexisting"
+  },
+  "findings": [
+    {
+      "id": "F-R1",
+      "priority": "P2",
+      "route": "none"
+    }
+  ],
+  "noFindingsOfPriority": [
+    "P0"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "requirements": {
+    "R1": "done",
+    "R2": "done"
+  },
+  "warnings": [
+    "change units; only the first 219"
+  ],
+  "noFindingsOfPriority": [
+    "P0"
+  ]
+}

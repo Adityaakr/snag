@@ -1,0 +1,13 @@
+{
+  "requirements": {
+    "R1": "partial"
+  },
+  "findings": [
+    {
+      "id": "F-R1",
+      "priority": "P1",
+      "route": "reviewer_attention",
+      "reason": "Example 3 is not checked"
+    }
+  ]
+}

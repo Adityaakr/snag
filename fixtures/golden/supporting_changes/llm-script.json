@@ -1,0 +1,22 @@
+{
+  "extract:acme/app#24": [
+    {
+      "requirements": [
+        {
+          "id": "R1",
+          "text": "Invoices show a total that includes tax.",
+          "quote": "Invoices must show a total that includes tax",
+          "source": {
+            "kind": "body"
+          },
+          "kind": "behavior",
+          "explicitness": "explicit",
+          "priority": "must",
+          "examples": [],
+          "checkableInCode": true
+        }
+      ],
+      "openQuestions": []
+    }
+  ]
+}

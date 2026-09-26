@@ -1,0 +1,38 @@
+{
+  "extract:acme/text#18": [
+    {
+      "requirements": [
+        {
+          "id": "R1",
+          "text": "title_case capitalizes each word.",
+          "quote": "title_case must capitalize each word",
+          "source": {
+            "kind": "body"
+          },
+          "kind": "behavior",
+          "explicitness": "explicit",
+          "priority": "must",
+          "examples": [
+            {
+              "input": "hello world",
+              "expected": "Hello World",
+              "quote": "\"hello world\" -> \"Hello World\""
+            },
+            {
+              "input": "a b",
+              "expected": "A B",
+              "quote": "\"a b\" -> \"A B\""
+            },
+            {
+              "input": "o'neil",
+              "expected": "O'Neil",
+              "quote": "\"o'neil\" -> \"O'Neil\""
+            }
+          ],
+          "checkableInCode": true
+        }
+      ],
+      "openQuestions": []
+    }
+  ]
+}

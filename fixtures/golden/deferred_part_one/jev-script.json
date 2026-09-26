@@ -1,0 +1,77 @@
+{
+  "issue": {
+    "R1": {
+      "ambiguous": 0.15,
+      "checkable_in_code": 0.92
+    },
+    "R2": {
+      "ambiguous": 0.15,
+      "checkable_in_code": 0.92
+    }
+  },
+  "forward": {
+    "R1": {
+      "coverage": {
+        "levels": [
+          0.02,
+          0.03,
+          0.1,
+          0.85
+        ],
+        "confidence": 0.85
+      },
+      "conflict": 0.05,
+      "evidence": "U1"
+    },
+    "R2": {
+      "coverage": {
+        "levels": [
+          0.8,
+          0.12,
+          0.05,
+          0.03
+        ],
+        "confidence": 0.8
+      },
+      "conflict": 0.03,
+      "evidence": "none"
+    }
+  },
+  "tests": {
+    "R1": {
+      "asserts_as_stated": 0.88,
+      "asserts_differently": 0.04,
+      "test_evidence": "U3"
+    },
+    "R2": {
+      "asserts_as_stated": 0.08,
+      "asserts_differently": 0.04,
+      "test_evidence": "none"
+    }
+  },
+  "reverse": {
+    "U1": {
+      "serves": "R1",
+      "plumbing": 0.1,
+      "behavior_change": 0.8
+    },
+    "U2": {
+      "serves": "R1",
+      "plumbing": 0.1,
+      "behavior_change": 0.8
+    },
+    "U3": {
+      "serves": "R1",
+      "plumbing": 0.1,
+      "behavior_change": 0.8,
+      "loosens_test": 0.05
+    }
+  },
+  "claims": {
+    "S1": {
+      "claims_done": 0.05,
+      "claims_deferred": 0.93,
+      "about": "R2"
+    }
+  }
+}

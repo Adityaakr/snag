@@ -1,0 +1,15 @@
+{
+  "requirements": {
+    "R1": "contradicted"
+  },
+  "findings": [
+    {
+      "id": "F-R1",
+      "priority": "P0",
+      "route": "send_back"
+    }
+  ],
+  "claimMismatch": [
+    "R1"
+  ]
+}

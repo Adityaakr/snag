@@ -1,0 +1,22 @@
+{
+  "extract:acme/app#23": [
+    {
+      "requirements": [
+        {
+          "id": "R1",
+          "text": "Orders over 100 get a 10% discount.",
+          "quote": "Orders over 100 must get a 10% discount",
+          "source": {
+            "kind": "body"
+          },
+          "kind": "behavior",
+          "explicitness": "explicit",
+          "priority": "must",
+          "examples": [],
+          "checkableInCode": true
+        }
+      ],
+      "openQuestions": []
+    }
+  ]
+}

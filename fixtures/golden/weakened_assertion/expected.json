@@ -1,0 +1,27 @@
+{
+  "requirements": {
+    "R1": "done"
+  },
+  "facts": [
+    {
+      "kind": "assertion_weakened",
+      "severity": "high",
+      "unit": {
+        "file": "test/totals.test.ts"
+      }
+    }
+  ],
+  "findings": [
+    {
+      "type": "test_integrity",
+      "unit": {
+        "file": "test/totals.test.ts"
+      },
+      "priority": "P1",
+      "route": "reviewer_attention"
+    }
+  ],
+  "noFindingsOfPriority": [
+    "P0"
+  ]
+}
