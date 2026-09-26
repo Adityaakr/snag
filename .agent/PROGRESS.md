@@ -3,7 +3,7 @@
 One section per milestone. A checked item ends with `(evidence: <test or command>, <short sha>)`.
 
 ## M0 Bootstrap and loop infrastructure
-Status: IN_PROGRESS
+Status: DONE
 - [x] A git repository with a pnpm workspace, `.nvmrc` (22), strict TypeScript project references, Biome and Vitest. Every package in 4.2 is scaffolded with a passing smoke test. (evidence: `pnpm typecheck` + 9 package smoke tests (`pnpm test`), 4eaae58)
 - [x] `pnpm verify` runs the format check, lint, typecheck, tests and guards, and passes. (evidence: `pnpm verify` green in 2.2 s, 4eaae58)
 - [x] The `.agent/` memory files (3.1) exist. `.agent/milestones/M0.md` to `M11.md` are generated from this section as issue-style specs.; `.agent/PROGRESS.md` is seeded from them. (evidence: `node scripts/progress.mjs` lists M0..M11 from .agent/milestones, 4eaae58)
@@ -18,7 +18,7 @@ Status: IN_PROGRESS
 - [x] A README stub with a one-line pitch, the status and a quickstart placeholder. (evidence: README.md, 4eaae58)
 
 ## M1 Contracts and diff analysis (offline)
-Status: TODO
+Status: IN_PROGRESS
 - [ ] zod contracts for section 5, with JSON Schema export to `schemas/` and round-trip tests.
 - [ ] A unified diff parser covering every edge case in 6.3 step 1, with fast-check property tests (parse, render, parse again).
 - [ ] Local git ingest: `base.head` and `base..head` diffs, and file contents at both SHAs.

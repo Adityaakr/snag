@@ -21,7 +21,7 @@ describe('.claude/settings.json (Appendix A.1)', () => {
       .flatMap((entry) => entry.hooks.map((h) => h.command));
     expect(commands).toHaveLength(2);
     for (const command of commands) {
-      const path = join(ROOT, command.replace('${CLAUDE_PROJECT_DIR}/', ''));
+      const path = join(ROOT, command.replace(`\${CLAUDE_PROJECT_DIR}/`, ''));
       expect(statSync(path).mode & 0o111).not.toBe(0);
     }
   });
