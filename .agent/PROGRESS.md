@@ -23,7 +23,7 @@ Status: IN_PROGRESS
 - [x] A unified diff parser covering every edge case in 6.3 step 1, with fast-check property tests (parse, render, parse again). (evidence: packages/analysis/src/diff/parse.test.ts (edge cases + fast-check parse/render/parse, 300 runs), dd163d5)
 - [x] Local git ingest: `base.head` and `base..head` diffs, and file contents at both SHAs. (evidence: packages/analysis/src/git/local.test.ts, 432159f)
 - [ ] tree-sitter WASM loading for TS, TSX, JS, Python and Rust, plus symbol mapping, unit grouping, the size cap and stable IDs.
-- [ ] The file classifier from 6.4.1, including `.gitattributes` `linguist-generated`.
+- [x] The file classifier from 6.4.1, including `.gitattributes` `linguist-generated`. (evidence: packages/analysis/src/files/classify.test.ts, 281cca3)
 - [ ] Formatting-only detection, and comment stripping that preserves line numbers (Python docstrings included), with tests.
 - [ ] Every code-fact detector in 6.4.2 for its listed languages. Each is table-driven, with 3 positive and 2 negative cases.
 - [ ] `remit units --diff <file|range>` prints units and facts as a table and as JSON.
