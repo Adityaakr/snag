@@ -282,3 +282,30 @@ describe('linked issues outside the account', () => {
     );
   });
 });
+
+describe('publishing details', () => {
+  it('posts inline comments for P0 and P1 code findings', async () => {
+    const repo = fakeRepo('unrelated_config', { config: 'surfaces:\n  inline_comments: true\n' });
+    const out = await reviewPullRequest(repo.gh, 1, repo.pr, {
+      providers: repo.providers,
+      store: new MemoryStore(),
+    });
+    expect(out.status).toBe('done');
+    expect(repo.gh.reviewComments.length).toBeGreaterThan(0);
+    expect(repo.gh.reviewComments[0]).toMatchObject({ headSha: 'head0000' });
+    expect(repo.gh.reviewComments[0]?.body).toMatch(/^\*\*Remit F-/);
+  });
+
+  it('sends more than 50 annotations in batches and completes the check run on the last one', async () => {
+    const repo = fakeRepo('large_diff');
+    const out = await reviewPullRequest(repo.gh, 1, repo.pr, {
+      providers: repo.providers,
+      store: new MemoryStore(),
+    });
+    expect(out.status).toBe('done');
+    const run = repo.gh.checkRuns[0];
+    expect(run?.annotations.length).toBeGreaterThan(50);
+    expect(run?.updates).toBe(Math.ceil((run?.annotations.length ?? 0) / 50));
+    expect(run).toMatchObject({ status: 'completed' });
+  });
+});

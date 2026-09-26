@@ -56,7 +56,7 @@ GitHub must reach the webhook, so point `PUBLIC_URL` at a webhook proxy such as 
 
 1. Create a channel at https://smee.io and set `PUBLIC_URL` to the channel URL.
 2. Run `npx smee-client --url <channel> --target http://localhost:3000/webhooks`.
-3. Open `http://localhost:3000/setup`. The manifest points GitHub at the channel, and smee forwards deliveries with their signatures intact.
+3. Open the setup link the server printed (`http://localhost:3000/setup?token=...`). The manifest points GitHub at the channel, and smee forwards deliveries with their signatures intact.
 
 ## How a review runs
 

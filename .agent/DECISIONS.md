@@ -227,3 +227,6 @@ Append-only. Each entry: date, decision, alternatives, why. Deviations from BUIL
   - the slug is not looked up via `GET /app` when `GITHUB_APP_SLUG` is unset;
   - the Action has no bot-author check on its sticky comment (its login depends on the token used);
   - the setup link is printed to logs (accepted bootstrap step, documented).
+- M7 verifier (first run FAIL):
+  - The Action loads a calibration: the `calibration-path` input on the default branch, else files bundled into `dist/calibration` (`build.mjs` copies `eval/calibration`, excluding `simulated-jev`), matched by Jev model and question set. Gate mode can fail the job, and calibrated thresholds apply as in the CLI and the App.
+  - Other fixes: tests for inline comments and annotation batching (`large_diff`, over 50 annotations); release of the dedupe claim on invalid JSON; the Action reports a skipped config file; the local-development doc uses the setup token.

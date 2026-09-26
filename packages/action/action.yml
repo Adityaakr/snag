@@ -28,6 +28,9 @@ inputs:
     description: Config file on the default branch.
     required: false
     default: .remit.yml
+  calibration-path:
+    description: Calibration JSON on the default branch (from `remit calibrate`). Without it, the calibration shipped with the action is used when one matches the Jev model. Gate mode needs one.
+    required: false
   budget-usd:
     description: Maximum provider spend for one review, in USD.
     required: false

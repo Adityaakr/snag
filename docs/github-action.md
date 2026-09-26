@@ -3,7 +3,7 @@
 `packages/action` is a JavaScript action (`action.yml` plus the bundled `dist/index.js`, runtime `node24`).
 - It reads the PR from the event payload and reviews it through the GitHub API only. It never checks out or runs PR code.
 - It upserts the sticky comment, writes the job summary, and emits annotations as workflow commands.
-- It exits according to the mode: `gate` fails the job only on a calibrated gate failure.
+- It exits according to the mode: `gate` fails the job only on a calibrated gate failure. The calibration comes from `calibration-path` or from the files bundled in `dist/calibration` (real Jev models only). Without one, gate mode is refused and the job does not fail.
 
 ## Inputs
 
@@ -15,6 +15,7 @@
 | `github-token` | `${{ github.token }}` | API access (pull requests write, contents read) |
 | `mode` | from config | `comment_only`, `rework` or `gate` |
 | `config-path` | `.remit.yml` | config file, read from the default branch |
+| `calibration-path` | | calibration JSON on the default branch (from `remit calibrate`); otherwise the calibration shipped with the action is used when it matches the Jev model and question set |
 | `budget-usd` | from config | maximum provider spend per review |
 
 ## Example: `pull_request`
