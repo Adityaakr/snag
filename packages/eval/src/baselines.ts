@@ -187,7 +187,9 @@ export function baselineMetrics(
 /** Whether a baseline can run here, and why not. */
 export async function baselineNote(name: string, env: Record<string, string | undefined>): Promise<string> {
   if (name === 'single_pass')
-    return env.ANTHROPIC_API_KEY ? 'available' : 'skipped: ANTHROPIC_API_KEY not set';
+    return env.ANTHROPIC_API_KEY || (env.OPENAI_COMPATIBLE_API_KEY && env.OPENAI_COMPATIBLE_BASE_URL)
+      ? 'available'
+      : 'skipped: neither ANTHROPIC_API_KEY nor OPENAI_COMPATIBLE_API_KEY is set';
   if (name === 'pr_agent') {
     try {
       execFileSync('pr-agent', ['--help'], { stdio: 'ignore' });

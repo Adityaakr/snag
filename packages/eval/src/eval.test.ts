@@ -23,6 +23,23 @@ describe('golden corpus (corpus D)', () => {
     expect(m.p0Precision.value).toBe(1);
   });
 
+  it('stops for budget on spend charged outside the per-item trackers (live providers)', async () => {
+    const items = goldenItems();
+    let external = 0;
+    const { outcomes, stoppedForBudget } = await runItems(items, {
+      mode: 'scripted',
+      concurrency: 2,
+      maxUsd: 1,
+      spentUsd: () => {
+        external += 0.4;
+        return external;
+      },
+    });
+    // Checks happen before each batch of 2: 0.4 and 0.8 pass, 1.2 stops.
+    expect(outcomes).toHaveLength(4);
+    expect(stoppedForBudget).toBe(true);
+  });
+
   it('labels PRs with expected problems, including high-severity facts, as problem', () => {
     const byId = Object.fromEntries(goldenItems().map((i) => [i.id, i.labels.pr]));
     expect(byId['golden/three_reqs_one_missing']).toBe('problem');
