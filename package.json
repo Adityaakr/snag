@@ -19,7 +19,8 @@
     "test:live": "REMIT_ALLOW_NETWORK=1 vitest run --config vitest.live.config.ts",
     "guard": "node scripts/guard.mjs",
     "progress": "node scripts/progress.mjs",
-    "schemas": "tsx packages/core/src/contracts/write-schemas.ts"
+    "schemas": "tsx packages/core/src/contracts/write-schemas.ts",
+    "remit": "tsx --conditions=source packages/cli/src/bin.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.14",
