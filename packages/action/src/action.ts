@@ -4,13 +4,15 @@
  * as workflow commands, and exits according to the mode. Fork PRs on `pull_request` get no secrets, so they are
  * skipped with a notice.
  */
-import { appendFileSync, readFileSync } from 'node:fs';
+import { appendFileSync, existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import {
   annotations,
   BRAND,
   type Calibration,
   checkTitle,
   parseConfig,
+  QUESTION_SET_VERSION,
   type RemitConfig,
   renderComment,
   renderRework,
@@ -26,6 +28,8 @@ export interface ActionIo {
   /** For tests: a GitHub client instead of LiveGitHub. */
   github?: GitHubWriter;
   calibration?: Calibration;
+  /** Calibration files shipped with the action (dist/calibration). */
+  calibrationDir?: string;
   providers?: typeof providersFromEnv;
 }
 
@@ -76,7 +80,51 @@ async function loadConfig(
 ): Promise<{ config: RemitConfig; errors: string[] }> {
   const branch = await gh.getDefaultBranch(owner, repo);
   const file = await gh.getContent(owner, repo, path, branch);
-  return file && 'content' in file ? parseConfig(file.content) : parseConfig('');
+  if (file && !('content' in file))
+    return { ...parseConfig(''), errors: [`${path} was skipped (${file.skipped}); using defaults.`] };
+  return file ? parseConfig(file.content) : parseConfig('');
+}
+
+const CalibrationFile = z.object({
+  id: z.string(),
+  jevModel: z.string(),
+  questionSet: z.string(),
+  maps: z.record(z.string(), z.array(z.object({ x: z.number(), y: z.number() }))),
+  labeledFindings: z.number(),
+  p0Precision: z.number(),
+  thresholds: z.record(z.string(), z.number()).optional(),
+});
+
+function parseCalibration(text: string): Calibration {
+  const c = CalibrationFile.parse(JSON.parse(text));
+  return { ...c, ...(c.thresholds ? { thresholds: c.thresholds } : {}) } as Calibration;
+}
+
+/**
+ * The calibration for gate mode and calibrated thresholds (11.5, 6.9): the `calibration-path` file on the default
+ * branch when given, else the calibration bundled with the action for this Jev model and question set.
+ */
+export async function loadActionCalibration(
+  gh: GitHubWriter,
+  owner: string,
+  repo: string,
+  jevModel: string,
+  opts: { path?: string; bundledDir?: string },
+): Promise<{ calibration?: Calibration; note?: string }> {
+  if (opts.path) {
+    const file = await gh.getContent(owner, repo, opts.path, await gh.getDefaultBranch(owner, repo));
+    if (!file || !('content' in file))
+      return { note: `calibration-path ${opts.path} was not found on the default branch.` };
+    try {
+      return { calibration: parseCalibration(file.content) };
+    } catch {
+      return { note: `calibration-path ${opts.path} is not a valid calibration file.` };
+    }
+  }
+  if (!opts.bundledDir) return {};
+  const path = join(opts.bundledDir, jevModel.replace(/[^\w.-]+/g, '_'), `${QUESTION_SET_VERSION}.json`);
+  if (!existsSync(path)) return {};
+  return { calibration: parseCalibration(readFileSync(path, 'utf8')) };
 }
 
 export async function runAction(io: ActionIo): Promise<number> {
@@ -138,11 +186,18 @@ export async function runAction(io: ActionIo): Promise<number> {
       );
   }
   const p = (io.providers ?? providersFromEnv)(config, { ...keys, REMIT_CACHE_MODE: 'live' });
+  const cal = io.calibration
+    ? { calibration: io.calibration }
+    : await loadActionCalibration(gh, owner, repo, p.jev?.model ?? config.jev.model, {
+        ...(input(env, 'calibration-path') ? { path: input(env, 'calibration-path') } : {}),
+        ...(io.calibrationDir ? { bundledDir: io.calibrationDir } : {}),
+      });
+  if (cal.note) ingest.warnings.push(cal.note);
   const reviewId = `action_${env.GITHUB_RUN_ID ?? 'local'}_${env.GITHUB_RUN_ATTEMPT ?? '1'}`;
   const result = await runReview(ingest.input, {
     ...(p.jev ? { jev: p.jev } : {}),
     ...(p.llm ? { llm: p.llm } : {}),
-    ...(io.calibration ? { calibration: io.calibration } : {}),
+    ...(cal.calibration ? { calibration: cal.calibration } : {}),
     config,
     reviewId,
     costs: p.costs,

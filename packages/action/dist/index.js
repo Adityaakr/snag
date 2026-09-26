@@ -24510,11 +24510,12 @@ var require_x509_transport_state = __commonJS({
 });
 
 // src/main.ts
-import { dirname as dirname4, join as join5 } from "node:path";
+import { dirname as dirname4, join as join6 } from "node:path";
 import { fileURLToPath } from "node:url";
 
 // src/action.ts
-import { appendFileSync, readFileSync as readFileSync2 } from "node:fs";
+import { appendFileSync, existsSync, readFileSync as readFileSync2 } from "node:fs";
+import { join as join5 } from "node:path";
 
 // ../core/src/brand.ts
 var BRAND = {
@@ -81140,7 +81141,38 @@ function exitCode(r) {
 async function loadConfig(gh, owner, repo, path5) {
   const branch = await gh.getDefaultBranch(owner, repo);
   const file2 = await gh.getContent(owner, repo, path5, branch);
-  return file2 && "content" in file2 ? parseConfig(file2.content) : parseConfig("");
+  if (file2 && !("content" in file2))
+    return { ...parseConfig(""), errors: [`${path5} was skipped (${file2.skipped}); using defaults.`] };
+  return file2 ? parseConfig(file2.content) : parseConfig("");
+}
+var CalibrationFile = external_exports.object({
+  id: external_exports.string(),
+  jevModel: external_exports.string(),
+  questionSet: external_exports.string(),
+  maps: external_exports.record(external_exports.string(), external_exports.array(external_exports.object({ x: external_exports.number(), y: external_exports.number() }))),
+  labeledFindings: external_exports.number(),
+  p0Precision: external_exports.number(),
+  thresholds: external_exports.record(external_exports.string(), external_exports.number()).optional()
+});
+function parseCalibration(text) {
+  const c = CalibrationFile.parse(JSON.parse(text));
+  return { ...c, ...c.thresholds ? { thresholds: c.thresholds } : {} };
+}
+async function loadActionCalibration(gh, owner, repo, jevModel, opts) {
+  if (opts.path) {
+    const file2 = await gh.getContent(owner, repo, opts.path, await gh.getDefaultBranch(owner, repo));
+    if (!file2 || !("content" in file2))
+      return { note: `calibration-path ${opts.path} was not found on the default branch.` };
+    try {
+      return { calibration: parseCalibration(file2.content) };
+    } catch {
+      return { note: `calibration-path ${opts.path} is not a valid calibration file.` };
+    }
+  }
+  if (!opts.bundledDir) return {};
+  const path5 = join5(opts.bundledDir, jevModel.replace(/[^\w.-]+/g, "_"), `${QUESTION_SET_VERSION}.json`);
+  if (!existsSync(path5)) return {};
+  return { calibration: parseCalibration(readFileSync2(path5, "utf8")) };
 }
 async function runAction(io) {
   const { env, out: out2 } = io;
@@ -81200,11 +81232,16 @@ async function runAction(io) {
       );
   }
   const p = (io.providers ?? providersFromEnv)(config2, { ...keys, REMIT_CACHE_MODE: "live" });
+  const cal = io.calibration ? { calibration: io.calibration } : await loadActionCalibration(gh, owner, repo, p.jev?.model ?? config2.jev.model, {
+    ...input2(env, "calibration-path") ? { path: input2(env, "calibration-path") } : {},
+    ...io.calibrationDir ? { bundledDir: io.calibrationDir } : {}
+  });
+  if (cal.note) ingest.warnings.push(cal.note);
   const reviewId = `action_${env.GITHUB_RUN_ID ?? "local"}_${env.GITHUB_RUN_ATTEMPT ?? "1"}`;
   const result = await runReview(ingest.input, {
     ...p.jev ? { jev: p.jev } : {},
     ...p.llm ? { llm: p.llm } : {},
-    ...io.calibration ? { calibration: io.calibration } : {},
+    ...cal.calibration ? { calibration: cal.calibration } : {},
     config: config2,
     reviewId,
     costs: p.costs,
@@ -81231,8 +81268,13 @@ async function runAction(io) {
 }
 
 // src/main.ts
-process.env.REMIT_GRAMMAR_DIR ??= join5(dirname4(fileURLToPath(import.meta.url)), "grammars");
-runAction({ env: process.env, out: (t) => process.stdout.write(t) }).then(
+var here = dirname4(fileURLToPath(import.meta.url));
+process.env.REMIT_GRAMMAR_DIR ??= join6(here, "grammars");
+runAction({
+  env: process.env,
+  out: (t) => process.stdout.write(t),
+  calibrationDir: join6(here, "calibration")
+}).then(
   (code2) => {
     process.exitCode = code2;
   },

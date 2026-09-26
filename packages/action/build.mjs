@@ -1,5 +1,5 @@
 // Bundles the Action to dist/index.js (ESM, node24) and copies the tree-sitter runtime and grammars next to it.
-import { copyFileSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -34,5 +34,12 @@ for (const g of [
   'tree-sitter-rust/tree-sitter-rust.wasm',
 ])
   copyFileSync(require.resolve(g), join(dist, 'grammars', g.split('/')[1]));
+// Calibrations for real Jev models ship with the action; simulated ones never apply to a real model and stay out.
+const calibrations = join(here, '..', '..', 'eval', 'calibration');
+if (existsSync(calibrations))
+  cpSync(calibrations, join(dist, 'calibration'), {
+    recursive: true,
+    filter: (src) => !src.includes('simulated-jev'),
+  });
 writeFileSync(join(dist, 'package.json'), '{ "type": "module" }\n');
 console.log('built packages/action/dist');

@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { Calibration } from '@remit/core';
@@ -30,9 +30,13 @@ function run(
     fork?: boolean;
     eventName?: string;
     calibration?: Calibration;
+    calibrationDir?: string;
+    files?: Record<string, string>;
   } = {},
 ) {
   const repo = fakeRepo('three_reqs_one_missing', opts.config ? { config: opts.config } : {});
+  for (const [p, text] of Object.entries(opts.files ?? {}))
+    repo.gh.addContent('acme', 'reports', 'main', p, text);
   const ev = event(opts.fork);
   let out = '';
   const env: Record<string, string> = {
@@ -53,6 +57,7 @@ function run(
       return { ...p, costs: undefined as never, cacheMode: 'live' as const, notes: [] };
     },
     ...(opts.calibration ? { calibration: opts.calibration } : {}),
+    ...(opts.calibrationDir ? { calibrationDir: opts.calibrationDir } : {}),
   });
   return { done, repo, ev, out: () => out };
 }
@@ -112,5 +117,55 @@ describe('runAction', () => {
   it('escapes workflow command data and properties', () => {
     expect(escapeData('50%\nnext')).toBe('50%25%0Anext');
     expect(escapeProperty('a:b,c')).toBe('a%3Ab%2Cc');
+  });
+});
+
+describe('calibration in the Action', () => {
+  const cal = {
+    id: 'cal-x',
+    jevModel: 'jev-1.13.0',
+    questionSet: 'qs-0.1.0',
+    maps: {},
+    labeledFindings: 500,
+    p0Precision: 0.95,
+  };
+
+  it('uses the bundled calibration for the Jev model, so gate mode can fail the job', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'remit-cal-'));
+    mkdirSync(join(dir, 'jev-1.13.0'));
+    writeFileSync(join(dir, 'jev-1.13.0', 'qs-0.1.0.json'), JSON.stringify({ ...cal, fits: {}, tuning: {} }));
+    expect(
+      await run({ config: 'gate:\n  threshold: 0.5\n', inputs: { mode: 'gate' }, calibrationDir: dir }).done,
+    ).toBe(1);
+    const empty = mkdtempSync(join(tmpdir(), 'remit-cal-'));
+    expect(
+      await run({ config: 'gate:\n  threshold: 0.5\n', inputs: { mode: 'gate' }, calibrationDir: empty })
+        .done,
+    ).toBe(0);
+  });
+
+  it('prefers calibration-path on the default branch and warns when it is missing or invalid', async () => {
+    const good = run({
+      config: 'gate:\n  threshold: 0.5\n',
+      inputs: { mode: 'gate', 'calibration-path': '.remit/calibration.json' },
+      files: { '.remit/calibration.json': JSON.stringify(cal) },
+    });
+    expect(await good.done).toBe(1);
+    const missing = run({ inputs: { mode: 'gate', 'calibration-path': 'nope.json' } });
+    expect(await missing.done).toBe(0);
+    expect(missing.repo.gh.posted.get('acme/reports#77')?.[0]?.body).toContain(
+      'calibration-path nope.json was not found',
+    );
+    const invalid = run({ inputs: { 'calibration-path': 'bad.json' }, files: { 'bad.json': '{"id":1}' } });
+    expect(await invalid.done).toBe(0);
+    expect(invalid.repo.gh.posted.get('acme/reports#77')?.[0]?.body).toContain(
+      'is not a valid calibration file',
+    );
+  });
+
+  it('reports a skipped config file', async () => {
+    const r = run({ files: { '.remit.yml': 'x'.repeat(1024 * 1024 + 1) } });
+    expect(await r.done).toBe(0);
+    expect(r.repo.gh.posted.get('acme/reports#77')?.[0]?.body).toContain('.remit.yml was skipped');
   });
 });

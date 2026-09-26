@@ -85,6 +85,7 @@ export function createApp(deps: ServerDeps): Hono {
       try {
         payload = JSON.parse(body);
       } catch {
+        await deps.deliveries.release?.(delivery);
         return c.text('invalid JSON', 400);
       }
       try {
