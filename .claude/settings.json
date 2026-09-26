@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(pnpm *)",
+      "Bash(node *)",
+      "Bash(npx *)",
+      "Bash(git status *)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git show *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git tag *)",
+      "Bash(git branch *)",
+      "Bash(git switch *)",
+      "Bash(git checkout *)",
+      "Bash(git merge *)",
+      "Bash(git restore *)",
+      "Bash(git rev-parse *)",
+      "Bash(docker compose *)",
+      "Bash(curl *)",
+      "Bash(jq *)"
+    ],
+    "ask": [
+      "Bash(git push *)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.local)",
+      "Read(./.env.production)",
+      "Bash(cat .env*)",
+      "Edit(./BUILD_PROMPT.md)",
+      "Edit(./GOAL.txt)",
+      "Edit(./loop.sh)",
+      "Edit(./START_HERE.md)",
+      "Bash(git push --force *)",
+      "Bash(git reset --hard *)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      { "hooks": [ { "type": "command", "command": "${CLAUDE_PROJECT_DIR}/scripts/hooks/session-start.sh" } ] }
+    ],
+    "Stop": [
+      { "hooks": [ { "type": "command", "command": "${CLAUDE_PROJECT_DIR}/scripts/hooks/stop-hygiene.sh" } ] }
+    ]
+  }
+}
