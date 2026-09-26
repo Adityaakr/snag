@@ -5,15 +5,16 @@
 import { randomBytes } from 'node:crypto';
 import { join } from 'node:path';
 import { serve } from '@hono/node-server';
-import { BRAND } from '@remit/core';
+import { BRAND, QUESTION_SET_VERSION } from '@remit/core';
 import { CALIBRATION_ROOT, loadCalibration } from '@remit/eval';
 import { type AppCredentials, installationToken, LiveGitHub, providersFromEnv } from '@remit/providers';
 import { createApp } from './app.js';
-import { MemoryDeliveryStore } from './deliveries.js';
 import { Metrics } from './metrics.js';
 import { MemoryQueue } from './queue.js';
 import { FileSecretStore } from './secrets.js';
-import { MemoryStore } from './store.js';
+import { openPglite, openPostgres } from './db/client.js';
+import { DbStore } from './db/store.js';
+import { PgBossQueue } from './pg-queue.js';
 
 export async function start(env: Record<string, string | undefined> = process.env) {
   const secrets = env.SECRETS_ENCRYPTION_KEY
@@ -26,10 +27,23 @@ export async function start(env: Record<string, string | undefined> = process.en
   const metrics = new Metrics();
   const log = (msg: string, data: Record<string, unknown> = {}) =>
     process.stderr.write(`${JSON.stringify({ level: 'info', msg, ...data })}\n`);
-  const queue = new MemoryQueue({
-    onError: (key, e) => log('job failed', { key, error: (e as Error).message }),
-    onCancel: (key) => metrics.inc('remit_jobs_cancelled_total', { key: key.split(':')[0] ?? 'job' }),
-  });
+  const hooks = {
+    onError: (key: string, e: unknown) => log('job failed', { key, error: (e as Error).message }),
+    onCancel: (key: string) => metrics.inc('remit_jobs_cancelled_total', { key: key.split(':')[0] ?? 'job' }),
+  };
+  // Postgres and pg-boss when DATABASE_URL is set; otherwise PGlite on disk with the in-process queue.
+  const database = env.DATABASE_URL
+    ? await openPostgres(env.DATABASE_URL)
+    : await openPglite(join(env.DATA_DIR ?? '.data', 'pgdata'));
+  const store = new DbStore(database.db);
+  let queue: MemoryQueue | PgBossQueue;
+  if (env.DATABASE_URL) {
+    const { PgBoss } = await import('pg-boss');
+    const boss = new PgBoss({ connectionString: env.DATABASE_URL });
+    boss.on('error', (e) => log('queue error', { error: e.message }));
+    await boss.start();
+    queue = new PgBossQueue(boss, { hooks });
+  } else queue = new MemoryQueue(hooks);
   const creds: AppCredentials | null = appId && privateKey ? { appId, privateKey } : null;
   const slug = env.GITHUB_APP_SLUG ?? stored?.slug;
   // Setup is only possible before the App is configured, and only with this one-time token (printed once here).
@@ -40,13 +54,38 @@ export async function start(env: Record<string, string | undefined> = process.en
     );
   const app = createApp({
     webhookSecret,
-    deliveries: new MemoryDeliveryStore(),
+    deliveries: store,
     metrics,
     queue,
-    store: new MemoryStore(),
+    store,
+    maintenance: async (kind) => {
+      if (kind === 'cleanup') {
+        await store.cleanup();
+        await store.pruneDeliveries(7);
+      } else await store.recalibrateFromFeedback(env.JEV_MODEL ?? 'jev-1.13.0', QUESTION_SET_VERSION);
+    },
     ...(env.PUBLIC_URL ? { publicUrl: env.PUBLIC_URL } : {}),
     ...(secrets ? { secrets } : {}),
     log,
+    ...(env.SESSION_SECRET &&
+    (env.GITHUB_CLIENT_ID ?? stored?.clientId) &&
+    (env.GITHUB_CLIENT_SECRET ?? stored?.clientSecret)
+      ? {
+          dashboard: {
+            store,
+            sessionSecret: env.SESSION_SECRET,
+            oauth: {
+              clientId: (env.GITHUB_CLIENT_ID ?? stored?.clientId) as string,
+              clientSecret: (env.GITHUB_CLIENT_SECRET ?? stored?.clientSecret) as string,
+            },
+            publicUrl: env.PUBLIC_URL ?? 'http://localhost:3000',
+            staticDir: join(import.meta.dirname, '..', '..', 'dashboard', 'dist'),
+            ...(queue instanceof PgBossQueue
+              ? { deadLetters: () => (queue as PgBossQueue).deadLetters() }
+              : {}),
+          },
+        }
+      : {}),
     ready: async () => Boolean(creds && webhookSecret),
     configured: async () => Boolean(creds) || Boolean(await secrets?.load()),
     ...(setupToken ? { setupToken } : {}),
@@ -63,6 +102,7 @@ export async function start(env: Record<string, string | undefined> = process.en
       providersFromEnv(config, { ...env, REMIT_CACHE_MODE: env.REMIT_CACHE_MODE ?? 'live' }),
     calibration: (jevModel) => loadCalibration(env.REMIT_CALIBRATION_DIR ?? CALIBRATION_ROOT, jevModel),
   });
+  if (queue instanceof PgBossQueue) await queue.start();
   const port = Number(env.PORT ?? 3000);
   serve({ fetch: app.fetch, port });
   log(`${BRAND.name} server listening`, { port, configured: Boolean(creds) });

@@ -14,6 +14,7 @@ export {
   type ManifestConversion,
 } from './github/app.js';
 export { CachedGitHub } from './github/cached.js';
+export { exchangeOAuthCode, type OAuthOptions, type OAuthUser, oauthUser } from './github/oauth.js';
 export { githubContents, type PullDiff, pullDiff } from './github/diff.js';
 export { type FakeCheckRun, FakeGitHub, type FakeIssue, type FakePull } from './github/fake.js';
 export { closingKeywordRefs, linkIssues, plainRefs } from './github/links.js';
