@@ -43,3 +43,4 @@ Append-only. Each entry: date, decision, alternatives, why. Deviations from BUIL
 - Decision: the file from Appendix A.1 is written only after the human approves it, because it grants Bash permissions and installs hooks. The hook scripts, their tests and the subagents exist regardless.
 - Alternatives: write it silently.
 - Why: a local safety hook (prism-guard) flagged it as a permissions change; the human decides.
+- Update 2026-09-26: the human approved; `.claude/settings.json` written verbatim from Appendix A.1 and excluded from Biome formatting so it stays byte-identical (checked by scripts/__tests__/settings.test.ts).
