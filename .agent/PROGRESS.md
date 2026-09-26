@@ -32,7 +32,7 @@ Status: DONE
 ## M2 Providers, budgets, record and replay
 Status: IN_PROGRESS
 - [x] The Jev adapter from 7.3 (LiveJev, FakeJev, CachedJev), with tests for: packing; 400 shrink-and-retry; 429 and 529 backoff; validation; concurrency; cost accounting; model logging. (evidence: packages/providers/src/jev/jev.test.ts (overflow shrink, 429/529 backoff, validation, concurrency, cost, model logging, preflight packing) + common/common.test.ts, 0a53ab4)
-- [ ] The LLM adapter from section 8 (Anthropic, OpenAI-compatible, FakeLlm, CachedLlm), with structured output, the repair retry and cost accounting.
+- [x] The LLM adapter from section 8 (Anthropic, OpenAI-compatible, FakeLlm, CachedLlm), with structured output, the repair retry and cost accounting. (evidence: packages/providers/src/llm/llm.test.ts, b453f61)
 - [ ] A GitHub adapter covering: PR metadata; paginated files and patches, with the local diff fallback; contents at a SHA, with a size guard; issues and comments with roles; linked issues per 6.1; rate-limit handling. It includes FakeGitHub for tests.
 - [ ] Record and replay per 7.4, with all four modes. A test proves cassettes contain no auth headers.
 - [ ] `remit doctor` per 10.1, including model ID verification through the Anthropic Models API. The results are recorded in `docs/providers.md`.
