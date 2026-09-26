@@ -31,3 +31,8 @@
 ## 2026-09-27 M8 closed (DONE)
 - Built the Postgres schema and migrations (Drizzle, PGlite in tests) with data minimization, pg-boss queues with retries and dead letters, feedback from slash commands, the dashboard and implicit weak labels, the React dashboard with GitHub OAuth and accessibility tests, corpus C exports, and the M8 end-to-end test.
 - milestone-verifier: FAIL (code stored by default; dead letters across installations), then PASS (D31 addendum). Dogfood run 4 surfaced swallowed queue errors (fixed).
+
+## 2026-09-27 M9 gate and M10
+- M9 security review: rounds 3 to 6 fixed checklist budget bypass, operator price floors, NaN costs via inherited model ids, worst-case estimates. Round 6 VERDICT: PASS.
+- M9 milestone-verifier: first run FAIL (tsbuildinfo, /shared ownership, weak static test, missing DECISIONS entry), fixed in c5a19fe (D33); re-audit VERDICT: PASS. M9 BLOCKED-HUMAN on B7.
+- M10 BLOCKED-HUMAN on B8 (no keys). docs/HANDOFF.md written.
