@@ -1,0 +1,140 @@
+{
+ "id": "gold:django__django-14007",
+ "corpus": "swebench",
+ "seedId": "django__django-14007",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "619f26d2895d121854b1bed1b535d42b722e2eba",
+  "headSha": "gold-django__django-14007",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 14007
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 14007
+    },
+    "title": "Database converters (from_db_value) not called for returning_fields on insert",
+    "body": "Description\n\t\nMaking a subclass of BigAutoField, I've found that, unlike all other query pathways, on insert the returned integer is not passed through any database converters defined for the field - including the from_db_value hook.\nThis means that a field which would normally use a wrapper class has instead a plain integer.\nTake this field:\nclass MyAutoField(models.BigAutoField):\n\tdef from_db_value(self, value, expression, connection):\n\t\tif value is None:\n\t\t\treturn None\n\t\treturn MyIntWrapper(value)\n\tdef get_prep_value(self, value):\n\t\tif value is None:\n\t\t\treturn None\n\t\treturn int(value)\nAnd a model that uses it:\nclass AutoModel(models.Model):\n\tid = MyAutoField(primary_key=True)\nQueried instances have the wrapper class for id:\n>>> am = AutoModel.objects.first()\n>>> am.id\n<MyIntWrapper: 1>\nBut on creation, the returned integer is directly set as an attribute on the class:\n>>> am2 = AutoModel.objects.create()\n>>> am2.id\n2\nThis also affects bulk_create on backends that support fetching the primary key value:\n>>> ams = [AutoModel()]\n>>> AutoModel.objects.bulk_create(ams)\n[<AutoModel: AutoModel object (2)>]\n>>> ams[0].id\n2",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:31215523cf94d502b403013812b2223facc639af05f85a6d6ab96444d9a3c669"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-14007",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/db/models/sql/compiler.py b/django/db/models/sql/compiler.py\n--- a/django/db/models/sql/compiler.py\n+++ b/django/db/models/sql/compiler.py\n@@ -1405,6 +1405,7 @@ def execute_sql(self, returning_fields=None):\n             returning_fields and len(self.query.objs) != 1 and\n             not self.connection.features.can_return_rows_from_bulk_insert\n         )\n+        opts = self.query.get_meta()\n         self.returning_fields = returning_fields\n         with self.connection.cursor() as cursor:\n             for sql, params in self.as_sql():\n@@ -1412,13 +1413,21 @@ def execute_sql(self, returning_fields=None):\n             if not self.returning_fields:\n                 return []\n             if self.connection.features.can_return_rows_from_bulk_insert and len(self.query.objs) > 1:\n-                return self.connection.ops.fetch_returned_insert_rows(cursor)\n-            if self.connection.features.can_return_columns_from_insert:\n+                rows = self.connection.ops.fetch_returned_insert_rows(cursor)\n+            elif self.connection.features.can_return_columns_from_insert:\n                 assert len(self.query.objs) == 1\n-                return [self.connection.ops.fetch_returned_insert_columns(cursor, self.returning_params)]\n-            return [(self.connection.ops.last_insert_id(\n-                cursor, self.query.get_meta().db_table, self.query.get_meta().pk.column\n-            ),)]\n+                rows = [self.connection.ops.fetch_returned_insert_columns(\n+                    cursor, self.returning_params,\n+                )]\n+            else:\n+                rows = [(self.connection.ops.last_insert_id(\n+                    cursor, opts.db_table, opts.pk.column,\n+                ),)]\n+        cols = [field.get_col(opts.db_table) for field in self.returning_fields]\n+        converters = self.get_converters(cols)\n+        if converters:\n+            rows = list(self.apply_converters(rows, converters))\n+        return rows\n \n \n class SQLDeleteCompiler(SQLCompiler):\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "gold",
+  "source": "gold",
+  "strength": "strong"
+ },
+ "annotatedBy": "study"
+}

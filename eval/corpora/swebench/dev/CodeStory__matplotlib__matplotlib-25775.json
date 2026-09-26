@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:matplotlib__matplotlib-25775",
+ "corpus": "swebench",
+ "seedId": "matplotlib__matplotlib-25775",
+ "input": {
+  "mode": "local",
+  "repo": "matplotlib/matplotlib",
+  "baseSha": "26224d96066b5c60882296c551f54ca7732c0af0",
+  "headSha": "CodeStory-matplotlib__matplotlib-25775",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "matplotlib",
+    "repo": "matplotlib",
+    "number": 25775
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "matplotlib",
+     "repo": "matplotlib",
+     "number": 25775
+    },
+    "title": "[ENH]: Add get/set_antialiased to Text objects",
+    "body": "### Problem\n\nCurrently, Text objects always retrieve their antialiasing state via the global rcParams[\"text.antialias\"], unlike other artists for which this can be configured on a per-artist basis via `set_antialiased` (and read via `set_antialiased`).\n\n### Proposed solution\n\nAdd similar getters/setters on Text objects (also adjusting Annotations accordingly, if needed) and use that info in the drawing stage.\r\n\r\nShould be relatively easy to implement, except that the slight fiddling needed with backends requires some understanding of backend code (I think we need to replace the access to `rcParams[\"text.antialiased\"]` by going through the GraphicsContext state).",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:797823efbab63e497ce25c26c2128d9c0d023abca58fb6f5fd14a154e9b775a1"
+   }
+  ],
+  "pr": {
+   "title": "Fix matplotlib__matplotlib-25775",
+   "body": ""
+  },
+  "diffText": "diff --git a/lib/matplotlib/text.py b/lib/matplotlib/text.py\nindex 4591316cf9..d6a50b4f82 100644\n--- a/lib/matplotlib/text.py\n+++ b/lib/matplotlib/text.py\n@@ -150,6 +150,7 @@ class Text(Artist):\n             linespacing=linespacing,\n             rotation_mode=rotation_mode,\n         )\n+        self._antialiased = mpl.rcParams[\"text.antialiased\"]\n         self.update(kwargs)\n \n     def _reset_visual_defaults(\n@@ -737,6 +738,7 @@ class Text(Artist):\n             gc.set_foreground(self.get_color())\n             gc.set_alpha(self.get_alpha())\n             gc.set_url(self._url)\n+            gc.set_antialiased(self._antialiased)\n             self._set_gc_clip(gc)\n \n             angle = self.get_rotation()\n@@ -873,6 +875,29 @@ class Text(Artist):\n         \"\"\"Return the text string.\"\"\"\n         return self._text\n \n+    def get_antialiased(self):\n+        \"\"\"\n+        Return whether text is antialiased.\n+\n+        Returns\n+        -------\n+        bool\n+            The antialiasing state.\n+        \"\"\"\n+        return self._antialiased\n+\n+    def set_antialiased(self, b):\n+        \"\"\"\n+        Set whether to use antialiased rendering.\n+\n+        Parameters\n+        ----------\n+        b : bool\n+            If True, text will be antialiased.\n+        \"\"\"\n+        self._antialiased = b\n+        self.stale = True\n+\n     def get_verticalalignment(self):\n         \"\"\"\n         Return the vertical alignment as a string.  Will be one of\ndiff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..ebac00c456\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,22 @@\n+import matplotlib.pyplot as plt\n+import matplotlib as mpl\n+\n+# Create a figure and axis\n+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))\n+\n+# Create text objects with different antialiasing settings\n+text1 = ax1.text(0.5, 0.5, 'Antialiased Text', fontsize=20, ha='center', va='center')\n+text2 = ax2.text(0.5, 0.5, 'Non-antialiased Text', fontsize=20, ha='center', va='center')\n+\n+# Set antialiasing for text2 to False\n+text2.set_antialiased(False)\n+\n+# Set titles\n+ax1.set_title('Antialiased')\n+ax2.set_title('Non-antialiased')\n+\n+# Print current settings\n+print(\"text1 antialiased:\", text1.get_antialiased())\n+print(\"text2 antialiased:\", text2.get_antialiased())\n+\n+plt.show()\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq2_divergent",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

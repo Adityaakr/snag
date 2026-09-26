@@ -1,0 +1,140 @@
+{
+ "id": "OpenHands:matplotlib__matplotlib-24149",
+ "corpus": "swebench",
+ "seedId": "matplotlib__matplotlib-24149",
+ "input": {
+  "mode": "local",
+  "repo": "matplotlib/matplotlib",
+  "baseSha": "af39f1edffcd828f05cfdd04f2e59506bb4a27bc",
+  "headSha": "OpenHands-matplotlib__matplotlib-24149",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "matplotlib",
+    "repo": "matplotlib",
+    "number": 24149
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "matplotlib",
+     "repo": "matplotlib",
+     "number": 24149
+    },
+    "title": "[Bug]: ax.bar raises for all-nan data on matplotlib 3.6.1",
+    "body": "### Bug summary\n\n`ax.bar` raises an exception in 3.6.1 when passed only nan data. This irrevocably breaks seaborn's histogram function (which draws and then removes a \"phantom\" bar to trip the color cycle).\n\n### Code for reproduction\n\n```python\nimport numpy as np\r\nimport matplotlib.pyplot as plt\r\nf, ax = plt.subplots()\r\nax.bar([np.nan], [np.nan])\n```\n\n\n### Actual outcome\n\n```python-traceback\r\n---------------------------------------------------------------------------\r\nStopIteration                             Traceback (most recent call last)\r\nCell In [1], line 4\r\n      2 import matplotlib.pyplot as plt\r\n      3 f, ax = plt.subplots()\r\n----> 4 ax.bar([np.nan], [np.nan])[0].get_x()\r\n\r\nFile ~/miniconda/envs/py310/lib/python3.10/site-packages/matplotlib/__init__.py:1423, in _preprocess_data.<locals>.inner(ax, data, *args, **kwargs)\r\n   1420 @functools.wraps(func)\r\n   1421 def inner(ax, *args, data=None, **kwargs):\r\n   1422     if data is None:\r\n-> 1423         return func(ax, *map(sanitize_sequence, args), **kwargs)\r\n   1425     bound = new_sig.bind(ax, *args, **kwargs)\r\n   1426     auto_label = (bound.arguments.get(label_namer)\r\n   1427                   or bound.kwargs.get(label_namer))\r\n\r\nFile ~/miniconda/envs/py310/lib/python3.10/site-packages/matplotlib/axes/_axes.py:2373, in Axes.bar(self, x, height, width, bottom, align, **kwargs)\r\n   2371 x0 = x\r\n   2372 x = np.asarray(self.convert_xunits(x))\r\n-> 2373 width = self._convert_dx(width, x0, x, self.convert_xunits)\r\n   2374 if xerr is not None:\r\n   2375     xerr = self._convert_dx(xerr, x0, x, self.convert_xunits)\r\n\r\nFile ~/miniconda/envs/py310/lib/python3.10/site-packages/matplotlib/axes/_axes.py:2182, in Axes._convert_dx(dx, x0, xconv, convert)\r\n   2170 try:\r\n   2171     # attempt to add the width to x0; this works for\r\n   2172     # datetime+timedelta, for instance\r\n   (...)\r\n   2179     # removes the units from unit packages like `pint` that\r\n   2180     # wrap numpy arrays.\r\n   2181     try:\r\n-> 2182         x0 = cbook._safe_first_finite(x0)\r\n   2183     except (TypeError, IndexError, KeyError):\r\n   2184         pass\r\n\r\nFile ~/miniconda/envs/py310/lib/python3.10/site-packages/matplotlib/cbook/__init__.py:1749, in _safe_first_finite(obj, skip_nonfinite)\r\n   1746     raise RuntimeError(\"matplotlib does not \"\r\n   1747                        \"support generators as input\")\r\n   1748 else:\r\n-> 1749     return next(val for val in obj if safe_isfinite(val))\r\n\r\nStopIteration: \r\n```\n\n### Expected outcome\n\nOn 3.6.0 this returns a `BarCollection` with one Rectangle, having `nan` for `x` and `height`.\n\n### Additional information\n\nI assume it's related to this bullet in the release notes:\r\n\r\n- Fix barplot being empty when first element is NaN\r\n\r\nBut I don't know the context for it to investigate further (could these link to PRs?)\r\n\r\nFurther debugging:\r\n\r\n```python\r\nax.bar([np.nan], [0])  # Raises\r\nax.bar([0], [np.nan])  # Works\r\n```\r\n\r\nSo it's about the x position specifically.\n\n### Operating system\n\nMacos\n\n### Matplotlib Version\n\n3.6.1\n\n### Matplotlib Backend\n\n_No response_\n\n### Python version\n\n_No response_\n\n### Jupyter version\n\n_No response_\n\n### Installation\n\npip",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:ebb6a515b8ba51ef9ddbf24877715086d45ad4c23a0e1b055423496430277eaa"
+   }
+  ],
+  "pr": {
+   "title": "Fix matplotlib__matplotlib-24149",
+   "body": ""
+  },
+  "diffText": "diff --git a/lib/matplotlib/cbook/__init__.py b/lib/matplotlib/cbook/__init__.py\nindex 34c6ddb861..d9f8c4d2ec 100644\n--- a/lib/matplotlib/cbook/__init__.py\n+++ b/lib/matplotlib/cbook/__init__.py\n@@ -1746,7 +1746,13 @@ def _safe_first_finite(obj, *, skip_nonfinite=True):\n         raise RuntimeError(\"matplotlib does not \"\n                            \"support generators as input\")\n     else:\n-        return next(val for val in obj if safe_isfinite(val))\n+        try:\n+            return next(val for val in obj if safe_isfinite(val))\n+        except StopIteration:\n+            # If all values are non-finite (e.g. all NaN), return the first value\n+            if len(obj) > 0:\n+                return obj[0]\n+            raise\n \n \n def sanitize_sequence(data):\ndiff --git a/reproduce.py b/reproduce.py\nnew file mode 100644\nindex 0000000000..3a5f3b1e2b\n--- /dev/null\n+++ b/reproduce.py\n@@ -0,0 +1,6 @@\n+import numpy as np\n+import matplotlib.pyplot as plt\n+\n+f, ax = plt.subplots()\n+ax.bar([np.nan], [np.nan])\n+plt.show()\n\\ No newline at end of file\ndiff --git a/test_edge_cases.py b/test_edge_cases.py\nnew file mode 100644\nindex 0000000000..89b909ccee\n--- /dev/null\n+++ b/test_edge_cases.py\n@@ -0,0 +1,25 @@\n+import numpy as np\n+import matplotlib.pyplot as plt\n+\n+# Test cases\n+test_cases = [\n+    ([np.nan], [0]),           # NaN x, finite height\n+    ([0], [np.nan]),           # finite x, NaN height\n+    ([np.nan], [np.nan]),      # NaN x and height\n+    ([np.nan, 1], [0, 1]),     # Mix of NaN and finite x\n+    ([1, np.nan], [1, 0]),     # Mix of finite and NaN x\n+    ([], []),                  # Empty arrays\n+]\n+\n+for i, (x, height) in enumerate(test_cases, 1):\n+    print(f\"\\nTest case {i}:\")\n+    print(f\"x = {x}\")\n+    print(f\"height = {height}\")\n+    \n+    f, ax = plt.subplots()\n+    try:\n+        ax.bar(x, height)\n+        print(\"✓ Success\")\n+    except Exception as e:\n+        print(f\"✗ Failed: {type(e).__name__}: {str(e)}\")\n+    plt.close()\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "OpenHands",
+  "source": "rq2_divergent",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

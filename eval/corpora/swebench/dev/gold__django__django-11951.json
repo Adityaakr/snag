@@ -1,0 +1,140 @@
+{
+ "id": "gold:django__django-11951",
+ "corpus": "swebench",
+ "seedId": "django__django-11951",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "312049091288dbba2299de8d07ea3e3311ed7238",
+  "headSha": "gold-django__django-11951",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 11951
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 11951
+    },
+    "title": "bulk_create batch_size param overrides the compatible batch size calculation",
+    "body": "Description\n\t \n\t\t(last modified by Ahmet Kucuk)\n\t \nAt this line: ​https://github.com/django/django/blob/stable/2.2.x/django/db/models/query.py#L1197\nbatch_size param overrides compatible batch size calculation. This looks like a bug as bulk_update properly picks the minimum of two:\n​https://github.com/django/django/blob/stable/2.2.x/django/db/models/query.py#L504\nI suggest using similar\n batch_size = min(batch_size, max_batch_size) if batch_size else max_batch_size\nlogic in bulk_create as well. I am happy to open a PR for it.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:36e5425b66be921b09536ee4ed08b3fa05832a9fb21cd7c79a649e6425f4aca9"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-11951",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/db/models/query.py b/django/db/models/query.py\n--- a/django/db/models/query.py\n+++ b/django/db/models/query.py\n@@ -1209,7 +1209,8 @@ def _batched_insert(self, objs, fields, batch_size, ignore_conflicts=False):\n         if ignore_conflicts and not connections[self.db].features.supports_ignore_conflicts:\n             raise NotSupportedError('This database backend does not support ignoring conflicts.')\n         ops = connections[self.db].ops\n-        batch_size = (batch_size or max(ops.bulk_batch_size(fields, objs), 1))\n+        max_batch_size = max(ops.bulk_batch_size(fields, objs), 1)\n+        batch_size = min(batch_size, max_batch_size) if batch_size else max_batch_size\n         inserted_rows = []\n         bulk_return = connections[self.db].features.can_return_rows_from_bulk_insert\n         for item in [objs[i:i + batch_size] for i in range(0, len(objs), batch_size)]:\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "gold",
+  "source": "gold",
+  "strength": "strong"
+ },
+ "annotatedBy": "study"
+}

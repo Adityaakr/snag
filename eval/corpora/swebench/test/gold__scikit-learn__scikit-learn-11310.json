@@ -1,0 +1,140 @@
+{
+ "id": "gold:scikit-learn__scikit-learn-11310",
+ "corpus": "swebench",
+ "seedId": "scikit-learn__scikit-learn-11310",
+ "input": {
+  "mode": "local",
+  "repo": "scikit-learn/scikit-learn",
+  "baseSha": "553b5fb8f84ba05c8397f26dd079deece2b05029",
+  "headSha": "gold-scikit-learn__scikit-learn-11310",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "scikit-learn",
+    "repo": "scikit-learn",
+    "number": 11310
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "scikit-learn",
+     "repo": "scikit-learn",
+     "number": 11310
+    },
+    "title": "Retrieving time to refit the estimator in BaseSearchCV",
+    "body": "Basically, I'm trying to figure out how much time it takes to refit the best model on the full data after doing grid/random search. What I can so far do is retrieve the time it takes to fit and score each model:\r\n```\r\nimport sklearn.datasets\r\nimport sklearn.model_selection\r\nimport sklearn.ensemble\r\n\r\nX, y = sklearn.datasets.load_iris(return_X_y=True)\r\n\r\nrs = sklearn.model_selection.GridSearchCV(\r\n    estimator=sklearn.ensemble.RandomForestClassifier(),\r\n    param_grid={'n_estimators': [2, 3, 4, 5]}\r\n)\r\nrs.fit(X, y)\r\nprint(rs.cv_results_['mean_fit_time'])\r\nprint(rs.cv_results_['mean_score_time'])\r\n```\r\nIn case I run this on a single core, I could time the whole search procedure and subtract the time it took to fit the single folds during hyperparameter optimization. Nevertheless, this isn't possible any more when setting `n_jobs != 1`.\r\n\r\nThus, it would be great to have an attribute `refit_time_` which is simply the time it took to refit the best model.\r\n\r\nUsecase: for [OpenML.org](https://openml.org) we want to support uploading the results of hyperparameter optimization, including the time it takes to do the hyperparameter optimization.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:6fd993643eaf294c194cdc1cc3b0b00c31f676cfc4233046e5ec023f4626a921"
+   }
+  ],
+  "pr": {
+   "title": "Fix scikit-learn__scikit-learn-11310",
+   "body": ""
+  },
+  "diffText": "diff --git a/sklearn/model_selection/_search.py b/sklearn/model_selection/_search.py\n--- a/sklearn/model_selection/_search.py\n+++ b/sklearn/model_selection/_search.py\n@@ -17,6 +17,7 @@\n from functools import partial, reduce\n from itertools import product\n import operator\n+import time\n import warnings\n \n import numpy as np\n@@ -766,10 +767,13 @@ def _store(key_name, array, weights=None, splits=False, rank=False):\n         if self.refit:\n             self.best_estimator_ = clone(base_estimator).set_params(\n                 **self.best_params_)\n+            refit_start_time = time.time()\n             if y is not None:\n                 self.best_estimator_.fit(X, y, **fit_params)\n             else:\n                 self.best_estimator_.fit(X, **fit_params)\n+            refit_end_time = time.time()\n+            self.refit_time_ = refit_end_time - refit_start_time\n \n         # Store the only scorer not as a dict for single metric evaluation\n         self.scorer_ = scorers if self.multimetric_ else scorers['score']\n@@ -1076,6 +1080,11 @@ class GridSearchCV(BaseSearchCV):\n     n_splits_ : int\n         The number of cross-validation splits (folds/iterations).\n \n+    refit_time_ : float\n+        Seconds used for refitting the best model on the whole dataset.\n+\n+        This is present only if ``refit`` is not False.\n+\n     Notes\n     ------\n     The parameters selected are those that maximize the score of the left out\n@@ -1387,6 +1396,11 @@ class RandomizedSearchCV(BaseSearchCV):\n     n_splits_ : int\n         The number of cross-validation splits (folds/iterations).\n \n+    refit_time_ : float\n+        Seconds used for refitting the best model on the whole dataset.\n+\n+        This is present only if ``refit`` is not False.\n+\n     Notes\n     -----\n     The parameters selected are those that maximize the score of the held-out\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "gold",
+  "source": "gold",
+  "strength": "strong"
+ },
+ "annotatedBy": "study"
+}

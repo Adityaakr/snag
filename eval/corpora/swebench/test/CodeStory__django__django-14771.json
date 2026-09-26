@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:django__django-14771",
+ "corpus": "swebench",
+ "seedId": "django__django-14771",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "4884a87e022056eda10534c13d74e49b8cdda632",
+  "headSha": "CodeStory-django__django-14771",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 14771
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 14771
+    },
+    "title": "Auto-reloader should pass -X options (for cpython implementation)",
+    "body": "Description\n\t\nWindows OS\n$ winpty python -m django startproject my_project\n$ cd my_project/\n$ winpty python -m django startapp my_app\n$ vi my_app/apps.py # demo for xoptions ...\n$ cat -n my_app/apps.py\n\t 1 from django.apps import AppConfig\n\t 2\n\t 3 class MyAppConfig(AppConfig):\n\t 4\t default_auto_field = 'django.db.models.BigAutoField'\n\t 5\t name = 'my_app'\n\t 6\n\t 7 # myapp global initial_demo ...\n\t 8 with open(\"manage.py\", mode=\"r\") as stream:\n\t 9\t print(\"=== %s\" % stream.encoding)\n$ vi my_project/settings.py # INSTALLED_APPS\n$ winpty python -X utf8 manage.py runserver 0.0.0.0:8005 -v3\n=== UTF-8\n=== cp936\nWatching for file changes with StatReloader\nPerforming system checks...\n... ...\n$ winpty python -X utf8 manage.py runserver 0.0.0.0:8005 -v3 --noreload\n=== UTF-8\nPerforming system checks...\n... ...\nRefer:\n​https://docs.python.org/3/library/sys.html#sys._xoptions\n​https://docs.python.org/3/library/functions.html#open",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:30f1e86f6c01a168e8af112cf0e35a9b6995457c44243087c98a83dc7a861d36"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-14771",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/utils/autoreload.py b/django/utils/autoreload.py\nindex cc65c043ab..4de2923141 100644\n--- a/django/utils/autoreload.py\n+++ b/django/utils/autoreload.py\n@@ -220,6 +220,8 @@ def get_child_arguments():\n     py_script = Path(sys.argv[0])\n \n     args = [sys.executable] + ['-W%s' % o for o in sys.warnoptions]\n+    # Add -X options from sys._xoptions\n+    args.extend('-X%s%s' % (k, ('=' + v) if v else '') for k, v in getattr(sys, '_xoptions', {}).items())\n     # __spec__ is set when the server was started with the `-m` option,\n     # see https://docs.python.org/3/reference/import.html#main-spec\n     # __spec__ may not exist, e.g. when running in a Conda env.\ndiff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..82aa445364\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,54 @@\n+import os\n+import sys\n+import tempfile\n+import subprocess\n+\n+def create_test_file():\n+    # Create a temporary directory\n+    temp_dir = tempfile.mkdtemp()\n+    os.chdir(temp_dir)\n+    \n+    # Create a simple Python script that prints sys._xoptions\n+    with open(\"test_script.py\", \"w\") as f:\n+        f.write('''import sys\n+print(\"=== sys._xoptions:\", sys._xoptions)\n+''')\n+    \n+    # Create a Django-like autoreload script\n+    with open(\"autoreload_script.py\", \"w\") as f:\n+        f.write('''import os\n+import sys\n+import subprocess\n+\n+def get_child_arguments():\n+    args = [sys.executable] + ['-W%s' % o for o in sys.warnoptions]\n+    # Add -X options from sys._xoptions\n+    for k, v in getattr(sys, '_xoptions', {}).items():\n+        opt = '-X' + k\n+        if v and not isinstance(v, bool):\n+            opt += '=' + v\n+        args.append(opt)\n+    args.extend(['test_script.py'])\n+    return args\n+\n+def restart_with_reloader():\n+    new_environ = {**os.environ, 'RUN_MAIN': 'true'}\n+    args = get_child_arguments()\n+    print(\"=== Reloader args:\", args)\n+    p = subprocess.run(args, env=new_environ)\n+    return p.returncode\n+\n+if __name__ == '__main__':\n+    if os.environ.get('RUN_MAIN') == 'true':\n+        import test_script\n+    else:\n+        exit_code = restart_with_reloader()\n+        sys.exit(exit_code)\n+''')\n+    \n+    # Run the script with -X utf8 option\n+    print(\"\\nRunning with -X utf8:\")\n+    subprocess.run([sys.executable, \"-X\", \"utf8\", \"autoreload_script.py\"])\n+\n+if __name__ == \"__main__\":\n+    create_test_file()\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq1_devtests",
+  "strength": "medium"
+ },
+ "annotatedBy": "study"
+}

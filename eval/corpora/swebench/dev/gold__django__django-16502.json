@@ -1,0 +1,140 @@
+{
+ "id": "gold:django__django-16502",
+ "corpus": "swebench",
+ "seedId": "django__django-16502",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "246eb4836a6fb967880f838aa0d22ecfdca8b6f1",
+  "headSha": "gold-django__django-16502",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 16502
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 16502
+    },
+    "title": "After #26052 runserver returns response body for HTTP HEAD requests",
+    "body": "Description\n\t\nFor compliance with RFC 2616, section 4.3, response bodies must not be returned for HEAD requests.\nIn #26052, the stripping of the response bodies was removed from Django in favour of letting the server perform the body removal, since the common servers (gunicorn, mod_wsgi etc) already do so.\nHowever it appears that runserver does not strip the body, contrary to:\nhttps://code.djangoproject.com/timeline?from=2016-04-23T20%3A26%3A34-05%3A00&precision=second\nAs such, starting in Django 1.10 the responses from runserver for HEAD requests are no longer compliant with the spec. (In certain configurations this also results in \"Broken pipe\" error messages in runserver output, since compliant user agents expect to be able to terminate the connection after the headers are sent.)\nSTR:\n1) mkvirtualenv django-test\n2) pip install 'Django>1.10,<1.11'\n3) django-admin startproject django-test\n4) cd django-test\n5) ./manage.py runserver\n6) In another terminal, run curl -iX HEAD http://127.0.0.1:8000/\n7) Observe response from curl\nExpected:\nHTTP/1.0 200 OK\nDate: Fri, 07 Apr 2017 14:56:39 GMT\nServer: WSGIServer/0.2 CPython/3.4.5\nContent-Type: text/html\nX-Frame-Options: SAMEORIGIN\nActual:\nHTTP/1.0 200 OK\nDate: Fri, 07 Apr 2017 14:56:39 GMT\nServer: WSGIServer/0.2 CPython/3.4.5\nContent-Type: text/html\nX-Frame-Options: SAMEORIGIN\n<!DOCTYPE html>\n<html lang=\"en\"><head>\n <meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\">\n <meta name=\"robots\" content=\"NONE,NOARCHIVE\"><title>Welcome to Django</title>\n...\nTested with Python 2.7.13 and 3.4.5.\nDoesn't reproduce under Django 1.9.13.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:43a40d126b37f760834d53d0ecc50aaf0e9dd598a998a67a2fde3004bbfead79"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-16502",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/core/servers/basehttp.py b/django/core/servers/basehttp.py\n--- a/django/core/servers/basehttp.py\n+++ b/django/core/servers/basehttp.py\n@@ -11,6 +11,7 @@\n import socket\n import socketserver\n import sys\n+from collections import deque\n from wsgiref import simple_server\n \n from django.core.exceptions import ImproperlyConfigured\n@@ -130,10 +131,18 @@ def __init__(self, stdin, stdout, stderr, environ, **kwargs):\n \n     def cleanup_headers(self):\n         super().cleanup_headers()\n+        if (\n+            self.environ[\"REQUEST_METHOD\"] == \"HEAD\"\n+            and \"Content-Length\" in self.headers\n+        ):\n+            del self.headers[\"Content-Length\"]\n         # HTTP/1.1 requires support for persistent connections. Send 'close' if\n         # the content length is unknown to prevent clients from reusing the\n         # connection.\n-        if \"Content-Length\" not in self.headers:\n+        if (\n+            self.environ[\"REQUEST_METHOD\"] != \"HEAD\"\n+            and \"Content-Length\" not in self.headers\n+        ):\n             self.headers[\"Connection\"] = \"close\"\n         # Persistent connections require threading server.\n         elif not isinstance(self.request_handler.server, socketserver.ThreadingMixIn):\n@@ -147,6 +156,22 @@ def close(self):\n         self.get_stdin().read()\n         super().close()\n \n+    def finish_response(self):\n+        if self.environ[\"REQUEST_METHOD\"] == \"HEAD\":\n+            try:\n+                deque(self.result, maxlen=0)  # Consume iterator.\n+                # Don't call self.finish_content() as, if the headers have not\n+                # been sent and Content-Length isn't set, it'll default to \"0\"\n+                # which will prevent omission of the Content-Length header with\n+                # HEAD requests as permitted by RFC 9110 Section 9.3.2.\n+                # Instead, send the headers, if not sent yet.\n+                if not self.headers_sent:\n+                    self.send_headers()\n+            finally:\n+                self.close()\n+        else:\n+            super().finish_response()\n+\n \n class WSGIRequestHandler(simple_server.WSGIRequestHandler):\n     protocol_version = \"HTTP/1.1\"\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "gold",
+  "source": "gold",
+  "strength": "strong"
+ },
+ "annotatedBy": "study"
+}

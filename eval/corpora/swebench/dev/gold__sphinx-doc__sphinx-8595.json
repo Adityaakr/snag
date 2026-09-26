@@ -1,0 +1,140 @@
+{
+ "id": "gold:sphinx-doc__sphinx-8595",
+ "corpus": "swebench",
+ "seedId": "sphinx-doc__sphinx-8595",
+ "input": {
+  "mode": "local",
+  "repo": "sphinx-doc/sphinx",
+  "baseSha": "b19bce971e82f2497d67fdacdeca8db08ae0ba56",
+  "headSha": "gold-sphinx-doc__sphinx-8595",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "sphinx-doc",
+    "repo": "sphinx",
+    "number": 8595
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "sphinx-doc",
+     "repo": "sphinx",
+     "number": 8595
+    },
+    "title": "autodoc: empty __all__ attribute is ignored",
+    "body": "**Describe the bug**\r\nautodoc: empty `__all__` attribute is ignored\r\n\r\n**To Reproduce**\r\n```\r\n# example.py\r\n__all__ = []\r\n\r\n\r\ndef foo():\r\n    \"docstring\"\r\n\r\n\r\ndef bar():\r\n    \"docstring\"\r\n\r\n\r\ndef baz():\r\n    \"docstring\"\r\n```\r\n```\r\n# index.rst\r\n.. automodule:: example\r\n   :members:\r\n```\r\n\r\nAll foo, bar, and baz are shown.\r\n\r\n**Expected behavior**\r\nNo entries should be shown because `__all__` is empty.\r\n\r\n**Your project**\r\nNo\r\n\r\n**Screenshots**\r\nNo\r\n\r\n**Environment info**\r\n- OS: Mac\r\n- Python version: 3.9.1\r\n- Sphinx version: HEAD of 3.x\r\n- Sphinx extensions: sphinx.ext.autodoc\r\n- Extra tools: No\r\n\r\n**Additional context**\r\nNo",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:7f196e9439b52d29590edd79a6724bc32a10fbe98134cd7924f0502160cc357f"
+   }
+  ],
+  "pr": {
+   "title": "Fix sphinx-doc__sphinx-8595",
+   "body": ""
+  },
+  "diffText": "diff --git a/sphinx/ext/autodoc/__init__.py b/sphinx/ext/autodoc/__init__.py\n--- a/sphinx/ext/autodoc/__init__.py\n+++ b/sphinx/ext/autodoc/__init__.py\n@@ -1074,7 +1074,7 @@ def get_module_members(self) -> Dict[str, ObjectMember]:\n     def get_object_members(self, want_all: bool) -> Tuple[bool, ObjectMembers]:\n         members = self.get_module_members()\n         if want_all:\n-            if not self.__all__:\n+            if self.__all__ is None:\n                 # for implicit module members, check __module__ to avoid\n                 # documenting imported objects\n                 return True, list(members.values())\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "gold",
+  "source": "gold",
+  "strength": "strong"
+ },
+ "annotatedBy": "study"
+}

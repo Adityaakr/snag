@@ -1,0 +1,140 @@
+{
+ "id": "gold:matplotlib__matplotlib-23314",
+ "corpus": "swebench",
+ "seedId": "matplotlib__matplotlib-23314",
+ "input": {
+  "mode": "local",
+  "repo": "matplotlib/matplotlib",
+  "baseSha": "97fc1154992f64cfb2f86321155a7404efeb2d8a",
+  "headSha": "gold-matplotlib__matplotlib-23314",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "matplotlib",
+    "repo": "matplotlib",
+    "number": 23314
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "matplotlib",
+     "repo": "matplotlib",
+     "number": 23314
+    },
+    "title": "[Bug]: set_visible() not working for 3d projection",
+    "body": "### Bug summary\r\n\r\nin the subplot projection=\"3d\" the set_visible function doesn't work even if the value is set to False\r\n\r\n### Code for reproduction\r\n\r\n```python\r\nimport matplotlib.pyplot as plt\r\nfrom matplotlib.gridspec import GridSpec\r\n\r\nfig, (ax1, ax2) = plt.subplots(1, 2, subplot_kw={'projection': '3d'})\r\nax1.scatter(1,1,1)\r\nax2.scatter(1,1,1, c='r')\r\nax1.set_visible(False)\r\n\r\nplt.show()\r\n# Thanks Tim for your help! \r\n```\r\n\r\n\r\n### Actual outcome\r\n\r\nthe subplot remains visible which should not happen if the value is set to False\r\n\r\n### Expected outcome\r\n\r\nthe subplot is not visible if the value is set to False\r\n\r\n### Additional information\r\n\r\n_No response_\r\n\r\n### Operating system\r\n\r\n_No response_\r\n\r\n### Matplotlib Version\r\n\r\n3.4.2\r\n\r\n### Matplotlib Backend\r\n\r\nQt5Agg\r\n\r\n### Python version\r\n\r\n3.8.10\r\n\r\n### Jupyter version\r\n\r\n_No response_\r\n\r\n### Installation\r\n\r\n_No response_",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:72b7cad121113ddb02d882f495c62fdfab689468f59c46f36d0cfea7d6c889e4"
+   }
+  ],
+  "pr": {
+   "title": "Fix matplotlib__matplotlib-23314",
+   "body": ""
+  },
+  "diffText": "diff --git a/lib/mpl_toolkits/mplot3d/axes3d.py b/lib/mpl_toolkits/mplot3d/axes3d.py\n--- a/lib/mpl_toolkits/mplot3d/axes3d.py\n+++ b/lib/mpl_toolkits/mplot3d/axes3d.py\n@@ -387,6 +387,8 @@ def apply_aspect(self, position=None):\n \n     @martist.allow_rasterization\n     def draw(self, renderer):\n+        if not self.get_visible():\n+            return\n         self._unstale_viewLim()\n \n         # draw the background patch\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "gold",
+  "source": "gold",
+  "strength": "strong"
+ },
+ "annotatedBy": "study"
+}

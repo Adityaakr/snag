@@ -1,0 +1,140 @@
+{
+ "id": "gold:sympy__sympy-13031",
+ "corpus": "swebench",
+ "seedId": "sympy__sympy-13031",
+ "input": {
+  "mode": "local",
+  "repo": "sympy/sympy",
+  "baseSha": "2dfa7457f20ee187fbb09b5b6a1631da4458388c",
+  "headSha": "gold-sympy__sympy-13031",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "sympy",
+    "repo": "sympy",
+    "number": 13031
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "sympy",
+     "repo": "sympy",
+     "number": 13031
+    },
+    "title": "Behavior of Matrix hstack and vstack changed in sympy 1.1",
+    "body": "In sympy 1.0:\r\n```\r\nimport sympy as sy\r\nM1 = sy.Matrix.zeros(0, 0)\r\nM2 = sy.Matrix.zeros(0, 1)\r\nM3 = sy.Matrix.zeros(0, 2)\r\nM4 = sy.Matrix.zeros(0, 3)\r\nsy.Matrix.hstack(M1, M2, M3, M4).shape\r\n```\r\nreturns \r\n`(0, 6)`\r\n\r\nNow, same in sympy 1.1:\r\n```\r\nimport sympy as sy\r\nM1 = sy.Matrix.zeros(0, 0)\r\nM2 = sy.Matrix.zeros(0, 1)\r\nM3 = sy.Matrix.zeros(0, 2)\r\nM4 = sy.Matrix.zeros(0, 3)\r\nsy.Matrix.hstack(M1, M2, M3, M4).shape\r\n```\r\nreturns\r\n`(0, 3)\r\n`\r\nwhereas:\r\n```\r\nimport sympy as sy\r\nM1 = sy.Matrix.zeros(1, 0)\r\nM2 = sy.Matrix.zeros(1, 1)\r\nM3 = sy.Matrix.zeros(1, 2)\r\nM4 = sy.Matrix.zeros(1, 3)\r\nsy.Matrix.hstack(M1, M2, M3, M4).shape\r\n```\r\nreturns\r\n`(1, 6)\r\n`",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:b2a51e69f7f782333dd5cd76f7330cf79232f2386be428bb5c9c21cdca7893ff"
+   }
+  ],
+  "pr": {
+   "title": "Fix sympy__sympy-13031",
+   "body": ""
+  },
+  "diffText": "diff --git a/sympy/matrices/sparse.py b/sympy/matrices/sparse.py\n--- a/sympy/matrices/sparse.py\n+++ b/sympy/matrices/sparse.py\n@@ -985,8 +985,10 @@ def col_join(self, other):\n         >>> C == A.row_insert(A.rows, Matrix(B))\n         True\n         \"\"\"\n-        if not self:\n-            return type(self)(other)\n+        # A null matrix can always be stacked (see  #10770)\n+        if self.rows == 0 and self.cols != other.cols:\n+            return self._new(0, other.cols, []).col_join(other)\n+\n         A, B = self, other\n         if not A.cols == B.cols:\n             raise ShapeError()\n@@ -1191,8 +1193,10 @@ def row_join(self, other):\n         >>> C == A.col_insert(A.cols, B)\n         True\n         \"\"\"\n-        if not self:\n-            return type(self)(other)\n+        # A null matrix can always be stacked (see  #10770)\n+        if self.cols == 0 and self.rows != other.rows:\n+            return self._new(other.rows, 0, []).row_join(other)\n+\n         A, B = self, other\n         if not A.rows == B.rows:\n             raise ShapeError()\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "gold",
+  "source": "gold",
+  "strength": "strong"
+ },
+ "annotatedBy": "study"
+}

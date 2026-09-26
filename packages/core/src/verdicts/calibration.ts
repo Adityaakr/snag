@@ -16,6 +16,8 @@ export interface Calibration {
   /** Labeled findings the calibration was measured on, and the measured P0 precision (for gate mode). */
   labeledFindings: number;
   p0Precision: number;
+  /** Thresholds tuned on dev with this calibration applied (11.5); they replace the config values while it is active. */
+  thresholds?: Record<string, number>;
 }
 
 /** Piecewise-linear interpolation over sorted points; identity outside a map. */
@@ -44,4 +46,17 @@ export function calibrator(cal: Calibration | undefined, jevModel: string, quest
   if (!cal || cal.jevModel !== jevModel || cal.questionSet !== questionSet)
     return { calibrated: false, value: (_k, p) => p };
   return { calibrated: true, value: (k, p) => applyMap(cal.maps[k], p) };
+}
+
+/** The config thresholds, with the calibration's tuned values on top when the calibration applies. */
+export function tunedThresholds<T extends Record<string, number>>(
+  thresholds: T,
+  cal: Calibration | undefined,
+  jevModel: string,
+  questionSet: string,
+): T {
+  if (!cal?.thresholds || cal.jevModel !== jevModel || cal.questionSet !== questionSet) return thresholds;
+  const out: Record<string, number> = { ...thresholds };
+  for (const [k, v] of Object.entries(cal.thresholds)) if (k in thresholds) out[k] = v;
+  return out as T;
 }

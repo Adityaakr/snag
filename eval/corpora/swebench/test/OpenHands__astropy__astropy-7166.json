@@ -1,0 +1,140 @@
+{
+ "id": "OpenHands:astropy__astropy-7166",
+ "corpus": "swebench",
+ "seedId": "astropy__astropy-7166",
+ "input": {
+  "mode": "local",
+  "repo": "astropy/astropy",
+  "baseSha": "26d147868f8a891a6009a25cd6a8576d2e1bd747",
+  "headSha": "OpenHands-astropy__astropy-7166",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "astropy",
+    "repo": "astropy",
+    "number": 7166
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "astropy",
+     "repo": "astropy",
+     "number": 7166
+    },
+    "title": "InheritDocstrings metaclass doesn't work for properties",
+    "body": "Inside the InheritDocstrings metaclass it uses `inspect.isfunction` which returns `False` for properties.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:e77c99473ad9a64d13e08708ed0944524f04480b83e316916b855566a53d1a3b"
+   }
+  ],
+  "pr": {
+   "title": "Fix astropy__astropy-7166",
+   "body": ""
+  },
+  "diffText": "diff --git a/astropy/utils/misc.py b/astropy/utils/misc.py\nindex de3fb01d18..e1f23bdeb3 100644\n--- a/astropy/utils/misc.py\n+++ b/astropy/utils/misc.py\n@@ -528,13 +528,21 @@ class InheritDocstrings(type):\n                 not key.startswith('_'))\n \n         for key, val in dct.items():\n-            if (inspect.isfunction(val) and\n+            # Handle both functions and properties\n+            if ((inspect.isfunction(val) or isinstance(val, property)) and\n                 is_public_member(key) and\n-                val.__doc__ is None):\n+                (val.__doc__ is None or \n+                 (isinstance(val, property) and val.fget.__doc__ is None))):\n                 for base in cls.__mro__[1:]:\n                     super_method = getattr(base, key, None)\n                     if super_method is not None:\n-                        val.__doc__ = super_method.__doc__\n+                        if isinstance(val, property):\n+                            # For properties, we need to set the docstring on both\n+                            # the property object and its getter function\n+                            val.__doc__ = super_method.__doc__\n+                            val.fget.__doc__ = super_method.__doc__\n+                        else:\n+                            val.__doc__ = super_method.__doc__\n                         break\n \n         super().__init__(name, bases, dct)\ndiff --git a/reproduce.py b/reproduce.py\nnew file mode 100644\nindex 0000000000..7b7a77f7ab\n--- /dev/null\n+++ b/reproduce.py\n@@ -0,0 +1,16 @@\n+from astropy.utils.misc import InheritDocstrings\n+\n+class A(metaclass=InheritDocstrings):\n+    @property\n+    def value(self):\n+        \"\"\"This is the value docstring\"\"\"\n+        return 42\n+\n+class B(A):\n+    @property \n+    def value(self):\n+        # This property should inherit the docstring from A.value but doesn't\n+        return 43\n+\n+print(\"A.value docstring:\", A.value.__doc__)\n+print(\"B.value docstring:\", B.value.__doc__)\n\\ No newline at end of file\ndiff --git a/reproduce_debug.py b/reproduce_debug.py\nnew file mode 100644\nindex 0000000000..446f30083d\n--- /dev/null\n+++ b/reproduce_debug.py\n@@ -0,0 +1,17 @@\n+from astropy.utils.misc import InheritDocstrings\n+\n+class A(metaclass=InheritDocstrings):\n+    @property\n+    def value(self):\n+        \"\"\"This is the value docstring\"\"\"\n+        return 42\n+\n+class B(A):\n+    @property \n+    def value(self):\n+        # This property should inherit the docstring from A.value but doesn't\n+        return 43\n+\n+print(\"A.value docstring:\", A.value.__doc__)\n+print(\"B.value docstring:\", B.value.__doc__)\n+print(\"B.value.fget.__doc__:\", B.value.fget.__doc__)\n\\ No newline at end of file\ndiff --git a/test_edge_cases.py b/test_edge_cases.py\nnew file mode 100644\nindex 0000000000..f78118cb10\n--- /dev/null\n+++ b/test_edge_cases.py\n@@ -0,0 +1,72 @@\n+from astropy.utils.misc import InheritDocstrings\n+\n+# Test case 1: Multiple inheritance\n+class A1(metaclass=InheritDocstrings):\n+    @property\n+    def value(self):\n+        \"\"\"A1 value docstring\"\"\"\n+        return 1\n+\n+class A2(metaclass=InheritDocstrings):\n+    @property\n+    def value(self):\n+        \"\"\"A2 value docstring\"\"\"\n+        return 2\n+\n+class B(A1, A2):\n+    @property\n+    def value(self):\n+        return 3\n+\n+# Test case 2: Property with explicit docstring shouldn't be overridden\n+class C(A1):\n+    @property\n+    def value(self):\n+        \"\"\"C value docstring\"\"\"\n+        return 4\n+\n+# Test case 3: Regular methods still work\n+class D(metaclass=InheritDocstrings):\n+    def method(self):\n+        \"\"\"D method docstring\"\"\"\n+        pass\n+\n+class E(D):\n+    def method(self):\n+        pass\n+\n+# Test case 4: Property with setter\n+class F(metaclass=InheritDocstrings):\n+    @property\n+    def value(self):\n+        \"\"\"F value docstring\"\"\"\n+        return self._value\n+\n+    @value.setter\n+    def value(self, val):\n+        self._value = val\n+\n+class G(F):\n+    @property\n+    def value(self):\n+        return self._value\n+\n+    @value.setter\n+    def value(self, val):\n+        self._value = val\n+\n+print(\"Test case 1 - Multiple inheritance:\")\n+print(\"A1.value docstring:\", A1.value.__doc__)\n+print(\"A2.value docstring:\", A2.value.__doc__)\n+print(\"B.value docstring:\", B.value.__doc__)  # Should inherit from A1\n+\n+print(\"\\nTest case 2 - Explicit docstring:\")\n+print(\"C.value docstring:\", C.value.__doc__)  # Should keep its own docstring\n+\n+print(\"\\nTest case 3 - Regular methods:\")\n+print(\"D.method docstring:\", D.method.__doc__)\n+print(\"E.method docstring:\", E.method.__doc__)\n+\n+print(\"\\nTest case 4 - Property with setter:\")\n+print(\"F.value docstring:\", F.value.__doc__)\n+print(\"G.value docstring:\", G.value.__doc__)\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "OpenHands",
+  "source": "rq2_divergent",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

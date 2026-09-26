@@ -1,0 +1,140 @@
+{
+ "id": "LearnByInteract:django__django-11095",
+ "corpus": "swebench",
+ "seedId": "django__django-11095",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "7d49ad76562e8c0597a0eb66046ab423b12888d8",
+  "headSha": "LearnByInteract-django__django-11095",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 11095
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 11095
+    },
+    "title": "add ModelAdmin.get_inlines() hook to allow set inlines based on the request or model instance.",
+    "body": "Description\n\t\nadd ModelAdmin.get_inlines() hook to allow set inlines based on the request or model instance.\nCurrently, We can override the method get_inline_instances to do such a thing, but a for loop should be copied to my code. So I wished add a hook get_inlines(request, obj=None)",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:f407b89d0b058937e2eb114e9ff32c547f3380a9fbeb610a438adbf4ba37191b"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-11095",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/contrib/admin/options.py b/django/contrib/admin/options.py\nindex 5e7b23f9a0..d021e06ba2 100644\n--- a/django/contrib/admin/options.py\n+++ b/django/contrib/admin/options.py\n@@ -580,9 +580,16 @@ class ModelAdmin(BaseModelAdmin):\n     def __str__(self):\n         return \"%s.%s\" % (self.model._meta.app_label, self.__class__.__name__)\n \n+    def get_inlines(self, request, obj=None):\n+        \"\"\"\n+        Hook for specifying custom inlines.\n+        \"\"\"\n+        return self.inlines\n+\n     def get_inline_instances(self, request, obj=None):\n         inline_instances = []\n-        for inline_class in self.inlines:\n+        for inline_class in self.get_inlines(request, obj):\n+\n             inline = inline_class(self.model, self.admin_site)\n             if request:\n                 if not (inline.has_view_or_change_permission(request, obj) or\n@@ -2164,3 +2171,5 @@ class StackedInline(InlineModelAdmin):\n \n class TabularInline(InlineModelAdmin):\n     template = 'admin/edit_inline/tabular.html'\n+\n+\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "LearnByInteract",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

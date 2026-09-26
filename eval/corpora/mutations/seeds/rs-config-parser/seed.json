@@ -1,0 +1,163 @@
+{
+  "id": "rs-config-parser",
+  "language": "rs",
+  "annotated_by": "claude-code",
+  "split": "dev",
+  "summary": "Config file parser: strip quotes from values, semicolon comments, case-insensitive keys, boolean words.",
+  "requirements": [
+    {
+      "id": "R1",
+      "text": "Values wrapped in double quotes have the quotes removed (for example `name = \"my app\"` reads as `my app`)",
+      "implementing": [
+        {
+          "file": "src/parser.rs",
+          "symbol": "unquote"
+        },
+        {
+          "file": "src/parser.rs",
+          "symbol": "parse_config",
+          "replace": [
+            {
+              "from": "unquote(value)",
+              "to": "value"
+            }
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "file": "src/parser.rs",
+          "symbol": "strips_double_quotes_from_values"
+        }
+      ],
+      "unwire": {
+        "file": "src/parser.rs",
+        "symbol": "parse_config",
+        "callee": "unquote"
+      }
+    },
+    {
+      "id": "R2",
+      "text": "Lines starting with `;` are comments, just like lines starting with `#`",
+      "implementing": [
+        {
+          "file": "src/parser.rs",
+          "symbol": "parse_config",
+          "replace": [
+            {
+              "from": "line.is_empty() || line.starts_with('#') || line.starts_with(';')",
+              "to": "line.is_empty() || line.starts_with('#')"
+            }
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "file": "src/parser.rs",
+          "symbol": "skips_semicolon_comments"
+        }
+      ],
+      "flip": {
+        "impl": {
+          "file": "src/parser.rs",
+          "symbol": "parse_config",
+          "from": "';'",
+          "to": "'%'"
+        },
+        "test": {
+          "file": "src/parser.rs",
+          "symbol": "skips_semicolon_comments",
+          "from": "\"; legacy comment\\nname = demo\\n\"",
+          "to": "\"% legacy comment\\nname = demo\\n\""
+        }
+      }
+    },
+    {
+      "id": "R3",
+      "text": "Keys are case-insensitive: `Port`, `PORT` and `port` all read the same value",
+      "implementing": [
+        {
+          "file": "src/parser.rs",
+          "symbol": "parse_config",
+          "replace": [
+            {
+              "from": "key.to_ascii_lowercase()",
+              "to": "key.to_string()"
+            }
+          ]
+        },
+        {
+          "file": "src/parser.rs",
+          "symbol": "Config/get"
+        }
+      ],
+      "tests": [
+        {
+          "file": "src/parser.rs",
+          "symbol": "keys_are_case_insensitive"
+        }
+      ]
+    },
+    {
+      "id": "R4",
+      "text": "`Config::get_bool` reads `true`/`false`, `yes`/`no` and `on`/`off`, and returns `None` for anything else",
+      "implementing": [
+        {
+          "file": "src/parser.rs",
+          "symbol": "Config/get_bool"
+        }
+      ],
+      "tests": [
+        {
+          "file": "src/parser.rs",
+          "symbol": "reads_boolean_words"
+        }
+      ],
+      "flip": {
+        "impl": {
+          "file": "src/parser.rs",
+          "symbol": "Config/get_bool",
+          "from": "false",
+          "to": "true"
+        },
+        "test": {
+          "file": "src/parser.rs",
+          "symbol": "reads_boolean_words",
+          "from": "false",
+          "to": "true"
+        }
+      },
+      "partial": {
+        "impl": {
+          "file": "src/parser.rs",
+          "symbol": "Config/get_bool",
+          "contains": "\"on\" => Some(true)"
+        },
+        "test": {
+          "file": "src/parser.rs",
+          "symbol": "reads_boolean_words",
+          "contains": "get_bool(\"e\")"
+        }
+      }
+    }
+  ],
+  "incidental": [],
+  "config": {
+    "file": "src/limits.rs",
+    "symbol": "MAX_LINE_LEN",
+    "from": "1024",
+    "to": "16"
+  },
+  "unrelatedTest": {
+    "file": "src/parser.rs",
+    "symbol": "parses_key_value_pairs"
+  },
+  "unrelatedCode": {
+    "file": "src/parser.rs",
+    "symbol": "split_pair",
+    "rename": {
+      "from": "eq",
+      "to": "pos"
+    }
+  }
+}

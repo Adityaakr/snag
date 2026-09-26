@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:sphinx-doc__sphinx-9281",
+ "corpus": "swebench",
+ "seedId": "sphinx-doc__sphinx-9281",
+ "input": {
+  "mode": "local",
+  "repo": "sphinx-doc/sphinx",
+  "baseSha": "8ec06e9a1bd862cd713b9db748e039ccc7b3e15b",
+  "headSha": "CodeStory-sphinx-doc__sphinx-9281",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "sphinx-doc",
+    "repo": "sphinx",
+    "number": 9281
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "sphinx-doc",
+     "repo": "sphinx",
+     "number": 9281
+    },
+    "title": "Python Enum values (used to show default values in function signatures) are rendered ugly.",
+    "body": "Python Enum values (used to show default values in function signatures) are rendered ugly.\r\n\r\n**To Reproduce**\r\n\r\nI made a minimal example to show the issue:\r\n\r\nhttps://github.com/sidneycadot/sphinx_issue_ugly_enum\r\n\r\n```\r\n$ git clone git@github.com:sidneycadot/sphinx_issue_ugly_enum.git\r\n$ cd sphinx_issue_ugly_enum/\r\n$ make html\r\n$ firefox build/html/index.html \r\n```\r\n\r\n**Expected behavior**\r\n\r\nI would hope the signature rendered as:\r\n\r\n    ugly_enum_func(e: ugly_enum.MyEnum = MyEnum.ValueA) → None\r\n\r\nUnfortunately, it renders as:\r\n\r\n    ugly_enum_func(e: ugly_enum.MyEnum = <MyEnum.ValueA: 10>) → None\r\n\r\n**Environment info**\r\n\r\n- Python version: 3.9.5\r\n- Sphinx version: 4.0.2\r\n- Sphinx extensions: autodoc",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:2c38bba733cceeadb2f4ccf13b91c2f122f834728402bb745249575df50d1826"
+   }
+  ],
+  "pr": {
+   "title": "Fix sphinx-doc__sphinx-9281",
+   "body": ""
+  },
+  "diffText": "diff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 000000000..a597781c6\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,74 @@\n+import os\n+import sys\n+import shutil\n+from pathlib import Path\n+from enum import Enum\n+import subprocess\n+\n+# Create a temporary test directory\n+test_dir = Path(\"test_enum_doc\")\n+if test_dir.exists():\n+    shutil.rmtree(test_dir)\n+test_dir.mkdir()\n+\n+# Create the package directory\n+pkg_dir = test_dir / \"pkg\"\n+pkg_dir.mkdir()\n+(pkg_dir / \"__init__.py\").touch()\n+\n+# Create the enum module\n+enum_file = pkg_dir / \"ugly_enum.py\"\n+enum_file.write_text(\"\"\"\n+from enum import Enum\n+\n+class MyEnum(Enum):\n+    ValueA = 10\n+    ValueB = 20\n+\n+def ugly_enum_func(e: MyEnum = MyEnum.ValueA) -> None:\n+    '''Test function with enum parameter.'''\n+    pass\n+\"\"\")\n+\n+# Create conf.py\n+conf_file = test_dir / \"conf.py\"\n+conf_file.write_text(\"\"\"\n+import os\n+import sys\n+sys.path.insert(0, os.path.abspath('.'))\n+\n+project = 'Test Enum Doc'\n+extensions = ['sphinx.ext.autodoc']\n+\"\"\")\n+\n+# Create index.rst\n+index_file = test_dir / \"index.rst\"\n+index_file.write_text(\"\"\"\n+Test Enum Documentation\n+======================\n+\n+.. automodule:: pkg.ugly_enum\n+   :members:\n+\"\"\")\n+\n+# Build the documentation\n+os.chdir(test_dir)\n+subprocess.run([\"sphinx-build\", \"-b\", \"html\", \".\", \"_build/html\"], check=True)\n+\n+# Print the generated output\n+print(\"\\nChecking the generated documentation...\")\n+html_file = Path(\"_build/html/index.html\")\n+if html_file.exists():\n+    content = html_file.read_text()\n+    print(\"\\nHTML file content (relevant part):\")\n+    if \"MyEnum.ValueA\" in content and \"<MyEnum.ValueA: 10>\" not in content:\n+        print(\"\\nSuccess: Enum value is rendered cleanly as 'MyEnum.ValueA'!\")\n+    else:\n+        print(\"\\nIssue still present: Enum value is not rendered as expected\")\n+        # Print the relevant part of the content\n+        import re\n+        if match := re.search(r'ugly_enum_func\\([^)]+\\)', content):\n+            print(\"\\nFunction signature found:\")\n+            print(match.group(0))\n+else:\n+    print(\"\\nError: HTML file was not generated\")\n\\ No newline at end of file\ndiff --git a/sphinx/util/inspect.py b/sphinx/util/inspect.py\nindex a415a7074..54d25beaa 100644\n--- a/sphinx/util/inspect.py\n+++ b/sphinx/util/inspect.py\n@@ -457,6 +457,8 @@ def object_description(object: Any) -> str:\n         else:\n             return \"frozenset({%s})\" % \", \".join(object_description(x)\n                                                  for x in sorted_values)\n+    if isenumattribute(object):\n+        return '%s.%s' % (object.__class__.__name__, object.name)\n     try:\n         s = repr(object)\n     except Exception as exc:\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

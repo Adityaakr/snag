@@ -25,12 +25,15 @@
     "demo": "tsx --conditions=source packages/cli/src/bin.ts demo",
     "eval:golden": "tsx --conditions=source packages/cli/src/bin.ts eval golden",
     "eval:dev": "tsx --conditions=source packages/cli/src/bin.ts eval mutations --split dev",
-    "eval:test": "tsx --conditions=source packages/cli/src/bin.ts eval mutations --split test"
+    "eval:test": "tsx --conditions=source packages/cli/src/bin.ts eval mutations --split test",
+    "eval:fetch-a": "tsx --conditions=source scripts/eval/fetch-corpus-a.ts",
+    "eval:freeze": "node scripts/eval-freeze.mjs"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.14",
     "@remit/analysis": "workspace:*",
     "@remit/core": "workspace:*",
+    "@remit/eval": "workspace:*",
     "@remit/pipeline": "workspace:*",
     "@remit/providers": "workspace:*",
     "@types/node": "22.20.4",

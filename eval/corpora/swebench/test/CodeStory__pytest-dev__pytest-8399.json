@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:pytest-dev__pytest-8399",
+ "corpus": "swebench",
+ "seedId": "pytest-dev__pytest-8399",
+ "input": {
+  "mode": "local",
+  "repo": "pytest-dev/pytest",
+  "baseSha": "6e7dc8bac831cd8cf7a53b08efa366bd84f0c0fe",
+  "headSha": "CodeStory-pytest-dev__pytest-8399",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "pytest-dev",
+    "repo": "pytest",
+    "number": 8399
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "pytest-dev",
+     "repo": "pytest",
+     "number": 8399
+    },
+    "title": "Starting v6.2.0, unittest setUpClass fixtures are no longer \"private\"",
+    "body": "<!--\r\nThanks for submitting an issue!\r\n\r\nQuick check-list while reporting bugs:\r\n-->\r\nMinimal example:\r\n```\r\nimport unittest\r\n\r\nclass Tests(unittest.TestCase):\r\n    @classmethod\r\n    def setUpClass(cls):\r\n        pass\r\n\r\n    def test_1(self):\r\n        pass\r\n```\r\n```\r\n~$  pytest --fixtures\r\n...\r\nunittest_setUpClass_fixture_Tests [class scope] -- ../Platform/.venv/lib/python3.6/site-packages/_pytest/unittest.py:145\r\n    /home/ubuntu/src/Platform/.venv/lib/python3.6/site-packages/_pytest/unittest.py:145: no docstring available\r\n```\r\nThe expected (and previously implemented behavior) is that this fixture's name would start with an underscore, and would therefore only get printed if the additional `-v` flag was used. As it stands, I don't see a way to hide such generated fixtures which will not have a docstring.\r\n\r\nThis breaks a code-quality CI script that makes sure we don't have undocumented pytest fixtures (and the code-base has many legacy tests that use unittest, and that will not get upgraded).",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:9a0d1bd56f25f5d8c78682d2ae3604b9570d8390194fb7da41e911e2e798c18b"
+   }
+  ],
+  "pr": {
+   "title": "Fix pytest-dev__pytest-8399",
+   "body": ""
+  },
+  "diffText": "diff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 000000000..5d6209392\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,18 @@\n+import unittest\n+\n+class Tests(unittest.TestCase):\n+    @classmethod\n+    def setUpClass(cls):\n+        pass\n+\n+    def test_1(self):\n+        pass\n+\n+if __name__ == \"__main__\":\n+    import subprocess\n+    result = subprocess.run([\"pytest\", \"--fixtures\"], capture_output=True, text=True)\n+    print(result.stdout)\n+    \n+    print(\"\\nNow with -v flag:\")\n+    result = subprocess.run([\"pytest\", \"--fixtures\", \"-v\"], capture_output=True, text=True)\n+    print(result.stdout)\n\\ No newline at end of file\ndiff --git a/src/_pytest/unittest.py b/src/_pytest/unittest.py\nindex 719eb4e88..3f88d7a9e 100644\n--- a/src/_pytest/unittest.py\n+++ b/src/_pytest/unittest.py\n@@ -144,7 +144,7 @@ def _make_xunit_fixture(\n         scope=scope,\n         autouse=True,\n         # Use a unique name to speed up lookup.\n-        name=f\"unittest_{setup_name}_fixture_{obj.__qualname__}\",\n+        name=f\"_unittest_{setup_name}_fixture_{obj.__qualname__}\",\n     )\n     def fixture(self, request: FixtureRequest) -> Generator[None, None, None]:\n         if _is_skipped(self):\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

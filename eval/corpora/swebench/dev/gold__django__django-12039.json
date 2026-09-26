@@ -1,0 +1,140 @@
+{
+ "id": "gold:django__django-12039",
+ "corpus": "swebench",
+ "seedId": "django__django-12039",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "58c1acb1d6054dfec29d0f30b1033bae6ef62aec",
+  "headSha": "gold-django__django-12039",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 12039
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 12039
+    },
+    "title": "Use proper whitespace in CREATE INDEX statements",
+    "body": "Description\n\t \n\t\t(last modified by Hannes Ljungberg)\n\t \nCreating an index through:\nindex = Index(\n\tfields=['-name’],\n\tname='idx'\n)\nWill generate the valid but not so pretty CREATE INDEX statement: \nCREATE INDEX \"idx\" ON \"schema_author\" (\"name\"DESC)\nThe following would be expected:\nCREATE INDEX \"idx\" ON \"schema_author\" (\"name\" DESC)\nThis was partially fixed for indexes using opclasses in https://code.djangoproject.com/ticket/30903#ticket but it introduced a new quirk when opclasses is used without explicit ordering:\nindex = Index(\n\tfields=['name’],\n\tname='idx'\n\topclasses=['text_pattern_ops’]\n)\nWill result in:\nCREATE INDEX \"idx\" ON \"schema_author\" (“name” text_pattern_ops )\nNote the whitespace after text_pattern_ops. When used with a descending order it will look correct. \nUnfortunately in the fix in #30903 it was assumed that the col_suffixes passed to django.db.backends.ddl_references.Columns would be empty for ascending order but instead it will contain empty strings and thus causing this bug. See: ​https://github.com/django/django/blob/master/django/db/backends/ddl_references.py#L87\nThe expected output would be:\nCREATE INDEX \"idx\" ON \"schema_author\" (“name” text_pattern_ops)",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:bc697292d8761f3209f75965d6de0d584b1ce15e0efcba852d965f21fe421848"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-12039",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/db/backends/ddl_references.py b/django/db/backends/ddl_references.py\n--- a/django/db/backends/ddl_references.py\n+++ b/django/db/backends/ddl_references.py\n@@ -83,10 +83,14 @@ def __init__(self, table, columns, quote_name, col_suffixes=()):\n \n     def __str__(self):\n         def col_str(column, idx):\n+            col = self.quote_name(column)\n             try:\n-                return self.quote_name(column) + self.col_suffixes[idx]\n+                suffix = self.col_suffixes[idx]\n+                if suffix:\n+                    col = '{} {}'.format(col, suffix)\n             except IndexError:\n-                return self.quote_name(column)\n+                pass\n+            return col\n \n         return ', '.join(col_str(column, idx) for idx, column in enumerate(self.columns))\n \n@@ -114,7 +118,9 @@ def col_str(column, idx):\n             # length as self.columns.\n             col = '{} {}'.format(self.quote_name(column), self.opclasses[idx])\n             try:\n-                col = '{} {}'.format(col, self.col_suffixes[idx])\n+                suffix = self.col_suffixes[idx]\n+                if suffix:\n+                    col = '{} {}'.format(col, suffix)\n             except IndexError:\n                 pass\n             return col\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "gold",
+  "source": "gold",
+  "strength": "strong"
+ },
+ "annotatedBy": "study"
+}

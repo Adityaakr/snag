@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:django__django-11292",
+ "corpus": "swebench",
+ "seedId": "django__django-11292",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "eb16c7260e573ec513d84cb586d96bdf508f3173",
+  "headSha": "CodeStory-django__django-11292",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 11292
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 11292
+    },
+    "title": "Add --skip-checks option to management commands.",
+    "body": "Description\n\t\nManagement commands already have skip_checks stealth option. I propose exposing this option on the command line. This would allow users to skip checks when running a command from the command line. Sometimes in a development environment, it is nice to move ahead with a task at hand rather than getting side tracked fixing a system check.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:25cc8bc26fe6dfcc6d716db78a126556527d894b22e8090378d9a86b6c3c5ae9"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-11292",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/core/management/base.py b/django/core/management/base.py\nindex 0c3a981290..118dc38a5c 100644\n--- a/django/core/management/base.py\n+++ b/django/core/management/base.py\n@@ -286,6 +286,10 @@ class BaseCommand:\n             '--force-color', action='store_true',\n             help='Force colorization of the command output.',\n         )\n+        parser.add_argument(\n+            '--skip-checks', action='store_true',\n+            help='Skip system checks.',\n+        )\n         self.add_arguments(parser)\n         return parser\n \ndiff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..0d4fc451bf\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,28 @@\n+from django.core.management import BaseCommand, CommandParser\n+\n+# Create a test command\n+class TestCommand(BaseCommand):\n+    help = 'Test command to demonstrate skip_checks functionality'\n+    requires_system_checks = True\n+    \n+    def handle(self, *args, **options):\n+        return \"Command executed successfully\"\n+\n+# Test the new --skip-checks command line option\n+parser = TestCommand().create_parser('django-admin', 'test')\n+options = parser.parse_args(['--skip-checks'])\n+print(\"Command line option test:\")\n+print(\"--skip-checks option is now available\")\n+print(\"skip_checks value:\", options.skip_checks)\n+\n+# Test that the stealth option still works\n+cmd = TestCommand()\n+options = {\n+    'skip_checks': True,\n+    'force_color': False,\n+    'no_color': False,\n+    'verbosity': 1,\n+}\n+result = cmd.execute(**options)\n+print(\"\\nStealth option test:\")\n+print(\"skip_checks stealth option still works\")\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq1_devtests",
+  "strength": "medium"
+ },
+ "annotatedBy": "study"
+}

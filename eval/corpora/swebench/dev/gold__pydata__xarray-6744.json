@@ -1,0 +1,140 @@
+{
+ "id": "gold:pydata__xarray-6744",
+ "corpus": "swebench",
+ "seedId": "pydata__xarray-6744",
+ "input": {
+  "mode": "local",
+  "repo": "pydata/xarray",
+  "baseSha": "7cc6cc991e586a6158bb656b8001234ccda25407",
+  "headSha": "gold-pydata__xarray-6744",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "pydata",
+    "repo": "xarray",
+    "number": 6744
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "pydata",
+     "repo": "xarray",
+     "number": 6744
+    },
+    "title": "\"center\" kwarg ignored when manually iterating over DataArrayRolling",
+    "body": "### Discussed in https://github.com/pydata/xarray/discussions/6738\r\n\r\n<div type='discussions-op-text'>\r\n\r\n<sup>Originally posted by **ckingdon95** June 29, 2022</sup>\r\nHello, I am trying to manually iterate over a DataArrayRolling object, as described [here ](https://docs.xarray.dev/en/stable/user-guide/computation.html#rolling-window-operations)in the documentation. \r\n\r\nI am confused why the following two code chunks do not produce the same sequence of values. I would like to be able to manually iterate over a DataArrayRolling object, and still be given center-justified windows. Is there a way to do this?\r\n\r\n```python\r\nimport xarray as xr\r\nimport numpy as np\r\n\r\nmy_data = xr.DataArray(np.arange(1,10), dims=\"x\")\r\n\r\n# Option 1: take a center-justified rolling average\r\nresult1 = my_data.rolling(x=3, center=True).mean().values\r\nresult1\r\n```\r\nThis returns the following values, as expected:\r\n```\r\narray([nan,  2.,  3.,  4.,  5.,  6.,  7.,  8., nan])\r\n```\r\n\r\nWhereas when I do it manually, it is not equivalent:\r\n\r\n```python\r\n# Option 2: try to manually iterate, but the result is not centered\r\nmy_data_rolling = my_data.rolling(x=3, center=True)\r\nresult2 = [window.mean().values.item() for label, window in my_data_rolling]\r\nresult2\r\n```\r\nThis returns\r\n```\r\n[nan, nan, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]\r\n```\r\nIs this an issue with the window iterator? If it is not an issue, then is there a way for me to get the center-justified windows in the manual iteration? </div>",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:44547fc8b1aca234243d48b70c3443603b3c7d9d9c1ba281023f533d13d6a843"
+   }
+  ],
+  "pr": {
+   "title": "Fix pydata__xarray-6744",
+   "body": ""
+  },
+  "diffText": "diff --git a/xarray/core/rolling.py b/xarray/core/rolling.py\n--- a/xarray/core/rolling.py\n+++ b/xarray/core/rolling.py\n@@ -267,16 +267,21 @@ def __init__(\n         # TODO legacy attribute\n         self.window_labels = self.obj[self.dim[0]]\n \n-    def __iter__(self) -> Iterator[tuple[RollingKey, DataArray]]:\n+    def __iter__(self) -> Iterator[tuple[DataArray, DataArray]]:\n         if self.ndim > 1:\n             raise ValueError(\"__iter__ is only supported for 1d-rolling\")\n-        stops = np.arange(1, len(self.window_labels) + 1)\n-        starts = stops - int(self.window[0])\n-        starts[: int(self.window[0])] = 0\n+\n+        dim0 = self.dim[0]\n+        window0 = int(self.window[0])\n+        offset = (window0 + 1) // 2 if self.center[0] else 1\n+        stops = np.arange(offset, self.obj.sizes[dim0] + offset)\n+        starts = stops - window0\n+        starts[: window0 - offset] = 0\n+\n         for (label, start, stop) in zip(self.window_labels, starts, stops):\n-            window = self.obj.isel({self.dim[0]: slice(start, stop)})\n+            window = self.obj.isel({dim0: slice(start, stop)})\n \n-            counts = window.count(dim=self.dim[0])\n+            counts = window.count(dim=dim0)\n             window = window.where(counts >= self.min_periods)\n \n             yield (label, window)\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "gold",
+  "source": "gold",
+  "strength": "strong"
+ },
+ "annotatedBy": "study"
+}

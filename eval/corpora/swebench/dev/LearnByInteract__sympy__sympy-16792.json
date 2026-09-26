@@ -1,0 +1,140 @@
+{
+ "id": "LearnByInteract:sympy__sympy-16792",
+ "corpus": "swebench",
+ "seedId": "sympy__sympy-16792",
+ "input": {
+  "mode": "local",
+  "repo": "sympy/sympy",
+  "baseSha": "09786a173e7a0a488f46dd6000177c23e5d24eed",
+  "headSha": "LearnByInteract-sympy__sympy-16792",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "sympy",
+    "repo": "sympy",
+    "number": 16792
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "sympy",
+     "repo": "sympy",
+     "number": 16792
+    },
+    "title": "autowrap with cython backend fails when array arguments do not appear in wrapped expr",
+    "body": "When using the cython backend for autowrap, it appears that the code is not correctly generated when the function in question has array arguments that do not appear in the final expression. A minimal counterexample is:\r\n\r\n```python\r\nfrom sympy.utilities.autowrap import autowrap\r\nfrom sympy import MatrixSymbol\r\nimport numpy as np\r\n\r\nx = MatrixSymbol('x', 2, 1)\r\nexpr = 1.0\r\nf = autowrap(expr, args=(x,), backend='cython')\r\n\r\nf(np.array([[1.0, 2.0]]))\r\n```\r\n\r\nThis should of course return `1.0` but instead fails with:\r\n```python\r\nTypeError: only size-1 arrays can be converted to Python scalars\r\n```\r\n\r\nA little inspection reveals that this is because the corresponding C function is generated with an incorrect signature:\r\n\r\n```C\r\ndouble autofunc(double x) {\r\n\r\n   double autofunc_result;\r\n   autofunc_result = 1.0;\r\n   return autofunc_result;\r\n\r\n}\r\n```\r\n\r\n(`x` should be `double *`, not `double` in this case)\r\n\r\nI've found that this error won't occur so long as `expr` depends at least in part on each argument. For example this slight modification of the above counterexample works perfectly:\r\n\r\n```python\r\nfrom sympy.utilities.autowrap import autowrap\r\nfrom sympy import MatrixSymbol\r\nimport numpy as np\r\n\r\nx = MatrixSymbol('x', 2, 1)\r\n# now output depends on x\r\nexpr = x[0,0]\r\nf = autowrap(expr, args=(x,), backend='cython')\r\n\r\n# returns 1.0 as expected, without failure\r\nf(np.array([[1.0, 2.0]]))\r\n```\r\n\r\nThis may seem like a silly issue (\"why even have `x` as an argument if it doesn't appear in the expression you're trying to evaluate?\"). But of course in interfacing with external libraries (e.g. for numerical integration), one often needs functions to have a pre-defined signature regardless of whether a given argument contributes to the output.\r\n\r\nI think I've identified the problem in `codegen` and will suggest a PR shortly.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:75285dadabdf1d2c5da9310363aa54117dea471338a6787eed68369e4edccd41"
+   }
+  ],
+  "pr": {
+   "title": "Fix sympy__sympy-16792",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/db/models/fields/__init__.py b/django/db/models/fields/__init__.py\nnew file mode 100644\nindex 0000000000..387ad892bb\n--- /dev/null\n+++ b/django/db/models/fields/__init__.py\n@@ -0,0 +1,8 @@\n+type_args = []\n+        for arg in routine.arguments:\n+            name = self.printer.doprint(arg.name)\n+            if arg.dimensions or isinstance(arg, ResultBase) or isinstance(arg.name, MatrixSymbol):\n+                type_args.append((arg.get_datatype('C'), \"*%s\" % name))\n+            else:\n+                type_args.append((arg.get_datatype('C'), name))\n+        arguments = \", \".join([ \"%s %s\" % t for t in type_args])\ndiff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..e9b1108c3b\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,31 @@\n+from sympy.utilities.autowrap import autowrap\n+from sympy import MatrixSymbol\n+import numpy as np\n+\n+# Test case 1: Expression doesn't use the matrix argument\n+print(\"Test case 1: Expression doesn't use matrix argument\")\n+x = MatrixSymbol('x', 2, 1)\n+expr = 1.0\n+f = autowrap(expr, args=(x,), backend='cython')\n+print(\"Trying to evaluate f(array([[1.0], [2.0]]))...\")\n+result = f(np.array([[1.0], [2.0]]))\n+print(f\"Result: {result}\")\n+\n+# Test case 2: Expression uses the matrix argument (should work)\n+print(\"\\nTest case 2: Expression uses matrix argument\")\n+x = MatrixSymbol('x', 2, 1)\n+expr = x[0,0]  # Now output depends on x\n+f = autowrap(expr, args=(x,), backend='cython')\n+print(\"Trying to evaluate f(array([[1.0], [2.0]]))...\")\n+result = f(np.array([[1.0], [2.0]]))\n+print(f\"Result: {result}\")\n+\n+print(\"\\nTest case 3: Multiple unused matrix arguments\")\n+x = MatrixSymbol('x', 2, 1)\n+y = MatrixSymbol('y', 3, 1)\n+expr = 2.0\n+f = autowrap(expr, args=(x,y), backend='cython')\n+print(\"Trying to evaluate f(array([[1.0], [2.0]]), array([[3.0], [4.0], [5.0]]))...\")\n+result = f(np.array([[1.0], [2.0]]), np.array([[3.0], [4.0], [5.0]]))\n+print(f\"Result: {result}\")\n+\ndiff --git a/sympy/utilities/autowrap.py b/sympy/utilities/autowrap.py\nindex bd6afb12d1..5bea303f2a 100644\n--- a/sympy/utilities/autowrap.py\n+++ b/sympy/utilities/autowrap.py\n@@ -81,11 +81,13 @@\n from sympy.core.relational import Eq\n from sympy.core.symbol import Dummy, Symbol\n from sympy.tensor.indexed import Idx, IndexedBase\n+from sympy.matrices import MatrixSymbol\n from sympy.utilities.codegen import (make_routine, get_code_generator,\n                                      OutputArgument, InOutArgument,\n                                      InputArgument, CodeGenArgumentListError,\n                                      Result, ResultBase, C99CodeGen)\n from sympy.utilities.lambdify import implemented_function\n+\n from sympy.utilities.decorator import doctest_depends_on\n \n _doctest_depends_on = {'exe': ('f2py', 'gfortran', 'gcc'),\n@@ -435,20 +437,21 @@ def _partition_args(self, args):\n         # Filter inferred arguments from py_args\n         py_args = [a for a in py_args if a not in py_inferred]\n         return py_returns, py_args, py_locals, py_inferred\n-\n     def _prototype_arg(self, arg):\n         mat_dec = \"np.ndarray[{mtype}, ndim={ndim}] {name}\"\n         np_types = {'double': 'np.double_t',\n                     'int': 'np.int_t'}\n         t = arg.get_datatype('c')\n-        if arg.dimensions:\n+        if arg.dimensions or isinstance(arg.name, MatrixSymbol):\n             self._need_numpy = True\n-            ndim = len(arg.dimensions)\n+            if arg.dimensions:\n+                ndim = len(arg.dimensions)\n+            else:\n+                ndim = len(arg.name.shape)\n             mtype = np_types[t]\n             return mat_dec.format(mtype=mtype, ndim=ndim, name=self._string_var(arg.name))\n         else:\n             return \"%s %s\" % (t, self._string_var(arg.name))\n-\n     def _declare_arg(self, arg):\n         proto = self._prototype_arg(arg)\n         if arg.dimensions:\n@@ -458,14 +461,22 @@ def _declare_arg(self, arg):\n             return proto + \" = 0\"\n \n     def _call_arg(self, arg):\n-        if arg.dimensions:\n+        if arg.dimensions or isinstance(arg.name, MatrixSymbol):\n             t = arg.get_datatype('c')\n-            return \"<{0}*> {1}.data\".format(t, self._string_var(arg.name))\n+            return \"<{0}*> &{1}[0]\".format(t, self._string_var(arg.name))\n         elif isinstance(arg, ResultBase):\n             return \"&{0}\".format(self._string_var(arg.name))\n         else:\n             return self._string_var(arg.name)\n \n+\n+\n+\n+\n+\n+\n+\n+\n     def _string_var(self, var):\n         printer = self.generator.printer.doprint\n         return printer(var)\n@@ -1119,3 +1130,21 @@ def ufuncify(args, expr, language=None, backend='numpy', tempdir=None,\n         args_with_indices = [a[i] for a in indexed_args]\n         return autowrap(Eq(y[i], f(*args_with_indices)), language, backend,\n                         tempdir, args, flags, verbose, helpers, **kwargs)\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\ndiff --git \"a/sympy/utilities/autowrap.py\\\"\" \"b/sympy/utilities/autowrap.py\\\"\"\nnew file mode 100644\nindex 0000000000..618cea3fe8\n--- /dev/null\n+++ \"b/sympy/utilities/autowrap.py\\\"\"\n@@ -0,0 +1,8 @@\n+def _call_arg(self, arg):\n+        if arg.dimensions or isinstance(arg.name, MatrixSymbol):\n+            t = arg.get_datatype('c')\n+            return \"<{0}*> &{1}[0]\".format(t, self._string_var(arg.name))\n+        elif isinstance(arg, ResultBase):\n+            return \"&{0}\".format(self._string_var(arg.name))\n+        else:\n+            return self._string_var(arg.name)\ndiff --git a/sympy/utilities/codegen.py b/sympy/utilities/codegen.py\nindex f0befb2bd7..73b6395423 100644\n--- a/sympy/utilities/codegen.py\n+++ b/sympy/utilities/codegen.py\n@@ -910,7 +910,7 @@ def get_prototype(self, routine):\n         type_args = []\n         for arg in routine.arguments:\n             name = self.printer.doprint(arg.name)\n-            if arg.dimensions or isinstance(arg, ResultBase):\n+            if arg.dimensions or isinstance(arg, ResultBase) or isinstance(arg.name, MatrixSymbol):\n                 type_args.append((arg.get_datatype('C'), \"*%s\" % name))\n             else:\n                 type_args.append((arg.get_datatype('C'), name))\n@@ -2230,3 +2230,17 @@ def make_routine(name, expr, argument_sequence=None,\n     code_gen = get_code_generator(language)\n \n     return code_gen.routine(name, expr, argument_sequence, global_vars)\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "LearnByInteract",
+  "source": "rq2_divergent",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

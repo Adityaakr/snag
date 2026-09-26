@@ -1,0 +1,140 @@
+{
+ "id": "OpenHands:django__django-11880",
+ "corpus": "swebench",
+ "seedId": "django__django-11880",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "06909fe084f87a65459a83bd69d7cdbe4fce9a7c",
+  "headSha": "OpenHands-django__django-11880",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 11880
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 11880
+    },
+    "title": "Form Field’s __deepcopy__ does not (deep)copy the error messages.",
+    "body": "Description\n\t\nThe __deepcopy__ method defined for the formfields (​https://github.com/django/django/blob/146086f219d01dbb1cd8c089b5a5667e396e1cc4/django/forms/fields.py#L200) performs a shallow copy of self and does not include additional treatment for the error_messages dictionary. As a result, all copies of the same field share the same dictionary and any modification of either the dictionary or the error message itself for one formfield is immediately reflected on all other formfiels.\nThis is relevant for Forms and ModelForms that modify the error messages of their fields dynamically: while each instance of the specific form (e.g., ProfileForm) is expected to have a set of fields “sealed” away from other instances of the same ProfileForm (​https://github.com/django/django/blob/146086f219d01dbb1cd8c089b5a5667e396e1cc4/django/forms/forms.py#L95), in fact all these instances share the same error messages, resulting in incorrectly raised errors.\nConfirmed for versions of Django going back to 1.11.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:7d56e00c644085a3f423c6c61b9b30e94700cf9dceb046dfb3f60ae1ec9bc3f8"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-11880",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/forms/fields.py b/django/forms/fields.py\nindex 03cd8af8d7..4cc3133ca0 100644\n--- a/django/forms/fields.py\n+++ b/django/forms/fields.py\n@@ -200,6 +200,7 @@ class Field:\n         memo[id(self)] = result\n         result.widget = copy.deepcopy(self.widget, memo)\n         result.validators = self.validators[:]\n+        result.error_messages = copy.deepcopy(self.error_messages, memo)\n         return result\n \n \ndiff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..3d3b993b32\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,33 @@\n+import copy\n+from django.conf import settings\n+from django.forms import Form, CharField\n+\n+# Configure minimal Django settings\n+settings.configure(\n+    USE_I18N=False,\n+    USE_L10N=False,\n+    USE_TZ=False,\n+)\n+\n+class CustomObject:\n+    def __init__(self, value):\n+        self.value = value\n+\n+    def __str__(self):\n+        return str(self.value)\n+\n+class ProfileForm(Form):\n+    name = CharField(max_length=100, error_messages={\n+        'custom': CustomObject('Original message')\n+    })\n+\n+# Create two instances of the form\n+form1 = ProfileForm()\n+form2 = copy.deepcopy(form1)\n+\n+# Modify custom object in form1\n+form1.fields['name'].error_messages['custom'].value = 'Modified message'\n+\n+# Print error messages from both forms\n+print(\"Form1 custom message:\", form1.fields['name'].error_messages['custom'])\n+print(\"Form2 custom message:\", form2.fields['name'].error_messages['custom'])\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "OpenHands",
+  "source": "rq2_divergent",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

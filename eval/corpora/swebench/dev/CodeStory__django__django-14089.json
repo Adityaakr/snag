@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:django__django-14089",
+ "corpus": "swebench",
+ "seedId": "django__django-14089",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "d01709aae21de9cd2565b9c52f32732ea28a2d98",
+  "headSha": "CodeStory-django__django-14089",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 14089
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 14089
+    },
+    "title": "Allow calling reversed() on an OrderedSet",
+    "body": "Description\n\t\nCurrently, ​OrderedSet isn't reversible (i.e. allowed to be passed as an argument to Python's ​reversed()). This would be natural to support given that OrderedSet is ordered. This should be straightforward to add by adding a __reversed__() method to OrderedSet.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:6ba819bbd20be8d992a238f9f7c30423d3140fe0e403145f5214033e0159b665"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-14089",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/utils/datastructures.py b/django/utils/datastructures.py\nindex 871b016715..966ebb7c96 100644\n--- a/django/utils/datastructures.py\n+++ b/django/utils/datastructures.py\n@@ -34,6 +34,12 @@ class OrderedSet:\n     def __len__(self):\n         return len(self.dict)\n \n+    def __reversed__(self):\n+        \"\"\"\n+        Return an iterator over the items in the set in reverse order.\n+        \"\"\"\n+        return reversed(self.dict)\n+\n \n class MultiValueDictKeyError(KeyError):\n     pass\ndiff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..bf6320befd\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,24 @@\n+from django.utils.datastructures import OrderedSet\n+\n+def test_reverse(ordered_set, case_name):\n+    print(f\"\\nTesting {case_name}:\")\n+    try:\n+        reversed_set = reversed(ordered_set)\n+        print(\"Values in reverse order:\")\n+        for item in reversed_set:\n+            print(item)\n+        print(\"Success!\")\n+    except Exception as e:\n+        print(\"Error:\", e)\n+\n+# Test case 1: Normal set (already tested above)\n+test_reverse(OrderedSet(['a', 'b', 'c', 'd']), \"normal set\")\n+\n+# Test case 2: Empty set\n+test_reverse(OrderedSet(), \"empty set\")\n+\n+# Test case 3: Single item\n+test_reverse(OrderedSet(['single']), \"single item\")\n+\n+# Test case 4: Mixed types (strings, numbers, tuples)\n+test_reverse(OrderedSet([1, 'two', (3, 4), 5.0]), \"mixed types\")\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

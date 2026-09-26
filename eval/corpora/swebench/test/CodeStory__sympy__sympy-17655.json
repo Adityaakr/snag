@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:sympy__sympy-17655",
+ "corpus": "swebench",
+ "seedId": "sympy__sympy-17655",
+ "input": {
+  "mode": "local",
+  "repo": "sympy/sympy",
+  "baseSha": "f5e965947af2410ded92cfad987aaf45262ea434",
+  "headSha": "CodeStory-sympy__sympy-17655",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "sympy",
+    "repo": "sympy",
+    "number": 17655
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "sympy",
+     "repo": "sympy",
+     "number": 17655
+    },
+    "title": "Unexpected exception when multiplying geometry.Point and number",
+    "body": "```python\r\nfrom sympy import geometry as ge\r\nimport sympy\r\n\r\npoint1 = ge.Point(0,0)\r\npoint2 = ge.Point(1,1)\r\n```\r\n\r\nThis line works fine\r\n```python\r\npoint1 + point2 * sympy.sympify(2.0)\r\n```\r\n\r\nBut when I write the same this way it raises an exception\r\n```python\r\npoint1 + sympy.sympify(2.0) * point2\r\n```\r\n\r\n```\r\n---------------------------------------------------------------------------\r\nTypeError                                 Traceback (most recent call last)\r\n~/.virtualenvs/test/lib/python3.6/site-packages/sympy/geometry/point.py in __add__(self, other)\r\n    219         try:\r\n--> 220             s, o = Point._normalize_dimension(self, Point(other, evaluate=False))\r\n    221         except TypeError:\r\n\r\n~/.virtualenvs/test/lib/python3.6/site-packages/sympy/geometry/point.py in __new__(cls, *args, **kwargs)\r\n    128                 Expecting sequence of coordinates, not `{}`'''\r\n--> 129                                        .format(func_name(coords))))\r\n    130         # A point where only `dim` is specified is initialized\r\n\r\nTypeError: \r\nExpecting sequence of coordinates, not `Mul`\r\n\r\nDuring handling of the above exception, another exception occurred:\r\n\r\nGeometryError                             Traceback (most recent call last)\r\n<ipython-input-20-6dcbddac1ee2> in <module>\r\n----> 1 point1 + sympy.sympify(2.0)* point2\r\n\r\n~/.virtualenvs/test/lib/python3.6/site-packages/sympy/geometry/point.py in __add__(self, other)\r\n    220             s, o = Point._normalize_dimension(self, Point(other, evaluate=False))\r\n    221         except TypeError:\r\n--> 222             raise GeometryError(\"Don't know how to add {} and a Point object\".format(other))\r\n    223 \r\n    224         coords = [simplify(a + b) for a, b in zip(s, o)]\r\n\r\nGeometryError: Don't know how to add 2.0*Point2D(1, 1) and a Point object\r\n```\r\n\r\nThe expected behaviour is, that both lines give the same result",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:d9b85570090ad88a5e3b1df76d921c71ae62abe0b85cc0934ea39cf30a078a74"
+   }
+  ],
+  "pr": {
+   "title": "Fix sympy__sympy-17655",
+   "body": ""
+  },
+  "diffText": "diff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..8b83552809\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,38 @@\n+from sympy import geometry as ge\n+import sympy\n+\n+def test_point_operations():\n+    point1 = ge.Point(0, 0)\n+    point2 = ge.Point(1, 1)\n+\n+    # Original failing case\n+    print(\"Testing original case...\")\n+    result1 = point1 + point2 * sympy.sympify(2.0)\n+    result2 = point1 + sympy.sympify(2.0) * point2\n+    print(\"point1 + point2 * 2.0 =\", result1)\n+    print(\"point1 + 2.0 * point2 =\", result2)\n+    print(\"Results are equal:\", result1 == result2)\n+\n+    # Edge cases\n+    print(\"\\nTesting edge cases...\")\n+    \n+    # Test with integer\n+    result3 = point1 + point2 * 2\n+    result4 = point1 + 2 * point2\n+    print(\"Integer multiplication results are equal:\", result3 == result4)\n+\n+    # Test with rational\n+    result5 = point1 + point2 * sympy.Rational(1, 2)\n+    result6 = point1 + sympy.Rational(1, 2) * point2\n+    print(\"Rational multiplication results are equal:\", result5 == result6)\n+\n+    # Test with multiple points\n+    point3 = ge.Point(2, 2)\n+    try:\n+        result7 = point1 + point2 * point3\n+        print(\"ERROR: Should not be able to multiply points\")\n+    except TypeError:\n+        print(\"Correctly raised TypeError for point multiplication\")\n+\n+if __name__ == \"__main__\":\n+    test_point_operations()\n\\ No newline at end of file\ndiff --git a/sympy/geometry/point.py b/sympy/geometry/point.py\nindex 7c978c47be..4b1501b469 100644\n--- a/sympy/geometry/point.py\n+++ b/sympy/geometry/point.py\n@@ -213,7 +213,16 @@ def __add__(self, other):\n         sympy.geometry.point.Point.translate\n \n         \"\"\"\n+        from sympy.core.mul import Mul\n         try:\n+            if isinstance(other, Mul):\n+                # Handle cases like scalar * Point\n+                point_terms = [arg for arg in other.args if isinstance(arg, Point)]\n+                if len(point_terms) == 1:\n+                    scalar_terms = [arg for arg in other.args if not isinstance(arg, Point)]\n+                    point = point_terms[0]\n+                    scalar = Mul(*scalar_terms)\n+                    return self + point * scalar\n             s, o = Point._normalize_dimension(self, Point(other, evaluate=False))\n         except TypeError:\n             raise GeometryError(\"Don't know how to add {} and a Point object\".format(other))\n@@ -247,6 +256,11 @@ def __iter__(self):\n     def __len__(self):\n         return len(self.args)\n \n+    def as_coeff_Mul(self):\n+        \"\"\"Return the point as a tuple (coeff, Mul) where coeff is a Rational.\n+        This is used by sympy's Mul class for multiplication.\"\"\"\n+        return S.One, self\n+\n     def __mul__(self, factor):\n         \"\"\"Multiply point's coordinates by a factor.\n \n@@ -278,6 +292,19 @@ def __mul__(self, factor):\n         coords = [simplify(x*factor) for x in self.args]\n         return Point(coords, evaluate=False)\n \n+    def __rmul__(self, factor):\n+        \"\"\"Multiply point's coordinates by a factor.\n+\n+        This method is called when factor * Point.\n+\n+        See Also\n+        ========\n+\n+        sympy.geometry.point.Point.scale\n+        \"\"\"\n+        factor = sympify(factor)\n+        return self.__mul__(factor)\n+\n     def __neg__(self):\n         \"\"\"Negate the point.\"\"\"\n         coords = [-x for x in self.args]\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq2_divergent",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

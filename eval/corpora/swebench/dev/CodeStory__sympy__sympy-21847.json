@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:sympy__sympy-21847",
+ "corpus": "swebench",
+ "seedId": "sympy__sympy-21847",
+ "input": {
+  "mode": "local",
+  "repo": "sympy/sympy",
+  "baseSha": "d9b18c518d64d0ebe8e35a98c2fb519938b9b151",
+  "headSha": "CodeStory-sympy__sympy-21847",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "sympy",
+    "repo": "sympy",
+    "number": 21847
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "sympy",
+     "repo": "sympy",
+     "number": 21847
+    },
+    "title": "itermonomials returns incorrect monomials when using min_degrees argument",
+    "body": "`itermonomials` returns incorrect monomials when using optional `min_degrees` argument\r\n\r\nFor example, the following code introduces three symbolic variables and generates monomials with max and min degree of 3:\r\n\r\n\r\n```\r\nimport sympy as sp\r\nfrom sympy.polys.orderings import monomial_key\r\n\r\nx1, x2, x3 = sp.symbols('x1, x2, x3')\r\nstates = [x1, x2, x3]\r\nmax_degrees = 3\r\nmin_degrees = 3\r\nmonomials = sorted(sp.itermonomials(states, max_degrees, min_degrees=min_degrees), \r\n                   key=monomial_key('grlex', states))\r\nprint(monomials)\r\n```\r\nThe code returns `[x3**3, x2**3, x1**3]`, when it _should_ also return monomials such as `x1*x2**2, x2*x3**2, etc...` that also have total degree of 3. This behaviour is inconsistent with the documentation that states that \r\n\r\n> A generator of all monomials `monom` is returned, such that either `min_degree <= total_degree(monom) <= max_degree`...\r\n\r\nThe monomials are also missing when `max_degrees` is increased above `min_degrees`.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:3bea38f7c960f43de3f56d409349927f1885c02fb35895d5ef21bac01a876371"
+   }
+  ],
+  "pr": {
+   "title": "Fix sympy__sympy-21847",
+   "body": ""
+  },
+  "diffText": "diff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..e2f165cb25\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,19 @@\n+import sympy as sp\n+from sympy.polys.orderings import monomial_key\n+\n+x1, x2, x3 = sp.symbols('x1, x2, x3')\n+states = [x1, x2, x3]\n+max_degrees = 3\n+min_degrees = 3\n+monomials = sorted(sp.itermonomials(states, max_degrees, min_degrees=min_degrees), \n+                   key=monomial_key('grlex', states))\n+print(\"Current output:\")\n+print(monomials)\n+\n+# Also test with max_degrees > min_degrees\n+max_degrees = 4\n+min_degrees = 3\n+monomials = sorted(sp.itermonomials(states, max_degrees, min_degrees=min_degrees), \n+                   key=monomial_key('grlex', states))\n+print(\"\\nWith max_degrees=4, min_degrees=3:\")\n+print(monomials)\n\\ No newline at end of file\ndiff --git a/sympy/polys/monomials.py b/sympy/polys/monomials.py\nindex 0e84403307..9ee8404969 100644\n--- a/sympy/polys/monomials.py\n+++ b/sympy/polys/monomials.py\n@@ -127,7 +127,8 @@ def itermonomials(variables, max_degrees, min_degrees=None):\n                 for variable in item:\n                     if variable != 1:\n                         powers[variable] += 1\n-                if max(powers.values()) >= min_degree:\n+                total_power = sum(powers.values())\n+                if min_degree <= total_power <= max_degree:\n                     monomials_list_comm.append(Mul(*item))\n             yield from set(monomials_list_comm)\n         else:\n@@ -139,7 +140,8 @@ def itermonomials(variables, max_degrees, min_degrees=None):\n                 for variable in item:\n                     if variable != 1:\n                         powers[variable] += 1\n-                if max(powers.values()) >= min_degree:\n+                total_power = sum(powers.values())\n+                if min_degree <= total_power <= max_degree:\n                     monomials_list_non_comm.append(Mul(*item))\n             yield from set(monomials_list_non_comm)\n     else:\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

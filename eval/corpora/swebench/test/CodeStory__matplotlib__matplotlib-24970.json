@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:matplotlib__matplotlib-24970",
+ "corpus": "swebench",
+ "seedId": "matplotlib__matplotlib-24970",
+ "input": {
+  "mode": "local",
+  "repo": "matplotlib/matplotlib",
+  "baseSha": "a3011dfd1aaa2487cce8aa7369475533133ef777",
+  "headSha": "CodeStory-matplotlib__matplotlib-24970",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "matplotlib",
+    "repo": "matplotlib",
+    "number": 24970
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "matplotlib",
+     "repo": "matplotlib",
+     "number": 24970
+    },
+    "title": "[Bug]: NumPy 1.24 deprecation warnings",
+    "body": "### Bug summary\r\n\r\nStarting NumPy 1.24 I observe several deprecation warnings.\r\n\r\n\r\n### Code for reproduction\r\n\r\n```python\r\nimport matplotlib.pyplot as plt\r\nimport numpy as np\r\n\r\nplt.get_cmap()(np.empty((0, ), dtype=np.uint8))\r\n```\r\n\r\n\r\n### Actual outcome\r\n\r\n```\r\n/usr/lib/python3.10/site-packages/matplotlib/colors.py:730: DeprecationWarning: NumPy will stop allowing conversion of out-of-bound Python integers to integer arrays.  The conversion of 257 to uint8 will fail in the future.\r\nFor the old behavior, usually:\r\n    np.array(value).astype(dtype)`\r\nwill give the desired result (the cast overflows).\r\n  xa[xa > self.N - 1] = self._i_over\r\n/usr/lib/python3.10/site-packages/matplotlib/colors.py:731: DeprecationWarning: NumPy will stop allowing conversion of out-of-bound Python integers to integer arrays.  The conversion of 256 to uint8 will fail in the future.\r\nFor the old behavior, usually:\r\n    np.array(value).astype(dtype)`\r\nwill give the desired result (the cast overflows).\r\n  xa[xa < 0] = self._i_under\r\n/usr/lib/python3.10/site-packages/matplotlib/colors.py:732: DeprecationWarning: NumPy will stop allowing conversion of out-of-bound Python integers to integer arrays.  The conversion of 258 to uint8 will fail in the future.\r\nFor the old behavior, usually:\r\n    np.array(value).astype(dtype)`\r\nwill give the desired result (the cast overflows).\r\n  xa[mask_bad] = self._i_bad\r\n```\r\n\r\n### Expected outcome\r\n\r\nNo warnings.\r\n\r\n### Additional information\r\n\r\n_No response_\r\n\r\n### Operating system\r\n\r\nArchLinux\r\n\r\n### Matplotlib Version\r\n\r\n3.6.2\r\n\r\n### Matplotlib Backend\r\n\r\nQtAgg\r\n\r\n### Python version\r\n\r\nPython 3.10.9\r\n\r\n### Jupyter version\r\n\r\n_No response_\r\n\r\n### Installation\r\n\r\nLinux package manager",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:927eca060fd9cadc7a7b0bc09b0a7b5d7b162ed9ddf39cccd767a37ab11f0717"
+   }
+  ],
+  "pr": {
+   "title": "Fix matplotlib__matplotlib-24970",
+   "body": ""
+  },
+  "diffText": "diff --git a/lib/matplotlib/colors.py b/lib/matplotlib/colors.py\nindex 2d3072da04..1a9ecdce6d 100644\n--- a/lib/matplotlib/colors.py\n+++ b/lib/matplotlib/colors.py\n@@ -727,9 +727,12 @@ class Colormap:\n                 xa = xa.astype(int)\n         # Set the over-range indices before the under-range;\n         # otherwise the under-range values get converted to over-range.\n-        xa[xa > self.N - 1] = self._i_over\n-        xa[xa < 0] = self._i_under\n-        xa[mask_bad] = self._i_bad\n+        # Convert out-of-bound indices using the recommended NumPy approach\n+        over_mask = xa > self.N - 1\n+        under_mask = xa < 0\n+        xa[over_mask] = np.array(self._i_over).astype(xa.dtype)\n+        xa[under_mask] = np.array(self._i_under).astype(xa.dtype)\n+        xa[mask_bad] = np.array(self._i_bad).astype(xa.dtype)\n \n         lut = self._lut\n         if bytes:\ndiff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..d59a99a1a1\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,4 @@\n+import matplotlib.pyplot as plt\n+import numpy as np\n+\n+plt.get_cmap()(np.empty((0, ), dtype=np.uint8))\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

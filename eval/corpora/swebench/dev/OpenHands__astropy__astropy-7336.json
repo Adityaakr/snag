@@ -1,0 +1,140 @@
+{
+ "id": "OpenHands:astropy__astropy-7336",
+ "corpus": "swebench",
+ "seedId": "astropy__astropy-7336",
+ "input": {
+  "mode": "local",
+  "repo": "astropy/astropy",
+  "baseSha": "732d89c2940156bdc0e200bb36dc38b5e424bcba",
+  "headSha": "OpenHands-astropy__astropy-7336",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "astropy",
+    "repo": "astropy",
+    "number": 7336
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "astropy",
+     "repo": "astropy",
+     "number": 7336
+    },
+    "title": "units.quantity_input decorator fails for constructors with type hinted return value -> None",
+    "body": "### Summary\r\nI am using the `units.quantity_input` decorator with typing hints for constructors, however when I add the correct return value for the constructor (`None`) then I get an exception, because `None` has no attribute `to`.\r\n\r\n### Reproducer\r\nThe issue can be reproduced with the following file:\r\n``` Python\r\nimport astropy.units as u\r\n\r\n\r\nclass PoC(object):\r\n\r\n    @u.quantity_input\r\n    def __init__(self, voltage: u.V) -> None:\r\n        pass\r\n\r\n\r\nif __name__ == '__main__':\r\n    poc = PoC(1.*u.V)\r\n```\r\nwhich results in the following error:\r\n```\r\n$ python3 poc.py\r\nTraceback (most recent call last):\r\n  File \"poc.py\", line 12, in <module>\r\n    poc = PoC(1.*u.V)\r\n  File \"/usr/lib64/python3.6/site-packages/astropy/utils/decorators.py\", line 868, in __init__\r\n    func = make_function_with_signature(func, name=name, **wrapped_args)\r\n  File \"/usr/lib64/python3.6/site-packages/astropy/units/decorators.py\", line 225, in wrapper\r\n    return return_.to(wrapped_signature.return_annotation)\r\nAttributeError: 'NoneType' object has no attribute 'to'\r\n```\r\n\r\nThis has been tested on Fedora 27 with python 3.6.3, astropy 2.0.2 and numpy 1.13.3 all from Fedora's repository.\r\n\r\n### Workaround\r\nThe issue can be circumvented by not adding the return type typing hint. Unfortunately, then a static type checker cannot infer that this function returns nothing.\r\n\r\n### Possible fix\r\nMaybe the decorator could explicitly check whether None is returned and then omit the unit check.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:2c97658a478b6403d3505395fc8a0fe654d72b1126693535b3b5ca55a93054c7"
+   }
+  ],
+  "pr": {
+   "title": "Fix astropy__astropy-7336",
+   "body": ""
+  },
+  "diffText": "diff --git a/astropy/units/decorators.py b/astropy/units/decorators.py\nindex 8bece5a850..9b48e4f0c1 100644\n--- a/astropy/units/decorators.py\n+++ b/astropy/units/decorators.py\n@@ -221,7 +221,11 @@ class QuantityInput:\n             with add_enabled_equivalencies(self.equivalencies):\n                 return_ = wrapped_function(*func_args, **func_kwargs)\n             if wrapped_signature.return_annotation is not inspect.Signature.empty:\n-                return return_.to(wrapped_signature.return_annotation)\n+                # Handle the case where return annotation is None\n+                if wrapped_signature.return_annotation is None:\n+                    return return_\n+                else:\n+                    return return_.to(wrapped_signature.return_annotation)\n             else:\n                 return return_\n \ndiff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..cc943f0261\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,12 @@\n+import astropy.units as u\n+\n+\n+class PoC(object):\n+\n+    @u.quantity_input\n+    def __init__(self, voltage: u.V) -> None:\n+        pass\n+\n+\n+if __name__ == '__main__':\n+    poc = PoC(1.*u.V)\n\\ No newline at end of file\ndiff --git a/test_edge_cases.py b/test_edge_cases.py\nnew file mode 100644\nindex 0000000000..0782bd1313\n--- /dev/null\n+++ b/test_edge_cases.py\n@@ -0,0 +1,36 @@\n+import astropy.units as u\n+\n+\n+class TestCase1:\n+    @u.quantity_input\n+    def __init__(self, voltage: u.V):  # No return annotation\n+        pass\n+\n+\n+class TestCase2:\n+    @u.quantity_input\n+    def __init__(self, voltage: u.V) -> u.V:  # Unit return annotation\n+        return voltage\n+\n+\n+class TestCase3:\n+    @u.quantity_input\n+    def __init__(self, voltage: u.V) -> None:  # None return but returns value\n+        self.voltage = voltage\n+        return voltage  # This is actually invalid in Python but good to test\n+\n+\n+# Test case 1: No return annotation\n+print(\"Testing case 1...\")\n+t1 = TestCase1(1. * u.V)\n+\n+# Test case 2: Unit return annotation\n+print(\"Testing case 2...\")\n+t2 = TestCase2(1. * u.V)\n+\n+# Test case 3: None return annotation but returns value\n+print(\"Testing case 3...\")\n+try:\n+    t3 = TestCase3(1. * u.V)\n+except TypeError as e:\n+    print(\"Expected error for case 3:\", str(e))\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "OpenHands",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

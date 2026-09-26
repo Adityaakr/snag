@@ -1,0 +1,140 @@
+{
+ "id": "LearnByInteract:sympy__sympy-22714",
+ "corpus": "swebench",
+ "seedId": "sympy__sympy-22714",
+ "input": {
+  "mode": "local",
+  "repo": "sympy/sympy",
+  "baseSha": "3ff4717b6aef6086e78f01cdfa06f64ae23aed7e",
+  "headSha": "LearnByInteract-sympy__sympy-22714",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "sympy",
+    "repo": "sympy",
+    "number": 22714
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "sympy",
+     "repo": "sympy",
+     "number": 22714
+    },
+    "title": "simpify gives `Imaginary coordinates are not permitted.` with evaluate(False)",
+    "body": "## Issue\r\n`with evaluate(False)` crashes unexpectedly with `Point2D`\r\n\r\n## Code\r\n```python\r\nimport sympy as sp\r\nwith sp.evaluate(False):\r\n  sp.S('Point2D(Integer(1),Integer(2))')\r\n```\r\n\r\n## Error\r\n```\r\nTraceback (most recent call last):\r\n  File \"<stdin>\", line 1, in <module>\r\n  File \"/home/avinash/.local/lib/python3.8/site-packages/sympy/core/sympify.py\", line 472, in sympify\r\n    expr = parse_expr(a, local_dict=locals, transformations=transformations, evaluate=evaluate)\r\n  File \"/home/avinash/.local/lib/python3.8/site-packages/sympy/parsing/sympy_parser.py\", line 1026, in parse_expr\r\n    raise e from ValueError(f\"Error from parse_expr with transformed code: {code!r}\")\r\n  File \"/home/avinash/.local/lib/python3.8/site-packages/sympy/parsing/sympy_parser.py\", line 1017, in parse_expr\r\n    rv = eval_expr(code, local_dict, global_dict)\r\n  File \"/home/avinash/.local/lib/python3.8/site-packages/sympy/parsing/sympy_parser.py\", line 911, in eval_expr\r\n    expr = eval(\r\n  File \"<string>\", line 1, in <module>\r\n  File \"/home/avinash/.local/lib/python3.8/site-packages/sympy/geometry/point.py\", line 912, in __new__\r\n    args = Point(*args, **kwargs)\r\n  File \"/home/avinash/.local/lib/python3.8/site-packages/sympy/geometry/point.py\", line 153, in __new__\r\n    raise ValueError('Imaginary coordinates are not permitted.')\r\nValueError: Imaginary coordinates are not permitted.\r\n```\r\n\r\nHowever, it works without `with evaluate(False)`. Both of following commands work\r\n```python\r\nsp.S('Point2D(Integer(1),Integer(2))')\r\nsp.S('Point2D(Integer(1),Integer(2))', evaluate=False)\r\n```",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:97c99b796bcbebd6f2f56d4d520866b2193e8a46a465ec96b915fd429b4b84e9"
+   }
+  ],
+  "pr": {
+   "title": "Fix sympy__sympy-22714",
+   "body": ""
+  },
+  "diffText": "diff --git a/sympy/geometry/point.py b/sympy/geometry/point.py\nindex 73c20334d0..7480119336 100644\n--- a/sympy/geometry/point.py\n+++ b/sympy/geometry/point.py\n@@ -152,8 +152,6 @@ def __new__(cls, *args, **kwargs):\n                         'warn' or 'ignore'.'''))\n         if any(coords[dim:]):\n             raise ValueError('Nonzero coordinates cannot be removed.')\n-        if any(a.is_number and im(a) for a in coords):\n-            raise ValueError('Imaginary coordinates are not permitted.')\n         if not all(isinstance(a, Expr) for a in coords):\n             raise TypeError('Coordinates must be valid SymPy expressions.')\n \n@@ -163,6 +161,8 @@ def __new__(cls, *args, **kwargs):\n         # Turn any Floats into rationals and simplify\n         # any expressions before we instantiate\n         if evaluate:\n+            if any(a.is_number and im(a) for a in coords):\n+                raise ValueError('Imaginary coordinates are not permitted.')\n             coords = coords.xreplace({\n                 f: simplify(nsimplify(f, rational=True))\n                  for f in coords.atoms(Float)})\n@@ -1374,3 +1374,4 @@ def z(self):\n         1\n         \"\"\"\n         return self.args[2]\n+\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "LearnByInteract",
+  "source": "rq2_divergent",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

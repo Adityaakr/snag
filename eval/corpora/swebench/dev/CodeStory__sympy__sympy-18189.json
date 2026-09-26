@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:sympy__sympy-18189",
+ "corpus": "swebench",
+ "seedId": "sympy__sympy-18189",
+ "input": {
+  "mode": "local",
+  "repo": "sympy/sympy",
+  "baseSha": "1923822ddf8265199dbd9ef9ce09641d3fd042b9",
+  "headSha": "CodeStory-sympy__sympy-18189",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "sympy",
+    "repo": "sympy",
+    "number": 18189
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "sympy",
+     "repo": "sympy",
+     "number": 18189
+    },
+    "title": "diophantine: incomplete results depending on syms order with permute=True",
+    "body": "```\r\nIn [10]: diophantine(n**4 + m**4 - 2**4 - 3**4, syms=(m,n), permute=True)\r\nOut[10]: {(-3, -2), (-3, 2), (-2, -3), (-2, 3), (2, -3), (2, 3), (3, -2), (3, 2)}\r\n\r\nIn [11]: diophantine(n**4 + m**4 - 2**4 - 3**4, syms=(n,m), permute=True)\r\nOut[11]: {(3, 2)}\r\n```\r\n\ndiophantine: incomplete results depending on syms order with permute=True\n```\r\nIn [10]: diophantine(n**4 + m**4 - 2**4 - 3**4, syms=(m,n), permute=True)\r\nOut[10]: {(-3, -2), (-3, 2), (-2, -3), (-2, 3), (2, -3), (2, 3), (3, -2), (3, 2)}\r\n\r\nIn [11]: diophantine(n**4 + m**4 - 2**4 - 3**4, syms=(n,m), permute=True)\r\nOut[11]: {(3, 2)}\r\n```",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:4ddbcbe2ac878dafcc3c0edd971da68d6107c407a8dae2316c405d9161c0bb90"
+   }
+  ],
+  "pr": {
+   "title": "Fix sympy__sympy-18189",
+   "body": ""
+  },
+  "diffText": "diff --git a/classify_test.py b/classify_test.py\nnew file mode 100644\nindex 0000000000..95348cebcb\n--- /dev/null\n+++ b/classify_test.py\n@@ -0,0 +1,13 @@\n+from sympy import symbols\n+from sympy.solvers.diophantine import classify_diop, diophantine\n+\n+m, n = symbols('m n', integer=True)\n+\n+# Test case 1: syms=(m,n)\n+eq = n**4 + m**4 - 2**4 - 3**4\n+print(\"Classification with syms=(m,n):\")\n+print(classify_diop(eq))\n+\n+# Test case 2: syms=(n,m)\n+print(\"\\nClassification with syms=(n,m):\")\n+print(classify_diop(eq))\n\\ No newline at end of file\ndiff --git a/final_test.py b/final_test.py\nnew file mode 100644\nindex 0000000000..2a4a9c5e36\n--- /dev/null\n+++ b/final_test.py\n@@ -0,0 +1,12 @@\n+from sympy import symbols\n+from sympy.solvers.diophantine import diophantine\n+\n+m, n = symbols('m n', integer=True)\n+\n+# Test case 4: Sum of squares\n+eq4 = n**2 + m**2 - 25\n+print(\"Test case 4: Sum of squares\")\n+print(\"Result with syms=(m,n):\")\n+print(diophantine(eq4, syms=(m,n), permute=True))\n+print(\"\\nResult with syms=(n,m):\")\n+print(diophantine(eq4, syms=(n,m), permute=True))\n\\ No newline at end of file\ndiff --git a/regression_test.py b/regression_test.py\nnew file mode 100644\nindex 0000000000..4d2a73b253\n--- /dev/null\n+++ b/regression_test.py\n@@ -0,0 +1,28 @@\n+from sympy import symbols\n+from sympy.solvers.diophantine import diophantine\n+\n+m, n = symbols('m n', integer=True)\n+\n+# Test case 1: Original test\n+eq1 = n**4 + m**4 - 2**4 - 3**4\n+print(\"Test case 1: Original equation\")\n+print(\"Result with syms=(m,n):\")\n+print(diophantine(eq1, syms=(m,n), permute=True))\n+print(\"\\nResult with syms=(n,m):\")\n+print(diophantine(eq1, syms=(n,m), permute=True))\n+\n+# Test case 2: Different powers\n+eq2 = n**6 + m**6 - 2**6 - 3**6\n+print(\"\\nTest case 2: Higher powers\")\n+print(\"Result with syms=(m,n):\")\n+print(diophantine(eq2, syms=(m,n), permute=True))\n+print(\"\\nResult with syms=(n,m):\")\n+print(diophantine(eq2, syms=(n,m), permute=True))\n+\n+# Test case 3: Mixed terms\n+eq3 = n**4 + m**4 + n*m - 10\n+print(\"\\nTest case 3: Mixed terms\")\n+print(\"Result with syms=(m,n):\")\n+print(diophantine(eq3, syms=(m,n), permute=True))\n+print(\"\\nResult with syms=(n,m):\")\n+print(diophantine(eq3, syms=(n,m), permute=True))\n\\ No newline at end of file\ndiff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..2404f98b6e\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,18 @@\n+from sympy import symbols\n+from sympy.solvers.diophantine import diophantine\n+\n+m, n = symbols('m n', integer=True)\n+\n+# Test case 1: syms=(m,n)\n+eq = n**4 + m**4 - 2**4 - 3**4\n+result1 = diophantine(eq, syms=(m,n), permute=True)\n+print(\"Result with syms=(m,n):\")\n+print(result1)\n+\n+# Test case 2: syms=(n,m)\n+result2 = diophantine(eq, syms=(n,m), permute=True)\n+print(\"\\nResult with syms=(n,m):\")\n+print(result2)\n+\n+# Expected: Both results should be the same set of solutions\n+# {(-3, -2), (-3, 2), (-2, -3), (-2, 3), (2, -3), (2, 3), (3, -2), (3, 2)}\n\\ No newline at end of file\ndiff --git a/sympy/solvers/diophantine.py b/sympy/solvers/diophantine.py\nindex 6092e35dab..ddc5b3c441 100644\n--- a/sympy/solvers/diophantine.py\n+++ b/sympy/solvers/diophantine.py\n@@ -180,9 +180,18 @@ def diophantine(eq, param=symbols(\"t\", integer=True), syms=None,\n                     'syms should be given as a sequence, e.g. a list')\n             syms = [i for i in syms if i in var]\n             if syms != var:\n-                dict_sym_index = dict(zip(syms, range(len(syms))))\n-                return {tuple([t[dict_sym_index[i]] for i in var])\n-                            for t in diophantine(eq, param)}\n+                # Get solutions in terms of original variables\n+                base_sols = diophantine(eq, param, permute=permute)\n+                # Map solutions to the requested symbol order\n+                mapped_sols = set()\n+                for sol in base_sols:\n+                    # Create a mapping from original variables to values\n+                    val_dict = dict(zip(var, sol))\n+                    # Create new solution tuple with requested order\n+                    new_sol = tuple(val_dict[s] for s in syms)\n+                    mapped_sols.add(new_sol)\n+                return mapped_sols\n+\n         n, d = eq.as_numer_denom()\n         if n.is_number:\n             return set()\n@@ -342,12 +351,35 @@ def diophantine(eq, param=symbols(\"t\", integer=True), syms=None,\n                 permuted_sign = set(lst)\n                 final_soln.update(permuted_sign)\n             elif do_permute_signs_var:\n+                # For general_sum_of_even_powers, we want to permute both signs and positions\n                 permuted_sign_var = set(signed_permutations(sol))\n                 final_soln.update(permuted_sign_var)\n             else:\n                 final_soln.add(sol)\n         else:\n-                final_soln.add(sol)\n+            final_soln.add(sol)\n+\n+    # If syms was provided, ensure solutions are in the correct order\n+    if syms and syms != var:\n+        # Create a mapping from original variables to their positions\n+        orig_dict = dict(zip(var, range(len(var))))\n+        # Create a mapping from syms to their positions\n+        syms_dict = dict(zip(syms, range(len(syms))))\n+        # Map solutions to the requested symbol order\n+        mapped_sols = set()\n+        for sol in final_soln:\n+            # Create a mapping from original positions to values\n+            val_dict = dict(zip(range(len(var)), sol))\n+            # Map values to new positions based on syms order\n+            new_sol = [None] * len(var)\n+            for i, v in enumerate(var):\n+                if v in syms:\n+                    new_sol[i] = sol[syms_dict[v]]\n+                else:\n+                    new_sol[i] = sol[orig_dict[v]]\n+            mapped_sols.add(tuple(new_sol))\n+        final_soln = mapped_sols\n+\n     return final_soln\n \n \n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq2_divergent",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

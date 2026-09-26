@@ -1,0 +1,140 @@
+{
+ "id": "gold:sphinx-doc__sphinx-8459",
+ "corpus": "swebench",
+ "seedId": "sphinx-doc__sphinx-8459",
+ "input": {
+  "mode": "local",
+  "repo": "sphinx-doc/sphinx",
+  "baseSha": "68aa4fb29e7dfe521749e1e14f750d7afabb3481",
+  "headSha": "gold-sphinx-doc__sphinx-8459",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "sphinx-doc",
+    "repo": "sphinx",
+    "number": 8459
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "sphinx-doc",
+     "repo": "sphinx",
+     "number": 8459
+    },
+    "title": "autodoc_type_aliases doesn't work when autodoc_typehints is set to \"description\"",
+    "body": "**Describe the bug**\r\nautodoc_type_aliases doesn't work when autodoc_typehints is set to \"description\".\r\n\r\n**To Reproduce**\r\n\r\ntypes.py\r\n```python\r\nfrom __future__ import annotations\r\n\r\nfrom typing import Any, Dict\r\n\r\nJSONObject = Dict[str, Any]\r\n\r\n\r\ndef sphinx_doc(data: JSONObject) -> JSONObject:\r\n    \"\"\"Does it work.\r\n\r\n    Args:\r\n        data: Does it args.\r\n\r\n    Returns:\r\n        Does it work in return.\r\n    \"\"\"\r\n    return {}\r\n\r\n```\r\n\r\nconf.py\r\n```python\r\nautodoc_typehints = 'description'\r\nautodoc_type_aliases = {\r\n    'JSONObject': 'types.JSONObject',\r\n}\r\n```\r\n\r\nI get,\r\n```\r\ntypes.sphinx_doc(data)\r\nDoes it work.\r\n\r\nParameters\r\ndata (Dict[str, Any]) – Does it args.\r\n\r\nReturns\r\nDoes it work in return.\r\n\r\nReturn type\r\nDict[str, Any]\r\n```\r\n\r\nThen if I remove `autodoc_typehints = 'description'`\r\nI get,\r\n```\r\ntypes.sphinx_doc(data: types.JSONObject) → types.JSONObject\r\nDoes it work.\r\n\r\nParameters\r\ndata – Does it args.\r\n\r\nReturns\r\nDoes it work in return.\r\n```\r\n\r\n**Expected behavior**\r\n\r\n`types.JSONObject` instead of `Dict[str, Any]` in both cases.\r\n\r\n\r\n**Environment info**\r\n- OS: Mac Catalina 10.15.7\r\n- Python version: 3.7.9\r\n- Sphinx version: 3.3.1\r\n- Sphinx extensions:      sphinx.ext.autodoc, sphinx.ext.napoleon, sphinxarg.ext",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:4ca1abfa53ba0ff1303c38274a711bf091670d4d18963ed137e79c03a6d83f8f"
+   }
+  ],
+  "pr": {
+   "title": "Fix sphinx-doc__sphinx-8459",
+   "body": ""
+  },
+  "diffText": "diff --git a/sphinx/ext/autodoc/typehints.py b/sphinx/ext/autodoc/typehints.py\n--- a/sphinx/ext/autodoc/typehints.py\n+++ b/sphinx/ext/autodoc/typehints.py\n@@ -27,7 +27,7 @@ def record_typehints(app: Sphinx, objtype: str, name: str, obj: Any,\n         if callable(obj):\n             annotations = app.env.temp_data.setdefault('annotations', {})\n             annotation = annotations.setdefault(name, OrderedDict())\n-            sig = inspect.signature(obj)\n+            sig = inspect.signature(obj, type_aliases=app.config.autodoc_type_aliases)\n             for param in sig.parameters.values():\n                 if param.annotation is not param.empty:\n                     annotation[param.name] = typing.stringify(param.annotation)\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "gold",
+  "source": "gold",
+  "strength": "strong"
+ },
+ "annotatedBy": "study"
+}

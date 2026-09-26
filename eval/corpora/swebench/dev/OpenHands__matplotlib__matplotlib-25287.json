@@ -1,0 +1,140 @@
+{
+ "id": "OpenHands:matplotlib__matplotlib-25287",
+ "corpus": "swebench",
+ "seedId": "matplotlib__matplotlib-25287",
+ "input": {
+  "mode": "local",
+  "repo": "matplotlib/matplotlib",
+  "baseSha": "f8ffce6d44127d4ea7d6491262ab30046b03294b",
+  "headSha": "OpenHands-matplotlib__matplotlib-25287",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "matplotlib",
+    "repo": "matplotlib",
+    "number": 25287
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "matplotlib",
+     "repo": "matplotlib",
+     "number": 25287
+    },
+    "title": "[Bug]: offsetText is colored based on tick.color instead of tick.labelcolor",
+    "body": "### Bug summary\n\nIn version 3.6.3, when setting ytick.labelcolor / xtick.labelcolor in styles / rcParams, it does not change the color of the exponent label as well. It will be colored based on xtick.color / ytick.color.\n\n### Code for reproduction\n\n```python\nimport matplotlib.pyplot as plt\r\n\r\nplt.rcParams.update({'ytick.labelcolor': 'red'})\r\nfig = plt.figure()\r\nax = fig.add_subplot(1,1,1)\r\nax.plot([1.01e9,1.02e9,1.03e9])\n```\n\n\n### Actual outcome\n\n![wrong_color](https://user-images.githubusercontent.com/50588526/217083612-dddf85ba-ebfa-4bf0-8ae0-3dce36c17198.png)\r\n\n\n### Expected outcome\n\n![correct_color](https://user-images.githubusercontent.com/50588526/217083512-34b3b32f-5d3a-4242-8742-2269bb09c20c.png)\r\n\n\n### Additional information\n\nThe following patch seems to fix it for my simple usecases:\r\n\r\n```\r\ndiff --git a/axis.py b/axis.py\r\n--- a/axis.py\t\r\n+++ b/axis.py\t(date 1675716341305)\r\n@@ -2203,7 +2203,7 @@\r\n             transform=mtransforms.blended_transform_factory(\r\n                 self.axes.transAxes, mtransforms.IdentityTransform()),\r\n             fontsize=mpl.rcParams['xtick.labelsize'],\r\n-            color=mpl.rcParams['xtick.color'],\r\n+            color=mpl.rcParams['xtick.color'] if mpl.rcParams['xtick.labelcolor']=='inherit' else mpl.rcParams['xtick.labelcolor'],\r\n         )\r\n         self.offset_text_position = 'bottom'\r\n \r\n@@ -2456,7 +2456,7 @@\r\n             transform=mtransforms.blended_transform_factory(\r\n                 self.axes.transAxes, mtransforms.IdentityTransform()),\r\n             fontsize=mpl.rcParams['ytick.labelsize'],\r\n-            color=mpl.rcParams['ytick.color'],\r\n+            color=mpl.rcParams['ytick.color'] if mpl.rcParams['ytick.labelcolor']=='inherit' else mpl.rcParams['ytick.labelcolor'],\r\n         )\r\n         self.offset_text_position = 'left'\r\n \r\n```\n\n### Operating system\n\n_No response_\n\n### Matplotlib Version\n\n3.6.3\n\n### Matplotlib Backend\n\n_No response_\n\n### Python version\n\n_No response_\n\n### Jupyter version\n\n_No response_\n\n### Installation\n\nNone",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:8c244a031ab150ffc27955e8ac5aa7036e8d6491b77e07f52e14d13e8495688a"
+   }
+  ],
+  "pr": {
+   "title": "Fix matplotlib__matplotlib-25287",
+   "body": ""
+  },
+  "diffText": "diff --git a/lib/matplotlib/axis.py b/lib/matplotlib/axis.py\nindex c0e706e2b3..0920063693 100644\n--- a/lib/matplotlib/axis.py\n+++ b/lib/matplotlib/axis.py\n@@ -2255,7 +2255,7 @@ class XAxis(Axis):\n             transform=mtransforms.blended_transform_factory(\n                 self.axes.transAxes, mtransforms.IdentityTransform()),\n             fontsize=mpl.rcParams['xtick.labelsize'],\n-            color=mpl.rcParams['xtick.color'],\n+            color=mpl.rcParams['xtick.color'] if mpl.rcParams['xtick.labelcolor']=='inherit' else mpl.rcParams['xtick.labelcolor'],\n         )\n         self.offset_text_position = 'bottom'\n \n@@ -2515,7 +2515,7 @@ class YAxis(Axis):\n             transform=mtransforms.blended_transform_factory(\n                 self.axes.transAxes, mtransforms.IdentityTransform()),\n             fontsize=mpl.rcParams['ytick.labelsize'],\n-            color=mpl.rcParams['ytick.color'],\n+            color=mpl.rcParams['ytick.color'] if mpl.rcParams['ytick.labelcolor']=='inherit' else mpl.rcParams['ytick.labelcolor'],\n         )\n         self.offset_text_position = 'left'\n \ndiff --git a/reproduce.py b/reproduce.py\nnew file mode 100644\nindex 0000000000..f90946613d\n--- /dev/null\n+++ b/reproduce.py\n@@ -0,0 +1,7 @@\n+import matplotlib.pyplot as plt\n+\n+plt.rcParams.update({'ytick.labelcolor': 'red'})\n+fig = plt.figure()\n+ax = fig.add_subplot(1,1,1)\n+ax.plot([1.01e9,1.02e9,1.03e9])\n+plt.savefig('wrong_color.png')\n\\ No newline at end of file\ndiff --git a/test_colors.png b/test_colors.png\nnew file mode 100644\nindex 0000000000..a26f3ec6ec\nBinary files /dev/null and b/test_colors.png differ\ndiff --git a/test_colors.py b/test_colors.py\nnew file mode 100644\nindex 0000000000..698b749003\n--- /dev/null\n+++ b/test_colors.py\n@@ -0,0 +1,46 @@\n+import matplotlib.pyplot as plt\n+import numpy as np\n+\n+# Test case 1: Different colors for ticks and labels\n+plt.rcParams.update({\n+    'ytick.color': 'blue',\n+    'ytick.labelcolor': 'red',\n+    'xtick.color': 'green',\n+    'xtick.labelcolor': 'orange'\n+})\n+fig, ax = plt.subplots(2, 2, figsize=(10, 10))\n+\n+# Plot 1: Basic case\n+ax[0,0].plot([1.01e9,1.02e9,1.03e9])\n+ax[0,0].set_title('Different colors for ticks and labels')\n+\n+# Plot 2: Inherit case\n+plt.rcParams.update({\n+    'ytick.labelcolor': 'inherit',\n+    'xtick.labelcolor': 'inherit'\n+})\n+ax[0,1].plot([1.01e9,1.02e9,1.03e9])\n+ax[0,1].set_title('Inherit colors from ticks')\n+\n+# Plot 3: RGB colors\n+plt.rcParams.update({\n+    'ytick.color': (0.1, 0.2, 0.3),\n+    'ytick.labelcolor': (0.4, 0.5, 0.6),\n+    'xtick.color': (0.7, 0.8, 0.9),\n+    'xtick.labelcolor': (0.2, 0.3, 0.4)\n+})\n+ax[1,0].plot([1.01e9,1.02e9,1.03e9])\n+ax[1,0].set_title('RGB colors')\n+\n+# Plot 4: RGBA colors with alpha\n+plt.rcParams.update({\n+    'ytick.color': (0.1, 0.2, 0.3, 0.5),\n+    'ytick.labelcolor': (0.4, 0.5, 0.6, 0.7),\n+    'xtick.color': (0.7, 0.8, 0.9, 0.6),\n+    'xtick.labelcolor': (0.2, 0.3, 0.4, 0.8)\n+})\n+ax[1,1].plot([1.01e9,1.02e9,1.03e9])\n+ax[1,1].set_title('RGBA colors with alpha')\n+\n+plt.tight_layout()\n+plt.savefig('test_colors.png')\n\\ No newline at end of file\ndiff --git a/wrong_color.png b/wrong_color.png\nnew file mode 100644\nindex 0000000000..36ae82cfbd\nBinary files /dev/null and b/wrong_color.png differ\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "OpenHands",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

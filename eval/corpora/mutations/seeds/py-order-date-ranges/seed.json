@@ -1,0 +1,190 @@
+{
+  "id": "py-order-date-ranges",
+  "language": "py",
+  "annotated_by": "claude-code",
+  "split": "test",
+  "summary": "Orders report date ranges: open-ended bounds, inclusive end day, start-after-end check, named ranges.",
+  "requirements": [
+    {
+      "id": "R1",
+      "text": "A range may leave out either side to be open-ended: `..2024-03-31` has no start and `2024-03-01..` has no end",
+      "implementing": [
+        {
+          "file": "reports/ranges.py",
+          "symbol": "parse_range",
+          "replace": [
+            {
+              "from": "parse_day(left) if left else None",
+              "to": "parse_day(left)"
+            },
+            {
+              "from": "parse_day(right) if right else None",
+              "to": "parse_day(right)"
+            }
+          ]
+        },
+        {
+          "file": "reports/ranges.py",
+          "symbol": "orders_between",
+          "replace": [
+            {
+              "from": "start is not None and order.placed_at < start",
+              "to": "order.placed_at < start"
+            },
+            {
+              "from": "end is not None and order.placed_at >= next_day(end)",
+              "to": "order.placed_at >= next_day(end)"
+            }
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "file": "tests/test_ranges.py",
+          "symbol": "test_parses_open_ended_ranges"
+        },
+        {
+          "file": "tests/test_ranges.py",
+          "symbol": "test_filters_open_ended_ranges"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "text": "The end date is inclusive: an order placed at 23:00 on 2024-03-08 is inside `2024-03-01..2024-03-08`",
+      "implementing": [
+        {
+          "file": "reports/ranges.py",
+          "symbol": "next_day"
+        },
+        {
+          "file": "reports/ranges.py",
+          "symbol": "orders_between",
+          "replace": [
+            {
+              "from": "order.placed_at >= next_day(end)",
+              "to": "order.placed_at > end"
+            }
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "file": "tests/test_ranges.py",
+          "symbol": "test_end_date_is_inclusive"
+        }
+      ],
+      "unwire": {
+        "file": "reports/ranges.py",
+        "symbol": "orders_between",
+        "callee": "next_day"
+      }
+    },
+    {
+      "id": "R3",
+      "text": "A range whose start is after its end raises `ValueError` with the message `start after end`",
+      "implementing": [
+        {
+          "file": "reports/ranges.py",
+          "symbol": "parse_range",
+          "remove": [
+            "if start and end and start > end:"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "file": "tests/test_ranges.py",
+          "symbol": "test_rejects_start_after_end"
+        }
+      ],
+      "flip": {
+        "impl": {
+          "file": "reports/ranges.py",
+          "symbol": "parse_range",
+          "from": ">",
+          "to": ">="
+        },
+        "test": {
+          "file": "tests/test_ranges.py",
+          "symbol": "test_rejects_start_after_end",
+          "from": "\"2024-03-06..2024-03-05\"",
+          "to": "\"2024-03-05..2024-03-05\""
+        }
+      }
+    },
+    {
+      "id": "R4",
+      "text": "`resolve_range` understands the named ranges `today`, `last-7-days` and `this-month`, counted back from a given day and including it (`last-7-days` on 2024-03-10 is 2024-03-04 to 2024-03-10)",
+      "implementing": [
+        {
+          "file": "reports/ranges.py",
+          "symbol": "named_range"
+        },
+        {
+          "file": "reports/ranges.py",
+          "symbol": "resolve_range"
+        }
+      ],
+      "tests": [
+        {
+          "file": "tests/test_ranges.py",
+          "symbol": "test_named_ranges"
+        },
+        {
+          "file": "tests/test_ranges.py",
+          "symbol": "test_last_seven_days"
+        },
+        {
+          "file": "tests/test_ranges.py",
+          "symbol": "test_resolve_falls_back_to_explicit_range"
+        }
+      ],
+      "flip": {
+        "impl": {
+          "file": "reports/ranges.py",
+          "symbol": "named_range",
+          "from": "6",
+          "to": "7"
+        },
+        "test": {
+          "file": "tests/test_ranges.py",
+          "symbol": "test_last_seven_days",
+          "from": "4",
+          "to": "3"
+        }
+      },
+      "partial": {
+        "impl": {
+          "file": "reports/ranges.py",
+          "symbol": "named_range",
+          "contains": "name == \"this-month\""
+        },
+        "test": {
+          "file": "tests/test_ranges.py",
+          "symbol": "test_named_ranges",
+          "contains": "resolve_range(\"this-month\", today)"
+        }
+      }
+    }
+  ],
+  "incidental": [],
+  "config": {
+    "file": "reports/config.py",
+    "symbol": "report_defaults",
+    "from": "\"USD\"",
+    "to": "\"EUR\""
+  },
+  "unrelatedTest": {
+    "file": "tests/test_money.py",
+    "symbol": "test_formats_thousands"
+  },
+  "unrelatedCode": {
+    "file": "reports/money.py",
+    "symbol": "format_cents",
+    "rename": {
+      "from": "whole",
+      "to": "units"
+    }
+  }
+}

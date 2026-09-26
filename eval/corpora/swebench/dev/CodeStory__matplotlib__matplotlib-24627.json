@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:matplotlib__matplotlib-24627",
+ "corpus": "swebench",
+ "seedId": "matplotlib__matplotlib-24627",
+ "input": {
+  "mode": "local",
+  "repo": "matplotlib/matplotlib",
+  "baseSha": "9d22ab09d52d279b125d8770967569de070913b2",
+  "headSha": "CodeStory-matplotlib__matplotlib-24627",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "matplotlib",
+    "repo": "matplotlib",
+    "number": 24627
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "matplotlib",
+     "repo": "matplotlib",
+     "number": 24627
+    },
+    "title": "cla(), clf() should unset the `.axes` and `.figure` attributes of deparented artists",
+    "body": "mpl2.0b3: Removing an artist from its axes unsets its `.axes` attribute, but clearing the axes does not do so.\n\n```\nIn [11]: f, a = plt.subplots(); l, = a.plot([1, 2]); l.remove(); print(l.axes)\nNone\n\nIn [12]: f, a = plt.subplots(); l, = a.plot([1, 2]); a.cla(); print(l.axes)\nAxes(0.125,0.11;0.775x0.77)\n```",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:05efc506cbb6183820ead0ee1df14d38cf1814dcab8d5f8b78b30797d2fb0095"
+   }
+  ],
+  "pr": {
+   "title": "Fix matplotlib__matplotlib-24627",
+   "body": ""
+  },
+  "diffText": "diff --git a/lib/matplotlib/axes/_base.py b/lib/matplotlib/axes/_base.py\nindex 90b0bf117e..75c68a99df 100644\n--- a/lib/matplotlib/axes/_base.py\n+++ b/lib/matplotlib/axes/_base.py\n@@ -1284,6 +1284,11 @@ class _AxesBase(martist.Artist):\n         xaxis_visible = self.xaxis.get_visible()\n         yaxis_visible = self.yaxis.get_visible()\n \n+        # Unset axes and figure references for all artists\n+        for artist in self._children:\n+            artist.axes = None\n+            artist.figure = None\n+\n         for axis in self._axis_map.values():\n             axis.clear()  # Also resets the scale to linear.\n         for spine in self.spines.values():\ndiff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..9967f0e743\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,25 @@\n+import matplotlib.pyplot as plt\n+\n+# Test case 1: Using remove()\n+print(\"Test case 1: Using remove()\")\n+f1, a1 = plt.subplots()\n+l1, = a1.plot([1, 2])\n+print(\"Before remove():\", l1.axes is not None)\n+l1.remove()\n+print(\"After remove():\", l1.axes is not None)\n+\n+# Test case 2: Using cla()\n+print(\"\\nTest case 2: Using cla()\")\n+f2, a2 = plt.subplots()\n+l2, = a2.plot([1, 2])\n+print(\"Before cla():\", l2.axes is not None)\n+a2.cla()\n+print(\"After cla():\", l2.axes is not None)\n+\n+# Test case 3: Using clf()\n+print(\"\\nTest case 3: Using clf()\")\n+f3, a3 = plt.subplots()\n+l3, = a3.plot([1, 2])\n+print(\"Before clf():\", l3.axes is not None)\n+plt.clf()\n+print(\"After clf():\", l3.axes is not None)\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

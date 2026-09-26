@@ -1,0 +1,140 @@
+{
+ "id": "gold:django__django-15731",
+ "corpus": "swebench",
+ "seedId": "django__django-15731",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "93cedc82f29076c824d476354527af1150888e4f",
+  "headSha": "gold-django__django-15731",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 15731
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 15731
+    },
+    "title": "inspect.signature() returns incorrect signature on manager methods.",
+    "body": "Description\n\t \n\t\t(last modified by Shiva Kumar)\n\t \ninspect.signature returns incorrect signature information when used on queryset methods\nimport inspect\nfrom django.db import models\nclass Person(models.Model):\n\tname = models.CharField(max_length=100)\nprint(inspect.signature(Person.objects.bulk_create))\n# actual: (*args, **kwargs)\n# expected: (objs, batch_size=None, ignore_conflicts=False)\nipython and jupyter seem to internally use inspect.signature to show documentation when using the <obj>? command and they too show incorrect signature information:\n \nThe issue is due to the code at ​https://github.com/django/django/blob/fe2e1478464846638082219c933a4302e5cf3037/django/db/models/manager.py#L84\nAlthough we are ensuring the decorated method has the right name and docstring on lines 87 and 88, complete metadata is not copied.\nThe fix is to use functools.wraps instead of manually assigning name and docstring. wraps will take care of all the metadata and inspect.signature will return the expected output.\nIf the bug is acknowledged please assign the ticket to me, I would like to raise a PR for this.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:60721319ee9ae6dfb161f4e308bee46338235628b6ed50e0c262698043f36e1c"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-15731",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/db/models/manager.py b/django/db/models/manager.py\n--- a/django/db/models/manager.py\n+++ b/django/db/models/manager.py\n@@ -1,5 +1,6 @@\n import copy\n import inspect\n+from functools import wraps\n from importlib import import_module\n \n from django.db import router\n@@ -81,11 +82,10 @@ def check(self, **kwargs):\n     @classmethod\n     def _get_queryset_methods(cls, queryset_class):\n         def create_method(name, method):\n+            @wraps(method)\n             def manager_method(self, *args, **kwargs):\n                 return getattr(self.get_queryset(), name)(*args, **kwargs)\n \n-            manager_method.__name__ = method.__name__\n-            manager_method.__doc__ = method.__doc__\n             return manager_method\n \n         new_methods = {}\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "gold",
+  "source": "gold",
+  "strength": "strong"
+ },
+ "annotatedBy": "study"
+}

@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:django__django-13012",
+ "corpus": "swebench",
+ "seedId": "django__django-13012",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "22a59c01c00cf9fbefaee0e8e67fab82bbaf1fd2",
+  "headSha": "CodeStory-django__django-13012",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 13012
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 13012
+    },
+    "title": "Constant expressions of an ExpressionWrapper object are incorrectly placed at the GROUP BY clause",
+    "body": "Description\n\t\nI have a function that expects an arbitrary Query expression and constructs a query on a Postgres db\n def execQuery(expr):\n\t expr = ExpressionWrapper(expr, output_field=IntegerField())\n\t return Model.objects.annotate(expr_res=expr).values('expr_res', 'column_a').annotate(sum=Sum('column_b'))\nHowever, when the given expr is a constant expression (e.g., Value(3)), Django generates an SQL query that contains this constant expression in its GROUP BY clause.\nSELECT \"model\".\"column_a\", 3 AS \"expr_res\", SUM(\"model\".\"column_b\") AS \"sum\" FROM \"model\" GROUP BY \"model\".\"column_a\", 3\nThis leads to an exception because in Postgres, the query above is invalid:\ndjango.db.utils.ProgrammingError: aggregate functions are not allowed in GROUP BY\nLINE 1: SELECT \"model\".\"column_a\", 3 AS \"expr_res\", SUM(\"model\".\"col...\nNote that when the given query expression is not wrapped by the ExpressionWrapper object, Django correctly identifies and omits the constant from the GROUP BY clause. For example, the query below runs correctly.\n def execQuery(expr):\n\t return Model.objects.annotate(expr_res=Value(3, output_field=IntegerField())).values('expr_res', 'column_a').annotate(sum=Sum('column_b'))\nSELECT \"model\".\"column_a\", 3 AS \"expr_res\", SUM(\"model\".\"column_b\") AS \"sum\" FROM \"model\" GROUP BY \"model\".\"column_a\"",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:087326609f6f61c5669d6e425ccafd6302c460e459dc812b546f7c4d5dbe392d"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-13012",
+   "body": ""
+  },
+  "diffText": "diff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..cf02aa640e\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,31 @@\n+from django.db import models\n+from django.db.models import IntegerField, Sum, Value\n+from django.db.models.expressions import ExpressionWrapper\n+\n+# Create a simple model for testing\n+class Model(models.Model):\n+    column_a = models.CharField(max_length=100)\n+    column_b = models.IntegerField()\n+\n+    class Meta:\n+        app_label = 'testapp'\n+        db_table = 'model'\n+\n+def execQuery(expr):\n+    expr = ExpressionWrapper(expr, output_field=IntegerField())\n+    # Print the SQL query that would be generated\n+    query = Model.objects.annotate(expr_res=expr).values('expr_res', 'column_a').annotate(sum=Sum('column_b')).query\n+    print(\"SQL with ExpressionWrapper:\")\n+    print(query)\n+    print(\"\\n\")\n+\n+def execQueryWithoutWrapper():\n+    # Print the SQL query without wrapper (working case)\n+    query = Model.objects.annotate(expr_res=Value(3, output_field=IntegerField())).values('expr_res', 'column_a').annotate(sum=Sum('column_b')).query\n+    print(\"SQL without ExpressionWrapper:\")\n+    print(query)\n+\n+if __name__ == \"__main__\":\n+    # Test with a constant value\n+    execQuery(Value(3))\n+    execQueryWithoutWrapper()\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq1_devtests",
+  "strength": "medium"
+ },
+ "annotatedBy": "study"
+}

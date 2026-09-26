@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:django__django-14376",
+ "corpus": "swebench",
+ "seedId": "django__django-14376",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "d06c5b358149c02a62da8a5469264d05f29ac659",
+  "headSha": "CodeStory-django__django-14376",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 14376
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 14376
+    },
+    "title": "MySQL backend uses deprecated \"db\" and \"passwd\" kwargs.",
+    "body": "Description\n\t\nThe \"db\" and \"passwd\" usage can be seen at ​https://github.com/django/django/blob/ca9872905559026af82000e46cde6f7dedc897b6/django/db/backends/mysql/base.py#L202-L205 in main. mysqlclient recently marked these two kwargs as deprecated (see ​https://github.com/PyMySQL/mysqlclient/commit/fa25358d0f171bd8a63729c5a8d76528f4ae74e9) in favor of \"database\" and \"password\" respectively. mysqlclient added support for \"database\" and \"password\" in 1.3.8 with ​https://github.com/PyMySQL/mysqlclient/commit/66029d64060fca03f3d0b22661b1b4cf9849ef03.\nDjango 2.2, 3.1, and 3.2 all require a minimum version of mysqlclient newer than 1.3.8, so a fix for this could be backported to all currently supported versions of Django.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:ccc4d67193b9bb25a48ce132952928031a58d08522e603bc87d14c7d389f9fc7"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-14376",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/db/backends/mysql/base.py b/django/db/backends/mysql/base.py\nindex 2c62182d31..8b28a60485 100644\n--- a/django/db/backends/mysql/base.py\n+++ b/django/db/backends/mysql/base.py\n@@ -200,9 +200,9 @@ class DatabaseWrapper(BaseDatabaseWrapper):\n         if settings_dict['USER']:\n             kwargs['user'] = settings_dict['USER']\n         if settings_dict['NAME']:\n-            kwargs['db'] = settings_dict['NAME']\n+            kwargs['database'] = settings_dict['NAME']\n         if settings_dict['PASSWORD']:\n-            kwargs['passwd'] = settings_dict['PASSWORD']\n+            kwargs['password'] = settings_dict['PASSWORD']\n         if settings_dict['HOST'].startswith('/'):\n             kwargs['unix_socket'] = settings_dict['HOST']\n         elif settings_dict['HOST']:\ndiff --git a/django/db/backends/mysql/client.py b/django/db/backends/mysql/client.py\nindex 95442a32b0..dd5a39b30e 100644\n--- a/django/db/backends/mysql/client.py\n+++ b/django/db/backends/mysql/client.py\n@@ -8,7 +8,7 @@ class DatabaseClient(BaseDatabaseClient):\n     def settings_to_cmd_args_env(cls, settings_dict, parameters):\n         args = [cls.executable_name]\n         env = None\n-        db = settings_dict['OPTIONS'].get('db', settings_dict['NAME'])\n+        db = settings_dict['OPTIONS'].get('database', settings_dict['OPTIONS'].get('db', settings_dict['NAME']))\n         user = settings_dict['OPTIONS'].get('user', settings_dict['USER'])\n         password = settings_dict['OPTIONS'].get(\n             'password',\ndiff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..bac7292836\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,15 @@\n+import MySQLdb\n+\n+# Attempt to create a connection with deprecated parameters\n+try:\n+    conn = MySQLdb.connect(\n+        host='localhost',\n+        user='test_user',\n+        db='test_db',  # deprecated\n+        passwd='test_pass'  # deprecated\n+    )\n+    print(\"Connection successful using deprecated parameters\")\n+    conn.close()\n+except Exception as e:\n+    print(f\"Error occurred: {e}\")\n+    print(\"Note: You may see warnings about deprecated parameters 'db' and 'passwd'\")\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

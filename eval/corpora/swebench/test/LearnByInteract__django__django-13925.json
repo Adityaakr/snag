@@ -1,0 +1,140 @@
+{
+ "id": "LearnByInteract:django__django-13925",
+ "corpus": "swebench",
+ "seedId": "django__django-13925",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "0c42cdf0d2422f4c080e93594d5d15381d6e955e",
+  "headSha": "LearnByInteract-django__django-13925",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 13925
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 13925
+    },
+    "title": "models.W042 is raised on inherited manually specified primary key.",
+    "body": "Description\n\t\nI have models which inherit from other models, and they should inherit the primary key. This works fine with Django 3.1. However, if I install Django 3.2 alpha, when I run make_migrations I get the following error messages:\nSystem check identified some issues:\nWARNINGS:\naccounts.ReservedUsername: (models.W042) Auto-created primary key used when not defining a primary key type, by default 'django.db.models.AutoField'.\n\t\tHINT: Configure the DEFAULT_AUTO_FIELD setting or the SpeedyCoreAccountsConfig.default_auto_field attribute to point to a subclass of AutoField, e.g. 'django.db.models.BigAutoField'.\naccounts.User: (models.W042) Auto-created primary key used when not defining a primary key type, by default 'django.db.models.AutoField'.\n\t\tHINT: Configure the DEFAULT_AUTO_FIELD setting or the SpeedyCoreAccountsConfig.default_auto_field attribute to point to a subclass of AutoField, e.g. 'django.db.models.BigAutoField'.\nblocks.Block: (models.W042) Auto-created primary key used when not defining a primary key type, by default 'django.db.models.AutoField'.\n\t\tHINT: Configure the DEFAULT_AUTO_FIELD setting or the AppConfig.default_auto_field attribute to point to a subclass of AutoField, e.g. 'django.db.models.BigAutoField'.\ncontact_by_form.Feedback: (models.W042) Auto-created primary key used when not defining a primary key type, by default 'django.db.models.AutoField'.\n\t\tHINT: Configure the DEFAULT_AUTO_FIELD setting or the SpeedyCoreContactByFormConfig.default_auto_field attribute to point to a subclass of AutoField, e.g. 'django.db.models.BigAutoField'.\ncore_messages.ReadMark: (models.W042) Auto-created primary key used when not defining a primary key type, by default 'django.db.models.AutoField'.\n\t\tHINT: Configure the DEFAULT_AUTO_FIELD setting or the SpeedyCoreMessagesConfig.default_auto_field attribute to point to a subclass of AutoField, e.g. 'django.db.models.BigAutoField'.\nfriendship.Block: (models.W042) Auto-created primary key used when not defining a primary key type, by default 'django.db.models.AutoField'.\n\t\tHINT: Configure the DEFAULT_AUTO_FIELD setting or the AppConfig.default_auto_field attribute to point to a subclass of AutoField, e.g. 'django.db.models.BigAutoField'.\nfriendship.Follow: (models.W042) Auto-created primary key used when not defining a primary key type, by default 'django.db.models.AutoField'.\n\t\tHINT: Configure the DEFAULT_AUTO_FIELD setting or the AppConfig.default_auto_field attribute to point to a subclass of AutoField, e.g. 'django.db.models.BigAutoField'.\nfriendship.Friend: (models.W042) Auto-created primary key used when not defining a primary key type, by default 'django.db.models.AutoField'.\n\t\tHINT: Configure the DEFAULT_AUTO_FIELD setting or the AppConfig.default_auto_field attribute to point to a subclass of AutoField, e.g. 'django.db.models.BigAutoField'.\nfriendship.FriendshipRequest: (models.W042) Auto-created primary key used when not defining a primary key type, by default 'django.db.models.AutoField'.\n\t\tHINT: Configure the DEFAULT_AUTO_FIELD setting or the AppConfig.default_auto_field attribute to point to a subclass of AutoField, e.g. 'django.db.models.BigAutoField'.\nlikes.UserLike: (models.W042) Auto-created primary key used when not defining a primary key type, by default 'django.db.models.AutoField'.\n\t\tHINT: Configure the DEFAULT_AUTO_FIELD setting or the AppConfig.default_auto_field attribute to point to a subclass of AutoField, e.g. 'django.db.models.BigAutoField'.\nuploads.Image: (models.W042) Auto-created primary key used when not defining a primary key type, by default 'django.db.models.AutoField'.\n\t\tHINT: Configure the DEFAULT_AUTO_FIELD setting or the AppConfig.default_auto_field attribute to point to a subclass of AutoField, e.g. 'django.db.models.BigAutoField'.\nThese models should not use auto-created primary keys! I already defined the primary key in the ancestor of the model. For example class Entity which class User inherits from. It looks to me like a bug in Django 3.2 alpha.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:6116a4e9f884d56db544a628ba04eea3ba7ce4ac2893309bfbec03f82cc4ec68"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-13925",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/db/models/base.py b/django/db/models/base.py\nindex 4038859cfa..cd22b0af22 100644\n--- a/django/db/models/base.py\n+++ b/django/db/models/base.py\n@@ -1297,28 +1297,43 @@ class Model(metaclass=ModelBase):\n \n     @classmethod\n     def _check_default_pk(cls):\n-        if (\n-            cls._meta.pk.auto_created and\n-            not settings.is_overridden('DEFAULT_AUTO_FIELD') and\n-            not cls._meta.app_config._is_default_auto_field_overridden\n-        ):\n-            return [\n-                checks.Warning(\n-                    f\"Auto-created primary key used when not defining a \"\n-                    f\"primary key type, by default \"\n-                    f\"'{settings.DEFAULT_AUTO_FIELD}'.\",\n-                    hint=(\n-                        f\"Configure the DEFAULT_AUTO_FIELD setting or the \"\n-                        f\"{cls._meta.app_config.__class__.__qualname__}.\"\n-                        f\"default_auto_field attribute to point to a subclass \"\n-                        f\"of AutoField, e.g. 'django.db.models.BigAutoField'.\"\n+\n+        if cls._meta.pk.auto_created:\n+            # Check if we inherit primary key from a parent model\n+            for parent in cls._meta.get_parent_list():\n+                if (\n+                    not parent._meta.abstract and  # Only check concrete models\n+                    any(f.primary_key for f in parent._meta.local_fields)  # Has explicit PK\n+                ):\n+                    # Primary key is inherited from parent - no warning needed\n+                    return []\n+\n+\n+            # No parent defines primary key, check if we need to warn\n+            if (\n+                not settings.is_overridden('DEFAULT_AUTO_FIELD') and\n+                not cls._meta.app_config._is_default_auto_field_overridden\n+            ):\n+                return [\n+                    checks.Warning(\n+                        f\"Auto-created primary key used when not defining a \"\n+                        f\"primary key type, by default \"\n+                        f\"'{settings.DEFAULT_AUTO_FIELD}'.\",\n+                        hint=(\n+                            f\"Configure the DEFAULT_AUTO_FIELD setting or the \"\n+                            f\"{cls._meta.app_config.__class__.__qualname__}.\"\n+                            f\"default_auto_field attribute to point to a subclass \"\n+                            f\"of AutoField, e.g. 'django.db.models.BigAutoField'.\"\n+                        ),\n+                        obj=cls,\n+                        id='models.W042',\n                     ),\n-                    obj=cls,\n-                    id='models.W042',\n-                ),\n-            ]\n+                ]\n         return []\n \n+\n+\n+\n     @classmethod\n     def _check_swappable(cls):\n         \"\"\"Check if the swapped model exists.\"\"\"\n@@ -2137,3 +2152,21 @@ def model_unpickle(model_id):\n \n \n model_unpickle.__safe_for_unpickle__ = True\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\ndiff --git \"a/django/db/models/base.py\\\"\" \"b/django/db/models/base.py\\\"\"\nnew file mode 100644\nindex 0000000000..b910aa14d5\n--- /dev/null\n+++ \"b/django/db/models/base.py\\\"\"\n@@ -0,0 +1,34 @@\n+    @classmethod\n+    def _check_default_pk(cls):\n+        if cls._meta.pk.auto_created:\n+            # Check if we inherit primary key from a parent model\n+            for parent in cls._meta.get_parent_list():\n+                if (\n+                    not parent._meta.abstract and  # Only check concrete models\n+                    any(f.primary_key for f in parent._meta.local_fields)  # Has explicit PK\n+                ):\n+                    # Primary key is inherited from parent - no warning needed\n+                    return []\n+\n+            # No parent defines primary key, check if we need to warn\n+            if (\n+                not settings.is_overridden('DEFAULT_AUTO_FIELD') and\n+                not cls._meta.app_config._is_default_auto_field_overridden\n+            ):\n+                return [\n+                    checks.Warning(\n+                        f\"Auto-created primary key used when not defining a \"\n+                        f\"primary key type, by default \"\n+                        f\"'{settings.DEFAULT_AUTO_FIELD}'.\",\n+                        hint=(\n+                            f\"Configure the DEFAULT_AUTO_FIELD setting or the \"\n+                            f\"{cls._meta.app_config.__class__.__qualname__}.\"\n+                            f\"default_auto_field attribute to point to a subclass \"\n+                            f\"of AutoField, e.g. 'django.db.models.BigAutoField'.\"\n+                        ),\n+                        obj=cls,\n+                        id='models.W042',\n+                    ),\n+                ]\n+        return []\n+\ndiff --git a/reproduce.py b/reproduce.py\nnew file mode 100644\nindex 0000000000..119ec18b07\n--- /dev/null\n+++ b/reproduce.py\n@@ -0,0 +1,42 @@\n+from django.conf import settings\n+from django.apps import apps\n+\n+settings.configure(\n+    INSTALLED_APPS=[\n+        'django.contrib.contenttypes',\n+    ],\n+    DATABASES={\n+        'default': {\n+            'ENGINE': 'django.db.backends.sqlite3',\n+            'NAME': ':memory:'\n+        }\n+    }\n+)\n+\n+import django\n+django.setup()\n+\n+from django.db import models\n+from django.core import checks\n+\n+# Parent model with explicit primary key\n+class Entity(models.Model):\n+    id = models.AutoField(primary_key=True)\n+    name = models.CharField(max_length=100)\n+    \n+    class Meta:\n+        app_label = 'testapp'\n+\n+# Child model that should inherit primary key\n+class User(Entity):\n+    email = models.EmailField()\n+    \n+    class Meta:\n+        app_label = 'testapp'\n+\n+# Run model checks\n+print(\"Running model checks...\")\n+issues = checks.run_checks()\n+for issue in issues:\n+    if isinstance(issue.obj, type) and issubclass(issue.obj, models.Model):\n+        print(f\"{issue.obj.__name__}: {issue.msg} (ID: {issue.id})\")\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "LearnByInteract",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

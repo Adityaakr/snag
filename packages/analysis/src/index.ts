@@ -2,6 +2,7 @@ import { BRAND } from '@remit/core';
 
 export * from './diff/parse.js';
 export * from './diff/render.js';
+export * from './diff/trees.js';
 export * from './git/local.js';
 
 /** The package name, used by smoke tests to prove workspace wiring. */

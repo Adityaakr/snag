@@ -1,0 +1,140 @@
+{
+ "id": "OpenHands:sympy__sympy-24539",
+ "corpus": "swebench",
+ "seedId": "sympy__sympy-24539",
+ "input": {
+  "mode": "local",
+  "repo": "sympy/sympy",
+  "baseSha": "193e3825645d93c73e31cdceb6d742cc6919624d",
+  "headSha": "OpenHands-sympy__sympy-24539",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "sympy",
+    "repo": "sympy",
+    "number": 24539
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "sympy",
+     "repo": "sympy",
+     "number": 24539
+    },
+    "title": "`PolyElement.as_expr()` not accepting symbols",
+    "body": "The method `PolyElement.as_expr()`\r\n\r\nhttps://github.com/sympy/sympy/blob/193e3825645d93c73e31cdceb6d742cc6919624d/sympy/polys/rings.py#L618-L624\r\n\r\nis supposed to let you set the symbols you want to use, but, as it stands, either you pass the wrong number of symbols, and get an error message, or you pass the right number of symbols, and it ignores them, using `self.ring.symbols` instead:\r\n\r\n```python\r\n>>> from sympy import ring, ZZ, symbols\r\n>>> R, x, y, z = ring(\"x,y,z\", ZZ)\r\n>>> f = 3*x**2*y - x*y*z + 7*z**3 + 1\r\n>>> U, V, W = symbols(\"u,v,w\")\r\n>>> f.as_expr(U, V, W)\r\n3*x**2*y - x*y*z + 7*z**3 + 1\r\n```",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:585b373f0a9042c66d0bb66b76d27f5b94bf5d3491342b87180468eed17f473d"
+   }
+  ],
+  "pr": {
+   "title": "Fix sympy__sympy-24539",
+   "body": ""
+  },
+  "diffText": "diff --git a/reproduce.py b/reproduce.py\nnew file mode 100644\nindex 0000000000..5a9d700ee6\n--- /dev/null\n+++ b/reproduce.py\n@@ -0,0 +1,7 @@\n+from sympy import ring, ZZ, symbols\n+\n+R, x, y, z = ring(\"x,y,z\", ZZ)\n+f = 3*x**2*y - x*y*z + 7*z**3 + 1\n+U, V, W = symbols(\"u,v,w\")\n+print(\"Original expression:\", f)\n+print(\"Expression with new symbols:\", f.as_expr(U, V, W))\n\\ No newline at end of file\ndiff --git a/sympy/polys/rings.py b/sympy/polys/rings.py\nindex 12bd2fc920..3e33a2780b 100644\n--- a/sympy/polys/rings.py\n+++ b/sympy/polys/rings.py\n@@ -618,8 +618,11 @@ def set_ring(self, new_ring):\n     def as_expr(self, *symbols):\n         if symbols and len(symbols) != self.ring.ngens:\n             raise ValueError(\"not enough symbols, expected %s got %s\" % (self.ring.ngens, len(symbols)))\n-        else:\n+        elif not symbols:\n             symbols = self.ring.symbols\n+        else:\n+            # Convert any polynomial elements to their corresponding symbols\n+            symbols = tuple(s.as_expr() if isinstance(s, PolyElement) else s for s in symbols)\n \n         return expr_from_dict(self.as_expr_dict(), *symbols)\n \ndiff --git a/test_edge_cases.py b/test_edge_cases.py\nnew file mode 100644\nindex 0000000000..2a84f64550\n--- /dev/null\n+++ b/test_edge_cases.py\n@@ -0,0 +1,31 @@\n+from sympy import ring, ZZ, symbols\n+\n+# Test case 1: No symbols provided (should use original symbols)\n+R, x, y, z = ring(\"x,y,z\", ZZ)\n+f = 3*x**2*y - x*y*z + 7*z**3 + 1\n+print(\"Test 1 - No symbols provided:\")\n+print(\"Original:\", f)\n+print(\"as_expr():\", f.as_expr())\n+print()\n+\n+# Test case 2: Wrong number of symbols (should raise error)\n+U, V = symbols(\"u,v\")\n+print(\"Test 2 - Wrong number of symbols:\")\n+print(\"Original:\", f)\n+try:\n+    print(\"as_expr(U,V):\", f.as_expr(U, V))\n+except ValueError as e:\n+    print(\"ValueError:\", str(e))\n+print()\n+\n+# Test case 3: Symbols with different names but same number\n+U, V, W = symbols(\"u,v,w\")\n+print(\"Test 3 - Different symbols:\")\n+print(\"Original:\", f)\n+print(\"as_expr(U,V,W):\", f.as_expr(U, V, W))\n+print()\n+\n+# Test case 4: Using the same symbols in different order\n+print(\"Test 4 - Same symbols different order:\")\n+print(\"Original:\", f)\n+print(\"as_expr(z,y,x):\", f.as_expr(z, y, x))\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "OpenHands",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

@@ -1,0 +1,142 @@
+{
+ "id": "CodeStory:django__django-11964",
+ "corpus": "swebench",
+ "seedId": "django__django-11964",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "fc2b1cc926e34041953738e58fa6ad3053059b22",
+  "headSha": "CodeStory-django__django-11964",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 11964
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 11964
+    },
+    "title": "The value of a TextChoices/IntegerChoices field has a differing type",
+    "body": "Description\n\t\nIf we create an instance of a model having a CharField or IntegerField with the keyword choices pointing to IntegerChoices or TextChoices, the value returned by the getter of the field will be of the same type as the one created by enum.Enum (enum value).\nFor example, this model:\nfrom django.db import models\nfrom django.utils.translation import gettext_lazy as _\nclass MyChoice(models.TextChoices):\n\tFIRST_CHOICE = \"first\", _(\"The first choice, it is\")\n\tSECOND_CHOICE = \"second\", _(\"The second choice, it is\")\nclass MyObject(models.Model):\n\tmy_str_value = models.CharField(max_length=10, choices=MyChoice.choices)\nThen this test:\nfrom django.test import TestCase\nfrom testing.pkg.models import MyObject, MyChoice\nclass EnumTest(TestCase):\n\tdef setUp(self) -> None:\n\t\tself.my_object = MyObject.objects.create(my_str_value=MyChoice.FIRST_CHOICE)\n\tdef test_created_object_is_str(self):\n\t\tmy_object = self.my_object\n\t\tself.assertIsInstance(my_object.my_str_value, str)\n\t\tself.assertEqual(str(my_object.my_str_value), \"first\")\n\tdef test_retrieved_object_is_str(self):\n\t\tmy_object = MyObject.objects.last()\n\t\tself.assertIsInstance(my_object.my_str_value, str)\n\t\tself.assertEqual(str(my_object.my_str_value), \"first\")\nAnd then the results:\n(django30-venv) ➜ django30 ./manage.py test\nCreating test database for alias 'default'...\nSystem check identified no issues (0 silenced).\nF.\n======================================================================\nFAIL: test_created_object_is_str (testing.tests.EnumTest)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n File \"/Users/mikailkocak/Development/django30/testing/tests.py\", line 14, in test_created_object_is_str\n\tself.assertEqual(str(my_object.my_str_value), \"first\")\nAssertionError: 'MyChoice.FIRST_CHOICE' != 'first'\n- MyChoice.FIRST_CHOICE\n+ first\n----------------------------------------------------------------------\nRan 2 tests in 0.002s\nFAILED (failures=1)\nWe notice when invoking __str__(...) we don't actually get the value property of the enum value which can lead to some unexpected issues, especially when communicating to an external API with a freshly created instance that will send MyEnum.MyValue, and the one that was retrieved would send my_value.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:3257930b130c3ac487c7359674ef9210b5a671f24bf0aad69a92df4f7e44f8f5"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-11964",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/db/models/enums.py b/django/db/models/enums.py\nindex bbe362a6ab..7a3ae04c5a 100644\n--- a/django/db/models/enums.py\n+++ b/django/db/models/enums.py\n@@ -65,7 +65,9 @@ class Choices(enum.Enum, metaclass=ChoicesMeta):\n \n class IntegerChoices(int, Choices):\n     \"\"\"Class for creating enumerated integer choices.\"\"\"\n-    pass\n+\n+    def __str__(self):\n+        return str(self.value)\n \n \n class TextChoices(str, Choices):\n@@ -73,3 +75,6 @@ class TextChoices(str, Choices):\n \n     def _generate_next_value_(name, start, count, last_values):\n         return name\n+\n+    def __str__(self):\n+        return str(self.value)\ndiff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..9a4e35e1b0\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,36 @@\n+# Configure Django settings\n+import django\n+from django.conf import settings\n+settings.configure(\n+    DATABASES={'default': {'ENGINE': 'django.db.backends.sqlite3', 'NAME': ':memory:'}},\n+    INSTALLED_APPS=['django.contrib.contenttypes', 'django.contrib.auth'],\n+)\n+django.setup()\n+\n+from django.db import models\n+from django.utils.translation import gettext_lazy as _\n+\n+# Define our models\n+class MyTextChoice(models.TextChoices):\n+    FIRST_CHOICE = \"first\", _(\"The first choice, it is\")\n+    SECOND_CHOICE = \"second\", _(\"The second choice, it is\")\n+\n+class MyIntChoice(models.IntegerChoices):\n+    ONE = 1, _(\"The first choice, it is\")\n+    TWO = 2, _(\"The second choice, it is\")\n+\n+# Test TextChoices string conversion\n+text_choice = MyTextChoice.FIRST_CHOICE\n+print(\"TextChoices Test:\")\n+print(f\"String representation: {str(text_choice)}\")\n+print(f\"Raw value: {text_choice.value}\")\n+print(f\"Is instance of str? {isinstance(text_choice, str)}\")\n+print(f\"Direct comparison: {'first' == str(text_choice)}\")\n+\n+# Test IntegerChoices string conversion\n+int_choice = MyIntChoice.ONE\n+print(\"\\nIntegerChoices Test:\")\n+print(f\"String representation: {str(int_choice)}\")\n+print(f\"Raw value: {int_choice.value}\")\n+print(f\"Is instance of int? {isinstance(int_choice, int)}\")\n+print(f\"Direct comparison: {1 == int_choice}\")\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq34_manual",
+  "strength": "weak",
+  "diffPattern": "divergent",
+  "correctness": "uncertain"
+ },
+ "annotatedBy": "study"
+}

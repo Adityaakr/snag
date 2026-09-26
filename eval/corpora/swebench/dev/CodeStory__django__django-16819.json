@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:django__django-16819",
+ "corpus": "swebench",
+ "seedId": "django__django-16819",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "0b0998dc151feb77068e2387c34cc50ef6b356ae",
+  "headSha": "CodeStory-django__django-16819",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 16819
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 16819
+    },
+    "title": "Reduce Add/RemoveIndex migration operations.",
+    "body": "Description\n\t\nWe should reduce AddIndex/RemoveIndex operations when optimizing migration operations.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:ae69cea75c9444919c22ba2c727b389638ed9f3986c0012a9a835b8ed3ac10fd"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-16819",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/db/migrations/operations/models.py b/django/db/migrations/operations/models.py\nindex 967a91fdc8..1988b47cbf 100644\n--- a/django/db/migrations/operations/models.py\n+++ b/django/db/migrations/operations/models.py\n@@ -861,6 +861,21 @@ class AddIndex(IndexOperation):\n     def migration_name_fragment(self):\n         return \"%s_%s\" % (self.model_name_lower, self.index.name.lower())\n \n+    def reduce(self, operation, app_label):\n+        if (\n+            isinstance(operation, RemoveIndex)\n+            and self.model_name_lower == operation.model_name_lower\n+            and self.index.name.lower() == operation.name.lower()\n+        ):\n+            return []\n+        elif (\n+            isinstance(operation, AddIndex)\n+            and self.model_name_lower == operation.model_name_lower\n+            and self.index.name.lower() == operation.index.name.lower()\n+        ):\n+            return [self]  # Keep only the first AddIndex\n+        return super().reduce(operation, app_label)\n+\n \n class RemoveIndex(IndexOperation):\n     \"\"\"Remove an index from a model.\"\"\"\n@@ -904,6 +919,15 @@ class RemoveIndex(IndexOperation):\n     def migration_name_fragment(self):\n         return \"remove_%s_%s\" % (self.model_name_lower, self.name.lower())\n \n+    def reduce(self, operation, app_label):\n+        if (\n+            isinstance(operation, RemoveIndex)\n+            and self.model_name_lower == operation.model_name_lower\n+            and self.name.lower() == operation.name.lower()\n+        ):\n+            return [self]  # Keep only the first RemoveIndex\n+        return super().reduce(operation, app_label)\n+\n \n class RenameIndex(IndexOperation):\n     \"\"\"Rename an index.\"\"\"\ndiff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..fc518c8cca\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,98 @@\n+from django.db import migrations, models\n+from django.db.migrations.optimizer import MigrationOptimizer\n+\n+def test_index_operations():\n+    # Test 1: Add and remove same index\n+    operations = [\n+        migrations.AddIndex(\n+            model_name='testmodel',\n+            index=models.Index(fields=['name'], name='test_idx'),\n+        ),\n+        migrations.RemoveIndex(\n+            model_name='testmodel',\n+            name='test_idx',\n+        ),\n+    ]\n+    \n+    optimizer = MigrationOptimizer()\n+    optimized = optimizer.optimize(operations, app_label='testapp')\n+    \n+    print(\"Test 1: Add/Remove same index\")\n+    print(\"Original operations:\", len(operations))\n+    print(\"Optimized operations:\", len(optimized))\n+    print(\"Expected: 0 operations (cancel out)\\n\")\n+    \n+    # Test 2: Duplicate AddIndex\n+    operations = [\n+        migrations.AddIndex(\n+            model_name='testmodel',\n+            index=models.Index(fields=['name'], name='test_idx'),\n+        ),\n+        migrations.AddIndex(\n+            model_name='testmodel',\n+            index=models.Index(fields=['name'], name='test_idx'),\n+        ),\n+    ]\n+    \n+    optimized = optimizer.optimize(operations, app_label='testapp')\n+    print(\"Test 2: Duplicate AddIndex\")\n+    print(\"Original operations:\", len(operations))\n+    print(\"Optimized operations:\", len(optimized))\n+    print(\"Expected: 1 operation (deduplicated)\\n\")\n+    \n+    # Test 3: Duplicate RemoveIndex\n+    operations = [\n+        migrations.RemoveIndex(\n+            model_name='testmodel',\n+            name='test_idx',\n+        ),\n+        migrations.RemoveIndex(\n+            model_name='testmodel',\n+            name='test_idx',\n+        ),\n+    ]\n+    \n+    optimized = optimizer.optimize(operations, app_label='testapp')\n+    print(\"Test 3: Duplicate RemoveIndex\")\n+    print(\"Original operations:\", len(operations))\n+    print(\"Optimized operations:\", len(optimized))\n+    print(\"Expected: 1 operation (deduplicated)\\n\")\n+    \n+    # Test 4: Different indexes should not be optimized\n+    operations = [\n+        migrations.AddIndex(\n+            model_name='testmodel',\n+            index=models.Index(fields=['name'], name='test_idx1'),\n+        ),\n+        migrations.AddIndex(\n+            model_name='testmodel',\n+            index=models.Index(fields=['age'], name='test_idx2'),\n+        ),\n+    ]\n+    \n+    optimized = optimizer.optimize(operations, app_label='testapp')\n+    print(\"Test 4: Different indexes\")\n+    print(\"Original operations:\", len(operations))\n+    print(\"Optimized operations:\", len(optimized))\n+    print(\"Expected: 2 operations (no optimization)\\n\")\n+    \n+    # Test 5: Case insensitive index names\n+    operations = [\n+        migrations.AddIndex(\n+            model_name='testmodel',\n+            index=models.Index(fields=['name'], name='Test_Idx'),\n+        ),\n+        migrations.RemoveIndex(\n+            model_name='testmodel',\n+            name='test_idx',\n+        ),\n+    ]\n+    \n+    optimized = optimizer.optimize(operations, app_label='testapp')\n+    print(\"Test 5: Case insensitive index names\")\n+    print(\"Original operations:\", len(operations))\n+    print(\"Optimized operations:\", len(optimized))\n+    print(\"Expected: 0 operations (cancel out despite case)\\n\")\n+\n+if __name__ == '__main__':\n+    test_index_operations()\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

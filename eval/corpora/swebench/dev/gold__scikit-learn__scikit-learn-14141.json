@@ -1,0 +1,140 @@
+{
+ "id": "gold:scikit-learn__scikit-learn-14141",
+ "corpus": "swebench",
+ "seedId": "scikit-learn__scikit-learn-14141",
+ "input": {
+  "mode": "local",
+  "repo": "scikit-learn/scikit-learn",
+  "baseSha": "3d997697fdd166eff428ea9fd35734b6a8ba113e",
+  "headSha": "gold-scikit-learn__scikit-learn-14141",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "scikit-learn",
+    "repo": "scikit-learn",
+    "number": 14141
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "scikit-learn",
+     "repo": "scikit-learn",
+     "number": 14141
+    },
+    "title": "Add joblib in show_versions",
+    "body": "joblib should be added to the dependencies listed in show_versions or added to the issue template when sklearn version is > 0.20.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:d9f746d29fb68eab0b7722bee0447300e4f9abcce62e4bd377da40ec524f33b8"
+   }
+  ],
+  "pr": {
+   "title": "Fix scikit-learn__scikit-learn-14141",
+   "body": ""
+  },
+  "diffText": "diff --git a/sklearn/utils/_show_versions.py b/sklearn/utils/_show_versions.py\n--- a/sklearn/utils/_show_versions.py\n+++ b/sklearn/utils/_show_versions.py\n@@ -48,6 +48,7 @@ def _get_deps_info():\n         \"Cython\",\n         \"pandas\",\n         \"matplotlib\",\n+        \"joblib\",\n     ]\n \n     def get_version(module):\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "gold",
+  "source": "gold",
+  "strength": "strong"
+ },
+ "annotatedBy": "study"
+}

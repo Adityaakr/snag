@@ -1,0 +1,140 @@
+{
+ "id": "gold:django__django-11477",
+ "corpus": "swebench",
+ "seedId": "django__django-11477",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "e28671187903e6aca2428374fdd504fca3032aee",
+  "headSha": "gold-django__django-11477",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 11477
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 11477
+    },
+    "title": "translate_url() creates an incorrect URL when optional named groups are missing in the URL pattern",
+    "body": "Description\n\t\nThere is a problem when translating urls with absent 'optional' arguments\n(it's seen in test case of the patch)",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:948b7da125ce3286f7261aee4018643a4a9b1d05c88f1fd23b4c4f0f0f8c10cf"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-11477",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/urls/resolvers.py b/django/urls/resolvers.py\n--- a/django/urls/resolvers.py\n+++ b/django/urls/resolvers.py\n@@ -153,7 +153,7 @@ def match(self, path):\n             # If there are any named groups, use those as kwargs, ignoring\n             # non-named groups. Otherwise, pass all non-named arguments as\n             # positional arguments.\n-            kwargs = match.groupdict()\n+            kwargs = {k: v for k, v in match.groupdict().items() if v is not None}\n             args = () if kwargs else match.groups()\n             return path[match.end():], args, kwargs\n         return None\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "gold",
+  "source": "gold",
+  "strength": "strong"
+ },
+ "annotatedBy": "study"
+}

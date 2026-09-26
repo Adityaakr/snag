@@ -1,0 +1,140 @@
+{
+ "id": "gold:sphinx-doc__sphinx-9602",
+ "corpus": "swebench",
+ "seedId": "sphinx-doc__sphinx-9602",
+ "input": {
+  "mode": "local",
+  "repo": "sphinx-doc/sphinx",
+  "baseSha": "6c38f68dae221e8cfc70c137974b8b88bd3baaab",
+  "headSha": "gold-sphinx-doc__sphinx-9602",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "sphinx-doc",
+    "repo": "sphinx",
+    "number": 9602
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "sphinx-doc",
+     "repo": "sphinx",
+     "number": 9602
+    },
+    "title": "Nitpick flags Literal annotation values as missing py:class",
+    "body": "### Describe the bug\n\nWhen a value is present in a type annotation as `Literal`, sphinx will treat the value as a `py:class`. With nitpick enabled, values like `Literal[True]` end up failing, because `True` is not a class.\r\n\r\nThis is a problem for builds which want to use `-n -W` to catch doc errors.\n\n### How to Reproduce\n\nSetup a simple function which uses Literal, then attempt to autodoc it. e.g.\r\n```python\r\nimport typing\r\n@typing.overload\r\ndef foo(x: \"typing.Literal[True]\") -> int: ...\r\n@typing.overload\r\ndef foo(x: \"typing.Literal[False]\") -> str: ...\r\ndef foo(x: bool):\r\n    \"\"\"a func\"\"\"\r\n    return 1 if x else \"foo\"\r\n```\r\n\r\nI've pushed an example [failing project](https://github.com/sirosen/repro/tree/master/sphinxdoc/literal) to [my repro repo](https://github.com/sirosen/repro). Just run `./doc.sh` with `sphinx-build` available to see the failing build.\n\n### Expected behavior\n\n`Literal[True]` (or whatever literal value) should be present in the type annotation but should not trigger the nitpick warning.\n\n### Your project\n\nhttps://github.com/sirosen/repro/tree/master/sphinxdoc/literal\n\n### Screenshots\n\n_No response_\n\n### OS\n\nLinux\n\n### Python version\n\n3.8, 3.9\n\n### Sphinx version\n\n4.1.2\n\n### Sphinx extensions\n\nautodoc\n\n### Extra tools\n\n_No response_\n\n### Additional context\n\n_No response_",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:27497636dbd304a09f5b4fd3a3c630064d22323f5e2dcbef32f2ee8e39a0cc3d"
+   }
+  ],
+  "pr": {
+   "title": "Fix sphinx-doc__sphinx-9602",
+   "body": ""
+  },
+  "diffText": "diff --git a/sphinx/domains/python.py b/sphinx/domains/python.py\n--- a/sphinx/domains/python.py\n+++ b/sphinx/domains/python.py\n@@ -123,7 +123,7 @@ def unparse(node: ast.AST) -> List[Node]:\n             if node.value is Ellipsis:\n                 return [addnodes.desc_sig_punctuation('', \"...\")]\n             else:\n-                return [nodes.Text(node.value)]\n+                return [nodes.Text(repr(node.value))]\n         elif isinstance(node, ast.Expr):\n             return unparse(node.value)\n         elif isinstance(node, ast.Index):\n@@ -149,6 +149,12 @@ def unparse(node: ast.AST) -> List[Node]:\n             result.append(addnodes.desc_sig_punctuation('', '['))\n             result.extend(unparse(node.slice))\n             result.append(addnodes.desc_sig_punctuation('', ']'))\n+\n+            # Wrap the Text nodes inside brackets by literal node if the subscript is a Literal\n+            if result[0] in ('Literal', 'typing.Literal'):\n+                for i, subnode in enumerate(result[1:], start=1):\n+                    if isinstance(subnode, nodes.Text):\n+                        result[i] = nodes.literal('', '', subnode)\n             return result\n         elif isinstance(node, ast.Tuple):\n             if node.elts:\n@@ -179,7 +185,9 @@ def unparse(node: ast.AST) -> List[Node]:\n         tree = ast_parse(annotation)\n         result = unparse(tree)\n         for i, node in enumerate(result):\n-            if isinstance(node, nodes.Text) and node.strip():\n+            if isinstance(node, nodes.literal):\n+                result[i] = node[0]\n+            elif isinstance(node, nodes.Text) and node.strip():\n                 result[i] = type_to_xref(str(node), env)\n         return result\n     except SyntaxError:\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "gold",
+  "source": "gold",
+  "strength": "strong"
+ },
+ "annotatedBy": "study"
+}

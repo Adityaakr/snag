@@ -1,0 +1,168 @@
+{
+ "id": "py-blog-slugs.weaken_assertion.tests_test_reading_time.py",
+ "corpus": "mutations",
+ "seedId": "py-blog-slugs",
+ "operator": "weaken_assertion",
+ "target": "tests/test_reading_time.py",
+ "input": {
+  "mode": "local",
+  "baseSha": "base",
+  "headSha": "head-weaken_assertion-tests/test_reading_time.py",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "inkwell",
+    "repo": "blog",
+    "number": 203
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "inkwell",
+     "repo": "blog",
+     "number": 203
+    },
+    "title": "Cleaner post slugs",
+    "body": "Slugs are just the lowercased title with spaces swapped for hyphens, so titles with accents, punctuation or extra spaces produce ugly or broken URLs, and two posts with the same title collide.\n\n- [ ] Accented letters become plain ASCII (an e with an acute accent becomes `e`), and sharp s, the ae ligature and o with a stroke become `ss`, `ae` and `o`\n- [ ] Runs of spaces, underscores and punctuation collapse into one hyphen, with no leading or trailing hyphen (`  Hello,  World! ` becomes `hello-world`)\n- [ ] Slugs longer than 60 characters are cut at the last word boundary within 60 characters, never mid-word (only a single word longer than 60 is cut at 60)\n- [ ] `unique_slug` appends `-2`, `-3` and so on when the slug is already taken (`hello` taken gives `hello-2`)",
+    "author": "local",
+    "state": "open",
+    "comments": [],
+    "contentHash": "sha256:a66d54343d59a8dd0634aba5602d1961e8e708ebd2310c61a2c7447dabc29608"
+   }
+  ],
+  "pr": {
+   "title": "Transliterate, collapse and truncate post slugs",
+   "body": "`slugify` now transliterates accented letters to ASCII (with explicit mappings for sharp s, ae and o with a stroke), collapses any run of non-alphanumeric characters into a single hyphen, trims hyphens at both ends, and cuts slugs over 60 characters at a word boundary. Adds `unique_slug`, which appends a counter starting at 2 until the slug is free. Tests cover each case."
+  },
+  "diffText": "diff --git a/blog/slugs.py b/blog/slugs.py\n--- a/blog/slugs.py\n+++ b/blog/slugs.py\n@@ -1,5 +1,41 @@\n \"\"\"URL slugs for blog posts.\"\"\"\n \n+import re\n+import unicodedata\n \n+\n+def to_ascii(text):\n+    special = {\n+        \"\\u00df\": \"ss\",\n+        \"\\u00e6\": \"ae\",\n+        \"\\u00f8\": \"o\",\n+    }\n+    for letter, plain in special.items():\n+        text = text.replace(letter, plain)\n+    decomposed = unicodedata.normalize(\"NFKD\", text)\n+    return decomposed.encode(\"ascii\", \"ignore\").decode(\"ascii\")\n+\n+\n+def truncate(slug, limit):\n+    if len(slug) <= limit:\n+        return slug\n+    head = slug[: limit + 1]\n+    if \"-\" not in head:\n+        return slug[:limit]\n+    return head.rsplit(\"-\", 1)[0]\n+\n+\n def slugify(title):\n-    return title.strip().lower().replace(\" \", \"-\")\n+    text = to_ascii(title).lower()\n+    text = re.sub(r\"[^a-z0-9]+\", \"-\", text).strip(\"-\")\n+    return truncate(text, 60)\n+\n+\n+def unique_slug(title, taken):\n+    base = slugify(title)\n+    slug = base\n+    counter = 2\n+    while slug in taken:\n+        slug = f\"{base}-{counter}\"\n+        counter += 1\n+    return slug\ndiff --git a/tests/test_reading_time.py b/tests/test_reading_time.py\n--- a/tests/test_reading_time.py\n+++ b/tests/test_reading_time.py\n@@ -4,7 +4,7 @@\n \n \n def test_rounds_to_nearest_minute():\n-    assert reading_minutes(\"word \" * 600) == 3\n+    assert reading_minutes(\"word \" * 600)\n \n \n def test_short_posts_take_one_minute():\ndiff --git a/tests/test_slugs.py b/tests/test_slugs.py\n--- a/tests/test_slugs.py\n+++ b/tests/test_slugs.py\n@@ -5,3 +5,33 @@\n \n def test_lowercases_and_hyphenates():\n     assert slugs.slugify(\"Hello World\") == \"hello-world\"\n+\n+\n+def test_transliterates_accents():\n+    assert slugs.slugify(\"Caf\\u00e9 Cr\\u00e8me\") == \"cafe-creme\"\n+    assert slugs.to_ascii(\"Stra\\u00dfe\") == \"Strasse\"\n+    assert slugs.to_ascii(\"\\u00e6ble\") == \"aeble\"\n+    assert slugs.to_ascii(\"\\u00f8l\") == \"ol\"\n+\n+\n+def test_collapses_separators():\n+    assert slugs.slugify(\"  Hello,  World! \") == \"hello-world\"\n+    assert slugs.slugify(\"snake_case__title\") == \"snake-case-title\"\n+    assert slugs.slugify(\"--draft--\") == \"draft\"\n+\n+\n+def test_truncates_on_word_boundary():\n+    assert slugs.slugify(\"word \" * 30) == \"-\".join([\"word\"] * 12)\n+\n+\n+def test_short_slugs_are_not_truncated():\n+    assert slugs.slugify(\"word \" * 5) == \"word-word-word-word-word\"\n+\n+\n+def test_unique_slug_keeps_free_slug():\n+    assert slugs.unique_slug(\"Hello\", set()) == \"hello\"\n+\n+\n+def test_unique_slug_appends_counter():\n+    assert slugs.unique_slug(\"Hello\", {\"hello\"}) == \"hello-2\"\n+    assert slugs.unique_slug(\"Hello\", {\"hello\", \"hello-2\", \"hello-3\"}) == \"hello-4\"\n"
+ },
+ "trees": {
+  "base": {
+   "blog/config.py": "\"\"\"Site-wide settings for the blog.\"\"\"\n\n\ndef site_settings():\n    return {\"posts_per_page\": 10, \"words_per_minute\": 200, \"base_url\": \"https://blog.example.com\"}\n",
+   "blog/reading_time.py": "\"\"\"Estimated reading time for posts.\"\"\"\n\nfrom blog.config import site_settings\n\n\ndef reading_minutes(text):\n    words = len(text.split())\n    minutes = round(words / site_settings()[\"words_per_minute\"])\n    return max(1, minutes)\n",
+   "blog/slugs.py": "\"\"\"URL slugs for blog posts.\"\"\"\n\n\ndef slugify(title):\n    return title.strip().lower().replace(\" \", \"-\")\n",
+   "tests/test_reading_time.py": "import pytest\n\nfrom blog.reading_time import reading_minutes\n\n\ndef test_rounds_to_nearest_minute():\n    assert reading_minutes(\"word \" * 600) == 3\n\n\ndef test_short_posts_take_one_minute():\n    assert reading_minutes(\"hello\") == 1\n",
+   "tests/test_slugs.py": "import pytest\n\nfrom blog import slugs\n\n\ndef test_lowercases_and_hyphenates():\n    assert slugs.slugify(\"Hello World\") == \"hello-world\"\n"
+  },
+  "head": {
+   "blog/config.py": "\"\"\"Site-wide settings for the blog.\"\"\"\n\n\ndef site_settings():\n    return {\"posts_per_page\": 10, \"words_per_minute\": 200, \"base_url\": \"https://blog.example.com\"}\n",
+   "blog/reading_time.py": "\"\"\"Estimated reading time for posts.\"\"\"\n\nfrom blog.config import site_settings\n\n\ndef reading_minutes(text):\n    words = len(text.split())\n    minutes = round(words / site_settings()[\"words_per_minute\"])\n    return max(1, minutes)\n",
+   "blog/slugs.py": "\"\"\"URL slugs for blog posts.\"\"\"\n\nimport re\nimport unicodedata\n\n\ndef to_ascii(text):\n    special = {\n        \"\\u00df\": \"ss\",\n        \"\\u00e6\": \"ae\",\n        \"\\u00f8\": \"o\",\n    }\n    for letter, plain in special.items():\n        text = text.replace(letter, plain)\n    decomposed = unicodedata.normalize(\"NFKD\", text)\n    return decomposed.encode(\"ascii\", \"ignore\").decode(\"ascii\")\n\n\ndef truncate(slug, limit):\n    if len(slug) <= limit:\n        return slug\n    head = slug[: limit + 1]\n    if \"-\" not in head:\n        return slug[:limit]\n    return head.rsplit(\"-\", 1)[0]\n\n\ndef slugify(title):\n    text = to_ascii(title).lower()\n    text = re.sub(r\"[^a-z0-9]+\", \"-\", text).strip(\"-\")\n    return truncate(text, 60)\n\n\ndef unique_slug(title, taken):\n    base = slugify(title)\n    slug = base\n    counter = 2\n    while slug in taken:\n        slug = f\"{base}-{counter}\"\n        counter += 1\n    return slug\n",
+   "tests/test_reading_time.py": "import pytest\n\nfrom blog.reading_time import reading_minutes\n\n\ndef test_rounds_to_nearest_minute():\n    assert reading_minutes(\"word \" * 600)\n\n\ndef test_short_posts_take_one_minute():\n    assert reading_minutes(\"hello\") == 1\n",
+   "tests/test_slugs.py": "import pytest\n\nfrom blog import slugs\n\n\ndef test_lowercases_and_hyphenates():\n    assert slugs.slugify(\"Hello World\") == \"hello-world\"\n\n\ndef test_transliterates_accents():\n    assert slugs.slugify(\"Caf\\u00e9 Cr\\u00e8me\") == \"cafe-creme\"\n    assert slugs.to_ascii(\"Stra\\u00dfe\") == \"Strasse\"\n    assert slugs.to_ascii(\"\\u00e6ble\") == \"aeble\"\n    assert slugs.to_ascii(\"\\u00f8l\") == \"ol\"\n\n\ndef test_collapses_separators():\n    assert slugs.slugify(\"  Hello,  World! \") == \"hello-world\"\n    assert slugs.slugify(\"snake_case__title\") == \"snake-case-title\"\n    assert slugs.slugify(\"--draft--\") == \"draft\"\n\n\ndef test_truncates_on_word_boundary():\n    assert slugs.slugify(\"word \" * 30) == \"-\".join([\"word\"] * 12)\n\n\ndef test_short_slugs_are_not_truncated():\n    assert slugs.slugify(\"word \" * 5) == \"word-word-word-word-word\"\n\n\ndef test_unique_slug_keeps_free_slug():\n    assert slugs.unique_slug(\"Hello\", set()) == \"hello\"\n\n\ndef test_unique_slug_appends_counter():\n    assert slugs.unique_slug(\"Hello\", {\"hello\"}) == \"hello-2\"\n    assert slugs.unique_slug(\"Hello\", {\"hello\", \"hello-2\", \"hello-3\"}) == \"hello-4\"\n"
+  }
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "tasklist_only",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {
+   "R1": "done",
+   "R2": "done",
+   "R3": "done",
+   "R4": "done"
+  },
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [
+   {
+    "kind": "assertion_weakened",
+    "file": "tests/test_reading_time.py",
+    "symbol": "test_rounds_to_nearest_minute"
+   }
+  ],
+  "testIntegrity": [
+   {
+    "file": "tests/test_reading_time.py",
+    "symbol": "test_rounds_to_nearest_minute"
+   }
+  ],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "annotatedBy": "claude-code"
+}

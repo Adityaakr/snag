@@ -1,0 +1,140 @@
+{
+ "id": "OpenHands:sympy__sympy-12481",
+ "corpus": "swebench",
+ "seedId": "sympy__sympy-12481",
+ "input": {
+  "mode": "local",
+  "repo": "sympy/sympy",
+  "baseSha": "c807dfe7569692cad24f02a08477b70c1679a4dd",
+  "headSha": "OpenHands-sympy__sympy-12481",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "sympy",
+    "repo": "sympy",
+    "number": 12481
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "sympy",
+     "repo": "sympy",
+     "number": 12481
+    },
+    "title": "`Permutation` constructor fails with non-disjoint cycles",
+    "body": "Calling `Permutation([[0,1],[0,1]])` raises a `ValueError` instead of constructing the identity permutation.  If the cycles passed in are non-disjoint, they should be applied in left-to-right order and the resulting permutation should be returned.\r\n\r\nThis should be easy to compute.  I don't see a reason why non-disjoint cycles should be forbidden.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:f8e86fd8bff16880ed9eed1e717f5fe6a5298c944c365c4c24868f4ab142ee64"
+   }
+  ],
+  "pr": {
+   "title": "Fix sympy__sympy-12481",
+   "body": ""
+  },
+  "diffText": "diff --git a/sympy/combinatorics/permutations.py b/sympy/combinatorics/permutations.py\nindex 136ed5a478..c8732de8cf 100644\n--- a/sympy/combinatorics/permutations.py\n+++ b/sympy/combinatorics/permutations.py\n@@ -894,29 +894,22 @@ def __new__(cls, *args, **kwargs):\n         # for convenience in case one wants to enter permutations where\n         # counting starts from 1.\n \n-        temp = flatten(args)\n-        if has_dups(temp):\n-            if is_cycle:\n-                raise ValueError('there were repeated elements; to resolve '\n-                'cycles use Cycle%s.' % ''.join([str(tuple(c)) for c in args]))\n-            else:\n+        if not is_cycle:\n+            temp = flatten(args)\n+            if has_dups(temp):\n                 raise ValueError('there were repeated elements.')\n-        temp = set(temp)\n-\n-        if not is_cycle and \\\n-                any(i not in temp for i in range(len(temp))):\n-            raise ValueError(\"Integers 0 through %s must be present.\" %\n-                             max(temp))\n-\n-        if is_cycle:\n-            # it's not necessarily canonical so we won't store\n-            # it -- use the array form instead\n+            temp = set(temp)\n+            if any(i not in temp for i in range(len(temp))):\n+                raise ValueError(\"Integers 0 through %s must be present.\" %\n+                                max(temp))\n+            aform = list(args)\n+        else:\n+            # For cycles, we allow duplicates since they represent composition\n+            # Apply cycles from left to right\n             c = Cycle()\n             for ci in args:\n                 c = c(*ci)\n             aform = c.list()\n-        else:\n-            aform = list(args)\n         if size and size > len(aform):\n             # don't allow for truncation of permutation which\n             # might split a cycle and lead to an invalid aform\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "OpenHands",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

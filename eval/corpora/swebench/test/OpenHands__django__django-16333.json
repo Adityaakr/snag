@@ -1,0 +1,140 @@
+{
+ "id": "OpenHands:django__django-16333",
+ "corpus": "swebench",
+ "seedId": "django__django-16333",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "60a7bd89860e504c0c33b02c78edcac87f6d1b5a",
+  "headSha": "OpenHands-django__django-16333",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 16333
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 16333
+    },
+    "title": "UserCreationForm should save data from ManyToMany form fields",
+    "body": "Description\n\t\nWhen using contrib.auth.forms.UserCreationForm with a custom User model which has ManyToManyField fields, the data in all related form fields (e.g. a ModelMultipleChoiceField) is not saved. \nThis is because unlike its parent class django.forms.ModelForm, UserCreationForm.save(commit=True) omits to call self.save_m2m(). \nThis has been discussed on the #django-developers mailing list ​https://groups.google.com/u/1/g/django-developers/c/2jj-ecoBwE4 and I'm ready to work on a PR.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:b5acb8cf00ff79751b30b4f3ec6368cf50a0811614522cd12043dd925e8c48e2"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-16333",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/contrib/auth/forms.py b/django/contrib/auth/forms.py\nindex d73d1c8495..73fbbe668c 100644\n--- a/django/contrib/auth/forms.py\n+++ b/django/contrib/auth/forms.py\n@@ -141,6 +141,7 @@ class UserCreationForm(forms.ModelForm):\n         user.set_password(self.cleaned_data[\"password1\"])\n         if commit:\n             user.save()\n+            self.save_m2m()  # Save ManyToMany fields\n         return user\n \n \ndiff --git a/migrations/0001_initial.py b/migrations/0001_initial.py\nnew file mode 100644\nindex 0000000000..ee94d63ae0\n--- /dev/null\n+++ b/migrations/0001_initial.py\n@@ -0,0 +1,23 @@\n+\n+from django.db import migrations, models\n+import django.db.models.deletion\n+\n+class Migration(migrations.Migration):\n+    initial = True\n+    dependencies = [\n+        ('auth', '0012_alter_user_first_name_max_length'),\n+    ]\n+    operations = [\n+        migrations.CreateModel(\n+            name='CustomUser',\n+            fields=[\n+                ('user_ptr', models.OneToOneField(auto_created=True, on_delete=django.db.models.deletion.CASCADE, parent_link=True, primary_key=True, serialize=False, to='auth.user')),\n+            ],\n+            bases=('auth.user',),\n+        ),\n+        migrations.AddField(\n+            model_name='customuser',\n+            name='favorite_groups',\n+            field=models.ManyToManyField(related_name='favorited_by', to='auth.group'),\n+        ),\n+    ]\ndiff --git a/migrations/__init__.py b/migrations/__init__.py\nnew file mode 100644\nindex 0000000000..e69de29bb2\ndiff --git a/reproduce_m2m_issue.py b/reproduce_m2m_issue.py\nnew file mode 100644\nindex 0000000000..67410ea220\n--- /dev/null\n+++ b/reproduce_m2m_issue.py\n@@ -0,0 +1,79 @@\n+import os\n+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'test_settings')\n+\n+# Create test_settings.py module\n+with open('test_settings.py', 'w') as f:\n+    f.write(\"\"\"\n+DATABASES = {\n+    'default': {\n+        'ENGINE': 'django.db.backends.sqlite3',\n+        'NAME': ':memory:',\n+    }\n+}\n+INSTALLED_APPS = [\n+    'django.contrib.auth',\n+    'django.contrib.contenttypes',\n+]\n+SECRET_KEY = 'dummy-key-for-tests'\n+\"\"\")\n+\n+import django\n+django.setup()\n+\n+from django.contrib.auth.forms import UserCreationForm\n+from django.contrib.auth.models import Group, User\n+from django.db import models\n+from django.core.management import call_command\n+\n+# Run migrations for auth and contenttypes\n+call_command('migrate')\n+\n+# Create tables for CustomUser\n+from django.db import connection\n+with connection.cursor() as cursor:\n+    cursor.execute(\"\"\"\n+        CREATE TABLE auth_customuser (\n+            user_ptr_id integer NOT NULL PRIMARY KEY REFERENCES auth_user(id)\n+        )\n+    \"\"\")\n+    cursor.execute(\"\"\"\n+        CREATE TABLE auth_customuser_favorite_groups (\n+            id integer NOT NULL PRIMARY KEY AUTOINCREMENT,\n+            customuser_id integer NOT NULL REFERENCES auth_customuser(user_ptr_id),\n+            group_id integer NOT NULL REFERENCES auth_group(id),\n+            UNIQUE(customuser_id, group_id)\n+        )\n+    \"\"\")\n+\n+# Create a custom user model with M2M field\n+class CustomUser(User):\n+    favorite_groups = models.ManyToManyField(Group, related_name='favorited_by')\n+\n+    class Meta:\n+        app_label = 'auth'\n+\n+# Create a custom form\n+class CustomUserCreationForm(UserCreationForm):\n+    class Meta(UserCreationForm.Meta):\n+        model = CustomUser\n+        fields = ('username', 'favorite_groups')\n+\n+# Run test\n+if __name__ == '__main__':\n+    # Create test group\n+    group = Group.objects.create(name='test_group')\n+    \n+    # Create form with data\n+    form_data = {\n+        'username': 'testuser',\n+        'password1': 'testpass123',\n+        'password2': 'testpass123',\n+        'favorite_groups': [group.id]\n+    }\n+    \n+    form = CustomUserCreationForm(data=form_data)\n+    if form.is_valid():\n+        user = form.save()\n+        print(f\"User created: {user.username}\")\n+        print(f\"Favorite groups: {list(user.favorite_groups.all())}\")\n+        print(\"Issue confirmed: Favorite groups are empty even though they were selected in the form\")\n\\ No newline at end of file\ndiff --git a/test_settings.py b/test_settings.py\nnew file mode 100644\nindex 0000000000..5aa52a8f5c\n--- /dev/null\n+++ b/test_settings.py\n@@ -0,0 +1,12 @@\n+\n+DATABASES = {\n+    'default': {\n+        'ENGINE': 'django.db.backends.sqlite3',\n+        'NAME': ':memory:',\n+    }\n+}\n+INSTALLED_APPS = [\n+    'django.contrib.auth',\n+    'django.contrib.contenttypes',\n+]\n+SECRET_KEY = 'dummy-key-for-tests'\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "OpenHands",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

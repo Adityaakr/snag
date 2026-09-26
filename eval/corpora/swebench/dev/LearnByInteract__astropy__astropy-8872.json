@@ -1,0 +1,140 @@
+{
+ "id": "LearnByInteract:astropy__astropy-8872",
+ "corpus": "swebench",
+ "seedId": "astropy__astropy-8872",
+ "input": {
+  "mode": "local",
+  "repo": "astropy/astropy",
+  "baseSha": "b750a0e6ee76fb6b8a099a4d16ec51977be46bf6",
+  "headSha": "LearnByInteract-astropy__astropy-8872",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "astropy",
+    "repo": "astropy",
+    "number": 8872
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "astropy",
+     "repo": "astropy",
+     "number": 8872
+    },
+    "title": "float16 quantities get upgraded to float64 automatically",
+    "body": "When trying to create a `Quantity` from a `np.float16` (not something I actually intended to do, I was experimenting while investigating other issue) it gets upgraded automatically to `np.float64`, which is something that does not happen with other float types:\r\n\r\n```\r\nIn [73]: np.float16(1)\r\nOut[73]: 1.0\r\n\r\nIn [74]: (np.float16(1) * u.km)\r\nOut[74]: <Quantity 1. km>\r\n\r\nIn [75]: (np.float16(1) * u.km).dtype\r\nOut[75]: dtype('float64')\r\n```\r\n\r\nHowever:\r\n\r\n```\r\nIn [76]: (np.float32(1) * u.km).dtype\r\nOut[76]: dtype('float32')\r\n\r\nIn [77]: (np.float64(1) * u.km).dtype\r\nOut[77]: dtype('float64')\r\n\r\nIn [78]: (np.float128(1) * u.km).dtype\r\nOut[78]: dtype('float128')\r\n\r\nIn [79]: (np.float(1) * u.km).dtype\r\nOut[79]: dtype('float64')\r\n\r\nIn [80]: (np.float_(1) * u.km).dtype\r\nOut[80]: dtype('float64')\r\n```\r\n\r\nSomewhat related: #6389",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:af10fe9a9202cf1a2c17d1bf07b279d39731abcd4c043a0f8ce3af910b3c2494"
+   }
+  ],
+  "pr": {
+   "title": "Fix astropy__astropy-8872",
+   "body": ""
+  },
+  "diffText": "diff --git a/astropy/units/quantity.py b/astropy/units/quantity.py\nindex ded609cbe9..fcadc8f21b 100644\n--- a/astropy/units/quantity.py\n+++ b/astropy/units/quantity.py\n@@ -380,7 +380,10 @@ class Quantity(np.ndarray, metaclass=InheritDocstrings):\n         if dtype is None and (not (np.can_cast(np.float32, value.dtype)\n                                    or value.dtype.fields)\n                               or value.dtype.kind == 'O'):\n-            value = value.astype(float)\n+            if value.dtype == np.float16:\n+                value = value.astype(np.float16)\n+            else:\n+                value = value.astype(float)\n \n         value = value.view(cls)\n         value._set_unit(value_unit)\n@@ -1700,3 +1703,4 @@ def _unquantify_allclose_arguments(actual, desired, rtol, atol):\n         raise UnitsError(\"`rtol` should be dimensionless\")\n \n     return actual.value, desired.value, rtol.value, atol.value\n+\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "LearnByInteract",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

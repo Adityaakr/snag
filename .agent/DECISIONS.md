@@ -159,3 +159,25 @@ Append-only. Each entry: date, decision, alternatives, why. Deviations from BUIL
 - Requirement metrics treat missing, partial, contradicted and interpretation_mismatch as problems and done, preexisting and deferred as non-problems; anything else is an abstention (reported as a rate, and counted as "not flagged" for recall). PR level uses "any P0" as the prediction. P0 precision counts a P0 as correct when it targets a requirement labeled as a problem or a unit labeled for test integrity.
 - Golden PR labels: a scenario is a problem PR when Appendix D expects a P0 or P1 finding or a high-severity fact.
 - `pnpm eval:golden` exits non-zero unless every scenario passes `checkExpected`. Eval reports are kept locally (`eval/reports/` is gitignored); important runs are force-added.
+
+## 2026-09-26 D25 Corpus A (SWE-bench Verified plus PatchDiff)
+- Label mapping as in docs/eval.md "Label mapping". Manual RQ3/RQ4 labels win, then RQ1 functionality failures, then RQ2 divergence. `uncertain` counts as a problem (the spec treats behaviorally divergent patches as positives), marked weak. "No divergence found" counts as clean, marked weak. RQ1 `coding_conventions`-only failures are excluded: they are real test failures but not about the issue.
+- Agent patches over 200 KB are excluded (8 patches; some are megabytes of generated files).
+- Corpus A splits by the SWE-bench `instance_id`, not the item id, so a gold patch and its agent patches share a split (the same rule as seeds and their mutations).
+- Raw downloads are gitignored (`eval/corpora/swebench/raw/`); the built dev and test items are committed (about 10 MB), so the test-split freeze can be checked from a clean clone. Attribution: Zenodo record 10.5281/zenodo.18258368 (CC-BY-4.0), recorded in SOURCES.json and docs/eval.md.
+- Downloads go through `LiveHttp` in providers (rule 7). Zip entries are read with range requests, so the 60 MB archive is never downloaded whole. The HF datasets-server rows API replaces the parquet file, so no parquet dependency is needed.
+- `packages/eval/src/corpora/swebench.slow.test.ts:13` uses `describe.skipIf` because it checks the fetched raw data against the paper's totals, and that data is gitignored. It runs whenever `pnpm eval:fetch-a` has been run (it passed on 2026-09-26). This is a data-dependent test, like the live suites without keys, not a skipped check.
+
+## 2026-09-26 D26 Corpus B seeds and operators
+- The 12 synthetic seeds (4 each in TS, Python and Rust) were written by Claude Code subagents against one brief, and every label was checked by reading each mutation diff. Issues are task lists so requirement ids (R1..Rn) are stable without an LLM; items use `extraction.mode: tasklist_only`.
+- Split: a pure hash of 12 seed ids put 1 seed in test. Before any seed was run, the split was pinned in each seed.json by stratified assignment: within each language, round(30%) of seeds with the highest `sha256` fraction go to test (`stratifiedSplits`). The result is 1 test seed per language (ts-list-pagination, py-order-date-ranges, rs-lru-cache), 128 dev items and 41 test items. Pinned splits never move; new seeds fall back to `splitOf`.
+- Shared symbols: drop_requirement reverts whole symbols unless the annotation names `remove` (statements) or `replace` (expressions) for that requirement. The seed test fails if two requirements revert the same symbol whole.
+- Operator recall ("detected") follows the G.1 Expected column per operator (for example, weaken_assertion needs the fact and the test integrity finding). The "every label correct" count is reported next to it. inject_refactor's "detected" means no P0 or P1.
+- Labels include `requirementsAccept` and unit `accept` for G.1's "or" cases (unwire: partial or missing; inject_refactor: benign, filtered or supporting). Metrics use the primary label.
+
+## 2026-09-26 D27 Calibration storage, thresholds and baselines
+- A calibration file stores maps plus the thresholds tuned on dev with those maps applied. While the calibration matches the Jev model and question set, its thresholds replace the config values (`tunedThresholds`), as the `remit init` template promises. `remit review` loads `eval/calibration/<jev-model>/<question-set>.json` (or `REMIT_CALIBRATION_DIR`).
+- Tuning is one coordinate-descent pass over full, partial, missing, contradicted, behavior, serves and loosens on the grid 0.40 to 0.90. Ties keep the current value, so defaults win unless beaten. False P0 means a P0 finding that points at nothing labeled as a problem.
+- A calibration fitted in simulated mode is stored under `simulated-jev` and can never apply to a real model.
+- single_pass uses the B.2 system prompt verbatim; the adapter's native structured output is named `record_review` (D8: structured output instead of a forced tool call). The `own_requirements` variant is scored at PR level only, because its requirement ids do not line up with labels. pr_agent is detected but not mapped; it is optional.
+- Corpus C export format: `remit-shadow-1` (packages/eval/src/corpora/shadow.ts). PR labels come from strong feedback only; weak labels are counted separately.

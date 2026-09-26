@@ -1,0 +1,142 @@
+{
+ "id": "LearnByInteract:sphinx-doc__sphinx-11445",
+ "corpus": "swebench",
+ "seedId": "sphinx-doc__sphinx-11445",
+ "input": {
+  "mode": "local",
+  "repo": "sphinx-doc/sphinx",
+  "baseSha": "71db08c05197545944949d5aa76cd340e7143627",
+  "headSha": "LearnByInteract-sphinx-doc__sphinx-11445",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "sphinx-doc",
+    "repo": "sphinx",
+    "number": 11445
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "sphinx-doc",
+     "repo": "sphinx",
+     "number": 11445
+    },
+    "title": "Using rst_prolog removes top level headings containing a domain directive",
+    "body": "### Describe the bug\r\n\r\nIf `rst_prolog` is set, then any documents that contain a domain directive as the first heading (eg `:mod:`) do not render the heading correctly or include the heading in the toctree.\r\n\r\nIn the example below, if the heading of `docs/mypackage.rst` were `mypackage2` instead of `:mod:mypackage2` then the heading displays correctly.\r\nSimilarly, if you do not set `rst_prolog` then the heading will display correctly.\r\n\r\nThis appears to have been broken for some time because I can reproduce it in v4.0.0 of Sphinx\r\n\r\n### How to Reproduce\r\n\r\n```bash\r\n$ sphinx-quickstart --no-sep --project mypackage --author me -v 0.1.0 --release 0.1.0 --language en docs\r\n$ echo -e 'Welcome\\n=======\\n\\n.. toctree::\\n\\n   mypackage\\n' > docs/index.rst\r\n$ echo -e ':mod:`mypackage2`\\n=================\\n\\nContent\\n\\nSubheading\\n----------\\n' > docs/mypackage.rst\r\n$ echo -e 'rst_prolog = \"\"\"\\n.. |psf| replace:: Python Software Foundation\\n\"\"\"\\n' >> docs/conf.py\r\n$ sphinx-build -b html . _build\r\n$ grep 'mypackage2' docs/_build/index.html\r\n```\r\n\r\n`docs/index.rst`:\r\n\r\n```rst\r\nWelcome\r\n=======\r\n\r\n.. toctree::\r\n\r\n   mypackage\r\n```\r\n\r\n`docs/mypackage.rst`:\r\n\r\n```rst\r\n:mod:`mypackage2`\r\n=================\r\n\r\nContent\r\n\r\nSubheading\r\n----------\r\n```\r\n\r\n### Environment Information\r\n\r\n```text\r\nPlatform:              linux; (Linux-6.3.2-arch1-1-x86_64-with-glibc2.37)\r\nPython version:        3.11.3 (main, Apr  5 2023, 15:52:25) [GCC 12.2.1 20230201])\r\nPython implementation: CPython\r\nSphinx version:        7.1.0+/d3c91f951\r\nDocutils version:      0.20.1\r\nJinja2 version:        3.1.2\r\nPygments version:      2.15.1\r\n```\r\n\r\n\r\n### Sphinx extensions\r\n\r\n```python\r\n[]\r\n```\r\n\r\n\r\n### Additional context\r\n\r\n_No response_",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:7d7f6618c0ab60e0cee06f6497abf071a1c27b27cac13dd599e02c9064cc6af6"
+   }
+  ],
+  "pr": {
+   "title": "Fix sphinx-doc__sphinx-11445",
+   "body": ""
+  },
+  "diffText": "diff --git a/sphinx/parsers.py b/sphinx/parsers.py\nindex 3bcd69f52..ac66f9ad7 100644\n--- a/sphinx/parsers.py\n+++ b/sphinx/parsers.py\n@@ -82,8 +82,40 @@ class RSTParser(docutils.parsers.rst.Parser, Parser):\n \n     def decorate(self, content: StringList) -> None:\n         \"\"\"Preprocess reST content before parsing.\"\"\"\n-        prepend_prolog(content, self.config.rst_prolog)\n-        append_epilog(content, self.config.rst_epilog)\n+        # Process domain directives in headings before applying rst_prolog\n+        processed_content = StringList()\n+        i = 0\n+        while i < len(content):\n+            line = content[i]\n+            # Check if this is a heading with a domain directive\n+            if (i + 1 < len(content) and \n+                line.startswith(':') and \n+                all(c == '=' for c in content[i + 1].strip())):\n+                # Keep the heading and its underline at the top\n+                processed_content.append(line, content.source(i), content.offset(i))\n+                processed_content.append(content[i + 1], content.source(i + 1), content.offset(i + 1))\n+                processed_content.append('', '<generated>', 0)  # Add blank line after heading\n+                i += 2\n+            else:\n+                processed_content.append(line, content.source(i), content.offset(i))\n+                i += 1\n+\n+        # Now apply rst_prolog after the heading\n+        if self.config.rst_prolog:\n+            pos = 3  # After heading, underline, and blank line\n+            prolog_lines = self.config.rst_prolog.splitlines()\n+            for lineno, line in enumerate(prolog_lines):\n+                processed_content.insert(pos + lineno, line, '<rst_prolog>', lineno)\n+            if prolog_lines:\n+                processed_content.insert(pos + len(prolog_lines), '', '<generated>', 0)\n+\n+        # Apply epilog at the end\n+        append_epilog(processed_content, self.config.rst_epilog)\n+\n+        # Replace original content with processed content\n+        content.data = processed_content.data\n+        content.items = processed_content.items\n+        content.parent = processed_content.parent\n \n \n def setup(app: Sphinx) -> dict[str, Any]:\n@@ -94,3 +126,4 @@ def setup(app: Sphinx) -> dict[str, Any]:\n         'parallel_read_safe': True,\n         'parallel_write_safe': True,\n     }\n+\ndiff --git a/sphinx/util/rst.py b/sphinx/util/rst.py\nindex 7a1538325..caef315b5 100644\n--- a/sphinx/util/rst.py\n+++ b/sphinx/util/rst.py\n@@ -25,8 +25,10 @@ except ImportError:\n \n logger = logging.getLogger(__name__)\n \n-docinfo_re = re.compile(':\\\\w+:.*?')\n+docinfo_re = re.compile('^:\\\\w+:\\\\s.*?$')  # Only match full docinfo lines at start of line\n+domain_directive_re = re.compile('^:(?:mod|class|func|meth|attr):`[^`]+`\\\\s*$')  # Match domain directives in titles\n symbols_re = re.compile(r'([!-\\-/:-@\\[-`{-~])')  # symbols without dot(0x2e)\n+\n SECTIONING_CHARS = ['=', '-', '~']\n \n # width of characters\n@@ -77,24 +79,40 @@ def default_role(docname: str, name: str) -> Generator[None, None, None]:\n \n def prepend_prolog(content: StringList, prolog: str) -> None:\n     \"\"\"Prepend a string to content body as prolog.\"\"\"\n-    if prolog:\n-        pos = 0\n-        for line in content:\n-            if docinfo_re.match(line):\n-                pos += 1\n-            else:\n-                break\n+    if not prolog:\n+        return\n+\n+    # Find where to insert prolog\n+    pos = 0\n+    saw_heading = False\n+\n+    for i, line in enumerate(content):\n+        # Skip any domain directive headings\n+        if not saw_heading and domain_directive_re.match(line):\n+            # Next line should be a heading underline\n+            if i + 1 < len(content) and all(c == '=' for c in content[i + 1].strip()):\n+                pos = i + 2  # Skip the heading and its underline\n+                saw_heading = True\n+                continue\n+        \n+        if docinfo_re.match(line):\n+            pos = i + 1\n+        elif not line.strip():\n+            continue\n+        else:\n+            break\n \n-        if pos > 0:\n-            # insert a blank line after docinfo\n-            content.insert(pos, '', '<generated>', 0)\n-            pos += 1\n+    # Insert blank line after any docinfo\n+    if pos > 0:\n+        content.insert(pos, '', '<generated>', 0)\n+        pos += 1\n \n-        # insert prolog (after docinfo if exists)\n-        for lineno, line in enumerate(prolog.splitlines()):\n-            content.insert(pos + lineno, line, '<rst_prolog>', lineno)\n+    # Insert prolog\n+    for lineno, line in enumerate(prolog.splitlines()):\n+        content.insert(pos + lineno, line, '<rst_prolog>', lineno)\n \n-        content.insert(pos + lineno + 1, '', '<generated>', 0)\n+    if prolog.splitlines():\n+        content.insert(pos + len(prolog.splitlines()), '', '<generated>', 0)\n \n \n def append_epilog(content: StringList, epilog: str) -> None:\n@@ -108,3 +126,4 @@ def append_epilog(content: StringList, epilog: str) -> None:\n         content.append('', source, lineno + 1)\n         for lineno, line in enumerate(epilog.splitlines()):\n             content.append(line, '<rst_epilog>', lineno)\n+\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "LearnByInteract",
+  "source": "rq34_manual",
+  "strength": "strong",
+  "diffPattern": "noalignment",
+  "correctness": "incorrect_regression"
+ },
+ "annotatedBy": "study"
+}

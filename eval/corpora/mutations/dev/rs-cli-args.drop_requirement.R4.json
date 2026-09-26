@@ -1,0 +1,159 @@
+{
+ "id": "rs-cli-args.drop_requirement.R4",
+ "corpus": "mutations",
+ "seedId": "rs-cli-args",
+ "operator": "drop_requirement",
+ "target": "R4",
+ "input": {
+  "mode": "local",
+  "baseSha": "base",
+  "headSha": "head-drop_requirement-R4",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "lintr",
+    "repo": "argkit",
+    "number": 33
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "lintr",
+     "repo": "argkit",
+     "number": 33
+    },
+    "title": "CLI flags: short aliases, a jobs limit, `--` and duplicate files",
+    "body": "A few rough edges in `lintr` argument parsing keep coming up in bug reports.\n\n- [ ] `-v` is a short alias for `--verbose` and `-j` for `--jobs` (for example `-j 8`)\n- [ ] `--jobs` only accepts values from 1 to 64; anything else fails with `ArgError::JobsOutOfRange`\n- [ ] A bare `--` ends flag parsing: every later argument is treated as a file, even if it starts with `-`\n- [ ] Duplicate files are dropped, keeping the first occurrence (for example `a b a` gives `a b`)",
+    "author": "local",
+    "state": "open",
+    "comments": [],
+    "contentHash": "sha256:e3b939ceec693cd2419d0813ac90d2e32526e12aeb0d394b8c9e8066bdcd4927"
+   }
+  ],
+  "pr": {
+   "title": "Short flag aliases, jobs range check, `--` terminator and file dedup",
+   "body": "`parse_args` now runs each argument through a new `expand_alias` helper that maps `-v` to `--verbose` and `-j` to `--jobs`. `parse_jobs` rejects values outside 1 to 64 with a new `ArgError::JobsOutOfRange` variant. After a bare `--`, every remaining argument is pushed as a file. Finally, `dedup_files` removes repeated file names while keeping the first occurrence. Integration tests in `tests/cli.rs` cover each flag."
+  },
+  "diffText": "diff --git a/src/args.rs b/src/args.rs\n--- a/src/args.rs\n+++ b/src/args.rs\n@@ -12,20 +12,40 @@\n     UnknownFlag(String),\n     MissingValue(String),\n     BadNumber(String),\n+    JobsOutOfRange(u32),\n }\n \n fn parse_jobs(value: &str) -> Result<u32, ArgError> {\n-    value.parse().map_err(|_| ArgError::BadNumber(value.to_string()))\n+    let jobs: u32 = value.parse().map_err(|_| ArgError::BadNumber(value.to_string()))?;\n+    if jobs < 1 || jobs > 64 {\n+        return Err(ArgError::JobsOutOfRange(jobs));\n+    }\n+    Ok(jobs)\n }\n \n+fn expand_alias(arg: &str) -> &str {\n+    match arg {\n+        \"-v\" => \"--verbose\",\n+        \"-j\" => \"--jobs\",\n+        other => other,\n+    }\n+}\n+\n pub fn parse_args(argv: &[&str]) -> Result<Args, ArgError> {\n     let mut args = Args { verbose: false, jobs: DEFAULT_JOBS, files: Vec::new() };\n+    let mut only_files = false;\n     let mut iter = argv.iter();\n     while let Some(&arg) = iter.next() {\n-        match arg {\n+        if only_files {\n+            args.files.push(arg.to_string());\n+            continue;\n+        }\n+        let flag = expand_alias(arg);\n+        match flag {\n+            \"--\" => only_files = true,\n             \"--verbose\" => args.verbose = true,\n             \"--jobs\" => {\n-                let value = iter.next().ok_or(ArgError::MissingValue(arg.to_string()))?;\n+                let value = iter.next().ok_or(ArgError::MissingValue(flag.to_string()))?;\n                 args.jobs = parse_jobs(value)?;\n             }\n             other if other.starts_with(\"--\") => return Err(ArgError::UnknownFlag(other.to_string())),\ndiff --git a/tests/cli.rs b/tests/cli.rs\n--- a/tests/cli.rs\n+++ b/tests/cli.rs\n@@ -22,3 +22,23 @@\n fn reports_a_bad_jobs_number() {\n     assert_eq!(parse_args(&[\"--jobs\", \"many\"]), Err(ArgError::BadNumber(\"many\".to_string())));\n }\n+\n+#[test]\n+fn accepts_short_aliases() {\n+    assert_eq!(parse_args(&[\"-v\"]).unwrap().verbose, true);\n+    assert_eq!(parse_args(&[\"-j\", \"8\"]).unwrap().jobs, 8);\n+}\n+\n+#[test]\n+fn rejects_jobs_outside_one_to_sixty_four() {\n+    assert_eq!(parse_args(&[\"--jobs\", \"0\"]), Err(ArgError::JobsOutOfRange(0)));\n+    assert_eq!(parse_args(&[\"--jobs\", \"65\"]).is_err(), true);\n+    assert_eq!(parse_args(&[\"--jobs\", \"64\"]).map(|a| a.jobs), Ok(64));\n+}\n+\n+#[test]\n+fn double_dash_ends_flag_parsing() {\n+    let args = parse_args(&[\"--verbose\", \"--\", \"--weird-name\", \"-v\"]).unwrap();\n+    assert_eq!(args.files, vec![\"--weird-name\".to_string(), \"-v\".to_string()]);\n+    assert_eq!(args.verbose, true);\n+}\n"
+ },
+ "trees": {
+  "base": {
+   "Cargo.toml": "[package]\nname = \"argkit\"\nversion = \"0.5.0\"\nedition = \"2021\"\n\n[dependencies]\n",
+   "src/args.rs": "use crate::defaults::DEFAULT_JOBS;\n\n#[derive(Debug, PartialEq)]\npub struct Args {\n    pub verbose: bool,\n    pub jobs: u32,\n    pub files: Vec<String>,\n}\n\n#[derive(Debug, PartialEq)]\npub enum ArgError {\n    UnknownFlag(String),\n    MissingValue(String),\n    BadNumber(String),\n}\n\nfn parse_jobs(value: &str) -> Result<u32, ArgError> {\n    value.parse().map_err(|_| ArgError::BadNumber(value.to_string()))\n}\n\npub fn parse_args(argv: &[&str]) -> Result<Args, ArgError> {\n    let mut args = Args { verbose: false, jobs: DEFAULT_JOBS, files: Vec::new() };\n    let mut iter = argv.iter();\n    while let Some(&arg) = iter.next() {\n        match arg {\n            \"--verbose\" => args.verbose = true,\n            \"--jobs\" => {\n                let value = iter.next().ok_or(ArgError::MissingValue(arg.to_string()))?;\n                args.jobs = parse_jobs(value)?;\n            }\n            other if other.starts_with(\"--\") => return Err(ArgError::UnknownFlag(other.to_string())),\n            file => args.files.push(file.to_string()),\n        }\n    }\n    Ok(args)\n}\n",
+   "src/defaults.rs": "//! Values used when a flag is not given.\n\n/// Worker threads used when `--jobs` is absent.\npub const DEFAULT_JOBS: u32 = 4;\n",
+   "src/help.rs": "//! Usage text.\n\npub fn usage(program: &str) -> String {\n    let name = program.rsplit('/').next().unwrap_or(program);\n    format!(\"usage: {} [options] FILE...\", name)\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n\n    #[test]\n    fn usage_strips_the_directory() {\n        assert_eq!(usage(\"/usr/local/bin/lintr\"), \"usage: lintr [options] FILE...\");\n    }\n}\n",
+   "src/lib.rs": "//! Command-line parsing for the `lintr` tool.\n\npub mod args;\npub mod defaults;\npub mod help;\n\npub use args::{parse_args, ArgError, Args};\n",
+   "tests/cli.rs": "use argkit::{parse_args, ArgError};\n\n#[test]\nfn parses_long_flags_and_files() {\n    let args = parse_args(&[\"--verbose\", \"--jobs\", \"2\", \"src/main.rs\"]).unwrap();\n    assert_eq!(args.verbose, true);\n    assert_eq!(args.jobs, 2);\n    assert_eq!(args.files, vec![\"src/main.rs\".to_string()]);\n}\n\n#[test]\nfn rejects_unknown_flags() {\n    assert_eq!(parse_args(&[\"--fast\"]), Err(ArgError::UnknownFlag(\"--fast\".to_string())));\n}\n\n#[test]\nfn reports_a_missing_jobs_value() {\n    assert_eq!(parse_args(&[\"--jobs\"]), Err(ArgError::MissingValue(\"--jobs\".to_string())));\n}\n\n#[test]\nfn reports_a_bad_jobs_number() {\n    assert_eq!(parse_args(&[\"--jobs\", \"many\"]), Err(ArgError::BadNumber(\"many\".to_string())));\n}\n"
+  },
+  "head": {
+   "Cargo.toml": "[package]\nname = \"argkit\"\nversion = \"0.5.0\"\nedition = \"2021\"\n\n[dependencies]\n",
+   "src/args.rs": "use crate::defaults::DEFAULT_JOBS;\n\n#[derive(Debug, PartialEq)]\npub struct Args {\n    pub verbose: bool,\n    pub jobs: u32,\n    pub files: Vec<String>,\n}\n\n#[derive(Debug, PartialEq)]\npub enum ArgError {\n    UnknownFlag(String),\n    MissingValue(String),\n    BadNumber(String),\n    JobsOutOfRange(u32),\n}\n\nfn parse_jobs(value: &str) -> Result<u32, ArgError> {\n    let jobs: u32 = value.parse().map_err(|_| ArgError::BadNumber(value.to_string()))?;\n    if jobs < 1 || jobs > 64 {\n        return Err(ArgError::JobsOutOfRange(jobs));\n    }\n    Ok(jobs)\n}\n\nfn expand_alias(arg: &str) -> &str {\n    match arg {\n        \"-v\" => \"--verbose\",\n        \"-j\" => \"--jobs\",\n        other => other,\n    }\n}\n\npub fn parse_args(argv: &[&str]) -> Result<Args, ArgError> {\n    let mut args = Args { verbose: false, jobs: DEFAULT_JOBS, files: Vec::new() };\n    let mut only_files = false;\n    let mut iter = argv.iter();\n    while let Some(&arg) = iter.next() {\n        if only_files {\n            args.files.push(arg.to_string());\n            continue;\n        }\n        let flag = expand_alias(arg);\n        match flag {\n            \"--\" => only_files = true,\n            \"--verbose\" => args.verbose = true,\n            \"--jobs\" => {\n                let value = iter.next().ok_or(ArgError::MissingValue(flag.to_string()))?;\n                args.jobs = parse_jobs(value)?;\n            }\n            other if other.starts_with(\"--\") => return Err(ArgError::UnknownFlag(other.to_string())),\n            file => args.files.push(file.to_string()),\n        }\n    }\n    Ok(args)\n}\n",
+   "src/defaults.rs": "//! Values used when a flag is not given.\n\n/// Worker threads used when `--jobs` is absent.\npub const DEFAULT_JOBS: u32 = 4;\n",
+   "src/help.rs": "//! Usage text.\n\npub fn usage(program: &str) -> String {\n    let name = program.rsplit('/').next().unwrap_or(program);\n    format!(\"usage: {} [options] FILE...\", name)\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n\n    #[test]\n    fn usage_strips_the_directory() {\n        assert_eq!(usage(\"/usr/local/bin/lintr\"), \"usage: lintr [options] FILE...\");\n    }\n}\n",
+   "src/lib.rs": "//! Command-line parsing for the `lintr` tool.\n\npub mod args;\npub mod defaults;\npub mod help;\n\npub use args::{parse_args, ArgError, Args};\n",
+   "tests/cli.rs": "use argkit::{parse_args, ArgError};\n\n#[test]\nfn parses_long_flags_and_files() {\n    let args = parse_args(&[\"--verbose\", \"--jobs\", \"2\", \"src/main.rs\"]).unwrap();\n    assert_eq!(args.verbose, true);\n    assert_eq!(args.jobs, 2);\n    assert_eq!(args.files, vec![\"src/main.rs\".to_string()]);\n}\n\n#[test]\nfn rejects_unknown_flags() {\n    assert_eq!(parse_args(&[\"--fast\"]), Err(ArgError::UnknownFlag(\"--fast\".to_string())));\n}\n\n#[test]\nfn reports_a_missing_jobs_value() {\n    assert_eq!(parse_args(&[\"--jobs\"]), Err(ArgError::MissingValue(\"--jobs\".to_string())));\n}\n\n#[test]\nfn reports_a_bad_jobs_number() {\n    assert_eq!(parse_args(&[\"--jobs\", \"many\"]), Err(ArgError::BadNumber(\"many\".to_string())));\n}\n\n#[test]\nfn accepts_short_aliases() {\n    assert_eq!(parse_args(&[\"-v\"]).unwrap().verbose, true);\n    assert_eq!(parse_args(&[\"-j\", \"8\"]).unwrap().jobs, 8);\n}\n\n#[test]\nfn rejects_jobs_outside_one_to_sixty_four() {\n    assert_eq!(parse_args(&[\"--jobs\", \"0\"]), Err(ArgError::JobsOutOfRange(0)));\n    assert_eq!(parse_args(&[\"--jobs\", \"65\"]).is_err(), true);\n    assert_eq!(parse_args(&[\"--jobs\", \"64\"]).map(|a| a.jobs), Ok(64));\n}\n\n#[test]\nfn double_dash_ends_flag_parsing() {\n    let args = parse_args(&[\"--verbose\", \"--\", \"--weird-name\", \"-v\"]).unwrap();\n    assert_eq!(args.files, vec![\"--weird-name\".to_string(), \"-v\".to_string()]);\n    assert_eq!(args.verbose, true);\n}\n"
+  }
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "tasklist_only",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {
+   "R1": "done",
+   "R2": "done",
+   "R3": "done",
+   "R4": "missing"
+  },
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "annotatedBy": "claude-code"
+}

@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:django__django-13401",
+ "corpus": "swebench",
+ "seedId": "django__django-13401",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "453967477e3ddae704cd739eac2449c0e13d464c",
+  "headSha": "CodeStory-django__django-13401",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 13401
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 13401
+    },
+    "title": "Abstract model field should not be equal across models",
+    "body": "Description\n\t\nConsider the following models:\nclass A(models.Model):\n\tclass Meta:\n\t\tabstract = True\n\tmyfield = IntegerField()\nclass B(A):\n\tpass\nclass C(A):\n\tpass\nIf I pull the fields of B and C into a shared set, one will be de-duplicated away, because they compare as equal. I found this surprising, though in practice using a list was sufficient for my need. The root of the issue is that they compare equal, as fields only consider self.creation_counter when comparing for equality.\nlen({B._meta.get_field('myfield'), C._meta.get_field('myfield')}) == 1\nB._meta.get_field('myfield') == C._meta.get_field('myfield')\nWe should adjust __eq__ so that if the field.model is different, they will compare unequal. Similarly, it is probably wise to adjust __hash__ and __lt__ to match.\nWhen adjusting __lt__, it may be wise to order first by self.creation_counter so that cases not affected by this equality collision won't be re-ordered. In my experimental branch, there was one test that broke if I ordered them by model first.\nI brought this up on IRC django-dev to check my intuitions, and those conversing with me there seemed to agree that the current behavior is not intuitive.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:9e6dec5c2f6f074090e011d4ff23f1e9709b329c4a67244b5e709d80f3aa03e7"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-13401",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/db/models/fields/__init__.py b/django/db/models/fields/__init__.py\nindex 28374272f4..dc6757a6f0 100644\n--- a/django/db/models/fields/__init__.py\n+++ b/django/db/models/fields/__init__.py\n@@ -516,17 +516,28 @@ class Field(RegisterLookupMixin):\n     def __eq__(self, other):\n         # Needed for @total_ordering\n         if isinstance(other, Field):\n-            return self.creation_counter == other.creation_counter\n+            if not hasattr(self, 'model') or not hasattr(other, 'model'):\n+                return self.creation_counter == other.creation_counter\n+            return (self.creation_counter == other.creation_counter and\n+                   self.model == other.model)\n         return NotImplemented\n \n     def __lt__(self, other):\n         # This is needed because bisect does not take a comparison function.\n         if isinstance(other, Field):\n-            return self.creation_counter < other.creation_counter\n+            # First compare by creation_counter to maintain existing order\n+            if self.creation_counter != other.creation_counter:\n+                return self.creation_counter < other.creation_counter\n+            # If creation_counter is equal, compare by model name for consistent ordering\n+            if hasattr(self, 'model') and hasattr(other, 'model'):\n+                return str(self.model) < str(other.model)\n+            return False\n         return NotImplemented\n \n     def __hash__(self):\n-        return hash(self.creation_counter)\n+        if not hasattr(self, 'model'):\n+            return hash(self.creation_counter)\n+        return hash((self.creation_counter, self.model))\n \n     def __deepcopy__(self, memodict):\n         # We don't have to deepcopy very much here, since most things are not\ndiff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..012e71f29a\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,42 @@\n+from django.conf import settings\n+from django.db import models\n+\n+# Configure Django settings\n+settings.configure(\n+    INSTALLED_APPS=[\n+        'django.contrib.contenttypes',\n+        'django.contrib.auth',\n+    ],\n+    DATABASES={\n+        'default': {\n+            'ENGINE': 'django.db.backends.sqlite3',\n+            'NAME': ':memory:',\n+        }\n+    }\n+)\n+\n+import django\n+django.setup()\n+\n+class A(models.Model):\n+    class Meta:\n+        abstract = True\n+        app_label = 'testapp'\n+    myfield = models.IntegerField()\n+\n+class B(A):\n+    class Meta:\n+        app_label = 'testapp'\n+\n+class C(A):\n+    class Meta:\n+        app_label = 'testapp'\n+\n+# Test field equality\n+b_field = B._meta.get_field('myfield')\n+c_field = C._meta.get_field('myfield')\n+\n+print(\"Fields equal?\", b_field == c_field)\n+print(\"Length of set:\", len({b_field, c_field}))\n+print(\"b_field model:\", b_field.model)\n+print(\"c_field model:\", c_field.model)\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq2_divergent",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

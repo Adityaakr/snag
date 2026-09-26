@@ -13,6 +13,7 @@
       "!**/node_modules",
       "!schemas",
       "!eval/cassettes",
+      "!eval/corpora",
       "!fixtures/cassettes",
       "!**/__tests__/fixtures",
       "!.claude/settings.json",

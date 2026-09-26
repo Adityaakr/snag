@@ -1,0 +1,169 @@
+{
+  "id": "rs-semver-compare",
+  "language": "rs",
+  "annotated_by": "claude-code",
+  "split": "dev",
+  "summary": "Semver parsing and comparison: leading v, default missing parts, caret ranges, readable parse errors.",
+  "requirements": [
+    {
+      "id": "R1",
+      "text": "A leading `v` is accepted and ignored (for example `v1.2.3` parses as `1.2.3`)",
+      "implementing": [
+        {
+          "file": "src/version.rs",
+          "symbol": "strip_v"
+        },
+        {
+          "file": "src/version.rs",
+          "symbol": "parse",
+          "replace": [
+            {
+              "from": "strip_v(input)",
+              "to": "input"
+            }
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "file": "src/version.rs",
+          "symbol": "accepts_a_leading_v"
+        }
+      ],
+      "unwire": {
+        "file": "src/version.rs",
+        "symbol": "parse",
+        "callee": "strip_v"
+      }
+    },
+    {
+      "id": "R2",
+      "text": "Missing minor or patch parts default to 0 (for example `1.4` parses as `1.4.0` and `2` as `2.0.0`)",
+      "implementing": [
+        {
+          "file": "src/version.rs",
+          "symbol": "parse",
+          "remove": [
+            "[major, minor] =>",
+            "[major] =>"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "file": "src/version.rs",
+          "symbol": "missing_parts_default_to_zero"
+        }
+      ],
+      "flip": {
+        "impl": {
+          "file": "src/version.rs",
+          "symbol": "parse",
+          "from": "0",
+          "to": "1"
+        },
+        "test": {
+          "file": "src/version.rs",
+          "symbol": "missing_parts_default_to_zero",
+          "from": "0",
+          "to": "1"
+        }
+      },
+      "partial": {
+        "impl": {
+          "file": "src/version.rs",
+          "symbol": "parse",
+          "contains": "[major] =>"
+        },
+        "test": {
+          "file": "src/version.rs",
+          "symbol": "missing_parts_default_to_zero",
+          "contains": "parse(\"2\")"
+        }
+      }
+    },
+    {
+      "id": "R3",
+      "text": "`caret_matches` implements caret ranges: `^1.2.3` matches versions from `1.2.3` up to but not including `2.0.0`, and `^0.3.1` only matches `0.3.x` versions from `0.3.1`",
+      "implementing": [
+        {
+          "file": "src/version.rs",
+          "symbol": "caret_matches"
+        }
+      ],
+      "tests": [
+        {
+          "file": "src/version.rs",
+          "symbol": "caret_allows_minor_and_patch_updates"
+        },
+        {
+          "file": "src/version.rs",
+          "symbol": "caret_on_zero_major_pins_the_minor"
+        }
+      ],
+      "flip": {
+        "impl": {
+          "file": "src/version.rs",
+          "symbol": "caret_matches",
+          "from": "<",
+          "to": "<="
+        },
+        "test": {
+          "file": "src/version.rs",
+          "symbol": "caret_allows_minor_and_patch_updates",
+          "from": "true",
+          "to": "false"
+        }
+      }
+    },
+    {
+      "id": "R4",
+      "text": "A parse failure displays as `invalid version: <input>`",
+      "implementing": [
+        {
+          "file": "src/version.rs",
+          "symbol": "fmt::Display for VersionError"
+        }
+      ],
+      "tests": [
+        {
+          "file": "src/version.rs",
+          "symbol": "parse_errors_name_the_input"
+        }
+      ],
+      "flip": {
+        "impl": {
+          "file": "src/version.rs",
+          "symbol": "fmt::Display for VersionError",
+          "from": "\"invalid version: {}\"",
+          "to": "\"version error: {}\""
+        },
+        "test": {
+          "file": "src/version.rs",
+          "symbol": "parse_errors_name_the_input",
+          "from": "\"invalid version: 1.x\"",
+          "to": "\"version error: 1.x\""
+        }
+      }
+    }
+  ],
+  "incidental": [],
+  "config": {
+    "file": "src/policy.rs",
+    "symbol": "default_policy",
+    "from": "1",
+    "to": "3"
+  },
+  "unrelatedTest": {
+    "file": "src/version.rs",
+    "symbol": "parses_three_part_versions"
+  },
+  "unrelatedCode": {
+    "file": "src/policy.rs",
+    "symbol": "is_upgrade_allowed",
+    "rename": {
+      "from": "jump",
+      "to": "delta"
+    }
+  }
+}

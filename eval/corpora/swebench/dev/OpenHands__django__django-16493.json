@@ -1,0 +1,140 @@
+{
+ "id": "OpenHands:django__django-16493",
+ "corpus": "swebench",
+ "seedId": "django__django-16493",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "e3a4cee081cf60650b8824f0646383b79cb110e7",
+  "headSha": "OpenHands-django__django-16493",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 16493
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 16493
+    },
+    "title": "Callable storage on FileField fails to deconstruct when it returns default_storage",
+    "body": "Description\n\t\nIf the storage argument on a FileField is set to a callable that returns default_storage, it is omitted from the deconstructed form of the field, rather than being included as a reference to the callable as expected.\nFor example, given a model definition:\nfrom django.core.files.storage import FileSystemStorage, default_storage\nfrom django.db import models\nimport random\nother_storage = FileSystemStorage(location='/media/other')\ndef get_storage():\n\treturn random.choice([default_storage, other_storage])\nclass MyModel(models.Model):\n\tmy_file = models.FileField(storage=get_storage)\nrepeatedly running makemigrations will randomly generate a migration that alternately includes or omits storage=myapp.models.get_storage on the FileField definition.\nThis case was overlooked in the fix for #31941 - the deconstruct method tests if self.storage is not default_storage to determine whether to add the storage kwarg, but at this point self.storage is the evaluated version, so it wrongly returns false for a callable that returns default_storage.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:5ae5c2e04ec8fa30dbd37929312bcb4e3b9183e33ab6904032b1bc942d19b642"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-16493",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/db/models/fields/files.py b/django/db/models/fields/files.py\nindex 7a99b12691..faac350f4e 100644\n--- a/django/db/models/fields/files.py\n+++ b/django/db/models/fields/files.py\n@@ -295,7 +295,8 @@ class FileField(Field):\n         if kwargs.get(\"max_length\") == 100:\n             del kwargs[\"max_length\"]\n         kwargs[\"upload_to\"] = self.upload_to\n-        if self.storage is not default_storage:\n+        # If storage was passed as a callable or is not default_storage, include it\n+        if hasattr(self, \"_storage_callable\") or self.storage is not default_storage:\n             kwargs[\"storage\"] = getattr(self, \"_storage_callable\", self.storage)\n         return name, path, args, kwargs\n \ndiff --git a/reproduce.py b/reproduce.py\nnew file mode 100644\nindex 0000000000..2f5128e091\n--- /dev/null\n+++ b/reproduce.py\n@@ -0,0 +1,40 @@\n+from django.conf import settings\n+from django.core.files.storage import FileSystemStorage, default_storage\n+from django.db import models\n+import django\n+import random\n+\n+# Configure Django settings\n+settings.configure(\n+    INSTALLED_APPS=['django.contrib.contenttypes'],\n+    DATABASES={'default': {'ENGINE': 'django.db.backends.sqlite3', 'NAME': ':memory:'}},\n+)\n+\n+# Setup Django\n+django.setup()\n+\n+other_storage = FileSystemStorage(location='/media/other')\n+\n+def get_storage():\n+    return random.choice([default_storage, other_storage])\n+\n+class MyModel(models.Model):\n+    my_file = models.FileField(storage=get_storage)\n+\n+    class Meta:\n+        app_label = 'contenttypes'  # Use the installed app\n+\n+# Test the deconstruct behavior\n+field = MyModel._meta.get_field('my_file')\n+name, path, args, kwargs = field.deconstruct()\n+\n+print(\"Deconstructed field:\")\n+print(f\"name: {name}\")\n+print(f\"path: {path}\")\n+print(f\"args: {args}\")\n+print(f\"kwargs: {kwargs}\")\n+\n+# The storage kwarg should always be included since it's a callable,\n+# regardless of what value it returns\n+print(\"\\nStorage kwarg present:\", 'storage' in kwargs)\n+print(\"Storage value:\", kwargs.get('storage', None))\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "OpenHands",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

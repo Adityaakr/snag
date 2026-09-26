@@ -1,0 +1,140 @@
+{
+ "id": "LearnByInteract:sphinx-doc__sphinx-8269",
+ "corpus": "swebench",
+ "seedId": "sphinx-doc__sphinx-8269",
+ "input": {
+  "mode": "local",
+  "repo": "sphinx-doc/sphinx",
+  "baseSha": "1e2ccd8f0eca0870cf6f8fce6934e2da8eba9b72",
+  "headSha": "LearnByInteract-sphinx-doc__sphinx-8269",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "sphinx-doc",
+    "repo": "sphinx",
+    "number": 8269
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "sphinx-doc",
+     "repo": "sphinx",
+     "number": 8269
+    },
+    "title": "Linkcheck should report HTTP errors instead of Anchor not found",
+    "body": "**Describe the bug**\r\nThe `linkcheck` command always reports that it was unable to find the anchor when [`linkcheck_anchors`](https://www.sphinx-doc.org/en/master/usage/configuration.html#confval-linkcheck_workers) is `True`, even when the server replied with an error status code (e.g. 404, 500).\r\n\r\nWhile it is indeed unable to find the anchor, the real issue is that the server encountered an error.\r\n\r\n**To Reproduce**\r\n```console\r\n$ sphinx-quickstart --project proj --sep --author me --release 1.0 --language en\r\n$ # https://google.com/test.txt does not exist, the server replies with a 404.\r\n$ echo '\\n`foo <https://google.com/test.txt#test>`_' >>source/index.rst\r\n$ make linkcheck\r\n```\r\n\r\n**Expected behavior**\r\n*Actual*\r\n```\r\n(line   22) broken    https://google.com/test.txt#test - Anchor 'test' not found\r\n```\r\n\r\n*Expected output*\r\nSame as when `linkcheck_anchors=False`.\r\n```\r\n(line   22) broken    https://google.com/test.txt#test - 404 Client Error: Not Found for url: https://google.com/test.txt\r\n``` \r\n\r\n**Environment info**\r\n- OS: Linux 5.8.12.a-1-hardened\r\n- Python version: 3.8.5\r\n- Sphinx version: 3.2.1",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:2540c3e15a6763d589f2ae33fc41ae5ba29aeffb9757245cad56723976766806"
+   }
+  ],
+  "pr": {
+   "title": "Fix sphinx-doc__sphinx-8269",
+   "body": ""
+  },
+  "diffText": "diff --git a/sphinx/builders/linkcheck.py b/sphinx/builders/linkcheck.py\nindex 9b54afc7c..c65e378a4 100644\n--- a/sphinx/builders/linkcheck.py\n+++ b/sphinx/builders/linkcheck.py\n@@ -162,28 +162,34 @@ class CheckExternalLinksBuilder(Builder):\n             kwargs['headers'] = get_request_headers()\n \n             try:\n+                # First check if the base URL is valid\n+                try:\n+                    # try a HEAD request first, which should be easier on\n+                    # the server and the network\n+                    response = requests.head(req_url, config=self.app.config,\n+                                          auth=auth_info, **kwargs)\n+                    response.raise_for_status()\n+                except HTTPError:\n+                    # retry with GET request if that fails, some servers\n+                    # don't like HEAD requests.\n+                    response = requests.get(req_url, stream=True, config=self.app.config,\n+                                          auth=auth_info, **kwargs)\n+                    response.raise_for_status()\n+\n+                # Only check anchor if base URL is valid and anchors are enabled\n                 if anchor and self.app.config.linkcheck_anchors:\n                     # Read the whole document and see if #anchor exists\n+                    if not response.headers.get('content-type', '').startswith('text/html'):\n+                        # Skip anchor check for non-HTML content\n+                        return 'working', '', 0\n+                    \n                     response = requests.get(req_url, stream=True, config=self.app.config,\n-                                            auth=auth_info, **kwargs)\n+                                         auth=auth_info, **kwargs)\n                     found = check_anchor(response, unquote(anchor))\n-\n                     if not found:\n                         raise Exception(__(\"Anchor '%s' not found\") % anchor)\n-                else:\n-                    try:\n-                        # try a HEAD request first, which should be easier on\n-                        # the server and the network\n-                        response = requests.head(req_url, config=self.app.config,\n-                                                 auth=auth_info, **kwargs)\n-                        response.raise_for_status()\n-                    except HTTPError:\n-                        # retry with GET request if that fails, some servers\n-                        # don't like HEAD requests.\n-                        response = requests.get(req_url, stream=True, config=self.app.config,\n-                                                auth=auth_info, **kwargs)\n-                        response.raise_for_status()\n             except HTTPError as err:\n+\n                 if err.response.status_code == 401:\n                     # We'll take \"Unauthorized\" as working.\n                     return 'working', ' - unauthorized', 0\n@@ -384,3 +390,4 @@ def setup(app: Sphinx) -> Dict[str, Any]:\n         'parallel_read_safe': True,\n         'parallel_write_safe': True,\n     }\n+\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "LearnByInteract",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

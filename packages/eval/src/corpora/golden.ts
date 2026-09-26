@@ -36,6 +36,8 @@ export function goldenItems(): EvalItem[] {
       config: s.config,
       labels: {
         requirements: e.requirements as Record<string, RequirementStatus>,
+        requirementsAccept: {},
+        claimMismatch: [],
         units: (e.units ?? []) as EvalItem['labels']['units'],
         facts: (e.facts ?? []).map((f) => ({
           kind: f.kind,

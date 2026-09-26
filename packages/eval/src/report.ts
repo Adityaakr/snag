@@ -3,9 +3,10 @@
  * reliability diagrams as inline SVG, cost and latency, versions and git SHA, and the 10 worst items with links
  * to their dumps. The HTML uses Satoshi from Fontshare with a system fallback stack.
  */
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { BRAND, EXTRACTION_PROMPT_VERSION, QUESTION_SET_VERSION } from '@remit/core';
+import type { BaselineMetrics } from './baselines.js';
 import type { Bin } from './calibration.js';
 import type { Metrics } from './metrics.js';
 import type { ItemOutcome, ProviderMode } from './runner.js';
@@ -18,7 +19,7 @@ export interface RunInfo {
   startedAt: string;
   jevModel: string;
   stoppedForBudget?: boolean;
-  baselines?: Record<string, { note: string; metrics?: Partial<Metrics> }>;
+  baselines?: Record<string, { note: string; variants?: BaselineMetrics[] }>;
 }
 
 const f2 = (x: number) => x.toFixed(2);
@@ -60,6 +61,61 @@ export function worstItems(
 
 const dumpName = (id: string) => `${id.replace(/[^\w.-]+/g, '_')}.json`;
 
+interface TargetRow {
+  name: string;
+  goal: string;
+  actual: string;
+  met: string;
+}
+
+/** The 11.8 targets that apply to this run, each reported honestly whether met or not. */
+export function targetRows(info: RunInfo, m: Metrics): TargetRow[] {
+  const rows: TargetRow[] = [];
+  const add = (name: string, goal: string, value: number | null, ok: (v: number) => boolean, fmt = f2) =>
+    rows.push({
+      name,
+      goal,
+      actual: value === null ? 'n/a' : `\`${fmt(value)}\``,
+      met: value === null ? 'n/a' : ok(value) ? 'yes' : 'no',
+    });
+  if (info.corpus === 'golden')
+    add('Golden accuracy', '`100%`', m.items ? m.passed / m.items : null, (v) => v === 1, pct);
+  const op = (k: string) => m.operators[k]?.recall ?? null;
+  if (Object.keys(m.operators).length) {
+    add('Recall: drop_requirement', '`>= 0.85`', op('drop_requirement'), (v) => v >= 0.85);
+    add('Recall: flip_condition', '`>= 0.60`', op('flip_condition'), (v) => v >= 0.6);
+    add('Recall: weaken_assertion', '`>= 0.90`', op('weaken_assertion'), (v) => v >= 0.9);
+    add('Recall: inject_config', '`>= 0.70`', op('inject_config'), (v) => v >= 0.7);
+    add(
+      'False alarms on clean seeds',
+      '`<= 0.15`',
+      m.pr.cleanItems ? m.pr.falseAlarmRate : null,
+      (v) => v <= 0.15,
+    );
+  }
+  if (info.corpus !== 'golden')
+    add('P0 precision', '`>= 0.80`', m.p0Precision.p0 ? m.p0Precision.value : null, (v) => v >= 0.8);
+  for (const [k, c] of Object.entries(m.calibration))
+    if (c.n >= 100) add(`ECE (raw) ${k}`, '`<= 0.10` after calibration', c.ece, (v) => v <= 0.1);
+  if (info.mode === 'live') {
+    add(
+      'Latency p50',
+      '`<= 30 s`',
+      m.ops.latencyP50 / 1000,
+      (v) => v <= 30,
+      (v) => `${v.toFixed(1)} s`,
+    );
+    add(
+      'Cost p50',
+      '`<= $0.10`',
+      m.ops.costP50,
+      (v) => v <= 0.1,
+      (v) => `$${v.toFixed(4)}`,
+    );
+  }
+  return rows;
+}
+
 export function renderReportMarkdown(info: RunInfo, m: Metrics, outcomes: readonly ItemOutcome[]): string {
   const real = isRealMeasurement(info.mode);
   const lines = [`# ${BRAND.name} eval: ${info.corpus} (${info.split})`, ''];
@@ -85,16 +141,47 @@ export function renderReportMarkdown(info: RunInfo, m: Metrics, outcomes: readon
     `| PR level (any P0 vs problem): precision / recall | \`${f2(m.pr.precision)}\` / \`${f2(m.pr.recall)}\` |`,
     `| False alarms (P0 or P1 per clean PR) | \`${f2(m.pr.falseAlarmRate)}\` over \`${m.pr.cleanItems}\` clean items |`,
     `| P0 precision | \`${f2(m.p0Precision.value)}\` (\`${m.p0Precision.correct}\` of \`${m.p0Precision.p0}\`) |`,
+    `| AUROC, problem vs clean (strongest P0/P1 finding) | ${m.pr.auroc === null ? 'n/a (needs both classes)' : `\`${f2(m.pr.auroc)}\``} |`,
     `| Latency p50 / p95 | \`${m.ops.latencyP50} ms\` / \`${m.ops.latencyP95} ms\` |`,
     `| Cost total / p50 per review | \`$${m.ops.costTotal.toFixed(4)}\` / \`$${m.ops.costP50.toFixed(4)}\` |`,
     `| Tokens: Jev in / LLM in / LLM out | \`${m.ops.jevInputTokens}\` / \`${m.ops.llmInputTokens}\` / \`${m.ops.llmOutputTokens}\` |`,
     `| Truncation rate | \`${pct(m.ops.truncationRate)}\` |`,
     '',
   );
+  const targets = targetRows(info, m);
+  if (targets.length) {
+    lines.push('## Targets (11.8)', '', '| Target | Goal | Actual | Met |', '|---|---|---|---|');
+    for (const t of targets) lines.push(`| ${t.name} | ${t.goal} | ${t.actual} | ${t.met} |`);
+    lines.push('');
+  }
   if (Object.keys(m.operators).length) {
-    lines.push('## Mutation operators', '', '| Operator | Items | Recall |', '|---|---|---|');
+    lines.push(
+      '## Mutation operators',
+      '',
+      '| Operator | Items | Detected (recall) | Every label correct |',
+      '|---|---|---|---|',
+    );
     for (const [op, v] of Object.entries(m.operators).sort())
-      lines.push(`| ${op} | \`${v.items}\` | \`${f2(v.recall)}\` |`);
+      lines.push(`| ${op} | \`${v.items}\` | \`${f2(v.recall)}\` | \`${v.passed}\` |`);
+    lines.push('');
+  }
+  if (m.feedback.agree + m.feedback.disagree + m.feedback.weakAgree + m.feedback.weakDisagree) {
+    lines.push(
+      '## Human feedback',
+      '',
+      `Strong labels: \`${m.feedback.agree}\` agree, \`${m.feedback.disagree}\` disagree (agreement ${m.feedback.agreement === null ? 'n/a' : `\`${f2(m.feedback.agreement)}\``}). Weak labels, kept apart: \`${m.feedback.weakAgree}\` agree, \`${m.feedback.weakDisagree}\` disagree.`,
+      '',
+    );
+  }
+  if (Object.keys(m.slices).length) {
+    lines.push(
+      '## Label slices',
+      '',
+      '| Source and strength | Items | Labeled problem | Flagged (P0) |',
+      '|---|---|---|---|',
+    );
+    for (const [k, v] of Object.entries(m.slices).sort())
+      lines.push(`| ${k} | \`${v.items}\` | \`${v.problem}\` | \`${v.flagged}\` |`);
     lines.push('');
   }
   const statuses = [
@@ -125,11 +212,21 @@ export function renderReportMarkdown(info: RunInfo, m: Metrics, outcomes: readon
     lines.push('');
   }
   if (info.baselines && Object.keys(info.baselines).length) {
-    lines.push('## Baselines', '', '| Baseline | Result |', '|---|---|');
-    for (const [name, b] of Object.entries(info.baselines))
-      lines.push(
-        `| ${name} | ${b.metrics?.pr ? `PR precision \`${f2(b.metrics.pr.precision)}\`, recall \`${f2(b.metrics.pr.recall)}\`` : b.note} |`,
-      );
+    lines.push(
+      '## Baselines',
+      '',
+      'Comparisons on the same items, not gates (11.6).',
+      '',
+      '| Baseline | Requirement F1 | PR precision / recall | False alarms | Errors | Note |',
+      '|---|---|---|---|---|---|',
+    );
+    for (const [name, b] of Object.entries(info.baselines)) {
+      if (!b.variants?.length) lines.push(`| ${name} | n/a | n/a | n/a | n/a | ${b.note} |`);
+      for (const v of b.variants ?? [])
+        lines.push(
+          `| ${name} (${v.variant}) | ${v.requirement ? `\`${f2(v.requirement.f1)}\`` : 'n/a'} | \`${f2(v.pr.precision)}\` / \`${f2(v.pr.recall)}\` | \`${f2(v.pr.falseAlarmRate)}\` | \`${v.errors}\` of \`${v.items}\` | ${b.note} |`,
+        );
+    }
     lines.push('');
   }
   const worst = worstItems(outcomes);
@@ -257,4 +354,35 @@ export function writeReport(
 export function summaryLine(info: RunInfo, m: Metrics, dir: string): string {
   const tag = isRealMeasurement(info.mode) ? '' : ' (not a real measurement)';
   return `- ${info.startedAt} ${info.corpus}/${info.split} ${info.mode}${tag}: ${m.passed}/${m.items} items correct, requirement F1 ${f2(m.requirement.f1)}, PR recall ${f2(m.pr.recall)}, false alarms ${f2(m.pr.falseAlarmRate)}, P0 precision ${f2(m.p0Precision.value)}, cost $${m.ops.costTotal.toFixed(4)}. Report: ${dir}`;
+}
+
+/** Re-renders report.md and report.html for a saved run from metrics.json and its item dumps (`remit report`). */
+export function rerenderReport(dir: string): { md: string; html: string } {
+  const metricsPath = join(dir, 'metrics.json');
+  if (!existsSync(metricsPath)) throw new Error(`${dir} has no metrics.json; is it an eval run directory?`);
+  const { info, metrics } = JSON.parse(readFileSync(metricsPath, 'utf8')) as {
+    info: RunInfo;
+    metrics: Metrics;
+  };
+  const itemsDir = join(dir, 'items');
+  const outcomes: ItemOutcome[] = existsSync(itemsDir)
+    ? readdirSync(itemsDir)
+        .filter((f) => f.endsWith('.json'))
+        .sort()
+        .map((f) => {
+          const d = JSON.parse(readFileSync(join(itemsDir, f), 'utf8'));
+          return {
+            item: { id: d.id, labels: d.labels },
+            comparison: d.comparison,
+            result: d.result,
+            latencyMs: 0,
+            costUsd: 0,
+          } as ItemOutcome;
+        })
+    : [];
+  const md = join(dir, 'report.md');
+  const html = join(dir, 'report.html');
+  writeFileSync(md, renderReportMarkdown(info, metrics, outcomes));
+  writeFileSync(html, renderReportHtml(info, metrics, outcomes));
+  return { md, html };
 }

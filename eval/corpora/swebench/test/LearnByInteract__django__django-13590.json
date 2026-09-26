@@ -1,0 +1,140 @@
+{
+ "id": "LearnByInteract:django__django-13590",
+ "corpus": "swebench",
+ "seedId": "django__django-13590",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "755dbf39fcdc491fe9b588358303e259c7750be4",
+  "headSha": "LearnByInteract-django__django-13590",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 13590
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 13590
+    },
+    "title": "Upgrading 2.2>3.0 causes named tuples used as arguments to __range to error.",
+    "body": "Description\n\t\nI noticed this while upgrading a project from 2.2 to 3.0.\nThis project passes named 2-tuples as arguments to range queryset filters. This works fine on 2.2. On 3.0 it causes the following error: TypeError: __new__() missing 1 required positional argument: 'far'.\nThis happens because django.db.models.sql.query.Query.resolve_lookup_value goes into the tuple elements to resolve lookups and then attempts to reconstitute the tuple with the resolved elements.\nWhen it attempts to construct the new tuple it preserves the type (the named tuple) but it passes a iterator to it's constructor.\nNamedTuples don't have the code path for copying an iterator, and so it errors on insufficient arguments.\nThe fix is to * expand the contents of the iterator into the constructor.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:d661861e2219e8024457db9ee13a5349d0585a3025f19bd68bd7d1d1c785c0c9"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-13590",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/db/models/sql/query.py b/django/db/models/sql/query.py\nindex 4648daf395..32de336795 100644\n--- a/django/db/models/sql/query.py\n+++ b/django/db/models/sql/query.py\n@@ -1077,10 +1077,16 @@ class Query(BaseExpression):\n         elif isinstance(value, (list, tuple)):\n             # The items of the iterable may be expressions and therefore need\n             # to be resolved independently.\n-            return type(value)(\n+            resolved_values = [\n                 self.resolve_lookup_value(sub_value, can_reuse, allow_joins)\n                 for sub_value in value\n-            )\n+            ]\n+            # Named tuples require unpacking of values as positional arguments\n+            if hasattr(value, '_fields'):\n+                # Input is a named tuple\n+                return type(value)(*resolved_values)\n+            # Regular tuples and lists\n+            return type(value)(resolved_values)\n         return value\n \n     def solve_lookup_type(self, lookup):\n@@ -2467,3 +2473,4 @@ class JoinPromoter:\n         query.promote_joins(to_promote)\n         query.demote_joins(to_demote)\n         return to_demote\n+\ndiff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..0cb0fee439\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,64 @@\n+import os\n+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'django.conf.global_settings')\n+\n+from django.conf import settings\n+settings.configure(\n+    DATABASES={\n+        'default': {\n+            'ENGINE': 'django.db.backends.sqlite3',\n+            'NAME': ':memory:',\n+        }\n+    },\n+    INSTALLED_APPS=['django.contrib.contenttypes']\n+)\n+\n+import django\n+django.setup()\n+\n+from collections import namedtuple\n+from django.db import models\n+from django.db.models.sql.query import Query\n+\n+# Create a named tuple type\n+Range = namedtuple('Range', ['near', 'far'])\n+\n+# Create a simple model\n+class TestModel(models.Model):\n+    value = models.IntegerField()\n+    \n+    class Meta:\n+        app_label = 'django.contrib.contenttypes'\n+\n+# Create a Query instance\n+query = Query(TestModel)\n+\n+# Test cases:\n+def test_case(description, value):\n+    print(f\"\\nTest: {description}\")\n+    try:\n+        resolved = query.resolve_lookup_value(value, can_reuse=None, allow_joins=True)\n+        print(\"Success:\", resolved)\n+        return True\n+    except Exception as e:\n+        print(\"Error:\", str(e))\n+        return False\n+\n+# 1. Regular named tuple\n+test_case(\"Regular named tuple\", Range(near=1, far=10))\n+\n+# 2. Empty named tuple\n+EmptyRange = namedtuple('EmptyRange', [])\n+test_case(\"Empty named tuple\", EmptyRange())\n+\n+# 3. Regular tuple\n+test_case(\"Regular tuple\", (1, 2))\n+\n+# 4. Regular list\n+test_case(\"Regular list\", [1, 2])\n+\n+# 5. Empty list\n+test_case(\"Empty list\", [])\n+\n+# 6. Single value\n+test_case(\"Single value\", 42)\n+\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "LearnByInteract",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

@@ -1,0 +1,140 @@
+{
+ "id": "gold:astropy__astropy-13033",
+ "corpus": "swebench",
+ "seedId": "astropy__astropy-13033",
+ "input": {
+  "mode": "local",
+  "repo": "astropy/astropy",
+  "baseSha": "298ccb478e6bf092953bca67a3d29dc6c35f6752",
+  "headSha": "gold-astropy__astropy-13033",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "astropy",
+    "repo": "astropy",
+    "number": 13033
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "astropy",
+     "repo": "astropy",
+     "number": 13033
+    },
+    "title": "TimeSeries: misleading exception when required column check fails.",
+    "body": "<!-- This comments are hidden when you submit the issue,\r\nso you do not need to remove them! -->\r\n\r\n<!-- Please be sure to check out our contributing guidelines,\r\nhttps://github.com/astropy/astropy/blob/main/CONTRIBUTING.md .\r\nPlease be sure to check out our code of conduct,\r\nhttps://github.com/astropy/astropy/blob/main/CODE_OF_CONDUCT.md . -->\r\n\r\n<!-- Please have a search on our GitHub repository to see if a similar\r\nissue has already been posted.\r\nIf a similar issue is closed, have a quick look to see if you are satisfied\r\nby the resolution.\r\nIf not please go ahead and open an issue! -->\r\n\r\n<!-- Please check that the development version still produces the same bug.\r\nYou can install development version with\r\npip install git+https://github.com/astropy/astropy\r\ncommand. -->\r\n\r\n### Description\r\n<!-- Provide a general description of the bug. -->\r\n\r\nFor a `TimeSeries` object that has additional required columns (in addition to `time`), when codes mistakenly try to remove a required column, the exception it produces is misleading.\r\n\r\n### Expected behavior\r\n<!-- What did you expect to happen. -->\r\nAn exception that informs the users required columns are missing.\r\n\r\n### Actual behavior\r\nThe actual exception message is confusing:\r\n`ValueError: TimeSeries object is invalid - expected 'time' as the first columns but found 'time'`\r\n\r\n### Steps to Reproduce\r\n<!-- Ideally a code example could be provided so we can run it ourselves. -->\r\n<!-- If you are pasting code, use triple backticks (```) around\r\nyour code snippet. -->\r\n<!-- If necessary, sanitize your screen output to be pasted so you do not\r\nreveal secrets like tokens and passwords. -->\r\n\r\n```python\r\nfrom astropy.time import Time\r\nfrom astropy.timeseries import TimeSeries\r\n\r\ntime=Time(np.arange(100000, 100003), format='jd')\r\nts = TimeSeries(time=time, data = {\"flux\": [99.9, 99.8, 99.7]})\r\nts._required_columns = [\"time\", \"flux\"]                                   \r\nts.remove_column(\"flux\")\r\n\r\n```\r\n\r\n### System Details\r\n<!-- Even if you do not think this is necessary, it is useful information for the maintainers.\r\nPlease run the following snippet and paste the output below:\r\nimport platform; print(platform.platform())\r\nimport sys; print(\"Python\", sys.version)\r\nimport numpy; print(\"Numpy\", numpy.__version__)\r\nimport erfa; print(\"pyerfa\", erfa.__version__)\r\nimport astropy; print(\"astropy\", astropy.__version__)\r\nimport scipy; print(\"Scipy\", scipy.__version__)\r\nimport matplotlib; print(\"Matplotlib\", matplotlib.__version__)\r\n-->\r\n```\r\nWindows-10-10.0.22000-SP0\r\nPython 3.9.10 | packaged by conda-forge | (main, Feb  1 2022, 21:21:54) [MSC v.1929 64 bit (AMD64)]\r\nNumpy 1.22.3\r\npyerfa 2.0.0.1\r\nastropy 5.0.3\r\nScipy 1.8.0\r\nMatplotlib 3.5.1\r\n```",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:03cfe6a3cd9b5d96ebd4daa8385826e4ba952e1009cc57b10962a46928e3d883"
+   }
+  ],
+  "pr": {
+   "title": "Fix astropy__astropy-13033",
+   "body": ""
+  },
+  "diffText": "diff --git a/astropy/timeseries/core.py b/astropy/timeseries/core.py\n--- a/astropy/timeseries/core.py\n+++ b/astropy/timeseries/core.py\n@@ -55,6 +55,13 @@ class BaseTimeSeries(QTable):\n     _required_columns_relax = False\n \n     def _check_required_columns(self):\n+        def as_scalar_or_list_str(obj):\n+            if not hasattr(obj, \"__len__\"):\n+                return f\"'{obj}'\"\n+            elif len(obj) == 1:\n+                return f\"'{obj[0]}'\"\n+            else:\n+                return str(obj)\n \n         if not self._required_columns_enabled:\n             return\n@@ -76,9 +83,10 @@ def _check_required_columns(self):\n \n             elif self.colnames[:len(required_columns)] != required_columns:\n \n-                raise ValueError(\"{} object is invalid - expected '{}' \"\n-                                 \"as the first column{} but found '{}'\"\n-                                 .format(self.__class__.__name__, required_columns[0], plural, self.colnames[0]))\n+                raise ValueError(\"{} object is invalid - expected {} \"\n+                                 \"as the first column{} but found {}\"\n+                                 .format(self.__class__.__name__, as_scalar_or_list_str(required_columns),\n+                                            plural, as_scalar_or_list_str(self.colnames[:len(required_columns)])))\n \n             if (self._required_columns_relax\n                     and self._required_columns == self.colnames[:len(self._required_columns)]):\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "gold",
+  "source": "gold",
+  "strength": "strong"
+ },
+ "annotatedBy": "study"
+}

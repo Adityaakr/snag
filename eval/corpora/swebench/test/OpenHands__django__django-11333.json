@@ -1,0 +1,140 @@
+{
+ "id": "OpenHands:django__django-11333",
+ "corpus": "swebench",
+ "seedId": "django__django-11333",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "55b68de643b5c2d5f0a8ea7587ab3b2966021ccc",
+  "headSha": "OpenHands-django__django-11333",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 11333
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 11333
+    },
+    "title": "Optimization: Multiple URLResolvers may be unintentionally be constructed by calls to `django.urls.resolvers.get_resolver`",
+    "body": "Description\n\t\nMultiple URLResolvers may be constructed by django.urls.resolvers.get_resolver if django.urls.base.set_urlconf has not yet been called, resulting in multiple expensive calls to URLResolver._populate.\n​`get_resolver` constructs a new URLResolver, and caches it using functools.lru_cache.\nURLResolver instances can pre-compute a large amount of information about routes in ​`URLResolver._populate`, and they store those caches as instance variables.\n​`set_urlconf` is called with when ​we first handle a request in `BaseHandler.get_response`.\nget_resolver has a number of call-sites. Most notably, ​`reverse`. Like the other call-sites, reverse calls get_resolver with the result of get_urlconf.\nIf reverse (or anything else using get_resolver) is called both before (e.g. at import time) and after a request is handled, get_resolver will be called with different values. Initially it will be called with None, and later if will be called with settings.ROOT_URLCONF, because request handling calls set_urlconf.\nIn an application with a large number of routes, URLResolver._populate can be expensive, so calling it twice and storing those caches twice is wasteful.\nMy proposed solution is just to modify ​`get_resolver` to look up settings.ROOT_URLCONF before the memoized function call.\nI'm planning to contribute a fix, as soon as I can get the CLA signed.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:a7ae2adc0a4897bba5d8d33fcdf8b30139932e42f358730546d3b8c6e76b1517"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-11333",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/urls/base.py b/django/urls/base.py\nindex 0e1c3d909c..1b63eebf0a 100644\n--- a/django/urls/base.py\n+++ b/django/urls/base.py\n@@ -7,7 +7,7 @@ from django.utils.functional import lazy\n from django.utils.translation import override\n \n from .exceptions import NoReverseMatch, Resolver404\n-from .resolvers import get_ns_resolver, get_resolver\n+from .resolvers import get_ns_resolver, get_resolver, _get_resolver\n from .utils import get_callable\n \n # SCRIPT_NAME prefixes for each thread are stored here. If there's no entry for\n@@ -92,7 +92,7 @@ reverse_lazy = lazy(reverse, str)\n \n def clear_url_caches():\n     get_callable.cache_clear()\n-    get_resolver.cache_clear()\n+    _get_resolver.cache_clear()\n     get_ns_resolver.cache_clear()\n \n \ndiff --git a/django/urls/resolvers.py b/django/urls/resolvers.py\nindex 247e3680c0..06690b5310 100644\n--- a/django/urls/resolvers.py\n+++ b/django/urls/resolvers.py\n@@ -63,10 +63,15 @@ class ResolverMatch:\n         )\n \n \n-@functools.lru_cache(maxsize=None)\n def get_resolver(urlconf=None):\n+    # Look up settings.ROOT_URLCONF before the memoized function call to avoid\n+    # creating multiple URLResolver instances when called with None vs. the actual value\n     if urlconf is None:\n         urlconf = settings.ROOT_URLCONF\n+    return _get_resolver(urlconf)\n+\n+@functools.lru_cache(maxsize=None)\n+def _get_resolver(urlconf):\n     return URLResolver(RegexPattern(r'^/'), urlconf)\n \n \ndiff --git a/reproduce.py b/reproduce.py\nnew file mode 100644\nindex 0000000000..d0bf0441d8\n--- /dev/null\n+++ b/reproduce.py\n@@ -0,0 +1,24 @@\n+from django.conf import settings\n+from django.urls.base import set_urlconf, reverse\n+from django.urls.resolvers import get_resolver\n+\n+# Configure Django settings\n+settings.configure(\n+    ROOT_URLCONF='django.conf.urls',\n+    DEBUG=True,\n+    INSTALLED_APPS=[],\n+)\n+\n+# First call to get_resolver() with None - will use settings.ROOT_URLCONF internally\n+resolver1 = get_resolver(None)\n+print(\"First resolver:\", resolver1)\n+\n+# Call set_urlconf which is what happens during request handling\n+set_urlconf(settings.ROOT_URLCONF)\n+\n+# Second call to get_resolver() with settings.ROOT_URLCONF directly\n+resolver2 = get_resolver(settings.ROOT_URLCONF)\n+print(\"Second resolver:\", resolver2)\n+\n+# Show that they are different objects\n+print(\"Are resolvers the same object?\", resolver1 is resolver2)\n\\ No newline at end of file\ndiff --git a/test_cache_clear.py b/test_cache_clear.py\nnew file mode 100644\nindex 0000000000..f2cbf40a66\n--- /dev/null\n+++ b/test_cache_clear.py\n@@ -0,0 +1,23 @@\n+from django.conf import settings\n+from django.urls.base import clear_url_caches, get_resolver\n+\n+# Configure Django settings\n+settings.configure(\n+    ROOT_URLCONF='django.conf.urls',\n+    DEBUG=True,\n+    INSTALLED_APPS=[],\n+)\n+\n+# Get a resolver\n+resolver1 = get_resolver(None)\n+print(\"First resolver:\", resolver1)\n+\n+# Clear caches\n+clear_url_caches()\n+\n+# Get another resolver\n+resolver2 = get_resolver(None)\n+print(\"Second resolver:\", resolver2)\n+\n+# Show that they are different objects after cache clear\n+print(\"Are resolvers the same object?\", resolver1 is resolver2)\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "OpenHands",
+  "source": "rq2_divergent",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

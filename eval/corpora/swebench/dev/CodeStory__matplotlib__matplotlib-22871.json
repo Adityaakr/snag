@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:matplotlib__matplotlib-22871",
+ "corpus": "swebench",
+ "seedId": "matplotlib__matplotlib-22871",
+ "input": {
+  "mode": "local",
+  "repo": "matplotlib/matplotlib",
+  "baseSha": "a7b7260bf06c20d408215d95ce20a1a01c12e5b1",
+  "headSha": "CodeStory-matplotlib__matplotlib-22871",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "matplotlib",
+    "repo": "matplotlib",
+    "number": 22871
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "matplotlib",
+     "repo": "matplotlib",
+     "number": 22871
+    },
+    "title": "[Bug]: ConciseDateFormatter not showing year anywhere when plotting <12 months",
+    "body": "### Bug summary\n\nWhen I plot < 1 year and January is not included in the x-axis, the year doesn't show up anywhere.\r\nThis bug is different from bug #21670 (fixed in #21785).\n\n### Code for reproduction\n\n```python\nimport matplotlib.pyplot as plt\r\nimport matplotlib.dates as mdates\r\nfrom datetime import datetime, timedelta\r\n\r\n#create time array\r\ninitial = datetime(2021,2,14,0,0,0)\r\ntime_array = [initial + timedelta(days=x) for x in range(1,200)]\r\n\r\n#create data array\r\ndata = [-x**2/20000 for x in range(1,200)]\r\n\r\n\r\n#plot data\r\nfig,ax = plt.subplots()\r\nax.plot(time_array,data) \r\n        \r\nlocator = mdates.AutoDateLocator()\r\nformatter = mdates.ConciseDateFormatter(locator)\r\n\r\nax.grid(True)\r\nax.set_ylabel(\"Temperature ($\\degree$C)\")\r\nax.xaxis.set_major_locator(locator)   \r\nax.xaxis.set_major_formatter(formatter)\r\nfig.autofmt_xdate() #automatically makes the x-labels rotate\n```\n\n\n### Actual outcome\n\n![image](https://user-images.githubusercontent.com/15143365/154090257-c7813f1c-f9ea-4252-86bf-f84e449c2f46.png)\r\n\n\n### Expected outcome\n\nI expect the year \"2021\" to show in the offset, to the right of the x-axis\n\n### Additional information\n\nI'm using Spyder IDE, v5.1.5\n\n### Operating system\n\nWindows 10\n\n### Matplotlib Version\n\n3.4.3\n\n### Matplotlib Backend\n\nQt5Agg\n\n### Python version\n\n3.9.1\n\n### Jupyter version\n\n_No response_\n\n### Installation\n\nconda",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:71a17f1de8669d93a8cc75acf9685e4b74b2129ecb135730d8dc376709151447"
+   }
+  ],
+  "pr": {
+   "title": "Fix matplotlib__matplotlib-22871",
+   "body": ""
+  },
+  "diffText": "diff --git a/lib/matplotlib/dates.py b/lib/matplotlib/dates.py\nindex 4d8ddf3ee5..0584767d91 100644\n--- a/lib/matplotlib/dates.py\n+++ b/lib/matplotlib/dates.py\n@@ -797,8 +797,9 @@ class ConciseDateFormatter(ticker.Formatter):\n         # 3: hours, 4: minutes, 5: seconds, 6: microseconds\n         for level in range(5, -1, -1):\n             if len(np.unique(tickdate[:, level])) > 1:\n-                if level < 2:\n-                    show_offset = False\n+                # Always show offset if we're not starting from January\n+                first_month = tickdate[0][1]  # Get month of first tick\n+                show_offset = first_month != 1 or level > 1\n                 break\n             elif level == 0:\n                 # all tickdate are the same, so only micros might be different\ndiff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..fe35bc8c26\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,26 @@\n+import matplotlib.pyplot as plt\n+import matplotlib.dates as mdates\n+from datetime import datetime, timedelta\n+\n+#create time array\n+initial = datetime(2021,2,14,0,0,0)\n+time_array = [initial + timedelta(days=x) for x in range(1,200)]\n+\n+#create data array\n+data = [-x**2/20000 for x in range(1,200)]\n+\n+#plot data\n+fig,ax = plt.subplots()\n+ax.plot(time_array,data) \n+        \n+locator = mdates.AutoDateLocator()\n+formatter = mdates.ConciseDateFormatter(locator)\n+\n+ax.grid(True)\n+ax.set_ylabel(\"Temperature ($\\degree$C)\")\n+ax.xaxis.set_major_locator(locator)   \n+ax.xaxis.set_major_formatter(formatter)\n+fig.autofmt_xdate() #automatically makes the x-labels rotate\n+\n+plt.savefig('test_plot.png')\n+plt.close()\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

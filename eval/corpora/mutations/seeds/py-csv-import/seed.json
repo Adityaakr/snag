@@ -1,0 +1,170 @@
+{
+  "id": "py-csv-import",
+  "language": "py",
+  "annotated_by": "claude-code",
+  "split": "dev",
+  "summary": "CSV contact import: required fields, email format, multi-format signup dates, name length limit.",
+  "requirements": [
+    {
+      "id": "R1",
+      "text": "Rows with an empty `name` or `email` are skipped and reported as `missing name` or `missing email`",
+      "implementing": [
+        {
+          "file": "importer/csv_import.py",
+          "symbol": "import_rows",
+          "remove": [
+            "missing = [col for col",
+            "if missing:"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "file": "tests/test_csv_import.py",
+          "symbol": "test_reports_missing_name_and_email"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "text": "Emails must contain exactly one `@` and a dot in the domain (`ann@example.com` is valid, `ann@example` is not); other rows are reported as `invalid email`",
+      "implementing": [
+        {
+          "file": "importer/csv_import.py",
+          "symbol": "is_valid_email"
+        },
+        {
+          "file": "importer/csv_import.py",
+          "symbol": "import_rows",
+          "remove": [
+            "if not is_valid_email(email):"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "file": "tests/test_csv_import.py",
+          "symbol": "test_is_valid_email"
+        },
+        {
+          "file": "tests/test_csv_import.py",
+          "symbol": "test_rejects_malformed_emails"
+        }
+      ],
+      "unwire": {
+        "file": "importer/csv_import.py",
+        "symbol": "import_rows",
+        "callee": "is_valid_email"
+      }
+    },
+    {
+      "id": "R3",
+      "text": "The optional `signup_date` column accepts `2024-03-05`, `05/03/2024` (day first, so 5 March) and `5 Mar 2024`; any other value is reported as `bad signup_date`",
+      "implementing": [
+        {
+          "file": "importer/csv_import.py",
+          "symbol": "parse_signup_date"
+        },
+        {
+          "file": "importer/csv_import.py",
+          "symbol": "import_rows",
+          "remove": [
+            "if row.get(\"signup_date\"):"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "file": "tests/test_csv_import.py",
+          "symbol": "test_parses_signup_dates"
+        },
+        {
+          "file": "tests/test_csv_import.py",
+          "symbol": "test_stores_signup_date"
+        },
+        {
+          "file": "tests/test_csv_import.py",
+          "symbol": "test_reports_bad_signup_date"
+        }
+      ],
+      "flip": {
+        "impl": {
+          "file": "importer/csv_import.py",
+          "symbol": "parse_signup_date",
+          "from": "\"%d/%m/%Y\"",
+          "to": "\"%m/%d/%Y\""
+        },
+        "test": {
+          "file": "tests/test_csv_import.py",
+          "symbol": "test_parses_signup_dates",
+          "from": "\"05/03/2024\"",
+          "to": "\"03/05/2024\""
+        }
+      },
+      "partial": {
+        "impl": {
+          "file": "importer/csv_import.py",
+          "symbol": "parse_signup_date",
+          "contains": "\"%d %b %Y\""
+        },
+        "test": {
+          "file": "tests/test_csv_import.py",
+          "symbol": "test_parses_signup_dates",
+          "contains": "parse_signup_date(\"5 Mar 2024\")"
+        }
+      }
+    },
+    {
+      "id": "R4",
+      "text": "Names longer than 80 characters are rejected with a `name too long` error",
+      "implementing": [
+        {
+          "file": "importer/csv_import.py",
+          "symbol": "import_rows",
+          "remove": [
+            "if len(name) > 80:"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "file": "tests/test_csv_import.py",
+          "symbol": "test_rejects_long_names"
+        }
+      ],
+      "flip": {
+        "impl": {
+          "file": "importer/csv_import.py",
+          "symbol": "import_rows",
+          "from": "80",
+          "to": "100"
+        },
+        "test": {
+          "file": "tests/test_csv_import.py",
+          "symbol": "test_rejects_long_names",
+          "from": "81",
+          "to": "101"
+        }
+      }
+    }
+  ],
+  "incidental": [],
+  "config": {
+    "file": "importer/config.py",
+    "symbol": "import_limits",
+    "from": "5000",
+    "to": "500"
+  },
+  "unrelatedTest": {
+    "file": "tests/test_phone.py",
+    "symbol": "test_adds_country_code"
+  },
+  "unrelatedCode": {
+    "file": "importer/phone.py",
+    "symbol": "normalize_phone",
+    "rename": {
+      "from": "digits",
+      "to": "number"
+    }
+  }
+}

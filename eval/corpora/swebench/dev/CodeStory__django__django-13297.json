@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:django__django-13297",
+ "corpus": "swebench",
+ "seedId": "django__django-13297",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "8954f255bbf5f4ee997fd6de62cb50fc9b5dd697",
+  "headSha": "CodeStory-django__django-13297",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 13297
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 13297
+    },
+    "title": "TemplateView.get_context_data()'s kwargs returns SimpleLazyObjects that causes a crash when filtering.",
+    "body": "Description\n\t\nExample Code that works in 3.0, but not in 3.1:\nclass OfferView(TemplateView):\n\ttemplate_name = \"offers/offer.html\"\n\tdef get_context_data(self, **kwargs):\n\t\toffer_slug = kwargs.get(\"offer_slug\", \"\")\n\t\toffer = get_object_or_404(Account, slug=offer_slug)\n\t\treturn {\"offer\": offer, \"offer_slug\": offer_slug}\nIn order to make this work in 3.1, you have to explicitly convert the result of kwargs.get() to a string to get the SimpleLazyObject to resolve:\nclass OfferView(TemplateView):\n\ttemplate_name = \"offers/offer.html\"\n\tdef get_context_data(self, **kwargs):\n\t\toffer_slug = kwargs.get(\"offer_slug\", \"\")\n\t\toffer = get_object_or_404(Account, slug=str(offer_slug))\n\t\treturn {\"offer\": offer, \"offer_slug\": offer_slug}\nThe error generated if you don't is:\nError binding parameter 0 - probably unsupported type\nfrom django/db/backends/sqlite3/operations.py, line 144, in _quote_params_for_last_executed_query\nIn both cases, the urls.py looks like:\npath(\n\t\t\"/offers/<slug:offer_slug>/\",\n\t\tOfferView.as_view(),\n\t\tname=\"offer_view\",\n\t),\nWhen debugging, I found that offer_slug (coming in from kwargs.get) was of type 'SimpleLazyObject' in Django 3.1, and when I explicitly converted it to a string, get_object_or_404 behaved as expected.\nThis is using Python 3.7.8 with SQLite.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:f90eca398ee5f75c49644268e4d3debc044cef9544670f7bf597cb7ec27fdc85"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-13297",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/db/backends/base/operations.py b/django/db/backends/base/operations.py\nindex 617ac95907..3d1b2cbeff 100644\n--- a/django/db/backends/base/operations.py\n+++ b/django/db/backends/base/operations.py\n@@ -469,6 +469,14 @@ class BaseDatabaseOperations:\n         \"\"\"\n         return value\n \n+    def _resolve_lazy_object(self, value):\n+        \"\"\"Resolve lazy objects to their actual values.\"\"\"\n+        if hasattr(value, '_wrapped'):\n+            if value._wrapped is None:\n+                value._setup()\n+            return value._wrapped\n+        return value\n+\n     def adapt_unknown_value(self, value):\n         \"\"\"\n         Transform a value to something compatible with the backend driver.\n@@ -477,6 +485,9 @@ class BaseDatabaseOperations:\n         cases where the target type isn't known, such as .raw() SQL queries.\n         As a consequence it may not work perfectly in all circumstances.\n         \"\"\"\n+        # First resolve any lazy objects\n+        value = self._resolve_lazy_object(value)\n+\n         if isinstance(value, datetime.datetime):   # must be before date\n             return self.adapt_datetimefield_value(value)\n         elif isinstance(value, datetime.date):\ndiff --git a/django/db/backends/sqlite3/base.py b/django/db/backends/sqlite3/base.py\nindex 8a105d4f35..93d96bb621 100644\n--- a/django/db/backends/sqlite3/base.py\n+++ b/django/db/backends/sqlite3/base.py\n@@ -405,15 +405,33 @@ class SQLiteCursorWrapper(Database.Cursor):\n     This fixes it -- but note that if you want to use a literal \"%s\" in a query,\n     you'll need to use \"%%s\".\n     \"\"\"\n+    def _resolve_lazy_objects(self, params):\n+        \"\"\"Resolve any lazy objects in the parameters.\"\"\"\n+        if params is None:\n+            return None\n+        if isinstance(params, (list, tuple)):\n+            return tuple(\n+                str(p._wrapped) if hasattr(p, '_wrapped') else p\n+                for p in params\n+            )\n+        elif isinstance(params, dict):\n+            return {\n+                k: str(v._wrapped) if hasattr(v, '_wrapped') else v\n+                for k, v in params.items()\n+            }\n+        return params\n+\n     def execute(self, query, params=None):\n         if params is None:\n             return Database.Cursor.execute(self, query)\n         query = self.convert_query(query)\n-        return Database.Cursor.execute(self, query, params)\n+        resolved_params = self._resolve_lazy_objects(params)\n+        return Database.Cursor.execute(self, query, resolved_params)\n \n     def executemany(self, query, param_list):\n         query = self.convert_query(query)\n-        return Database.Cursor.executemany(self, query, param_list)\n+        resolved_param_list = [self._resolve_lazy_objects(params) for params in param_list]\n+        return Database.Cursor.executemany(self, query, resolved_param_list)\n \n     def convert_query(self, query):\n         return FORMAT_QMARK_REGEX.sub('?', query).replace('%%', '%')\ndiff --git a/django/db/backends/sqlite3/operations.py b/django/db/backends/sqlite3/operations.py\nindex 1f77b3109f..13a4b4beea 100644\n--- a/django/db/backends/sqlite3/operations.py\n+++ b/django/db/backends/sqlite3/operations.py\n@@ -114,6 +114,14 @@ class DatabaseOperations(BaseDatabaseOperations):\n     def pk_default_value(self):\n         return \"NULL\"\n \n+    def _resolve_lazy_object(self, value):\n+        \"\"\"Resolve lazy objects to their actual values.\"\"\"\n+        if hasattr(value, '_wrapped'):\n+            if value._wrapped is None:\n+                value._setup()\n+            return value._wrapped\n+        return value\n+\n     def _quote_params_for_last_executed_query(self, params):\n         \"\"\"\n         Only for last_executed_query! Don't use this to execute SQL queries!\n@@ -131,13 +139,16 @@ class DatabaseOperations(BaseDatabaseOperations):\n                 results += self._quote_params_for_last_executed_query(chunk)\n             return results\n \n-        sql = 'SELECT ' + ', '.join(['QUOTE(?)'] * len(params))\n+        # Resolve any lazy objects in the parameters\n+        resolved_params = tuple(self._resolve_lazy_object(p) for p in params)\n+\n+        sql = 'SELECT ' + ', '.join(['QUOTE(?)'] * len(resolved_params))\n         # Bypass Django's wrappers and use the underlying sqlite3 connection\n         # to avoid logging this query - it would trigger infinite recursion.\n         cursor = self.connection.connection.cursor()\n         # Native sqlite3 cursors cannot be used as context managers.\n         try:\n-            return cursor.execute(sql, params).fetchone()\n+            return cursor.execute(sql, resolved_params).fetchone()\n         finally:\n             cursor.close()\n \ndiff --git a/django/shortcuts.py b/django/shortcuts.py\nindex eda6f8813c..8163f400a2 100644\n--- a/django/shortcuts.py\n+++ b/django/shortcuts.py\n@@ -72,8 +72,13 @@ def get_object_or_404(klass, *args, **kwargs):\n             \"First argument to get_object_or_404() must be a Model, Manager, \"\n             \"or QuerySet, not '%s'.\" % klass__name\n         )\n+    # Resolve any lazy objects in kwargs\n+    resolved_kwargs = {\n+        k: str(v._wrapped) if hasattr(v, '_wrapped') else v\n+        for k, v in kwargs.items()\n+    }\n     try:\n-        return queryset.get(*args, **kwargs)\n+        return queryset.get(*args, **resolved_kwargs)\n     except queryset.model.DoesNotExist:\n         raise Http404('No %s matches the given query.' % queryset.model._meta.object_name)\n \ndiff --git a/django/urls/resolvers.py b/django/urls/resolvers.py\nindex 9f4d84d5a2..5a7fae83cb 100644\n--- a/django/urls/resolvers.py\n+++ b/django/urls/resolvers.py\n@@ -160,7 +160,7 @@ class RegexPattern(CheckURLMixin):\n             # positional arguments.\n             kwargs = match.groupdict()\n             args = () if kwargs else match.groups()\n-            kwargs = {k: v for k, v in kwargs.items() if v is not None}\n+            kwargs = {k: str(v) if hasattr(v, '_wrapped') else v for k, v in kwargs.items() if v is not None}\n             return path[match.end():], args, kwargs\n         return None\n \ndiff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..255ab5036b\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,91 @@\n+import os\n+import sys\n+import django\n+from django.conf import settings\n+from django.http import HttpRequest\n+from django.urls import path\n+from django.views.generic import TemplateView\n+from django.shortcuts import get_object_or_404\n+from django.db import models\n+from django.test import RequestFactory\n+from django.utils.functional import SimpleLazyObject\n+\n+# Configure Django settings\n+if not settings.configured:\n+    settings.configure(\n+        DEBUG=True,\n+        DATABASES={\n+            'default': {\n+                'ENGINE': 'django.db.backends.sqlite3',\n+                'NAME': ':memory:',\n+            }\n+        },\n+        INSTALLED_APPS=[\n+            'django.contrib.contenttypes',\n+            'django.contrib.auth',\n+        ],\n+        ROOT_URLCONF=__name__,\n+    )\n+    django.setup()\n+\n+# Mock Account model\n+class Account(models.Model):\n+    slug = models.SlugField()\n+    \n+    class Meta:\n+        app_label = 'reproduce_error'\n+\n+# View that demonstrates the issue\n+class OfferView(TemplateView):\n+    template_name = \"offers/offer.html\"\n+    \n+    def get_context_data(self, **kwargs):\n+        offer_slug = kwargs.get(\"offer_slug\", \"\")\n+        print(f\"Type of offer_slug: {type(offer_slug)}\")\n+        print(f\"Value of offer_slug: {offer_slug}\")\n+        offer = get_object_or_404(Account, slug=offer_slug)\n+        return {\"offer\": offer, \"offer_slug\": offer_slug}\n+\n+# URL patterns\n+urlpatterns = [\n+    path('offers/<slug:offer_slug>/', OfferView.as_view(), name='offer_view'),\n+]\n+\n+def main():\n+    # Create the database tables\n+    from django.db import connection\n+    with connection.schema_editor() as schema_editor:\n+        schema_editor.create_model(Account)\n+    \n+    # Create a test account\n+    Account.objects.create(slug='test-offer')\n+    \n+    # Create a request factory\n+    factory = RequestFactory()\n+    \n+    # Create a view instance\n+    view = OfferView.as_view()\n+    \n+    # Create a lazy object to simulate URL parameter\n+    lazy_slug = SimpleLazyObject(lambda: \"test-offer\")\n+    \n+    print(\"\\nTesting with SimpleLazyObject...\")\n+    try:\n+        request = factory.get('/offers/test-offer/')\n+        response = view(request, offer_slug=lazy_slug)\n+        print(\"Success! The view handled the lazy object correctly\")\n+    except Exception as e:\n+        print(\"Error occurred:\")\n+        print(str(e))\n+    \n+    print(\"\\nTesting with regular string...\")\n+    try:\n+        request = factory.get('/offers/test-offer/')\n+        response = view(request, offer_slug=\"test-offer\")\n+        print(\"Success! The view handled the string correctly\")\n+    except Exception as e:\n+        print(\"Error occurred:\")\n+        print(str(e))\n+\n+if __name__ == \"__main__\":\n+    main()\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq2_divergent",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

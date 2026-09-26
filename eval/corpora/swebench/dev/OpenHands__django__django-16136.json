@@ -1,0 +1,140 @@
+{
+ "id": "OpenHands:django__django-16136",
+ "corpus": "swebench",
+ "seedId": "django__django-16136",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "19e6efa50b603af325e7f62058364f278596758f",
+  "headSha": "OpenHands-django__django-16136",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 16136
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 16136
+    },
+    "title": "object HttpResponseNotAllowed can't be used in 'await' expression",
+    "body": "Description\n\t\nWhen defining a simple View subclass with only an async \"post\" method, GET requests to this view cause the following exception:\n[29/Sep/2022 07:50:48] \"GET /demo HTTP/1.1\" 500 81134\nMethod Not Allowed (GET): /demo\nInternal Server Error: /demo\nTraceback (most recent call last):\n File \"/home/alorence/.cache/pypoetry/virtualenvs/dj-bug-demo-FlhD0jMY-py3.10/lib/python3.10/site-packages/django/core/handlers/exception.py\", line 55, in inner\n\tresponse = get_response(request)\n File \"/home/alorence/.cache/pypoetry/virtualenvs/dj-bug-demo-FlhD0jMY-py3.10/lib/python3.10/site-packages/django/core/handlers/base.py\", line 197, in _get_response\n\tresponse = wrapped_callback(request, *callback_args, **callback_kwargs)\n File \"/home/alorence/.cache/pypoetry/virtualenvs/dj-bug-demo-FlhD0jMY-py3.10/lib/python3.10/site-packages/asgiref/sync.py\", line 218, in __call__\n\treturn call_result.result()\n File \"/usr/lib/python3.10/concurrent/futures/_base.py\", line 451, in result\n\treturn self.__get_result()\n File \"/usr/lib/python3.10/concurrent/futures/_base.py\", line 403, in __get_result\n\traise self._exception\n File \"/home/alorence/.cache/pypoetry/virtualenvs/dj-bug-demo-FlhD0jMY-py3.10/lib/python3.10/site-packages/asgiref/sync.py\", line 284, in main_wrap\n\tresult = await self.awaitable(*args, **kwargs)\nTypeError: object HttpResponseNotAllowed can't be used in 'await' expression\nThis can be easily reproduced with an empty project (no external dependencies) started with Django 4.1.1 and python 3.10.6.\nBasic view to reproduce the bug:\nfrom django.views import View\nfrom django.http import HttpResponse\nclass Demo(View):\n\t\"\"\"This basic view supports only POST requests\"\"\"\n\tasync def post(self, request):\n\t\treturn HttpResponse(\"ok\")\nURL pattern to access it:\nfrom django.urls import path\nfrom views import Demo\nurlpatterns = [\n\tpath(\"demo\", Demo.as_view()),\n]\nStart the local dev server (manage.py runserver) and open ​http://127.0.0.1:8000/demo in the browser.\nServer crash with 500 error with the given traceback.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:522456b3818d9dc5f8bc54f05a1fe420fec172cf490fda2e5b29c68f7bb61728"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-16136",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/views/generic/base.py b/django/views/generic/base.py\nindex db1842e3e5..93979d1e9c 100644\n--- a/django/views/generic/base.py\n+++ b/django/views/generic/base.py\n@@ -148,7 +148,12 @@ class View:\n             request.path,\n             extra={\"status_code\": 405, \"request\": request},\n         )\n-        return HttpResponseNotAllowed(self._allowed_methods())\n+        response = HttpResponseNotAllowed(self._allowed_methods())\n+        if self.view_is_async:\n+            async def func():\n+                return response\n+            return func()\n+        return response\n \n     def options(self, request, *args, **kwargs):\n         \"\"\"Handle responding to requests for the OPTIONS HTTP verb.\"\"\"\ndiff --git a/test_async_view.py b/test_async_view.py\nnew file mode 100644\nindex 0000000000..8eafce3300\n--- /dev/null\n+++ b/test_async_view.py\n@@ -0,0 +1,76 @@\n+import os\n+import sys\n+import django\n+from django.conf import settings\n+from django.core.handlers.asgi import ASGIHandler\n+from django.urls import path\n+from django.views import View\n+from django.http import HttpResponse\n+\n+# Configure Django settings\n+settings.configure(\n+    DEBUG=True,\n+    SECRET_KEY='secret',\n+    ROOT_URLCONF=__name__,\n+    MIDDLEWARE=[],\n+)\n+\n+# Create test view\n+class Demo(View):\n+    \"\"\"This basic view supports only POST requests\"\"\"\n+    async def post(self, request):\n+        return HttpResponse(\"ok\")\n+\n+# URL patterns\n+urlpatterns = [\n+    path(\"demo\", Demo.as_view()),\n+]\n+\n+# Initialize Django\n+django.setup()\n+\n+# Create ASGI application\n+application = ASGIHandler()\n+\n+# Test function\n+async def test_get_request():\n+    from asgiref.testing import ApplicationCommunicator\n+    \n+    # Create a GET request\n+    scope = {\n+        \"type\": \"http\",\n+        \"method\": \"GET\",\n+        \"path\": \"/demo\",\n+        \"raw_path\": b\"/demo\",\n+        \"query_string\": b\"\",\n+        \"scheme\": \"http\",\n+        \"server\": (\"testserver\", 80),\n+        \"client\": (\"testclient\", 80),\n+        \"asgi\": {\"version\": \"3.0\"},\n+        \"headers\": [],\n+    }\n+    \n+    # Create communicator\n+    comm = ApplicationCommunicator(application, scope)\n+    \n+    # Send request\n+    await comm.send_input({\n+        \"type\": \"http.request\",\n+        \"body\": b\"\",\n+        \"more_body\": False,\n+    })\n+    \n+    # Get response\n+    response_start = await comm.receive_output(1)\n+    assert response_start[\"type\"] == \"http.response.start\"\n+    assert response_start[\"status\"] == 405  # Method Not Allowed\n+    \n+    response_body = await comm.receive_output(1)\n+    assert response_body[\"type\"] == \"http.response.body\"\n+    \n+    print(\"Test passed! GET request to async view returns 405 Method Not Allowed\")\n+\n+# Run test\n+if __name__ == \"__main__\":\n+    import asyncio\n+    asyncio.run(test_get_request())\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "OpenHands",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

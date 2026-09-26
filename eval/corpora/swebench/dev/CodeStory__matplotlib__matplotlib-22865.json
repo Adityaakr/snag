@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:matplotlib__matplotlib-22865",
+ "corpus": "swebench",
+ "seedId": "matplotlib__matplotlib-22865",
+ "input": {
+  "mode": "local",
+  "repo": "matplotlib/matplotlib",
+  "baseSha": "c6c7ec1978c22ae2c704555a873d0ec6e1e2eaa8",
+  "headSha": "CodeStory-matplotlib__matplotlib-22865",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "matplotlib",
+    "repo": "matplotlib",
+    "number": 22865
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "matplotlib",
+     "repo": "matplotlib",
+     "number": 22865
+    },
+    "title": "[Bug]: Colorbar with drawedges=True and extend='both' does not draw edges at extremities",
+    "body": "### Bug summary\n\nWhen creating a matplotlib colorbar, it is possible to set drawedges to True which separates the colors of the colorbar with black lines. However, when the colorbar is extended using extend='both', the black lines at the extremities do not show up.\n\n### Code for reproduction\n\n```python\nimport matplotlib as mpl\r\nimport numpy as np\r\nimport matplotlib.pyplot as plt  \r\nfrom matplotlib.colors import from_levels_and_colors\r\n\r\nmy_cmap = mpl.cm.viridis\r\nbounds = np.arange(10)\r\nnb_colors = len(bounds) + 1\r\ncolors = my_cmap(np.linspace(100, 255, nb_colors).astype(int))\r\nmy_cmap, my_norm = from_levels_and_colors(bounds, colors, extend='both')\r\n\r\nplt.figure(figsize=(5, 1))\r\nax = plt.subplot(111)\r\ncbar = mpl.colorbar.ColorbarBase(ax, cmap=my_cmap, norm=my_norm, orientation='horizontal', drawedges=True)\r\nplt.subplots_adjust(left=0.05, bottom=0.4, right=0.95, top=0.9)\r\nplt.show()\n```\n\n\n### Actual outcome\n\n![image](https://user-images.githubusercontent.com/34058459/164254401-7516988d-1efb-4887-a631-de9a68357685.png)\r\n\n\n### Expected outcome\n\n![image](https://user-images.githubusercontent.com/34058459/164254881-92c167b7-aa13-4972-9955-48221b38b866.png)\r\n\n\n### Additional information\n\n_No response_\n\n### Operating system\n\n_No response_\n\n### Matplotlib Version\n\n3.5.1\n\n### Matplotlib Backend\n\n_No response_\n\n### Python version\n\n_No response_\n\n### Jupyter version\n\n_No response_\n\n### Installation\n\n_No response_",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:4e05b519aa6dd6e52bd8235b1df6845c8fa16c3cbdc03ddc0d5000a740ed6fbe"
+   }
+  ],
+  "pr": {
+   "title": "Fix matplotlib__matplotlib-22865",
+   "body": ""
+  },
+  "diffText": "diff --git a/lib/matplotlib/colorbar.py b/lib/matplotlib/colorbar.py\nindex c59b0ac815..fa7ed68cac 100644\n--- a/lib/matplotlib/colorbar.py\n+++ b/lib/matplotlib/colorbar.py\n@@ -651,8 +651,15 @@ class Colorbar:\n             if not self.drawedges:\n                 if len(self._y) >= self.n_rasterize:\n                     self.solids.set_rasterized(True)\n-        self.dividers.set_segments(\n-            np.dstack([X, Y])[1:-1] if self.drawedges else [])\n+        if self.drawedges:\n+            # Include all segments including the extremities for the dividers\n+            segments = np.dstack([X, Y])\n+            # Only exclude first/last segment if we're not extending in that direction\n+            start_idx = 0 if self._extend_lower() else 1\n+            end_idx = None if self._extend_upper() else -1\n+            self.dividers.set_segments(segments[start_idx:end_idx])\n+        else:\n+            self.dividers.set_segments([])\n \n     def _add_solids_patches(self, X, Y, C, mappable):\n         hatches = mappable.hatches * len(C)  # Have enough hatches.\ndiff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..6bfd38cc1c\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,17 @@\n+import matplotlib as mpl\n+import numpy as np\n+import matplotlib.pyplot as plt  \n+from matplotlib.colors import from_levels_and_colors\n+\n+my_cmap = mpl.cm.viridis\n+bounds = np.arange(10)\n+nb_colors = len(bounds) + 1\n+colors = my_cmap(np.linspace(100, 255, nb_colors).astype(int))\n+my_cmap, my_norm = from_levels_and_colors(bounds, colors, extend='both')\n+\n+plt.figure(figsize=(5, 1))\n+ax = plt.subplot(111)\n+cbar = mpl.colorbar.ColorbarBase(ax, cmap=my_cmap, norm=my_norm, orientation='horizontal', drawedges=True)\n+plt.subplots_adjust(left=0.05, bottom=0.4, right=0.95, top=0.9)\n+plt.savefig('colorbar_bug.png')\n+plt.close()\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

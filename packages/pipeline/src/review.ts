@@ -30,6 +30,7 @@ import {
   type ChangeUnit,
   type ClaimSignal,
   calibrator,
+  tunedThresholds,
   claimSentences,
   claimsQuestions,
   claimsState,
@@ -250,7 +251,12 @@ export async function runReview(input: ReviewInput, deps: ReviewDeps): Promise<R
   const now = deps.now ?? Date.now;
   const started = now();
   const config = deps.config;
-  const t = config.thresholds;
+  const t = tunedThresholds(
+    config.thresholds,
+    deps.calibration,
+    deps.jev?.model ?? config.jev.model,
+    QUESTION_SET_VERSION,
+  );
   const warnings: string[] = [];
   const costs = deps.costs ?? new CostTracker(config.budgets.max_usd_per_review);
   deps = { ...deps, costs };

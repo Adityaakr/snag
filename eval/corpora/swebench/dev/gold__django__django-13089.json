@@ -1,0 +1,140 @@
+{
+ "id": "gold:django__django-13089",
+ "corpus": "swebench",
+ "seedId": "django__django-13089",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "27c09043da52ca1f02605bf28600bfd5ace95ae4",
+  "headSha": "gold-django__django-13089",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 13089
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 13089
+    },
+    "title": "cache.backends.db._cull sometimes fails with 'NoneType' object is not subscriptable",
+    "body": "Description\n\t \n\t\t(last modified by Guillermo Bonvehí)\n\t \nI'm sporadically getting some cache errors using database backend.\nThe error is: 'NoneType' object is not subscriptable\nAnd the backtrace:\n/usr/local/lib/python3.7/site-packages/django/core/handlers/base.py:143→ _get_response\n/usr/local/lib/python3.7/site-packages/django/template/response.py:108→ render\n/usr/local/lib/python3.7/site-packages/django/utils/decorators.py:156→ callback\n/usr/local/lib/python3.7/site-packages/django/middleware/cache.py:103→ process_response\n/usr/local/lib/python3.7/site-packages/django/utils/cache.py:374→ learn_cache_key\n/usr/local/lib/python3.7/site-packages/django/core/cache/backends/db.py:104→ set\n/usr/local/lib/python3.7/site-packages/django/core/cache/backends/db.py:136→ _base_set\n/usr/local/lib/python3.7/site-packages/django/core/cache/backends/db.py:277→ _cull\nThis is using Django 2.2.11 but I see the same code is in master.\n​https://github.com/django/django/blob/master/django/core/cache/backends/db.py#L270\n\t\t\t\tcursor.execute(\n\t\t\t\t\tconnection.ops.cache_key_culling_sql() % table,\n\t\t\t\t\t[cull_num])\n\t\t\t\tcursor.execute(\"DELETE FROM %s \"\n\t\t\t\t\t\t\t \"WHERE cache_key < %%s\" % table,\n\t\t\t\t\t\t\t [cursor.fetchone()[0]])\nFrom what I can understand, the cursor after running connection.ops.cache_key_culling_sql() command is not returning any data, so cursor.fetchone()[0] afterwards fails.\nI guess a simple check to see if it contains data would be enough, may apply for an easy picking.\nEdit: Wording",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:d3b1d0f8ea169872d890797db3bc8ec745c0b358e67b08a5412b14341d60b164"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-13089",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/core/cache/backends/db.py b/django/core/cache/backends/db.py\n--- a/django/core/cache/backends/db.py\n+++ b/django/core/cache/backends/db.py\n@@ -267,9 +267,12 @@ def _cull(self, db, cursor, now):\n                 cursor.execute(\n                     connection.ops.cache_key_culling_sql() % table,\n                     [cull_num])\n-                cursor.execute(\"DELETE FROM %s \"\n-                               \"WHERE cache_key < %%s\" % table,\n-                               [cursor.fetchone()[0]])\n+                last_cache_key = cursor.fetchone()\n+                if last_cache_key:\n+                    cursor.execute(\n+                        'DELETE FROM %s WHERE cache_key < %%s' % table,\n+                        [last_cache_key[0]],\n+                    )\n \n     def clear(self):\n         db = router.db_for_write(self.cache_model_class)\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "gold",
+  "source": "gold",
+  "strength": "strong"
+ },
+ "annotatedBy": "study"
+}

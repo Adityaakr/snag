@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:django__django-16877",
+ "corpus": "swebench",
+ "seedId": "django__django-16877",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "98f6ada0e2058d67d91fb6c16482411ec2ca0967",
+  "headSha": "CodeStory-django__django-16877",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 16877
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 16877
+    },
+    "title": "New template filter `escapeseq`",
+    "body": "Description\n\t\nFollowing #34574, and after some conversations within the security team, it seems appropriate to provide a new template filter escapeseq which would be to escape what safeseq is to safe. An example of usage would be:\n{{ some_list|escapeseq|join:\",\" }}\nwhere each item of some_list is escaped before applying the join operation. This usage makes sense in a context where autoescape is off.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:8a450ec8c845d13f372b6a1142c0383d7bbc66f339e2e5a9e94ff3c4add5df5f"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-16877",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/template/defaultfilters.py b/django/template/defaultfilters.py\nindex 5289ef34a0..c36b5c6b1c 100644\n--- a/django/template/defaultfilters.py\n+++ b/django/template/defaultfilters.py\n@@ -498,6 +498,17 @@ def safeseq(value):\n     return [mark_safe(obj) for obj in value]\n \n \n+@register.filter(is_safe=True)\n+def escapeseq(value):\n+    \"\"\"\n+    Escape each element in the sequence individually, after converting them to\n+    strings. Return a list with the results. This is useful when the list items\n+    need to be escaped before being joined or otherwise processed, particularly\n+    when autoescape is off.\n+    \"\"\"\n+    return [conditional_escape(obj) for obj in value]\n+\n+\n @register.filter(is_safe=True)\n @stringfilter\n def striptags(value):\ndiff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..c55ba2005b\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,64 @@\n+from django.template import Template, Context\n+from django.conf import settings\n+import django\n+\n+# Configure minimal Django settings\n+settings.configure(\n+    INSTALLED_APPS=[\n+        'django.contrib.contenttypes',\n+        'django.contrib.auth',\n+    ],\n+    TEMPLATES=[{\n+        'BACKEND': 'django.template.backends.django.DjangoTemplates',\n+        'DIRS': [],\n+        'APP_DIRS': True,\n+        'OPTIONS': {\n+            'context_processors': [],\n+        },\n+    }]\n+)\n+\n+django.setup()\n+\n+def test_template(template_str, context_dict):\n+    template = Template(template_str)\n+    context = Context(context_dict)\n+    return template.render(context)\n+\n+# Test cases\n+test_cases = [\n+    # Basic test with HTML special characters\n+    {\n+        'template': '{% autoescape off %}{{ some_list|escapeseq|join:\", \" }}{% endautoescape %}',\n+        'context': {'some_list': ['<script>', '&special', '\"quote\"']},\n+        'description': 'Basic test with HTML special characters (autoescape off)'\n+    },\n+    # Test with autoescape on\n+    {\n+        'template': '{{ some_list|escapeseq|join:\", \" }}',\n+        'context': {'some_list': ['<script>', '&special', '\"quote\"']},\n+        'description': 'Test with autoescape on'\n+    },\n+    # Test with mixed safe and unsafe content\n+    {\n+        'template': '{% autoescape off %}{{ some_list|escapeseq|join:\", \" }}{% endautoescape %}',\n+        'context': {'some_list': ['<b>bold</b>', 'normal', '<i>italic</i>']},\n+        'description': 'Test with mixed HTML content'\n+    },\n+    # Test with non-string objects\n+    {\n+        'template': '{% autoescape off %}{{ some_list|escapeseq|join:\", \" }}{% endautoescape %}',\n+        'context': {'some_list': [42, '<script>', True]},\n+        'description': 'Test with non-string objects'\n+    }\n+]\n+\n+# Run tests\n+for test in test_cases:\n+    print(f\"\\nRunning: {test['description']}\")\n+    try:\n+        result = test_template(test['template'], test['context'])\n+        print(f\"Input: {test['context']['some_list']}\")\n+        print(f\"Output: {result}\")\n+    except Exception as e:\n+        print(f\"Error: {str(e)}\")\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

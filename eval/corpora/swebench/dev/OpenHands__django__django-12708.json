@@ -1,0 +1,140 @@
+{
+ "id": "OpenHands:django__django-12708",
+ "corpus": "swebench",
+ "seedId": "django__django-12708",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "447980e72ac01da1594dd3373a03ba40b7ee6f80",
+  "headSha": "OpenHands-django__django-12708",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 12708
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 12708
+    },
+    "title": "Migration crashes deleting an index_together if there is a unique_together on the same fields",
+    "body": "Description\n\t\nHappens with Django 1.11.10\nSteps to reproduce:\n1) Create models with 2 fields, add 2 same fields to unique_together and to index_together\n2) Delete index_together -> Fail\nIt will fail at django/db/backends/base/schema.py, line 378, in _delete_composed_index(), ValueError: Found wrong number (2) of constraints for as this one will find two constraints, the _uniq and the _idx one. No way to get out of this...\nThe worst in my case is that happened as I wanted to refactor my code to use the \"new\" (Dj 1.11) Options.indexes feature. I am actually not deleting the index, just the way it is declared in my code.\nI think there are 2 different points here:\n1) The deletion of index_together should be possible alone or made coherent (migrations side?) with unique_together\n2) Moving the declaration of an index should not result in an index re-creation",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:1cbc3baec575525ad705367b60aa2e5ca5e051a8c9af41c216ac7371913d7d99"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-12708",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/db/backends/base/schema.py b/django/db/backends/base/schema.py\nindex 61f88401ab..b1799817e5 100644\n--- a/django/db/backends/base/schema.py\n+++ b/django/db/backends/base/schema.py\n@@ -403,13 +403,24 @@ class BaseDatabaseSchemaEditor:\n         meta_constraint_names = {constraint.name for constraint in model._meta.constraints}\n         meta_index_names = {constraint.name for constraint in model._meta.indexes}\n         columns = [model._meta.get_field(field).column for field in fields]\n-        constraint_names = self._constraint_names(\n+        \n+        # Get all constraints for these columns\n+        all_constraints = self._constraint_names(\n             model, columns, exclude=meta_constraint_names | meta_index_names,\n-            **constraint_kwargs\n         )\n+        \n+        # Filter constraints based on type (unique vs index)\n+        constraint_type = 'unique' if constraint_kwargs.get('unique', False) else 'index'\n+        constraint_names = [\n+            name for name in all_constraints\n+            if (constraint_type == 'unique' and name.endswith('_uniq')) or\n+               (constraint_type == 'index' and name.endswith('_idx'))\n+        ]\n+        \n         if len(constraint_names) != 1:\n-            raise ValueError(\"Found wrong number (%s) of constraints for %s(%s)\" % (\n+            raise ValueError(\"Found wrong number (%s) of %s constraints for %s(%s)\" % (\n                 len(constraint_names),\n+                constraint_type,\n                 model._meta.db_table,\n                 \", \".join(columns),\n             ))\ndiff --git a/reproduce.py b/reproduce.py\nnew file mode 100644\nindex 0000000000..21665b90e4\n--- /dev/null\n+++ b/reproduce.py\n@@ -0,0 +1,76 @@\n+from django.conf import settings\n+settings.configure(\n+    DATABASES={\n+        'default': {\n+            'ENGINE': 'django.db.backends.sqlite3',\n+            'NAME': ':memory:',\n+        }\n+    },\n+    INSTALLED_APPS=['django.contrib.contenttypes', 'django.contrib.auth', 'testapp'],\n+)\n+\n+import django\n+django.setup()\n+\n+from django.db import models\n+from django.db import migrations\n+from django.db.migrations.state import ProjectState\n+from django.db.migrations.executor import MigrationExecutor\n+from django.db import connection\n+\n+# Create test models\n+class TestModel(models.Model):\n+    field1 = models.CharField(max_length=100)\n+    field2 = models.CharField(max_length=100)\n+\n+    class Meta:\n+        app_label = 'testapp'\n+        unique_together = [('field1', 'field2')]\n+        index_together = [('field1', 'field2')]\n+\n+# Create migrations\n+class Migration(migrations.Migration):\n+    initial = True\n+    dependencies = []\n+\n+    operations = [\n+        migrations.CreateModel(\n+            name='TestModel',\n+            fields=[\n+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),\n+                ('field1', models.CharField(max_length=100)),\n+                ('field2', models.CharField(max_length=100)),\n+            ],\n+            options={\n+                'unique_together': {('field1', 'field2')},\n+                'index_together': {('field1', 'field2')},\n+            },\n+        ),\n+    ]\n+\n+class Migration2(migrations.Migration):\n+    dependencies = [('testapp', '0001_initial')]\n+\n+    operations = [\n+        migrations.AlterIndexTogether(\n+            name='TestModel',\n+            index_together=set(),  # Remove index_together\n+        ),\n+    ]\n+\n+# Run the migrations\n+executor = MigrationExecutor(connection)\n+\n+# Apply first migration\n+migration = Migration('0001_initial', 'testapp')\n+project_state = ProjectState()\n+migration.operations[0].state_forwards('testapp', project_state)\n+with connection.schema_editor() as schema_editor:\n+    migration.operations[0].database_forwards('testapp', schema_editor, ProjectState(), project_state)\n+\n+# Apply second migration\n+migration2 = Migration2('0002_remove_index', 'testapp')\n+new_state = project_state.clone()\n+migration2.operations[0].state_forwards('testapp', new_state)\n+with connection.schema_editor() as schema_editor:\n+    migration2.operations[0].database_forwards('testapp', schema_editor, project_state, new_state)\n\\ No newline at end of file\ndiff --git a/testapp/__init__.py b/testapp/__init__.py\nnew file mode 100644\nindex 0000000000..a9ace3a2ae\n--- /dev/null\n+++ b/testapp/__init__.py\n@@ -0,0 +1 @@\n+# Empty __init__.py\n\\ No newline at end of file\ndiff --git a/testapp/apps.py b/testapp/apps.py\nnew file mode 100644\nindex 0000000000..7100945a3b\n--- /dev/null\n+++ b/testapp/apps.py\n@@ -0,0 +1,4 @@\n+from django.apps import AppConfig\n+\n+class TestAppConfig(AppConfig):\n+    name = 'testapp'\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "OpenHands",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

@@ -1,0 +1,177 @@
+{
+  "id": "ts-flag-rules",
+  "language": "ts",
+  "annotated_by": "claude-code",
+  "split": "dev",
+  "summary": "Feature flag rules: country and email-domain targeting, stable percentage rollouts, scheduled start, allow lists.",
+  "requirements": [
+    {
+      "id": "R1",
+      "text": "Rules can target `countries` (for example `['DE', 'FR']`) and email `domains` (for example `['example.com']`, matched ignoring case); a user must match every list the rule sets",
+      "implementing": [
+        {
+          "file": "src/flags.ts",
+          "symbol": "matchesTargets"
+        },
+        {
+          "file": "src/flags.ts",
+          "symbol": "isEnabled",
+          "remove": [
+            "!matchesTargets(rule, user)"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "file": "src/flags.test.ts",
+          "symbol": "targets countries and email domains"
+        }
+      ],
+      "partial": {
+        "impl": {
+          "file": "src/flags.ts",
+          "symbol": "matchesTargets",
+          "contains": "rule.domains &&"
+        },
+        "test": {
+          "file": "src/flags.test.ts",
+          "symbol": "targets countries and email domains",
+          "contains": "'ana@other.org' }))"
+        }
+      }
+    },
+    {
+      "id": "R2",
+      "text": "Rules can roll out to a `percent` of users, bucketed by a stable hash of the flag name and user id so the same user always gets the same answer (`percent: 0` is off for everyone, `percent: 100` is on for everyone)",
+      "implementing": [
+        {
+          "file": "src/flags.ts",
+          "symbol": "bucketOf"
+        },
+        {
+          "file": "src/flags.ts",
+          "symbol": "inRollout"
+        },
+        {
+          "file": "src/flags.ts",
+          "symbol": "isEnabled",
+          "remove": [
+            "!inRollout(rule, flag, user)"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "file": "src/flags.test.ts",
+          "symbol": "keeps a user in the same bucket"
+        },
+        {
+          "file": "src/flags.test.ts",
+          "symbol": "rolls out to everyone at 100 percent and no one at 0 percent"
+        }
+      ],
+      "unwire": {
+        "file": "src/flags.ts",
+        "symbol": "isEnabled",
+        "callee": "inRollout"
+      }
+    },
+    {
+      "id": "R3",
+      "text": "A rule with `startsAt` is off before that time and on from it (for example `startsAt: '2026-10-01T00:00:00Z'` is already on at exactly that instant)",
+      "implementing": [
+        {
+          "file": "src/flags.ts",
+          "symbol": "isEnabled",
+          "remove": [
+            "rule.startsAt &&"
+          ],
+          "replace": [
+            {
+              "from": "(rules: FlagRule[], flag: string, user: User, now: Date = new Date())",
+              "to": "(rules: FlagRule[], flag: string, user: User)"
+            }
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "file": "src/flags.test.ts",
+          "symbol": "turns on exactly at startsAt"
+        }
+      ],
+      "flip": {
+        "impl": {
+          "file": "src/flags.ts",
+          "symbol": "isEnabled",
+          "from": "<",
+          "to": "<="
+        },
+        "test": {
+          "file": "src/flags.test.ts",
+          "symbol": "turns on exactly at startsAt",
+          "from": "true",
+          "to": "false"
+        }
+      }
+    },
+    {
+      "id": "R4",
+      "text": "Users listed in `allowUsers` get the flag on whenever the rule is enabled, skipping the targeting, rollout and schedule checks",
+      "implementing": [
+        {
+          "file": "src/flags.ts",
+          "symbol": "isEnabled",
+          "remove": [
+            "rule.allowUsers"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "file": "src/flags.test.ts",
+          "symbol": "lets allow-listed users skip the other checks"
+        }
+      ],
+      "flip": {
+        "impl": {
+          "file": "src/flags.ts",
+          "symbol": "isEnabled",
+          "from": "true",
+          "to": "false"
+        },
+        "test": {
+          "file": "src/flags.test.ts",
+          "symbol": "lets allow-listed users skip the other checks",
+          "from": "true",
+          "to": "false"
+        }
+      }
+    }
+  ],
+  "incidental": [
+    {
+      "file": "src/flags.ts",
+      "symbol": "FlagRule",
+      "role": "supporting"
+    }
+  ],
+  "config": {
+    "file": "src/config.ts",
+    "symbol": "FLAG_DEFAULTS",
+    "from": "60",
+    "to": "6"
+  },
+  "unrelatedTest": {
+    "file": "src/loader.test.ts",
+    "symbol": "parses a rule list"
+  },
+  "unrelatedCode": {
+    "file": "src/loader.ts",
+    "symbol": "parseRules",
+    "rename": {
+      "from": "parsed",
+      "to": "data"
+    }
+  }
+}

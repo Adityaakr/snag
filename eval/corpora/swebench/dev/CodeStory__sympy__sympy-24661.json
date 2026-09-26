@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:sympy__sympy-24661",
+ "corpus": "swebench",
+ "seedId": "sympy__sympy-24661",
+ "input": {
+  "mode": "local",
+  "repo": "sympy/sympy",
+  "baseSha": "a36caf5c74fe654cedc488e8a8a05fad388f8406",
+  "headSha": "CodeStory-sympy__sympy-24661",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "sympy",
+    "repo": "sympy",
+    "number": 24661
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "sympy",
+     "repo": "sympy",
+     "number": 24661
+    },
+    "title": "The evaluate=False parameter to `parse_expr` is ignored for relationals",
+    "body": "See also #22305 and #22098\r\n\r\nThis inequality evaluates even though `evaluate=False` is given:\r\n```python\r\nIn [14]: parse_expr('1 < 2', evaluate=False)\r\nOut[14]: True\r\n```\r\nThe result that should be returned is:\r\n```python\r\nIn [15]: Lt(1, 2, evaluate=False)\r\nOut[15]: 1 < 2\r\n```",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:593e14a4b28cad0a05270c9a89b6ad57e81f9c3d5648d62562b4ea44a6ec287a"
+   }
+  ],
+  "pr": {
+   "title": "Fix sympy__sympy-24661",
+   "body": ""
+  },
+  "diffText": "diff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..9382eb92f6\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,44 @@\n+from sympy.parsing.sympy_parser import parse_expr\n+from sympy import Lt, Le, Gt, Ge, Eq, Ne\n+\n+# Test basic less than\n+result1 = parse_expr('1 < 2', evaluate=False)\n+print(\"Test 1 - Basic less than:\")\n+print(result1)\n+print(type(result1))\n+\n+# Test less than or equal\n+result2 = parse_expr('1 <= 2', evaluate=False)\n+print(\"\\nTest 2 - Less than or equal:\")\n+print(result2)\n+print(type(result2))\n+\n+# Test greater than\n+result3 = parse_expr('2 > 1', evaluate=False)\n+print(\"\\nTest 3 - Greater than:\")\n+print(result3)\n+print(type(result3))\n+\n+# Test greater than or equal\n+result4 = parse_expr('2 >= 1', evaluate=False)\n+print(\"\\nTest 4 - Greater than or equal:\")\n+print(result4)\n+print(type(result4))\n+\n+# Test equality\n+result5 = parse_expr('x == y', evaluate=False)\n+print(\"\\nTest 5 - Equality:\")\n+print(result5)\n+print(type(result5))\n+\n+# Test inequality\n+result6 = parse_expr('x != y', evaluate=False)\n+print(\"\\nTest 6 - Inequality:\")\n+print(result6)\n+print(type(result6))\n+\n+# Test with expressions\n+result7 = parse_expr('2*x < y + 1', evaluate=False)\n+print(\"\\nTest 7 - Complex expression:\")\n+print(result7)\n+print(type(result7))\n\\ No newline at end of file\ndiff --git a/sympy/parsing/sympy_parser.py b/sympy/parsing/sympy_parser.py\nindex 52711d1324..0c68b784ba 100644\n--- a/sympy/parsing/sympy_parser.py\n+++ b/sympy/parsing/sympy_parser.py\n@@ -1110,6 +1110,14 @@ class EvaluateFalseTransformer(ast.NodeTransformer):\n         ast.BitAnd: 'And',\n         ast.BitXor: 'Not',\n     }\n+    comparisons = {\n+        ast.Lt: 'Lt',\n+        ast.Gt: 'Gt',\n+        ast.LtE: 'Le',\n+        ast.GtE: 'Ge',\n+        ast.Eq: 'Eq',\n+        ast.NotEq: 'Ne',\n+    }\n     functions = (\n         'Abs', 'im', 're', 'sign', 'arg', 'conjugate',\n         'acos', 'acot', 'acsc', 'asec', 'asin', 'atan',\n@@ -1134,6 +1142,25 @@ def flatten(self, args, func):\n                 result.append(arg)\n         return result\n \n+    def visit_Compare(self, node):\n+        if len(node.ops) > 1:\n+            raise ValueError(\"Only single comparisons are supported\")\n+        \n+        if node.ops[0].__class__ in self.comparisons:\n+            sympy_class = self.comparisons[node.ops[0].__class__]\n+            left = self.visit(node.left)\n+            right = self.visit(node.comparators[0])\n+            \n+            new_node = ast.Call(\n+                func=ast.Name(id=sympy_class, ctx=ast.Load()),\n+                args=[left, right],\n+                keywords=[ast.keyword(arg='evaluate', value=ast.NameConstant(value=False, ctx=ast.Load()))],\n+                starargs=None,\n+                kwargs=None\n+            )\n+            return new_node\n+        return node\n+\n     def visit_BinOp(self, node):\n         if node.op.__class__ in self.operators:\n             sympy_class = self.operators[node.op.__class__]\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq2_divergent",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

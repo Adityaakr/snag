@@ -16,6 +16,8 @@ export {
   MAX_PR_FILES,
 } from './github/live.js';
 export { commentRole, isBotComment } from './github/roles.js';
+export * from './http/http.js';
+export * from './http/zip.js';
 export * from './github/types.js';
 export { toAnswers } from './jev/answers.js';
 export { CachedJev } from './jev/cached.js';

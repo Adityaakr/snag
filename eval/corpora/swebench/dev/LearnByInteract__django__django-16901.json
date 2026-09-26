@@ -1,0 +1,142 @@
+{
+ "id": "LearnByInteract:django__django-16901",
+ "corpus": "swebench",
+ "seedId": "django__django-16901",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "ee36e101e8f8c0acde4bb148b738ab7034e902a0",
+  "headSha": "LearnByInteract-django__django-16901",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 16901
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 16901
+    },
+    "title": "On databases lacking XOR, Q(…) ^ Q(…) ^ Q(…) wrongly interpreted as exactly-one rather than parity",
+    "body": "Description\n\t\nOn databases that don’t natively support XOR, such as PostgreSQL, Django generates incorrect fallback SQL for Q(…) ^ Q(…) ^ Q(…) with more than 2 arguments. The ​correct interpretation, and the interpretation of databases natively supporting XOR (e.g. ​MySQL), is that a ^ b ^ c is true when an odd number of the arguments are true. But Django’s fallback interpretation is that a ^ b ^ c is true when exactly one argument is true:\n>>> from django.db.models import Q\n>>> from my_app.models import Client\n>>> Client.objects.filter(Q(id=37)).count()\n1\n>>> Client.objects.filter(Q(id=37) ^ Q(id=37)).count()\n0\n>>> Client.objects.filter(Q(id=37) ^ Q(id=37) ^ Q(id=37)).count()\n0\n>>> Client.objects.filter(Q(id=37) ^ Q(id=37) ^ Q(id=37) ^ Q(id=37)).count()\n0\n>>> Client.objects.filter(Q(id=37) ^ Q(id=37) ^ Q(id=37) ^ Q(id=37) ^ Q(id=37)).count()\n0\n(Expected: 1, 0, 1, 0, 1.)\nThis was introduced in #29865.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:4ccca6e851ebbabd10ebff1d4f01079525614cad09fc1ca863c0fd010af9b48b"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-16901",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/db/models/sql/where.py b/django/db/models/sql/where.py\nindex aaab1730b7..73c6a3f4f7 100644\n--- a/django/db/models/sql/where.py\n+++ b/django/db/models/sql/where.py\n@@ -129,17 +129,18 @@ class WhereNode(tree.Node):\n             # Convert if the database doesn't support XOR:\n             #   a XOR b XOR c XOR ...\n             # to:\n-            #   (a OR b OR c OR ...) AND (a + b + c + ...) == 1\n+            #   (a OR b OR c OR ...) AND MOD(a + b + c + ..., 2) = 1\n             lhs = self.__class__(self.children, OR)\n             rhs_sum = reduce(\n                 operator.add,\n                 (Case(When(c, then=1), default=0) for c in self.children),\n             )\n-            rhs = Exact(1, rhs_sum)\n+            rhs = Exact(1, rhs_sum % 2)  # Changed to use modulo 2 for odd parity\n             return self.__class__([lhs, rhs], AND, self.negated).as_sql(\n                 compiler, connection\n             )\n \n+\n         for child in self.children:\n             try:\n                 sql, params = compiler.compile(child)\n@@ -353,3 +354,4 @@ class SubqueryConstraint:\n         query.set_values(self.targets)\n         query_compiler = query.get_compiler(connection=connection)\n         return query_compiler.as_subquery_condition(self.alias, self.columns, compiler)\n+\ndiff --git a/reproduce_xor.py b/reproduce_xor.py\nnew file mode 100644\nindex 0000000000..e427e883a6\n--- /dev/null\n+++ b/reproduce_xor.py\n@@ -0,0 +1,46 @@\n+from django.conf import settings\n+\n+settings.configure(\n+    DATABASES={\n+        'default': {\n+            'ENGINE': 'django.db.backends.sqlite3',\n+            'NAME': ':memory:',\n+        }\n+    },\n+    INSTALLED_APPS=[\n+        'django.contrib.contenttypes',\n+    ],\n+    DEFAULT_AUTO_FIELD='django.db.models.AutoField',\n+)\n+\n+import django\n+django.setup()\n+\n+from django.db import models\n+from django.db.models import Q\n+\n+# Create test model\n+class Client(models.Model):\n+    class Meta:\n+        managed = True\n+        app_label = 'django.contrib.contenttypes'\n+\n+# Create tables\n+from django.core.management import call_command\n+call_command('migrate', run_syncdb=True, verbosity=0)\n+\n+# Create a test client\n+client = Client.objects.create(id=37)\n+\n+# Test XOR operations\n+tests = [\n+    Q(id=37),\n+    Q(id=37) ^ Q(id=37),\n+    Q(id=37) ^ Q(id=37) ^ Q(id=37),\n+    Q(id=37) ^ Q(id=37) ^ Q(id=37) ^ Q(id=37),\n+    Q(id=37) ^ Q(id=37) ^ Q(id=37) ^ Q(id=37) ^ Q(id=37)\n+]\n+\n+print(\"Testing XOR operations (should be: 1,0,1,0,1)\")\n+for i, q in enumerate(tests, 1):\n+    print(f\"Test {i}: {Client.objects.filter(q).count()}\")\ndiff --git a/test_xor.py b/test_xor.py\nnew file mode 100644\nindex 0000000000..2f33b416d1\n--- /dev/null\n+++ b/test_xor.py\n@@ -0,0 +1,51 @@\n+from django.conf import settings\n+settings.configure()\n+\n+from django.db.models.sql.where import WhereNode\n+from django.db.models.lookups import Exact\n+\n+class DummyCompiler:\n+    def compile(self, node):\n+        if isinstance(node, Exact):\n+            return f\"id = {node.rhs}\", []\n+        return node.as_sql(self, DummyConnection())\n+\n+class DummyConnection:\n+    class features:\n+        supports_logical_xor = False\n+\n+# Create test lookups\n+tests = [\n+    [Exact(\"id\", 1)],\n+    [Exact(\"id\", 1), Exact(\"id\", 1)],\n+    [Exact(\"id\", 1), Exact(\"id\", 1), Exact(\"id\", 1)],\n+]\n+\n+print(\"Testing XOR SQL generation (should handle odd/even parity)\")\n+compiler = DummyCompiler()\n+\n+for i, children in enumerate(tests, 1):\n+    node = WhereNode(children, \"XOR\")\n+    print(f\"\\nTest {i} ({len(children)} terms):\")\n+    sql, params = node.as_sql(compiler, DummyConnection())\n+    print(f\"SQL: {sql}\")\n+    print(f\"Params: {params}\")\n+\n+def test_xor(values):\n+    \"\"\"Test XOR behavior with given values (True/False)\"\"\"\n+    nodes = [Exact(\"id\", v) for v in values]\n+    node = WhereNode(nodes, \"XOR\")\n+    sql, _ = node.as_sql(DummyCompiler(), DummyConnection())\n+    print(f\"\\nTest with {values}:\")\n+    print(f\"SQL: {sql}\")\n+    # Count number of true values\n+    true_count = sum(1 for v in values if v)\n+    print(f\"Expected result (odd number of true): {true_count % 2 == 1}\")\n+\n+# Test different combinations\n+test_xor([True])  # Should be true (1 true)\n+test_xor([True, True])  # Should be false (2 true)\n+test_xor([True, True, True])  # Should be true (3 true)\n+test_xor([True, False, True])  # Should be false (2 true)\n+test_xor([True, False, False])  # Should be true (1 true)\n+\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "LearnByInteract",
+  "source": "rq34_manual",
+  "strength": "weak",
+  "diffPattern": "divergent",
+  "correctness": "uncertain"
+ },
+ "annotatedBy": "study"
+}

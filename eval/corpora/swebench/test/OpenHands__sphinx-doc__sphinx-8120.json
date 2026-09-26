@@ -1,0 +1,140 @@
+{
+ "id": "OpenHands:sphinx-doc__sphinx-8120",
+ "corpus": "swebench",
+ "seedId": "sphinx-doc__sphinx-8120",
+ "input": {
+  "mode": "local",
+  "repo": "sphinx-doc/sphinx",
+  "baseSha": "795747bdb6b8fb7d717d5bbfc2c3316869e66a73",
+  "headSha": "OpenHands-sphinx-doc__sphinx-8120",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "sphinx-doc",
+    "repo": "sphinx",
+    "number": 8120
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "sphinx-doc",
+     "repo": "sphinx",
+     "number": 8120
+    },
+    "title": "locale/<language>/LC_MESSAGES/sphinx.po translation ignored",
+    "body": "**Describe the bug**\r\nI read [1] as it should be possible to add a file ``locale/<language>/LC_MESSAGES/sphinx.mo`` to the source dir (same dir as the ``Makefile``) and through that change translations or add additional translation to <language>. \r\n\r\nWhen I add ``locale/da/LC_MESSAGES/sphinx.po``, with updated entries for ``Fig. %s`` and ``Listing %s``, a ``locale/da/LC_MESSAGES/sphinx.mo`` is created (because of ``gettext_auto_build = True``), but the translations are not used. The translations from the official ``da`` translation [2] is used. Of course ``language = 'da'`` is in ``conf.py``.\r\n\r\n[1] http://www.sphinx-doc.org/en/master/usage/configuration.html#confval-locale_dirs\r\n[2] https://github.com/sphinx-doc/sphinx/blob/master/sphinx/locale/da/LC_MESSAGES/sphinx.po\r\n\r\n**To Reproduce**\r\nSteps to reproduce the behavior:\r\n```\r\n$ git clone https://github.com/jonascj/sphinx-test-locale-override.git\r\n$ cd sphinx-test-locale-override\r\n$ git checkout 8dea4cd # EDIT: current master showcases workaround, so revert back to see the bug\r\n$ # make python venv however you like\r\n$ pip install sphinx\r\n$ make html\r\n```\r\nNotice that ``locale/da/LC_MESSAGES/sphinx.mo`` has been created. Open ``_build/html/index.html``. \r\n\r\n**Expected behavior**\r\nThe caption label for the figure ``figur 1`` should have been ``Foobar 1`` (for the sake of testing) and the caption label for the code block ``Viser 1`` should have been ``Whatever 1`` (again for the sake of testing).\r\n\r\n**Your project**\r\nhttps://github.com/jonascj/sphinx-test-locale-override.git\r\n\r\n**Screenshots**\r\n![Screenshot of index.html](https://yapb.in/exUE.png \"Screenshot of index.html\")\r\n\r\n**Environment info**\r\n- OS: Arch Linux \r\n- Python version: 3.7.3\r\n- Sphinx version: 2.1.2\r\n- Sphinx extensions:  none\r\n- Extra tools: none",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:cdf9623bc6f2bb829afd0d5c4049cba864548dbb7b4b9ae8dec3b69b0d3e5263"
+   }
+  ],
+  "pr": {
+   "title": "Fix sphinx-doc__sphinx-8120",
+   "body": ""
+  },
+  "diffText": "diff --git a/sphinx/config.py b/sphinx/config.py\nindex 353268e38..7ce51ffd1 100644\n--- a/sphinx/config.py\n+++ b/sphinx/config.py\n@@ -361,13 +361,23 @@ def convert_source_suffix(app: \"Sphinx\", config: Config) -> None:\n \n def init_numfig_format(app: \"Sphinx\", config: Config) -> None:\n     \"\"\"Initialize :confval:`numfig_format`.\"\"\"\n-    numfig_format = {'section': _('Section %s'),\n-                     'figure': _('Fig. %s'),\n-                     'table': _('Table %s'),\n-                     'code-block': _('Listing %s')}\n+    # Get the translator for the current language\n+    from sphinx.locale import get_translator\n+    translator = get_translator('sphinx')\n+\n+    # Initialize with default values\n+    numfig_format = {'section': 'Section %s',\n+                     'figure': 'Fig. %s',\n+                     'table': 'Table %s',\n+                     'code-block': 'Listing %s'}\n \n     # override default labels by configuration\n     numfig_format.update(config.numfig_format)\n+\n+    # Apply translations to all values\n+    for key in numfig_format:\n+        numfig_format[key] = translator.gettext(numfig_format[key])\n+\n     config.numfig_format = numfig_format  # type: ignore\n \n \ndiff --git a/sphinx/locale/__init__.py b/sphinx/locale/__init__.py\nindex 385ca3566..3aa1d9b35 100644\n--- a/sphinx/locale/__init__.py\n+++ b/sphinx/locale/__init__.py\n@@ -127,17 +127,35 @@ def init(locale_dirs: List[str], language: str,\n     else:\n         languages = [language]\n \n-    # loading\n-    for dir_ in locale_dirs:\n+    # First try custom locale directories (non-None entries)\n+    custom_dirs = [dir_ for dir_ in locale_dirs if dir_ is not None]\n+    for dir_ in custom_dirs:\n         try:\n             trans = gettext.translation(catalog, localedir=dir_, languages=languages)\n             if translator is None:\n                 translator = trans\n             else:\n+                # Add custom translations as primary, not fallback\n+                new_translator = trans\n+                new_translator.add_fallback(translator)\n+                translator = new_translator\n+        except Exception:\n+            # Language couldn't be found in the specified path\n+            pass\n+\n+    # Then try system locale directory (None entry)\n+    if None in locale_dirs:\n+        try:\n+            trans = gettext.translation(catalog, languages=languages)\n+            if translator is None:\n+                translator = trans\n+            else:\n+                # Add system translations as fallback\n                 translator.add_fallback(trans)\n         except Exception:\n             # Language couldn't be found in the specified path\n             pass\n+\n     # guarantee translators[(namespace, catalog)] exists\n     if translator is None:\n         translator = NullTranslations()\ndiff --git a/sphinx/util/i18n.py b/sphinx/util/i18n.py\nindex 41407f4e1..02a06f057 100644\n--- a/sphinx/util/i18n.py\n+++ b/sphinx/util/i18n.py\n@@ -90,9 +90,17 @@ class CatalogRepository:\n         if not self.language:\n             return\n \n+        # First check custom locale directories\n         for locale_dir in self._locale_dirs:\n-            locale_dir = path.join(self.basedir, locale_dir)\n-            if path.exists(path.join(locale_dir, self.language, 'LC_MESSAGES')):\n+            if locale_dir:  # Skip None which represents system locale dir\n+                locale_dir = path.join(self.basedir, locale_dir)\n+                messages_dir = path.join(locale_dir, self.language, 'LC_MESSAGES')\n+                if path.exists(messages_dir):\n+                    yield locale_dir\n+\n+        # Then check system locale directories\n+        for locale_dir in self._locale_dirs:\n+            if not locale_dir:  # Only process None which represents system locale dir\n                 yield locale_dir\n \n     @property\ndiff --git a/test_locale_override.py b/test_locale_override.py\nnew file mode 100644\nindex 000000000..e7d8cd2e3\n--- /dev/null\n+++ b/test_locale_override.py\n@@ -0,0 +1,170 @@\n+import os\n+import shutil\n+import subprocess\n+import tempfile\n+import warnings\n+from contextlib import contextmanager\n+from pathlib import Path\n+import logging\n+\n+from sphinx.application import Sphinx\n+from sphinx.deprecation import RemovedInSphinx40Warning\n+from sphinx.util import logging as sphinx_logging\n+from babel.messages.mofile import write_mo\n+from babel.messages.pofile import read_po\n+\n+# Patch the WarningIsErrorFilter to ignore meta node warnings\n+from sphinx.util.logging import WarningIsErrorFilter\n+\n+original_filter = WarningIsErrorFilter.filter\n+\n+def patched_filter(self, record):\n+    if 'node class' in str(record.msg) and 'is already registered' in str(record.msg):\n+        return True\n+    return original_filter(self, record)\n+\n+WarningIsErrorFilter.filter = patched_filter\n+\n+def test_locale_override():\n+    # Create a temporary directory for the test\n+    with tempfile.TemporaryDirectory() as tmpdir:\n+        # Create source directory\n+        srcdir = Path(tmpdir) / 'src'\n+        srcdir.mkdir()\n+\n+        # Create conf.py\n+        with open(srcdir / 'conf.py', 'w') as f:\n+            f.write('''\n+project = 'Test'\n+language = 'da'\n+locale_dirs = ['locale']\n+numfig = True\n+''')\n+\n+        # Create dummy image file\n+        with open(srcdir / 'img.png', 'wb') as f:\n+            f.write(b'\\x89PNG\\r\\n\\x1a\\n\\x00\\x00\\x00\\rIHDR\\x00\\x00\\x00\\x01\\x00\\x00\\x00\\x01\\x08\\x06\\x00\\x00\\x00\\x1f\\x15\\xc4\\x89\\x00\\x00\\x00\\nIDATx\\x9cc\\x00\\x00\\x00\\x02\\x00\\x01\\xe5\\x27\\xde\\xfc\\x00\\x00\\x00\\x00IEND\\xaeB`\\x82')\n+\n+        # Create index.rst\n+        with open(srcdir / 'index.rst', 'w') as f:\n+            f.write('''\n+Test Document\n+=============\n+\n+.. figure:: img.png\n+   :alt: Test image\n+\n+   Test caption\n+\n+.. code-block:: python\n+   :caption: Test code\n+\n+   print(\"Hello world\")\n+''')\n+\n+        # Create locale directory with custom Danish translations\n+        locale_dir = srcdir / 'locale' / 'da' / 'LC_MESSAGES'\n+        locale_dir.mkdir(parents=True, exist_ok=True)\n+        with open(locale_dir / 'sphinx.po', 'w') as f:\n+            f.write('''\n+msgid \"\"\n+msgstr \"\"\n+\"Project-Id-Version: Sphinx\\\\n\"\n+\"Report-Msgid-Bugs-To: \\\\n\"\n+\"POT-Creation-Date: 2019-07-24 17:11+0200\\\\n\"\n+\"PO-Revision-Date: 2019-07-24 17:11+0200\\\\n\"\n+\"Last-Translator: Test <test@test.com>\\\\n\"\n+\"Language-Team: Danish\\\\n\"\n+\"MIME-Version: 1.0\\\\n\"\n+\"Content-Type: text/plain; charset=UTF-8\\\\n\"\n+\"Content-Transfer-Encoding: 8bit\\\\n\"\n+\"Plural-Forms: nplurals=2; plural=(n != 1);\\\\n\"\n+\n+msgid \"Fig. %s\"\n+msgstr \"Foobar %s\"\n+\n+msgid \"Listing %s\"\n+msgstr \"Whatever %s\"\n+''')\n+\n+        # Compile .po file to .mo file\n+        with open(locale_dir / 'sphinx.po', 'r', encoding='utf-8') as po_file:\n+            catalog = read_po(po_file, 'da')\n+        with open(locale_dir / 'sphinx.mo', 'wb') as mo_file:\n+            write_mo(mo_file, catalog)\n+\n+        # Create build directory\n+        builddir = Path(tmpdir) / 'build'\n+        builddir.mkdir()\n+\n+        # Create doctrees directory\n+        doctreesdir = builddir / 'doctrees'\n+        doctreesdir.mkdir()\n+\n+        # Print debug info\n+        print(\"Locale directory:\", locale_dir)\n+        print(\"Files in locale directory:\", os.listdir(locale_dir))\n+        print(\"Content of sphinx.po:\", open(locale_dir / 'sphinx.po', 'r').read())\n+        print(\"Content of sphinx.mo:\", open(locale_dir / 'sphinx.mo', 'rb').read())\n+\n+        # Add debug info to conf.py\n+        with open(srcdir / 'conf.py', 'a') as f:\n+            f.write('''\n+import os\n+print(\"Current working directory:\", os.getcwd())\n+print(\"locale_dirs setting:\", locale_dirs)\n+print(\"language setting:\", language)\n+\n+# Add debug info to translation loading\n+from sphinx.locale import init, translators, get_translator\n+def debug_init(*args, **kwargs):\n+    print(\"init() called with args:\", args)\n+    print(\"init() called with kwargs:\", kwargs)\n+    result = init(*args, **kwargs)\n+    print(\"Translators after init:\", translators)\n+    return result\n+\n+import sphinx.locale\n+sphinx.locale.init = debug_init\n+\n+# Add debug info to numfig_format initialization\n+from sphinx.config import init_numfig_format\n+def debug_init_numfig_format(*args, **kwargs):\n+    print(\"init_numfig_format() called with args:\", args)\n+    print(\"init_numfig_format() called with kwargs:\", kwargs)\n+    translator = get_translator('sphinx')\n+    print(\"Translator for 'Fig. %s':\", translator.gettext('Fig. %s'))\n+    result = init_numfig_format(*args, **kwargs)\n+    print(\"Result of init_numfig_format:\", result)\n+    return result\n+\n+import sphinx.config\n+sphinx.config.init_numfig_format = debug_init_numfig_format\n+''')\n+\n+        # Run Sphinx build\n+        app = Sphinx(\n+            srcdir=str(srcdir),\n+            confdir=str(srcdir),\n+            outdir=str(builddir / 'html'),\n+            doctreedir=str(doctreesdir),\n+            buildername='html',\n+            confoverrides={},\n+            status=None,\n+            warning=None,\n+            freshenv=True,\n+            warningiserror=True,\n+            tags=None,\n+        )\n+        app.build()\n+\n+        # Check output\n+        with open(builddir / 'html' / 'index.html', 'r') as f:\n+            content = f.read()\n+            print(\"HTML content:\", content)\n+            assert 'Foobar 1' in content, \"Custom figure translation not found\"\n+            assert 'Whatever 1' in content, \"Custom listing translation not found\"\n+\n+if __name__ == '__main__':\n+    test_locale_override()\n+    print(\"Test passed successfully!\")\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "OpenHands",
+  "source": "rq1_devtests",
+  "strength": "medium"
+ },
+ "annotatedBy": "study"
+}

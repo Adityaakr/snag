@@ -1,0 +1,181 @@
+{
+  "id": "ts-job-intervals",
+  "language": "ts",
+  "annotated_by": "claude-code",
+  "split": "dev",
+  "summary": "Job scheduler: parse interval strings with s/m/h units, error types, minimum interval, name normalization.",
+  "requirements": [
+    {
+      "id": "R1",
+      "text": "Job intervals accept a number with a unit suffix: s, m or h (for example `90s`, `5m`, `2h`)",
+      "implementing": [
+        {
+          "file": "src/schedule.ts",
+          "symbol": "parseDuration"
+        },
+        {
+          "file": "src/schedule.ts",
+          "symbol": "scheduleJob",
+          "replace": [
+            {
+              "from": "parseDuration(job.every)",
+              "to": "Number(job.every)"
+            }
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "file": "src/schedule.test.ts",
+          "symbol": "keeps the job name"
+        },
+        {
+          "file": "src/schedule.test.ts",
+          "symbol": "parses seconds, minutes and hours"
+        },
+        {
+          "file": "src/schedule.test.ts",
+          "symbol": "schedules jobs with unit intervals"
+        }
+      ],
+      "flip": {
+        "impl": {
+          "file": "src/schedule.ts",
+          "symbol": "parseDuration",
+          "from": "60_000",
+          "to": "6_000"
+        },
+        "test": {
+          "file": "src/schedule.test.ts",
+          "symbol": "parses seconds, minutes and hours",
+          "from": "300_000",
+          "to": "30_000"
+        }
+      },
+      "partial": {
+        "impl": {
+          "file": "src/schedule.ts",
+          "symbol": "parseDuration",
+          "contains": "case 'h':"
+        },
+        "test": {
+          "file": "src/schedule.test.ts",
+          "symbol": "parses seconds, minutes and hours",
+          "contains": "parseDuration('2h')"
+        }
+      },
+      "unwire": {
+        "file": "src/schedule.ts",
+        "symbol": "scheduleJob",
+        "callee": "parseDuration"
+      }
+    },
+    {
+      "id": "R2",
+      "text": "An interval that cannot be parsed throws a `DurationError` that names the bad value",
+      "implementing": [
+        {
+          "file": "src/schedule.ts",
+          "symbol": "DurationError"
+        }
+      ],
+      "tests": [
+        {
+          "file": "src/schedule.test.ts",
+          "symbol": "throws a DurationError naming the bad value"
+        }
+      ],
+      "flip": {
+        "impl": {
+          "file": "src/schedule.ts",
+          "symbol": "DurationError",
+          "from": "`cannot parse duration \"${input}\"`",
+          "to": "`invalid duration`"
+        },
+        "test": {
+          "file": "src/schedule.test.ts",
+          "symbol": "throws a DurationError naming the bad value",
+          "from": "'cannot parse duration \"soon\"'",
+          "to": "'invalid duration'"
+        }
+      }
+    },
+    {
+      "id": "R3",
+      "text": "Intervals shorter than 1 second are rejected with a `RangeError`",
+      "implementing": [
+        {
+          "file": "src/schedule.ts",
+          "symbol": "scheduleJob",
+          "remove": [
+            "intervalMs < 1000"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "file": "src/schedule.test.ts",
+          "symbol": "rejects intervals shorter than one second"
+        }
+      ],
+      "flip": {
+        "impl": {
+          "file": "src/schedule.ts",
+          "symbol": "scheduleJob",
+          "from": "<",
+          "to": "<="
+        },
+        "test": {
+          "file": "src/schedule.test.ts",
+          "symbol": "rejects intervals shorter than one second",
+          "from": "'0s'",
+          "to": "'1s'"
+        }
+      }
+    },
+    {
+      "id": "R4",
+      "text": "Job names are trimmed and lowercased when a job is scheduled",
+      "implementing": [
+        {
+          "file": "src/schedule.ts",
+          "symbol": "scheduleJob",
+          "remove": [
+            "const name = job.name.trim()"
+          ],
+          "replace": [
+            {
+              "from": "{ name, intervalMs, timeoutMs: jobDefaults().timeoutMs }",
+              "to": "{ name: job.name, intervalMs, timeoutMs: jobDefaults().timeoutMs }"
+            }
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "file": "src/schedule.test.ts",
+          "symbol": "normalizes job names"
+        }
+      ]
+    }
+  ],
+  "incidental": [],
+  "config": {
+    "file": "src/config.ts",
+    "symbol": "DEFAULTS",
+    "from": "5000",
+    "to": "500"
+  },
+  "unrelatedTest": {
+    "file": "src/format.test.ts",
+    "symbol": "formats kilobytes"
+  },
+  "unrelatedCode": {
+    "file": "src/format.ts",
+    "symbol": "formatBytes",
+    "rename": {
+      "from": "value",
+      "to": "amount"
+    }
+  }
+}

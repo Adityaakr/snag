@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:django__django-15268",
+ "corpus": "swebench",
+ "seedId": "django__django-15268",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "0ab58c120939093fea90822f376e1866fc714d1f",
+  "headSha": "CodeStory-django__django-15268",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 15268
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 15268
+    },
+    "title": "Optimize multiple AlterFooTogether operations into one",
+    "body": "Description\n\t\nHi,\nIn #31503 we split the AlterFooTogether (AlterUniqueTogether and AlterIndexTogether) operations into two types of operations.\nFirst, a migration will have operations to remove constraints, and then other operations adds the new constraints. This allows field alterations to work as expected during in between operations.\nIn some cases, this introduced two operations that can actually easily be reduced to one.\nSee for instance the test case: ​https://github.com/django/django/pull/14722/files#diff-506caa00017053ff8278de6efc2e59cc0c5cea22da9461482bdf16a9fc50af9eR1573-R1592\nExample:\n operations = [\n\t migrations.AlterUniqueTogether(\n\t\t name='mymodel',\n\t\t unique_together=set(),\n\t ),\n\t migrations.AlterIndexTogether(\n\t\t name='mymodel',\n\t\t index_together=set(),\n\t ),\n\t migrations.AlterUniqueTogether(\n\t\t name='mymodel',\n\t\t unique_together={(\"col\",)},\n\t ),\n\t migrations.AlterIndexTogether(\n\t\t name='mymodel',\n\t\t index_together={(\"col\",)},\n\t ),\n ]\nshould be optimized to\n operations = [\n\t migrations.AlterUniqueTogether(\n\t\t name='mymodel',\n\t\t unique_together={(\"col\",)},\n\t ),\n\t migrations.AlterIndexTogether(\n\t\t name='mymodel',\n\t\t index_together={(\"col\",)},\n\t ),\n ]\nSo that we don't do two operations on each constraint, but only one.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:90de0665b6b807b6cb346e29a728404dd15da5cbfc5da5a317e78455da0a06a5"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-15268",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/db/migrations/operations/models.py b/django/db/migrations/operations/models.py\nindex c120f5d32d..8e3dc37d99 100644\n--- a/django/db/migrations/operations/models.py\n+++ b/django/db/migrations/operations/models.py\n@@ -32,6 +32,17 @@ class ModelOperation(Operation):\n         return name.lower() == self.name_lower\n \n     def reduce(self, operation, app_label):\n+        if isinstance(operation, DeleteModel) and self.name_lower == operation.name_lower:\n+            return [operation]\n+        if isinstance(operation, self.__class__) and self.name_lower == operation.name_lower:\n+            # If we're setting to empty set and next operation has a value, skip this operation\n+            if not self.option_value and operation.option_value:\n+                return [operation]\n+            # If we have a value and next operation is empty set, keep our value\n+            if self.option_value and not operation.option_value:\n+                return [self]\n+            # Otherwise take the latest value\n+            return [operation]\n         return (\n             super().reduce(operation, app_label) or\n             not operation.references_model(self.name, app_label)\n@@ -409,7 +420,16 @@ class RenameModel(ModelOperation):\n \n class ModelOptionOperation(ModelOperation):\n     def reduce(self, operation, app_label):\n-        if isinstance(operation, (self.__class__, DeleteModel)) and self.name_lower == operation.name_lower:\n+        if isinstance(operation, DeleteModel) and self.name_lower == operation.name_lower:\n+            return [operation]\n+        if isinstance(operation, self.__class__) and self.name_lower == operation.name_lower:\n+            # If we're setting to empty set and next operation has a value, skip this operation\n+            if not self.option_value and operation.option_value:\n+                return [operation]\n+            # If we have a value and next operation is empty set, keep our value\n+            if self.option_value and not operation.option_value:\n+                return [self]\n+            # Otherwise take the latest value\n             return [operation]\n         return super().reduce(operation, app_label)\n \n@@ -476,6 +496,19 @@ class AlterTogetherOptionOperation(ModelOptionOperation):\n         setattr(self, self.option_name, option_value)\n         super().__init__(name)\n \n+    def can_optimize_through(self, operation):\n+        \"\"\"\n+        Return True if this operation can be optimized through the given operation.\n+        This is used by the optimizer to determine if operations can be skipped.\n+        \"\"\"\n+        if not isinstance(operation, self.__class__) or self.name_lower != operation.name_lower:\n+            return False\n+        # If we're setting to empty set and the next operation has a value,\n+        # we can optimize through it\n+        if not self.option_value and operation.option_value:\n+            return True\n+        return False\n+\n     @cached_property\n     def option_value(self):\n         return getattr(self, self.option_name)\n@@ -528,6 +561,20 @@ class AlterTogetherOptionOperation(ModelOptionOperation):\n     def migration_name_fragment(self):\n         return 'alter_%s_%s' % (self.name_lower, self.option_name)\n \n+    def reduce(self, operation, app_label):\n+        if isinstance(operation, DeleteModel) and self.name_lower == operation.name_lower:\n+            return [operation]\n+        if isinstance(operation, self.__class__) and self.name_lower == operation.name_lower:\n+            # If we're setting to empty set and next operation has a value, skip this operation\n+            if not self.option_value and operation.option_value:\n+                return [operation]\n+            # If we have a value and next operation is empty set, keep our value\n+            if self.option_value and not operation.option_value:\n+                return [self]\n+            # Otherwise take the latest value\n+            return [operation]\n+        return super().reduce(operation, app_label)\n+\n \n class AlterUniqueTogether(AlterTogetherOptionOperation):\n     \"\"\"\ndiff --git a/django/db/migrations/optimizer.py b/django/db/migrations/optimizer.py\nindex ee20f62af2..232b9117c0 100644\n--- a/django/db/migrations/optimizer.py\n+++ b/django/db/migrations/optimizer.py\n@@ -40,30 +40,43 @@ class MigrationOptimizer:\n     def optimize_inner(self, operations, app_label):\n         \"\"\"Inner optimization loop.\"\"\"\n         new_operations = []\n-        for i, operation in enumerate(operations):\n-            right = True  # Should we reduce on the right or on the left.\n-            # Compare it to each operation after it\n-            for j, other in enumerate(operations[i + 1:]):\n-                result = operation.reduce(other, app_label)\n-                if isinstance(result, list):\n-                    in_between = operations[i + 1:i + j + 1]\n-                    if right:\n-                        new_operations.extend(in_between)\n-                        new_operations.extend(result)\n-                    elif all(op.reduce(other, app_label) is True for op in in_between):\n-                        # Perform a left reduction if all of the in-between\n-                        # operations can optimize through other.\n-                        new_operations.extend(result)\n-                        new_operations.extend(in_between)\n-                    else:\n-                        # Otherwise keep trying.\n-                        new_operations.append(operation)\n+        i = 0\n+        while i < len(operations):\n+            operation = operations[i]\n+            \n+            # Check if this operation can be optimized through a later operation\n+            can_skip = False\n+            if hasattr(operation, 'can_optimize_through'):\n+                for other in operations[i + 1:]:\n+                    if operation.can_optimize_through(other):\n+                        can_skip = True\n                         break\n-                    new_operations.extend(operations[i + j + 2:])\n-                    return new_operations\n-                elif not result:\n-                    # Can't perform a right reduction.\n-                    right = False\n-            else:\n-                new_operations.append(operation)\n+            \n+            if not can_skip:\n+                # Try normal optimization\n+                right = True  # Should we reduce on the right or on the left.\n+                for j, other in enumerate(operations[i + 1:], start=1):\n+                    result = operation.reduce(other, app_label)\n+                    if isinstance(result, list):\n+                        in_between = operations[i + 1:i + j]\n+                        if right:\n+                            new_operations.extend(in_between)\n+                            new_operations.extend(result)\n+                        elif all(op.reduce(other, app_label) is True for op in in_between):\n+                            # Perform a left reduction if all of the in-between\n+                            # operations can optimize through other.\n+                            new_operations.extend(result)\n+                            new_operations.extend(in_between)\n+                        else:\n+                            # Otherwise keep trying.\n+                            new_operations.append(operation)\n+                            break\n+                        new_operations.extend(operations[i + j + 1:])\n+                        return new_operations\n+                    elif not result:\n+                        # Can't perform a right reduction.\n+                        right = False\n+                else:\n+                    new_operations.append(operation)\n+            i += 1\n         return new_operations\ndiff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..8f4196e7e7\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,89 @@\n+from django.db import migrations\n+\n+# Test case 1: Basic optimization\n+operations1 = [\n+    migrations.AlterUniqueTogether(\n+        name='mymodel',\n+        unique_together=set(),\n+    ),\n+    migrations.AlterIndexTogether(\n+        name='mymodel',\n+        index_together=set(),\n+    ),\n+    migrations.AlterUniqueTogether(\n+        name='mymodel',\n+        unique_together={(\"col\",)},\n+    ),\n+    migrations.AlterIndexTogether(\n+        name='mymodel',\n+        index_together={(\"col\",)},\n+    ),\n+]\n+\n+# Test case 2: Multiple empty sets followed by value\n+operations2 = [\n+    migrations.AlterUniqueTogether(\n+        name='mymodel',\n+        unique_together=set(),\n+    ),\n+    migrations.AlterUniqueTogether(\n+        name='mymodel',\n+        unique_together=set(),\n+    ),\n+    migrations.AlterUniqueTogether(\n+        name='mymodel',\n+        unique_together={(\"col\",)},\n+    ),\n+]\n+\n+# Test case 3: Value followed by empty sets\n+operations3 = [\n+    migrations.AlterUniqueTogether(\n+        name='mymodel',\n+        unique_together={(\"col\",)},\n+    ),\n+    migrations.AlterUniqueTogether(\n+        name='mymodel',\n+        unique_together=set(),\n+    ),\n+    migrations.AlterUniqueTogether(\n+        name='mymodel',\n+        unique_together=set(),\n+    ),\n+]\n+\n+# Test case 4: Mixed operations\n+operations4 = [\n+    migrations.AlterUniqueTogether(\n+        name='mymodel',\n+        unique_together=set(),\n+    ),\n+    migrations.AlterIndexTogether(\n+        name='othermodel',  # Different model\n+        index_together=set(),\n+    ),\n+    migrations.AlterUniqueTogether(\n+        name='mymodel',\n+        unique_together={(\"col\",)},\n+    ),\n+]\n+\n+# Import the optimizer\n+from django.db.migrations.optimizer import MigrationOptimizer\n+\n+# Create an optimizer instance\n+optimizer = MigrationOptimizer()\n+\n+# Test all cases\n+for i, operations in enumerate([operations1, operations2, operations3, operations4], 1):\n+    print(f\"\\nTest case {i}:\")\n+    print(\"Original operations count:\", len(operations))\n+    optimized = optimizer.optimize(operations, app_label='testapp')\n+    print(\"Optimized operations count:\", len(optimized))\n+    print(\"\\nOptimized operations:\")\n+    for op in optimized:\n+        print(f\"- {op.__class__.__name__}: {op.name}\")\n+        if hasattr(op, 'unique_together'):\n+            print(f\"  unique_together: {op.unique_together}\")\n+        if hasattr(op, 'index_together'):\n+            print(f\"  index_together: {op.index_together}\")\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq1_devtests",
+  "strength": "medium"
+ },
+ "annotatedBy": "study"
+}

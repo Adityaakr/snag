@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:django__django-13512",
+ "corpus": "swebench",
+ "seedId": "django__django-13512",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "b79088306513d5ed76d31ac40ab3c15f858946ea",
+  "headSha": "CodeStory-django__django-13512",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 13512
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 13512
+    },
+    "title": "Admin doesn't display properly unicode chars in JSONFields.",
+    "body": "Description\n\t \n\t\t(last modified by ZhaoQi99)\n\t \n>>> import json\n>>> print json.dumps('中国')\n\"\\u4e2d\\u56fd\"\njson.dumps use ASCII encoding by default when serializing Chinese.\nSo when we edit a JsonField which contains Chinese character in Django admin,it will appear in ASCII characters.\nI have try to fix this this problem in ​https://github.com/adamchainz/django-mysql/pull/714.And it works prefectly.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:aa9445343a9847bae0823808c451118a15681983a26b37509c8ed3297ec4bc57"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-13512",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/db/models/fields/json.py b/django/db/models/fields/json.py\nindex a249f4cdbf..66c039c6e4 100644\n--- a/django/db/models/fields/json.py\n+++ b/django/db/models/fields/json.py\n@@ -81,7 +81,7 @@ class JSONField(CheckFieldDefaultMixin, Field):\n     def get_prep_value(self, value):\n         if value is None:\n             return value\n-        return json.dumps(value, cls=self.encoder)\n+        return json.dumps(value, cls=self.encoder, ensure_ascii=False)\n \n     def get_transform(self, name):\n         transform = super().get_transform(name)\ndiff --git a/django/forms/fields.py b/django/forms/fields.py\nindex 9de2c60b35..8235aaac01 100644\n--- a/django/forms/fields.py\n+++ b/django/forms/fields.py\n@@ -1258,7 +1258,7 @@ class JSONField(CharField):\n     def prepare_value(self, value):\n         if isinstance(value, InvalidJSONInput):\n             return value\n-        return json.dumps(value, cls=self.encoder)\n+        return json.dumps(value, cls=self.encoder, ensure_ascii=False)\n \n     def has_changed(self, initial, data):\n         if super().has_changed(initial, data):\ndiff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..2e7cafc9e7\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,136 @@\n+from django.contrib import admin\n+from django.db import models\n+from django.core.management import execute_from_command_line\n+import os\n+import sys\n+\n+# Set up Django settings\n+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'test_project.settings')\n+\n+# Create a test project\n+if not os.path.exists('test_project'):\n+    os.makedirs('test_project')\n+\n+# Create settings.py\n+settings_content = '''\n+SECRET_KEY = 'dummy-key-for-test'\n+INSTALLED_APPS = [\n+    'django.contrib.admin',\n+    'django.contrib.auth',\n+    'django.contrib.contenttypes',\n+    'django.contrib.sessions',\n+    'django.contrib.messages',\n+    'django.contrib.staticfiles',\n+    'test_app',\n+]\n+DATABASES = {\n+    'default': {\n+        'ENGINE': 'django.db.backends.sqlite3',\n+        'NAME': 'db.sqlite3',\n+    }\n+}\n+MIDDLEWARE = [\n+    'django.middleware.security.SecurityMiddleware',\n+    'django.contrib.sessions.middleware.SessionMiddleware',\n+    'django.middleware.common.CommonMiddleware',\n+    'django.middleware.csrf.CsrfViewMiddleware',\n+    'django.contrib.auth.middleware.AuthenticationMiddleware',\n+    'django.contrib.messages.middleware.MessageMiddleware',\n+]\n+ROOT_URLCONF = 'test_project.urls'\n+TEMPLATES = [\n+    {\n+        'BACKEND': 'django.template.backends.django.DjangoTemplates',\n+        'APP_DIRS': True,\n+        'OPTIONS': {\n+            'context_processors': [\n+                'django.template.context_processors.debug',\n+                'django.template.context_processors.request',\n+                'django.contrib.auth.context_processors.auth',\n+                'django.contrib.messages.context_processors.messages',\n+            ],\n+        },\n+    },\n+]\n+STATIC_URL = '/static/'\n+'''\n+\n+with open('test_project/settings.py', 'w') as f:\n+    f.write(settings_content)\n+\n+# Create __init__.py\n+with open('test_project/__init__.py', 'w') as f:\n+    f.write('')\n+\n+# Create urls.py\n+urls_content = '''\n+from django.contrib import admin\n+from django.urls import path\n+\n+urlpatterns = [\n+    path('admin/', admin.site.urls),\n+]\n+'''\n+\n+with open('test_project/urls.py', 'w') as f:\n+    f.write(urls_content)\n+\n+# Create test app\n+if not os.path.exists('test_app'):\n+    os.makedirs('test_app')\n+\n+with open('test_app/__init__.py', 'w') as f:\n+    f.write('')\n+\n+# Create models.py\n+models_content = '''\n+from django.db import models\n+\n+class TestModel(models.Model):\n+    json_field = models.JSONField()\n+\n+    def __str__(self):\n+        return str(self.json_field)\n+'''\n+\n+with open('test_app/models.py', 'w') as f:\n+    f.write(models_content)\n+\n+# Create admin.py\n+admin_content = '''\n+from django.contrib import admin\n+from .models import TestModel\n+\n+@admin.register(TestModel)\n+class TestModelAdmin(admin.ModelAdmin):\n+    pass\n+'''\n+\n+with open('test_app/admin.py', 'w') as f:\n+    f.write(admin_content)\n+\n+if __name__ == '__main__':\n+    # Set up Django\n+    import django\n+    django.setup()\n+\n+    # Create tables\n+    execute_from_command_line(['manage.py', 'makemigrations', 'test_app'])\n+    execute_from_command_line(['manage.py', 'migrate'])\n+\n+    # Create a superuser\n+    from django.contrib.auth.models import User\n+    if not User.objects.filter(username='admin').exists():\n+        User.objects.create_superuser('admin', 'admin@example.com', 'admin')\n+\n+    # Create a test object with Chinese characters\n+    from test_app.models import TestModel\n+    TestModel.objects.create(json_field={'name': '中国'})\n+\n+    print(\"\\nTest setup complete!\")\n+    print(\"1. A test model with JSONField containing Chinese characters has been created\")\n+    print(\"2. You can now run the development server with:\")\n+    print(\"   python manage.py runserver\")\n+    print(\"3. Visit http://127.0.0.1:8000/admin/\")\n+    print(\"4. Login with username: admin, password: admin\")\n+    print(\"5. Click on TestModel to see how Chinese characters are displayed\")\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:scikit-learn__scikit-learn-14496",
+ "corpus": "swebench",
+ "seedId": "scikit-learn__scikit-learn-14496",
+ "input": {
+  "mode": "local",
+  "repo": "scikit-learn/scikit-learn",
+  "baseSha": "d49a6f13af2f22228d430ac64ac2b518937800d0",
+  "headSha": "CodeStory-scikit-learn__scikit-learn-14496",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "scikit-learn",
+    "repo": "scikit-learn",
+    "number": 14496
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "scikit-learn",
+     "repo": "scikit-learn",
+     "number": 14496
+    },
+    "title": "[BUG] Optics float min_samples NN instantiation",
+    "body": "#### Reference Issues/PRs\r\nNone yet.\r\n\r\n```\r\ndata = load_some_data()\r\n\r\nclust = OPTICS(metric='minkowski', n_jobs=-1, min_samples=0.1)\r\nclust.fit(data)\r\n```\r\n\r\n#### What does this implement/fix? Explain your changes.\r\nWhen passing min_samples as a float to optics l439 & 440 execute to bring it into integer ranges, but don't convert to int:\r\n```\r\n    if min_samples <= 1:\r\n        min_samples = max(2, min_samples * n_samples)           # Still a float\r\n```\r\nWhen instantiating  the NearestNeighbours class with a float it raises due to the float (l448).  \r\n\r\n\r\nError message:\r\n```\r\n  File \"/home/someusername/anaconda3/envs/bachelor_project/lib/python3.7/site-packages/sklearn/cluster/optics_.py\", line 248, in fit\r\n    max_eps=self.max_eps)\r\n  File \"/home/someusername/anaconda3/envs/bachelor_project/lib/python3.7/site-packages/sklearn/cluster/optics_.py\", line 456, in compute_optics_graph\r\n    nbrs.fit(X)\r\n  File \"/home/someusername/anaconda3/envs/bachelor_project/lib/python3.7/site-packages/sklearn/neighbors/base.py\", line 930, in fit\r\n    return self._fit(X)\r\n  File \"/home/someusername/anaconda3/envs/bachelor_project/lib/python3.7/site-packages/sklearn/neighbors/base.py\", line 275, in _fit\r\n    type(self.n_neighbors))\r\nTypeError: n_neighbors does not take <class 'numpy.float64'> value, enter integer value\r\n```\r\n\r\nFix:\r\n```\r\n    if min_samples <= 1:\r\n        min_samples = int(round(max(2, min_samples * n_samples)))        # round to get the closest integer\r\n```\r\nthe int(...) is for backwards compatibbility to Python 2 where `round: T -> T` with T Number, while Python3 `round: T -> int`\r\n\r\n\r\n#### Any other comments?\r\n\r\n\r\n<!--\r\nPlease be aware that we are a loose team of volunteers so patience is\r\nnecessary; assistance handling other issues is very welcome. We value\r\nall user contributions, no matter how minor they are. If we are slow to\r\nreview, either the pull request needs some benchmarking, tinkering,\r\nconvincing, etc. or more likely the reviewers are simply busy. In either\r\ncase, we ask for your understanding during the review process.\r\nFor more information, see our FAQ on this topic:\r\nhttp://scikit-learn.org/dev/faq.html#why-is-my-pull-request-not-getting-any-attention.\r\n\r\nThanks for contributing!\r\n-->",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:11b49dcd7f74163d3cf5b6e35ca1085ae849ca8bface8deea153606f7ccc9113"
+   }
+  ],
+  "pr": {
+   "title": "Fix scikit-learn__scikit-learn-14496",
+   "body": ""
+  },
+  "diffText": "diff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 000000000..661eefd62\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,27 @@\n+import numpy as np\n+from sklearn.cluster import OPTICS\n+\n+# Create a simple dataset\n+np.random.seed(42)\n+X = np.random.rand(100, 2)  # 100 points in 2D\n+\n+# Test case 1: float min_samples < 1\n+print(\"Test case 1: float min_samples = 0.1\")\n+clust = OPTICS(metric='minkowski', n_jobs=-1, min_samples=0.1)\n+clust.fit(X)\n+print(\"Successfully fitted OPTICS with min_samples=0.1\")\n+print(f\"Number of clusters found: {len(np.unique(clust.labels_[clust.labels_ != -1]))}\\n\")\n+\n+# Test case 2: integer min_samples\n+print(\"Test case 2: integer min_samples = 5\")\n+clust = OPTICS(metric='minkowski', n_jobs=-1, min_samples=5)\n+clust.fit(X)\n+print(\"Successfully fitted OPTICS with min_samples=5\")\n+print(f\"Number of clusters found: {len(np.unique(clust.labels_[clust.labels_ != -1]))}\\n\")\n+\n+# Test case 3: very small float min_samples (should result in min_samples=2)\n+print(\"Test case 3: very small float min_samples = 0.01\")\n+clust = OPTICS(metric='minkowski', n_jobs=-1, min_samples=0.01)\n+clust.fit(X)\n+print(\"Successfully fitted OPTICS with min_samples=0.01\")\n+print(f\"Number of clusters found: {len(np.unique(clust.labels_[clust.labels_ != -1]))}\\n\")\n\\ No newline at end of file\ndiff --git a/sklearn/cluster/optics_.py b/sklearn/cluster/optics_.py\nindex 4f7eb11ab..228d88c4e 100755\n--- a/sklearn/cluster/optics_.py\n+++ b/sklearn/cluster/optics_.py\n@@ -437,7 +437,7 @@ if metric=’precomputed’.\n     n_samples = X.shape[0]\n     _validate_size(min_samples, n_samples, 'min_samples')\n     if min_samples <= 1:\n-        min_samples = max(2, min_samples * n_samples)\n+        min_samples = int(round(max(2, min_samples * n_samples)))\n \n     # Start all points as 'unprocessed' ##\n     reachability_ = np.empty(n_samples)\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

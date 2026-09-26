@@ -1,0 +1,140 @@
+{
+ "id": "OpenHands:sympy__sympy-18189",
+ "corpus": "swebench",
+ "seedId": "sympy__sympy-18189",
+ "input": {
+  "mode": "local",
+  "repo": "sympy/sympy",
+  "baseSha": "1923822ddf8265199dbd9ef9ce09641d3fd042b9",
+  "headSha": "OpenHands-sympy__sympy-18189",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "sympy",
+    "repo": "sympy",
+    "number": 18189
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "sympy",
+     "repo": "sympy",
+     "number": 18189
+    },
+    "title": "diophantine: incomplete results depending on syms order with permute=True",
+    "body": "```\r\nIn [10]: diophantine(n**4 + m**4 - 2**4 - 3**4, syms=(m,n), permute=True)\r\nOut[10]: {(-3, -2), (-3, 2), (-2, -3), (-2, 3), (2, -3), (2, 3), (3, -2), (3, 2)}\r\n\r\nIn [11]: diophantine(n**4 + m**4 - 2**4 - 3**4, syms=(n,m), permute=True)\r\nOut[11]: {(3, 2)}\r\n```\r\n\ndiophantine: incomplete results depending on syms order with permute=True\n```\r\nIn [10]: diophantine(n**4 + m**4 - 2**4 - 3**4, syms=(m,n), permute=True)\r\nOut[10]: {(-3, -2), (-3, 2), (-2, -3), (-2, 3), (2, -3), (2, 3), (3, -2), (3, 2)}\r\n\r\nIn [11]: diophantine(n**4 + m**4 - 2**4 - 3**4, syms=(n,m), permute=True)\r\nOut[11]: {(3, 2)}\r\n```",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:4ddbcbe2ac878dafcc3c0edd971da68d6107c407a8dae2316c405d9161c0bb90"
+   }
+  ],
+  "pr": {
+   "title": "Fix sympy__sympy-18189",
+   "body": ""
+  },
+  "diffText": "diff --git a/edge_cases.py b/edge_cases.py\nnew file mode 100644\nindex 0000000000..b9e6d75944\n--- /dev/null\n+++ b/edge_cases.py\n@@ -0,0 +1,32 @@\n+from sympy.solvers.diophantine import diophantine\n+from sympy import symbols\n+\n+print(\"Test 1: No syms parameter\")\n+n, m = symbols('n m', integer=True)\n+eq = n**4 + m**4 - 2**4 - 3**4\n+result = diophantine(eq, permute=True)\n+print(result)\n+\n+print(\"\\nTest 2: Empty syms list\")\n+result = diophantine(eq, syms=[], permute=True)\n+print(result)\n+\n+print(\"\\nTest 3: Partial syms list\")\n+result = diophantine(eq, syms=[n], permute=True)\n+print(result)\n+\n+print(\"\\nTest 4: Syms with extra variables\")\n+x = symbols('x', integer=True)\n+result = diophantine(eq, syms=[n, m, x], permute=True)\n+print(result)\n+\n+print(\"\\nTest 5: Linear equation with syms\")\n+eq2 = 2*n + 3*m - 5\n+result = diophantine(eq2, syms=(m,n))\n+print(result)\n+\n+print(\"\\nTest 6: Three variable equation with syms\")\n+x, y, z = symbols('x y z', integer=True)\n+eq3 = x**2 + y**2 - z**2\n+result = diophantine(eq3, syms=(z,y,x), permute=True)\n+print(result)\n\\ No newline at end of file\ndiff --git a/reproduce.py b/reproduce.py\nnew file mode 100644\nindex 0000000000..a84d5c5829\n--- /dev/null\n+++ b/reproduce.py\n@@ -0,0 +1,16 @@\n+from sympy.solvers.diophantine import diophantine\n+from sympy import symbols\n+\n+n, m = symbols('n m', integer=True)\n+eq = n**4 + m**4 - 2**4 - 3**4\n+\n+print(\"Testing with syms=(m,n):\")\n+result1 = diophantine(eq, syms=(m,n), permute=True)\n+print(result1)\n+\n+print(\"\\nTesting with syms=(n,m):\")\n+result2 = diophantine(eq, syms=(n,m), permute=True)\n+print(result2)\n+\n+# They should be equal\n+print(\"\\nAre results equal?\", result1 == result2)\n\\ No newline at end of file\ndiff --git a/sympy/solvers/diophantine.py b/sympy/solvers/diophantine.py\nindex 6092e35dab..93a4ba5b08 100644\n--- a/sympy/solvers/diophantine.py\n+++ b/sympy/solvers/diophantine.py\n@@ -180,9 +180,21 @@ def diophantine(eq, param=symbols(\"t\", integer=True), syms=None,\n                     'syms should be given as a sequence, e.g. a list')\n             syms = [i for i in syms if i in var]\n             if syms != var:\n-                dict_sym_index = dict(zip(syms, range(len(syms))))\n-                return {tuple([t[dict_sym_index[i]] for i in var])\n-                            for t in diophantine(eq, param)}\n+                # If syms is a subset of var, we need to keep the original order for non-specified variables\n+                if set(syms).issubset(set(var)):\n+                    # Create a mapping for the specified symbols\n+                    dict_sym_index = {}\n+                    for i, s in enumerate(syms):\n+                        dict_sym_index[s] = i\n+                    # Add remaining variables to the mapping\n+                    next_idx = len(syms)\n+                    for v in var:\n+                        if v not in dict_sym_index:\n+                            dict_sym_index[v] = next_idx\n+                            next_idx += 1\n+                    var_order = var.copy()  # Save original var order\n+                    # Put specified symbols first, keep others in original order\n+                    var = list(syms) + [v for v in var if v not in syms]\n         n, d = eq.as_numer_denom()\n         if n.is_number:\n             return set()\n@@ -348,6 +360,14 @@ def diophantine(eq, param=symbols(\"t\", integer=True), syms=None,\n                 final_soln.add(sol)\n         else:\n                 final_soln.add(sol)\n+    # If syms was provided and different from var_order, reorder the solutions\n+    try:\n+        if 'var_order' in locals() and var != var_order:\n+            final_soln = {tuple([t[dict_sym_index[i]] for i in var_order])\n+                         for t in final_soln}\n+    except (NameError, UnboundLocalError):\n+        pass\n+\n     return final_soln\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "OpenHands",
+  "source": "rq2_divergent",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

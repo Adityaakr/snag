@@ -1,0 +1,140 @@
+{
+ "id": "LearnByInteract:django__django-13512",
+ "corpus": "swebench",
+ "seedId": "django__django-13512",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "b79088306513d5ed76d31ac40ab3c15f858946ea",
+  "headSha": "LearnByInteract-django__django-13512",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 13512
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 13512
+    },
+    "title": "Admin doesn't display properly unicode chars in JSONFields.",
+    "body": "Description\n\t \n\t\t(last modified by ZhaoQi99)\n\t \n>>> import json\n>>> print json.dumps('中国')\n\"\\u4e2d\\u56fd\"\njson.dumps use ASCII encoding by default when serializing Chinese.\nSo when we edit a JsonField which contains Chinese character in Django admin,it will appear in ASCII characters.\nI have try to fix this this problem in ​https://github.com/adamchainz/django-mysql/pull/714.And it works prefectly.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:aa9445343a9847bae0823808c451118a15681983a26b37509c8ed3297ec4bc57"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-13512",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/db/models/fields/json.py b/django/db/models/fields/json.py\nindex a249f4cdbf..524634bc9b 100644\n--- a/django/db/models/fields/json.py\n+++ b/django/db/models/fields/json.py\n@@ -81,7 +81,8 @@ class JSONField(CheckFieldDefaultMixin, Field):\n     def get_prep_value(self, value):\n         if value is None:\n             return value\n-        return json.dumps(value, cls=self.encoder)\n+        return json.dumps(value, cls=self.encoder, ensure_ascii=False)\n+\n \n     def get_transform(self, name):\n         transform = super().get_transform(name)\n@@ -518,3 +519,4 @@ class KeyTransformFactory:\n \n     def __call__(self, *args, **kwargs):\n         return KeyTransform(self.key_name, *args, **kwargs)\n+\ndiff --git a/django/forms/fields.py b/django/forms/fields.py\nindex 9de2c60b35..bce74ae950 100644\n--- a/django/forms/fields.py\n+++ b/django/forms/fields.py\n@@ -1258,7 +1258,7 @@ class JSONField(CharField):\n     def prepare_value(self, value):\n         if isinstance(value, InvalidJSONInput):\n             return value\n-        return json.dumps(value, cls=self.encoder)\n+        return json.dumps(value, cls=self.encoder, ensure_ascii=False)\n \n     def has_changed(self, initial, data):\n         if super().has_changed(initial, data):\n@@ -1266,6 +1266,8 @@ class JSONField(CharField):\n         # For purposes of seeing whether something has changed, True isn't the\n         # same as 1 and the order of keys doesn't matter.\n         return (\n-            json.dumps(initial, sort_keys=True, cls=self.encoder) !=\n-            json.dumps(self.to_python(data), sort_keys=True, cls=self.encoder)\n+            json.dumps(initial, sort_keys=True, cls=self.encoder, ensure_ascii=False) !=\n+            json.dumps(self.to_python(data), sort_keys=True, cls=self.encoder, ensure_ascii=False)\n         )\n+\n+\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "LearnByInteract",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

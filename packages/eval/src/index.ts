@@ -17,3 +17,12 @@ export function describePackage(): string {
 export * from './baselines.js';
 export * from './corpora/files.js';
 export * from './report.js';
+export * from './mutations/ast.js';
+export * from './mutations/generate.js';
+export * from './mutations/operators.js';
+export * from './mutations/seed.js';
+export * from './corpora/swebench.js';
+export * from './corpora/swebench-fetch.js';
+export * from './tuning.js';
+export * from './calibrate.js';
+export * from './corpora/shadow.js';

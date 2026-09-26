@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:sympy__sympy-16766",
+ "corpus": "swebench",
+ "seedId": "sympy__sympy-16766",
+ "input": {
+  "mode": "local",
+  "repo": "sympy/sympy",
+  "baseSha": "b8fe457a02cc24b3470ff678d0099c350b7fef43",
+  "headSha": "CodeStory-sympy__sympy-16766",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "sympy",
+    "repo": "sympy",
+    "number": 16766
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "sympy",
+     "repo": "sympy",
+     "number": 16766
+    },
+    "title": "PythonCodePrinter doesn't support Indexed",
+    "body": "I use `lambdify()` to generate some functions and save the code for further use. But the generated code for `Indexed` operation has some warnings which can be confirmed by following code;\r\n\r\n```\r\nfrom sympy import *\r\np = IndexedBase(\"p\")\r\n\r\npycode(p[0])\r\n```\r\nthe output is \r\n\r\n```\r\n  # Not supported in Python:\r\n  # Indexed\r\np[0]\r\n```\r\n\r\nWe should add following method to `PythonCodePrinter`:\r\n\r\n```\r\ndef _print_Indexed(self, expr):\r\n    base, *index = expr.args\r\n    return \"{}[{}]\".format(str(base), \", \".join([self._print(ind) for ind in index]))\r\n```",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:e3499d0a20168b98d480b1bfc676539437c95aef0d0a0f9c2ecd720623106682"
+   }
+  ],
+  "pr": {
+   "title": "Fix sympy__sympy-16766",
+   "body": ""
+  },
+  "diffText": "diff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..548af07ae2\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,20 @@\n+from sympy import *\n+\n+# Test case 1: Basic indexed expression\n+p = IndexedBase(\"p\")\n+print(\"Test case 1 - Single index:\")\n+print(pycode(p[0]))\n+\n+# Test case 2: Multiple indices\n+print(\"\\nTest case 2 - Multiple indices:\")\n+print(pycode(p[0,1]))\n+\n+# Test case 3: Expression as index\n+x = Symbol('x')\n+print(\"\\nTest case 3 - Expression as index:\")\n+print(pycode(p[x+1]))\n+\n+# Test case 4: Different base type\n+A = MatrixSymbol('A', 3, 3)\n+print(\"\\nTest case 4 - Matrix base:\")\n+print(pycode(A[0,1]))\n\\ No newline at end of file\ndiff --git a/sympy/printing/pycode.py b/sympy/printing/pycode.py\nindex a3f0310735..2267221afc 100644\n--- a/sympy/printing/pycode.py\n+++ b/sympy/printing/pycode.py\n@@ -349,6 +349,10 @@ def _print_NoneToken(self, arg):\n \n class PythonCodePrinter(AbstractPythonCodePrinter):\n \n+    def _print_Indexed(self, expr):\n+        base, *index = expr.args\n+        return \"{}[{}]\".format(str(base), \", \".join([self._print(ind) for ind in index]))\n+\n     def _print_sign(self, e):\n         return '(0.0 if {e} == 0 else {f}(1, {e}))'.format(\n             f=self._module_format('math.copysign'), e=self._print(e.args[0]))\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

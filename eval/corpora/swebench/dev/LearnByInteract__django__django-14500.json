@@ -1,0 +1,140 @@
+{
+ "id": "LearnByInteract:django__django-14500",
+ "corpus": "swebench",
+ "seedId": "django__django-14500",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "8c3bd0b708b488a1f6e8bd8cc6b96569904605be",
+  "headSha": "LearnByInteract-django__django-14500",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 14500
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 14500
+    },
+    "title": "Squashed migration is not marked as unapplied",
+    "body": "Description\n\t \n\t\t(last modified by Markus Holtermann)\n\t \nWhen unapplying a squashed migration and the replaced migration files are still around, the MigrationExecutor mark the squash migration as unapplied, too, not only the replaced migrations.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:474b89c2e0915b4d3e396850cd6f27dcfc95c8635317bdfd277581bf28516cc3"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-14500",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/db/migrations/executor.py b/django/db/migrations/executor.py\nindex 57042a8690..e1d7a4b4f7 100644\n--- a/django/db/migrations/executor.py\n+++ b/django/db/migrations/executor.py\n@@ -254,8 +254,11 @@ class MigrationExecutor:\n         if migration.replaces:\n             for app_label, name in migration.replaces:\n                 self.recorder.record_unapplied(app_label, name)\n+            # Also record the squashed migration as unapplied\n+            self.recorder.record_unapplied(migration.app_label, migration.name)\n         else:\n             self.recorder.record_unapplied(migration.app_label, migration.name)\n+\n         # Report progress\n         if self.progress_callback:\n             self.progress_callback(\"unapply_success\", migration, fake)\n@@ -371,3 +374,4 @@ class MigrationExecutor:\n         # If we get this far and we found at least one CreateModel or AddField migration,\n         # the migration is considered implicitly applied.\n         return (found_create_model_migration or found_add_field_migration), after_state\n+\ndiff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..962e00d055\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,53 @@\n+from django.conf import settings\n+settings.configure(\n+    DATABASES={'default': {'ENGINE': 'django.db.backends.sqlite3', 'NAME': ':memory:'}},\n+    INSTALLED_APPS=['django.db.migrations'],\n+)\n+\n+import django\n+django.setup()\n+\n+from django.db import connection\n+from django.db.migrations.executor import MigrationExecutor\n+from django.db.migrations.recorder import MigrationRecorder\n+from django.db.migrations.state import ProjectState\n+\n+# Create a mock migration class\n+class MockMigration:\n+    def __init__(self, app_label, name, replaces=None):\n+        self.app_label = app_label\n+        self.name = name\n+        self.replaces = replaces or []\n+        self.atomic = True\n+\n+    def unapply(self, project_state, schema_editor):\n+        return project_state\n+\n+# Create executor and recorder\n+executor = MigrationExecutor(connection)\n+recorder = executor.recorder\n+\n+# Ensure schema exists\n+recorder.ensure_schema()\n+\n+# Create mock migration that replaces others\n+squashed_migration = MockMigration('testapp', 'squashed_0001', replaces=[\n+    ('testapp', '0001_initial'),\n+    ('testapp', '0002_change'),\n+])\n+\n+# Record the replaced migrations as applied\n+recorder.record_applied('testapp', '0001_initial')\n+recorder.record_applied('testapp', '0002_change')\n+recorder.record_applied('testapp', 'squashed_0001')\n+\n+print(\"Before unapply:\")\n+print(\"Applied migrations:\", recorder.applied_migrations())\n+\n+# Unapply the squashed migration\n+state = ProjectState()\n+executor.unapply_migration(state, squashed_migration)\n+\n+print(\"\\nAfter unapply:\")\n+print(\"Applied migrations:\", recorder.applied_migrations())\n+\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "LearnByInteract",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

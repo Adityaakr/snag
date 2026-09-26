@@ -1,0 +1,140 @@
+{
+ "id": "OpenHands:pallets__flask-5014",
+ "corpus": "swebench",
+ "seedId": "pallets__flask-5014",
+ "input": {
+  "mode": "local",
+  "repo": "pallets/flask",
+  "baseSha": "7ee9ceb71e868944a46e1ff00b506772a53a4f1d",
+  "headSha": "OpenHands-pallets__flask-5014",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "pallets",
+    "repo": "flask",
+    "number": 5014
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "pallets",
+     "repo": "flask",
+     "number": 5014
+    },
+    "title": "Require a non-empty name for Blueprints",
+    "body": "Things do not work correctly if a Blueprint is given an empty name (e.g. #4944).\r\nIt would be helpful if a `ValueError` was raised when trying to do that.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:1d27504ccf31af841f65a84de9bfeab79a9aebf9e2a4e3b716fe4765095f4663"
+   }
+  ],
+  "pr": {
+   "title": "Fix pallets__flask-5014",
+   "body": ""
+  },
+  "diffText": "diff --git a/reproduce_empty_name.py b/reproduce_empty_name.py\nnew file mode 100644\nindex 00000000..2fe230fd\n--- /dev/null\n+++ b/reproduce_empty_name.py\n@@ -0,0 +1,12 @@\n+from flask import Flask, Blueprint\n+\n+app = Flask(__name__)\n+\n+# Try to create a blueprint with an empty name\n+bp = Blueprint(\"\", __name__)\n+\n+# Register the blueprint\n+app.register_blueprint(bp)\n+\n+if __name__ == \"__main__\":\n+    app.run()\n\\ No newline at end of file\ndiff --git a/src/flask/blueprints.py b/src/flask/blueprints.py\nindex eb50585d..5052fe44 100644\n--- a/src/flask/blueprints.py\n+++ b/src/flask/blueprints.py\n@@ -192,6 +192,8 @@ class Blueprint(Scaffold):\n \n         if \".\" in name:\n             raise ValueError(\"'name' may not contain a dot '.' character.\")\n+        if not name or not name.strip():\n+            raise ValueError(\"'name' may not be empty.\")\n \n         self.name = name\n         self.url_prefix = url_prefix\ndiff --git a/test_edge_cases.py b/test_edge_cases.py\nnew file mode 100644\nindex 00000000..0d06ba45\n--- /dev/null\n+++ b/test_edge_cases.py\n@@ -0,0 +1,31 @@\n+from flask import Flask, Blueprint\n+\n+app = Flask(__name__)\n+\n+# Test case 1: Empty string\n+try:\n+    bp = Blueprint(\"\", __name__)\n+    print(\"Test case 1 failed: Empty string should raise ValueError\")\n+except ValueError as e:\n+    print(\"Test case 1 passed:\", str(e))\n+\n+# Test case 2: Only whitespace\n+try:\n+    bp = Blueprint(\"   \", __name__)\n+    print(\"Test case 2 failed: Whitespace-only string should raise ValueError\")\n+except ValueError as e:\n+    print(\"Test case 2 passed:\", str(e))\n+\n+# Test case 3: None value\n+try:\n+    bp = Blueprint(None, __name__)  # type: ignore\n+    print(\"Test case 3 failed: None value should raise TypeError\")\n+except (ValueError, TypeError) as e:\n+    print(\"Test case 3 passed:\", str(e))\n+\n+# Test case 4: Valid name (control case)\n+try:\n+    bp = Blueprint(\"valid_name\", __name__)\n+    print(\"Test case 4 passed: Valid name accepted\")\n+except ValueError as e:\n+    print(\"Test case 4 failed:\", str(e))\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "OpenHands",
+  "source": "rq2_divergent",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

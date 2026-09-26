@@ -1,0 +1,140 @@
+{
+ "id": "gold:scikit-learn__scikit-learn-26194",
+ "corpus": "swebench",
+ "seedId": "scikit-learn__scikit-learn-26194",
+ "input": {
+  "mode": "local",
+  "repo": "scikit-learn/scikit-learn",
+  "baseSha": "e886ce4e1444c61b865e7839c9cff5464ee20ace",
+  "headSha": "gold-scikit-learn__scikit-learn-26194",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "scikit-learn",
+    "repo": "scikit-learn",
+    "number": 26194
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "scikit-learn",
+     "repo": "scikit-learn",
+     "number": 26194
+    },
+    "title": "Thresholds can exceed 1 in `roc_curve` while providing probability estimate",
+    "body": "While working on https://github.com/scikit-learn/scikit-learn/pull/26120, I found out that something was odd with `roc_curve` that returns a threshold greater than 1. A non-regression test (that could be part of `sklearn/metrics/tests/test_ranking.py`) could be as follow:\r\n\r\n```python\r\ndef test_roc_curve_with_probablity_estimates():\r\n    rng = np.random.RandomState(42)\r\n    y_true = rng.randint(0, 2, size=10)\r\n    y_score = rng.rand(10)\r\n    _, _, thresholds = roc_curve(y_true, y_score)\r\n    assert np.logical_or(thresholds <= 1, thresholds >= 0).all()\r\n```\r\n\r\nThe reason is due to the following:\r\n\r\nhttps://github.com/scikit-learn/scikit-learn/blob/e886ce4e1444c61b865e7839c9cff5464ee20ace/sklearn/metrics/_ranking.py#L1086\r\n\r\nBasically, this is to add a point for `fpr=0` and `tpr=0`. However, the `+ 1` rule does not make sense in the case `y_score` is a probability estimate.\r\n\r\nI am not sure what would be the best fix here. A potential workaround would be to check `thresholds.max() <= 1` in which case we should clip `thresholds` to not be above 1.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:47fd40bf3d0f12bb7a5aabc1fd3f0b0ab128f0e27f0ab9183fb58acd44b92e68"
+   }
+  ],
+  "pr": {
+   "title": "Fix scikit-learn__scikit-learn-26194",
+   "body": ""
+  },
+  "diffText": "diff --git a/sklearn/metrics/_ranking.py b/sklearn/metrics/_ranking.py\n--- a/sklearn/metrics/_ranking.py\n+++ b/sklearn/metrics/_ranking.py\n@@ -1016,10 +1016,10 @@ def roc_curve(\n         Increasing true positive rates such that element `i` is the true\n         positive rate of predictions with score >= `thresholds[i]`.\n \n-    thresholds : ndarray of shape = (n_thresholds,)\n+    thresholds : ndarray of shape (n_thresholds,)\n         Decreasing thresholds on the decision function used to compute\n         fpr and tpr. `thresholds[0]` represents no instances being predicted\n-        and is arbitrarily set to `max(y_score) + 1`.\n+        and is arbitrarily set to `np.inf`.\n \n     See Also\n     --------\n@@ -1036,6 +1036,10 @@ def roc_curve(\n     are reversed upon returning them to ensure they correspond to both ``fpr``\n     and ``tpr``, which are sorted in reversed order during their calculation.\n \n+    An arbritrary threshold is added for the case `tpr=0` and `fpr=0` to\n+    ensure that the curve starts at `(0, 0)`. This threshold corresponds to the\n+    `np.inf`.\n+\n     References\n     ----------\n     .. [1] `Wikipedia entry for the Receiver operating characteristic\n@@ -1056,7 +1060,7 @@ def roc_curve(\n     >>> tpr\n     array([0. , 0.5, 0.5, 1. , 1. ])\n     >>> thresholds\n-    array([1.8 , 0.8 , 0.4 , 0.35, 0.1 ])\n+    array([ inf, 0.8 , 0.4 , 0.35, 0.1 ])\n     \"\"\"\n     fps, tps, thresholds = _binary_clf_curve(\n         y_true, y_score, pos_label=pos_label, sample_weight=sample_weight\n@@ -1083,7 +1087,8 @@ def roc_curve(\n     # to make sure that the curve starts at (0, 0)\n     tps = np.r_[0, tps]\n     fps = np.r_[0, fps]\n-    thresholds = np.r_[thresholds[0] + 1, thresholds]\n+    # get dtype of `y_score` even if it is an array-like\n+    thresholds = np.r_[np.inf, thresholds]\n \n     if fps[-1] <= 0:\n         warnings.warn(\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "gold",
+  "source": "gold",
+  "strength": "strong"
+ },
+ "annotatedBy": "study"
+}

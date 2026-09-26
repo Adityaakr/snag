@@ -1,0 +1,142 @@
+{
+ "id": "CodeStory:sphinx-doc__sphinx-8593",
+ "corpus": "swebench",
+ "seedId": "sphinx-doc__sphinx-8593",
+ "input": {
+  "mode": "local",
+  "repo": "sphinx-doc/sphinx",
+  "baseSha": "07983a5a8704ad91ae855218ecbda1c8598200ca",
+  "headSha": "CodeStory-sphinx-doc__sphinx-8593",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "sphinx-doc",
+    "repo": "sphinx",
+    "number": 8593
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "sphinx-doc",
+     "repo": "sphinx",
+     "number": 8593
+    },
+    "title": "autodoc: `:meta public:` does not effect to variables",
+    "body": "**Describe the bug**\r\nautodoc: `:meta public:` does not effect to variables.\r\n\r\n**To Reproduce**\r\n\r\n```\r\n# example.py\r\n_foo = None  #: :meta public:\r\n```\r\n```\r\n# index.rst\r\n.. automodule:: example\r\n   :members:\r\n```\r\n\r\nI expect `_foo` is shown on the built document, but not shown.\r\n\r\n**Expected behavior**\r\n`_foo` should be shown on the built document.\r\n\r\n**Your project**\r\nNo\r\n\r\n**Screenshots**\r\nNo\r\n\r\n**Environment info**\r\n- OS: Mac\r\n- Python version: 3.9.1\r\n- Sphinx version: HEAD of 3.x\r\n- Sphinx extensions: sphinx.ext.autodoc\r\n- Extra tools: No\r\n\r\n**Additional context**\r\nNo",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:59f89db3252c14b30f1f5a900c5a79fca0c57b45c7ee870310facbe64ff7a38b"
+   }
+  ],
+  "pr": {
+   "title": "Fix sphinx-doc__sphinx-8593",
+   "body": ""
+  },
+  "diffText": "diff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 000000000..70a6f7a95\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,45 @@\n+import os\n+import shutil\n+import subprocess\n+\n+# Create test files\n+os.makedirs('test_docs', exist_ok=True)\n+\n+# Create example.py\n+with open('test_docs/example.py', 'w') as f:\n+    f.write('_foo = None  #: :meta public:\\n')\n+\n+# Create index.rst\n+with open('test_docs/index.rst', 'w') as f:\n+    f.write('''\n+Test Documentation\n+=================\n+\n+.. automodule:: example\n+   :members:\n+''')\n+\n+# Create conf.py\n+with open('test_docs/conf.py', 'w') as f:\n+    f.write('''\n+import os\n+import sys\n+sys.path.insert(0, os.path.abspath('.'))\n+\n+project = 'Test'\n+copyright = '2023'\n+author = 'Test'\n+\n+extensions = ['sphinx.ext.autodoc']\n+''')\n+\n+# Build the documentation\n+subprocess.run(['sphinx-build', '-b', 'html', 'test_docs', 'test_docs/_build/html'])\n+\n+# Check if _foo appears in the output\n+with open('test_docs/_build/html/index.html', 'r') as f:\n+    content = f.read()\n+    if '_foo' in content:\n+        print(\"SUCCESS: _foo is documented\")\n+    else:\n+        print(\"FAILURE: _foo is not documented\")\n\\ No newline at end of file\ndiff --git a/sphinx/ext/autodoc/__init__.py b/sphinx/ext/autodoc/__init__.py\nindex 76265f5be..6e695d943 100644\n--- a/sphinx/ext/autodoc/__init__.py\n+++ b/sphinx/ext/autodoc/__init__.py\n@@ -728,6 +728,13 @@ class Documenter:\n \n             has_doc = bool(doc)\n \n+            # Check for comment-style docstrings in the source code\n+            if self.analyzer and not doc:\n+                attr_docs = self.analyzer.find_attr_docs()\n+                key = (namespace, membername)\n+                if key in attr_docs:\n+                    doc = '\\n'.join(attr_docs[key])\n+\n             metadata = extract_metadata(doc)\n             if 'private' in metadata:\n                 # consider a member private if docstring has \"private\" metadata\ndiff --git a/sphinx/util/docstrings.py b/sphinx/util/docstrings.py\nindex 206986bd0..4f50cbde7 100644\n--- a/sphinx/util/docstrings.py\n+++ b/sphinx/util/docstrings.py\n@@ -28,7 +28,14 @@ def extract_metadata(s: str) -> Dict[str, str]:\n     if not s:\n         return metadata\n \n-    for line in prepare_docstring(s):\n+    # Handle both regular docstrings and comment docstrings\n+    lines = []\n+    if s.lstrip().startswith('#:'):\n+        lines = prepare_commentdoc(s)\n+    else:\n+        lines = prepare_docstring(s)\n+\n+    for line in lines:\n         if line.strip() == '':\n             in_other_element = False\n         else:\n@@ -38,6 +45,12 @@ def extract_metadata(s: str) -> Dict[str, str]:\n                 if field_name.startswith('meta '):\n                     name = field_name[5:].strip()\n                     metadata[name] = line[matched.end():].strip()\n+            elif line.startswith(':meta '):  # Handle comment-style metadata\n+                parts = line[6:].split(':', 1)\n+                if len(parts) >= 1:\n+                    name = parts[0].strip()\n+                    value = parts[1].strip() if len(parts) > 1 else ''\n+                    metadata[name] = value\n             else:\n                 in_other_element = True\n \n@@ -95,7 +108,14 @@ def prepare_commentdoc(s: str) -> List[str]:\n             # the first space after the comment is ignored\n             if line and line[0] == ' ':\n                 line = line[1:]\n-            result.append(line)\n+            # Ensure :meta directives are properly formatted for field lists\n+            if line.startswith(':meta '):\n+                # Add a second colon to make it a proper field list item\n+                if not line.endswith(':'):\n+                    line = line + ':'\n+                result.append(line)\n+            else:\n+                result.append(line)\n     if result and result[-1]:\n         result.append('')\n     return result\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq34_manual",
+  "strength": "strong",
+  "diffPattern": "noalignment",
+  "correctness": "incorrect_regression"
+ },
+ "annotatedBy": "study"
+}

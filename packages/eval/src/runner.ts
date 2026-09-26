@@ -3,7 +3,7 @@
  * Provider modes: `scripted` (the item's recorded answers, golden only), `simulated` (SimulatedJev, not a real
  * measurement) and `live` (the given providers, normally CachedJev/CachedLlm over eval cassettes).
  */
-import type { ReviewResult } from '@remit/core';
+import type { Calibration, ReviewResult } from '@remit/core';
 import { checkExpected, runReview } from '@remit/pipeline';
 import { CostTracker, FakeJev, FakeLlm, type JevProvider, type LlmProvider } from '@remit/providers';
 import { type EvalItem, PROBLEM_STATUSES, treeContentSource, treeReferenceIndex } from './item.js';
@@ -19,13 +19,15 @@ export interface RunOptions {
   concurrency?: number;
   /** Stops the run when total cost passes this (EVAL_MAX_USD, default $20). */
   maxUsd?: number;
+  calibration?: Calibration;
 }
 
 export interface Comparison {
-  requirements: { id: string; expected: string; actual: string | undefined }[];
-  units: { file: string; symbol?: string; expected: string; actual: string | undefined }[];
+  requirements: { id: string; expected: string; actual: string | undefined; ok: boolean }[];
+  units: { file: string; symbol?: string; expected: string; actual: string | undefined; ok: boolean }[];
   facts: { kind: string; file?: string; found: boolean }[];
   testIntegrity: { file: string; symbol?: string; found: boolean }[];
+  claimMismatch: { id: string; found: boolean }[];
   pr: { expected: 'problem' | 'clean'; predictedProblem: boolean };
   /** P0 or P1 findings; counted as false alarms when the item is clean (11.4 noise budget). */
   p0p1: number;
@@ -49,18 +51,22 @@ function unitOf(r: ReviewResult, file: string, symbol?: string) {
 /** Compares one result with the item's labels. */
 export function compare(item: EvalItem, r: ReviewResult): Comparison {
   const status = new Map(r.requirementVerdicts.map((v) => [v.requirementId, v.status]));
-  const requirements = Object.entries(item.labels.requirements).map(([id, expected]) => ({
-    id,
-    expected,
-    actual: status.get(id),
-  }));
+  const requirements = Object.entries(item.labels.requirements).map(([id, expected]) => {
+    const actual = status.get(id);
+    const accept = item.labels.requirementsAccept?.[id] ?? [];
+    return { id, expected, actual, ok: actual === expected || accept.some((s) => s === actual) };
+  });
   const units = item.labels.units.map((l) => {
     const u = unitOf(r, l.file, l.symbol);
+    const actual = u ? r.unitVerdicts.find((v) => v.unitId === u.id)?.role : undefined;
+    // A unit the pipeline dropped entirely counts as filtered.
+    const effective = u ? actual : 'ignored';
     return {
       file: l.file,
       ...(l.symbol ? { symbol: l.symbol } : {}),
       expected: l.role,
-      actual: u ? r.unitVerdicts.find((v) => v.unitId === u.id)?.role : undefined,
+      actual,
+      ok: effective === l.role || (l.accept ?? []).some((a) => a === effective),
     };
   });
   const facts = item.labels.facts.map((f) => {
@@ -82,19 +88,27 @@ export function compare(item: EvalItem, r: ReviewResult): Comparison {
     );
     return { file: t.file, ...(t.symbol ? { symbol: t.symbol } : {}), found };
   });
+  const claimMismatch = (item.labels.claimMismatch ?? []).map((id) => ({
+    id,
+    found:
+      Boolean(r.requirementVerdicts.find((v) => v.requirementId === id)?.claimMismatch) &&
+      r.findings.some((f) => f.targetId === id && f.priority === 'P0'),
+  }));
   const predictedProblem = r.findings.some((f) => f.priority === 'P0');
   const goldenFailures = item.expected ? checkExpected(r, item.expected) : undefined;
   const passed = goldenFailures
     ? goldenFailures.length === 0
-    : requirements.every((x) => x.actual === x.expected) &&
-      units.every((x) => x.actual === x.expected) &&
+    : requirements.every((x) => x.ok) &&
+      units.every((x) => x.ok) &&
       facts.every((x) => x.found) &&
-      testIntegrity.every((x) => x.found);
+      testIntegrity.every((x) => x.found) &&
+      claimMismatch.every((x) => x.found);
   return {
     requirements,
     units,
     facts,
     testIntegrity,
+    claimMismatch,
     pr: { expected: item.labels.pr, predictedProblem },
     p0p1: r.findings.filter((f) => f.priority === 'P0' || f.priority === 'P1').length,
     ...(goldenFailures ? { goldenFailures } : {}),
@@ -126,6 +140,7 @@ export async function runItem(item: EvalItem, opts: RunOptions): Promise<ItemOut
     config: item.config,
     reviewId: `eval_${item.id}`,
     costs,
+    ...(opts.calibration ? { calibration: opts.calibration } : {}),
     ...(item.trees
       ? { contents: treeContentSource(item.trees), references: treeReferenceIndex(item.trees) }
       : {}),

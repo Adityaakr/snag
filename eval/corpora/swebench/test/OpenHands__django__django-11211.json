@@ -1,0 +1,140 @@
+{
+ "id": "OpenHands:django__django-11211",
+ "corpus": "swebench",
+ "seedId": "django__django-11211",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "ba726067604ce5a8ca3919edf653496722b433ab",
+  "headSha": "OpenHands-django__django-11211",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 11211
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 11211
+    },
+    "title": "Prefetch related is not working when used GFK for model that uses UUID field as PK.",
+    "body": "Description\n\t\nHow to reproduce:\ncreate model with UUID as primary key\nclass Foo(models.Model):\n\tid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)\n\t...\ncreate another model with GFK to model Foo\nclass Bar(models.Model):\n\tfoo_content_type = models.ForeignKey(\n\t\tContentType, related_name='actor',\n\t\ton_delete=models.CASCADE, db_index=True\n\t)\n\tfoo_object_id = models.CharField(max_length=255, db_index=True)\n\tfoo = GenericForeignKey('foo_content_type', 'foo_object_id')\n\t...\nand try to get queryset with prefetch related (django orm engine return None for attribute foo):\nBar.objects.all().prefetch_related('foo')\nThanks a lot for your attention! Also i wanna point out some related bug report from third party library in which previously i faced with that issue, maybe it would useful – ​https://github.com/justquick/django-activity-stream/issues/245",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:988b9d3ff521c68c2c5a4cc76467bb71f9934176e6bbf575161e8f33aa680294"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-11211",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/contrib/contenttypes/fields.py b/django/contrib/contenttypes/fields.py\nindex ed98ecb48c..3c09dfe0b7 100644\n--- a/django/contrib/contenttypes/fields.py\n+++ b/django/contrib/contenttypes/fields.py\n@@ -50,6 +50,22 @@ class GenericForeignKey(FieldCacheMixin):\n         self.name = name\n         self.model = cls\n         cls._meta.add_field(self, private=True)\n+\n+        # Create a descriptor for the foreign key field that handles UUIDs\n+        class UUIDForeignKeyDescriptor:\n+            def __init__(self, field):\n+                self.field = field\n+\n+            def __get__(self, instance, owner=None):\n+                if instance is None:\n+                    return self\n+                return instance.__dict__.get(self.field)\n+\n+            def __set__(self, instance, value):\n+                instance.__dict__[self.field] = value\n+\n+        # Replace the foreign key field with our descriptor\n+        setattr(cls, self.fk_field, UUIDForeignKeyDescriptor(self.fk_field))\n         setattr(cls, name, self)\n \n     def get_filter_kwargs_for_object(self, obj):\n@@ -184,6 +200,9 @@ class GenericForeignKey(FieldCacheMixin):\n             if ct_id is not None:\n                 fk_val = getattr(instance, self.fk_field)\n                 if fk_val is not None:\n+                    # Store the values in the instance's dict\n+                    instance.__dict__[self.ct_field + '_id'] = ct_id\n+                    instance.__dict__[self.fk_field] = fk_val\n                     fk_dict[ct_id].add(fk_val)\n                     instance_dict[ct_id] = instance\n \n@@ -191,19 +210,58 @@ class GenericForeignKey(FieldCacheMixin):\n         for ct_id, fkeys in fk_dict.items():\n             instance = instance_dict[ct_id]\n             ct = self.get_content_type(id=ct_id, using=instance._state.db)\n-            ret_val.extend(ct.get_all_objects_for_this_type(pk__in=fkeys))\n+            model_class = ct.model_class()\n+            if model_class is None:\n+                continue\n+            # Convert the fkeys to the correct type based on the model's pk field\n+            pk_field = model_class._meta.pk\n+            # For UUID fields, we need to handle both formats (with and without dashes)\n+            if isinstance(pk_field, models.UUIDField):\n+                # Try both formats - with and without dashes\n+                converted_fkeys = set()\n+                for fk in fkeys:\n+                    try:\n+                        # Try with dashes\n+                        converted_fkeys.add(pk_field.to_python(fk))\n+                    except ValueError:\n+                        # Try without dashes\n+                        converted_fkeys.add(pk_field.to_python(fk.replace('-', '')))\n+            else:\n+                converted_fkeys = {pk_field.to_python(fk) for fk in fkeys}\n+            ret_val.extend(ct.get_all_objects_for_this_type(pk__in=converted_fkeys))\n \n         # For doing the join in Python, we have to match both the FK val and the\n         # content type, so we use a callable that returns a (fk, class) pair.\n         def gfk_key(obj):\n-            ct_id = getattr(obj, ct_attname)\n+            ct_id = obj.__dict__.get(self.ct_field + '_id')\n             if ct_id is None:\n                 return None\n             else:\n-                model = self.get_content_type(id=ct_id,\n-                                              using=obj._state.db).model_class()\n-                return (model._meta.pk.get_prep_value(getattr(obj, self.fk_field)),\n-                        model)\n+                ct = self.get_content_type(id=ct_id, using=obj._state.db)\n+                model = ct.model_class()\n+                if model is None:\n+                    return None\n+                pk_field = model._meta.pk\n+                fk_val = obj.__dict__.get(self.fk_field)\n+                if isinstance(pk_field, models.UUIDField):\n+                    try:\n+                        # Try with dashes\n+                        return (pk_field.to_python(fk_val), model)\n+                    except ValueError:\n+                        # Try without dashes\n+                        return (pk_field.to_python(fk_val.replace('-', '')), model)\n+                else:\n+                    return (pk_field.to_python(fk_val) if fk_val is not None else None,\n+                            model)\n+\n+        return (\n+            ret_val,\n+            lambda obj: (obj.pk, obj.__class__),\n+            gfk_key,\n+            True,\n+            self.name,\n+            True,\n+        )\n \n         return (\n             ret_val,\n@@ -222,24 +280,55 @@ class GenericForeignKey(FieldCacheMixin):\n         # reload the same ContentType over and over (#5570). Instead, get the\n         # content type ID here, and later when the actual instance is needed,\n         # use ContentType.objects.get_for_id(), which has a global cache.\n-        f = self.model._meta.get_field(self.ct_field)\n-        ct_id = getattr(instance, f.get_attname(), None)\n-        pk_val = getattr(instance, self.fk_field)\n+        ct_id = instance.__dict__.get(self.ct_field + '_id')\n+        if ct_id is None:\n+            f = self.model._meta.get_field(self.ct_field)\n+            ct_id = getattr(instance, f.get_attname(), None)\n+        pk_val = instance.__dict__.get(self.fk_field)\n+        if pk_val is None:\n+            pk_val = getattr(instance, self.fk_field)\n+        if isinstance(ct_id, ContentType):\n+            ct_id = ct_id.id\n \n         rel_obj = self.get_cached_value(instance, default=None)\n         if rel_obj is not None:\n             ct_match = ct_id == self.get_content_type(obj=rel_obj, using=instance._state.db).id\n-            pk_match = rel_obj._meta.pk.to_python(pk_val) == rel_obj.pk\n+            # Convert pk_val to the correct type based on the model's pk field\n+            pk_field = rel_obj._meta.pk\n+            if isinstance(pk_field, models.UUIDField):\n+                try:\n+                    # Try with dashes\n+                    converted_pk = pk_field.to_python(pk_val)\n+                except ValueError:\n+                    # Try without dashes\n+                    converted_pk = pk_field.to_python(pk_val.replace('-', ''))\n+            else:\n+                converted_pk = pk_field.to_python(pk_val) if pk_val is not None else None\n+            pk_match = converted_pk == rel_obj.pk\n             if ct_match and pk_match:\n                 return rel_obj\n             else:\n                 rel_obj = None\n         if ct_id is not None:\n             ct = self.get_content_type(id=ct_id, using=instance._state.db)\n-            try:\n-                rel_obj = ct.get_object_for_this_type(pk=pk_val)\n-            except ObjectDoesNotExist:\n-                pass\n+            model_class = ct.model_class()\n+            if model_class is not None:\n+                try:\n+                    # Convert pk_val to the correct type based on the model's pk field\n+                    pk_field = model_class._meta.pk\n+                    if isinstance(pk_field, models.UUIDField):\n+                        try:\n+                            # Try with dashes\n+                            converted_pk = pk_field.to_python(pk_val)\n+                        except ValueError:\n+                            # Try without dashes\n+                            converted_pk = pk_field.to_python(pk_val.replace('-', ''))\n+                    else:\n+                        converted_pk = pk_field.to_python(pk_val) if pk_val is not None else None\n+                    if converted_pk is not None:\n+                        rel_obj = ct.get_object_for_this_type(pk=converted_pk)\n+                except (ObjectDoesNotExist, ValueError):\n+                    pass\n         self.set_cached_value(instance, rel_obj)\n         return rel_obj\n \n@@ -250,6 +339,8 @@ class GenericForeignKey(FieldCacheMixin):\n             ct = self.get_content_type(obj=value)\n             fk = value.pk\n \n+        instance.__dict__[self.ct_field + '_id'] = ct.id if ct else None\n+        instance.__dict__[self.fk_field] = fk\n         setattr(instance, self.ct_field, ct)\n         setattr(instance, self.fk_field, fk)\n         self.set_cached_value(instance, value)\ndiff --git a/reproduce.py b/reproduce.py\nnew file mode 100644\nindex 0000000000..d9699982ac\n--- /dev/null\n+++ b/reproduce.py\n@@ -0,0 +1,109 @@\n+import os\n+import uuid\n+import django\n+from django.conf import settings\n+\n+# Configure Django settings\n+if not settings.configured:\n+    settings.configure(\n+        DEBUG=True,\n+        DATABASES={\n+            'default': {\n+                'ENGINE': 'django.db.backends.sqlite3',\n+                'NAME': ':memory:',\n+            }\n+        },\n+        INSTALLED_APPS=[\n+            'django.contrib.contenttypes',\n+        ],\n+    )\n+    django.setup()\n+\n+from django.db import models\n+from django.contrib.contenttypes.fields import GenericForeignKey\n+from django.contrib.contenttypes.models import ContentType\n+\n+# Define the models\n+class Foo(models.Model):\n+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)\n+    name = models.CharField(max_length=100)\n+\n+    class Meta:\n+        app_label = 'testapp'\n+\n+class Bar(models.Model):\n+    foo_content_type = models.ForeignKey(\n+        ContentType, related_name='actor',\n+        on_delete=models.CASCADE, db_index=True\n+    )\n+    foo_object_id = models.CharField(max_length=255, db_index=True)\n+    foo = GenericForeignKey('foo_content_type', 'foo_object_id')\n+    name = models.CharField(max_length=100)\n+\n+    class Meta:\n+        app_label = 'testapp'\n+\n+    def __init__(self, *args, **kwargs):\n+        print(\"__init__ called with:\", args, kwargs)\n+        super().__init__(*args, **kwargs)\n+        print(\"__init__ fields:\", self.foo_content_type_id, self.foo_object_id)\n+\n+    @classmethod\n+    def from_db(cls, db, field_names, values):\n+        print(\"from_db called with:\", field_names, values)\n+        instance = super().from_db(db, field_names, values)\n+        # Store the original field values on the instance\n+        instance._loaded_values = dict(zip(field_names, values))\n+        # Store the values in the instance's state\n+        instance._state.fields_cache = {\n+            'foo_content_type_id': values[field_names.index('foo_content_type_id')],\n+            'foo_object_id': values[field_names.index('foo_object_id')],\n+        }\n+        print(\"instance fields:\", instance.foo_content_type_id, instance.foo_object_id)\n+        return instance\n+\n+# Create the database tables\n+from django.db import connection\n+with connection.schema_editor() as schema_editor:\n+    schema_editor.create_model(ContentType)\n+    schema_editor.create_model(Foo)\n+    schema_editor.create_model(Bar)\n+\n+# Create ContentType entries for our models\n+ContentType.objects.get_or_create(app_label='testapp', model='foo')\n+ContentType.objects.get_or_create(app_label='testapp', model='bar')\n+\n+# Create test data\n+foo = Foo.objects.create(name='Test Foo')\n+bar = Bar.objects.create(\n+    foo_content_type=ContentType.objects.get_for_model(Foo),\n+    foo_object_id=str(foo.id).replace('-', ''),  # Remove dashes to match how UUIDs are stored\n+    name='Test Bar'\n+)\n+\n+# Try to prefetch related\n+print(\"Created Foo:\", foo.id, foo.name)\n+print(\"Created Bar:\", bar.foo_object_id, bar.name)\n+\n+# Print raw values from database\n+with connection.cursor() as cursor:\n+    cursor.execute(\"SELECT * FROM testapp_foo\")\n+    print(\"Foo table:\", cursor.fetchall())\n+    cursor.execute(\"SELECT * FROM testapp_bar\")\n+    print(\"Bar table:\", cursor.fetchall())\n+    cursor.execute(\"SELECT * FROM django_content_type\")\n+    print(\"ContentType table:\", cursor.fetchall())\n+\n+# Print raw values from Bar object\n+print(\"Bar object foo_content_type_id:\", bar.foo_content_type_id)\n+print(\"Bar object foo_object_id:\", bar.foo_object_id)\n+print(\"Bar object foo:\", bar.foo)\n+\n+# Print the query Django is generating\n+bars = Bar.objects.all().prefetch_related('foo')\n+print(\"Query:\", bars.query)\n+for bar in bars:\n+    print(f\"Bar name: {bar.name}\")\n+    print(f\"Foo name: {bar.foo.name if bar.foo else 'None'}\")\n+    print(f\"Bar foo_object_id: {bar.foo_object_id}\")\n+    print(f\"Bar foo_content_type_id: {bar.foo_content_type_id}\")\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "OpenHands",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

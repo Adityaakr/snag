@@ -1,0 +1,140 @@
+{
+ "id": "gold:sympy__sympy-13798",
+ "corpus": "swebench",
+ "seedId": "sympy__sympy-13798",
+ "input": {
+  "mode": "local",
+  "repo": "sympy/sympy",
+  "baseSha": "7121bdf1facdd90d05b6994b4c2e5b2865a4638a",
+  "headSha": "gold-sympy__sympy-13798",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "sympy",
+    "repo": "sympy",
+    "number": 13798
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "sympy",
+     "repo": "sympy",
+     "number": 13798
+    },
+    "title": "latex() and mul_symbol",
+    "body": "The `latex()` pretty-printing function accepts a `mul_symbol` kwarg that must be one of four choices. I would like to be able to supply my own choice which is not in the list. Specifically, I want the multiplication symbol to be `\\,` (i.e., a thin space). This is what I mean\r\n```\r\n>>> latex(3*x**2*y)\r\n'3 \\\\, x^{2} \\\\, y' # I typed the thin spaces in after the fact\r\n```\r\n\r\nThin spaces are used by sympy to separate differentials from integrands in integrals.\r\n```\r\n>>> latex(Integral(2*x**2*y, x))\r\n'\\\\int 2 x^{2} y\\\\, dx' # This thin space is sympy's current behavior\r\n```\r\n\r\nIs there a reason why the user cannot supply the `mul_symbol` of their choosing? Or are the 4 choices a historical artifact? I'm willing to attempt making a PR to allow `mul_symbol` to be arbitrary (and backwards-compatible) if such a PR would be considered.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:6bba3f63f72e74528964954b2c67a857fe2be5193a34c1e2b4d1862ac16e53be"
+   }
+  ],
+  "pr": {
+   "title": "Fix sympy__sympy-13798",
+   "body": ""
+  },
+  "diffText": "diff --git a/sympy/printing/latex.py b/sympy/printing/latex.py\n--- a/sympy/printing/latex.py\n+++ b/sympy/printing/latex.py\n@@ -155,12 +155,23 @@ def __init__(self, settings=None):\n             \"dot\": r\" \\cdot \",\n             \"times\": r\" \\times \"\n         }\n-\n-        self._settings['mul_symbol_latex'] = \\\n-            mul_symbol_table[self._settings['mul_symbol']]\n-\n-        self._settings['mul_symbol_latex_numbers'] = \\\n-            mul_symbol_table[self._settings['mul_symbol'] or 'dot']\n+        try:\n+            self._settings['mul_symbol_latex'] = \\\n+                mul_symbol_table[self._settings['mul_symbol']]\n+        except KeyError:\n+            self._settings['mul_symbol_latex'] = \\\n+                self._settings['mul_symbol']\n+        try:\n+            self._settings['mul_symbol_latex_numbers'] = \\\n+                mul_symbol_table[self._settings['mul_symbol'] or 'dot']\n+        except KeyError:\n+            if (self._settings['mul_symbol'].strip() in\n+                    ['', ' ', '\\\\', '\\\\,', '\\\\:', '\\\\;', '\\\\quad']):\n+                self._settings['mul_symbol_latex_numbers'] = \\\n+                    mul_symbol_table['dot']\n+            else:\n+                self._settings['mul_symbol_latex_numbers'] = \\\n+                    self._settings['mul_symbol']\n \n         self._delim_dict = {'(': ')', '[': ']'}\n \n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "gold",
+  "source": "gold",
+  "strength": "strong"
+ },
+ "annotatedBy": "study"
+}

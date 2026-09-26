@@ -1,0 +1,140 @@
+{
+ "id": "LearnByInteract:scikit-learn__scikit-learn-12585",
+ "corpus": "swebench",
+ "seedId": "scikit-learn__scikit-learn-12585",
+ "input": {
+  "mode": "local",
+  "repo": "scikit-learn/scikit-learn",
+  "baseSha": "bfc4a566423e036fbdc9fb02765fd893e4860c85",
+  "headSha": "LearnByInteract-scikit-learn__scikit-learn-12585",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "scikit-learn",
+    "repo": "scikit-learn",
+    "number": 12585
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "scikit-learn",
+     "repo": "scikit-learn",
+     "number": 12585
+    },
+    "title": "clone fails for parameters that are estimator types",
+    "body": "#### Description\r\n\r\n`clone` fails when one or more instance parameters are estimator types (i.e. not instances, but classes). \r\n\r\nI know this is a somewhat unusual use case, but I'm working on a project that provides wrappers for sklearn estimators (https://github.com/phausamann/sklearn-xarray) and I'd like to store the wrapped estimators as their classes - not their instances - as a parameter inside of a wrapper that behaves like an estimator itself. \r\n\r\n#### Steps/Code to Reproduce\r\n\r\n    from sklearn.preprocessing import StandardScaler\r\n    from sklearn.base import clone\r\n    clone(StandardScaler(with_mean=StandardScaler))\r\n\r\n#### Expected Results\r\n\r\nNo error.\r\n\r\n#### Actual Results\r\n```\r\nTraceback (most recent call last):\r\n...\r\n  File \"...\\lib\\site-packages\\sklearn\\base.py\", line 62, in clone\r\n    new_object_params[name] = clone(param, safe=False)\r\n  File \"...\\lib\\site-packages\\sklearn\\base.py\", line 60, in clone\r\n    new_object_params = estimator.get_params(deep=False)\r\nTypeError: get_params() missing 1 required positional argument: 'self'\r\n```\r\n\r\n#### Possible fix\r\n\r\nChange `base.py`, line 51 to: \r\n\r\n    elif not hasattr(estimator, 'get_params') or isinstance(estimator, type):\r\n\r\nI'm not sure whether this might break stuff in other places, however. I'd happily submit a PR if this change is desired.\r\n\r\n#### Versions\r\n\r\n    sklearn: 0.20.0",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:f73b4c8cbe842a1c357eb14582b74918e1cacbce1471d4f46ee4083d48af0a0e"
+   }
+  ],
+  "pr": {
+   "title": "Fix scikit-learn__scikit-learn-12585",
+   "body": ""
+  },
+  "diffText": "diff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 000000000..8eac46694\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,6 @@\n+from sklearn.preprocessing import StandardScaler\n+from sklearn.base import clone\n+\n+# Reproduce the error by passing a class as a parameter\n+scaler = StandardScaler(with_mean=StandardScaler)\n+clone(scaler)\ndiff --git a/sklearn/base.py b/sklearn/base.py\nindex 56ffb18bf..cb0ab6d8f 100644\n--- a/sklearn/base.py\n+++ b/sklearn/base.py\n@@ -48,7 +48,16 @@ def clone(estimator, safe=True):\n     # XXX: not handling dictionaries\n     if estimator_type in (list, tuple, set, frozenset):\n         return estimator_type([clone(e, safe=safe) for e in estimator])\n-    elif not hasattr(estimator, 'get_params'):\n+    elif not hasattr(estimator, 'get_params') or isinstance(estimator, type):\n+        if not safe:\n+            return copy.deepcopy(estimator)\n+        else:\n+            raise TypeError(\"Cannot clone object '%s' (type %s): \"\n+                          \"it does not seem to be a scikit-learn estimator \"\n+                          \"as it does not implement a 'get_params' methods.\"\n+                          % (repr(estimator), type(estimator)))\n+\n+\n         if not safe:\n             return copy.deepcopy(estimator)\n         else:\n@@ -563,3 +572,12 @@ def is_outlier_detector(estimator):\n         True if estimator is an outlier detector and False otherwise.\n     \"\"\"\n     return getattr(estimator, \"_estimator_type\", None) == \"outlier_detector\"\n+\n+\n+\n+\n+\n+\n+\n+\n+\ndiff --git \"a/sklearn/base.py\\\"\" \"b/sklearn/base.py\\\"\"\nnew file mode 100644\nindex 000000000..7b35c8397\n--- /dev/null\n+++ \"b/sklearn/base.py\\\"\"\n@@ -0,0 +1 @@\n+elif not hasattr(estimator, 'get_params') or isinstance(estimator, type):\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "LearnByInteract",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

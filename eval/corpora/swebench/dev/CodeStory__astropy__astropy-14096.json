@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:astropy__astropy-14096",
+ "corpus": "swebench",
+ "seedId": "astropy__astropy-14096",
+ "input": {
+  "mode": "local",
+  "repo": "astropy/astropy",
+  "baseSha": "1a4462d72eb03f30dc83a879b1dd57aac8b2c18b",
+  "headSha": "CodeStory-astropy__astropy-14096",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "astropy",
+    "repo": "astropy",
+    "number": 14096
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "astropy",
+     "repo": "astropy",
+     "number": 14096
+    },
+    "title": "Subclassed SkyCoord gives misleading attribute access message",
+    "body": "I'm trying to subclass `SkyCoord`, and add some custom properties. This all seems to be working fine, but when I have a custom property (`prop` below) that tries to access a non-existent attribute (`random_attr`) below, the error message is misleading because it says `prop` doesn't exist, where it should say `random_attr` doesn't exist.\r\n\r\n```python\r\nimport astropy.coordinates as coord\r\n\r\n\r\nclass custom_coord(coord.SkyCoord):\r\n    @property\r\n    def prop(self):\r\n        return self.random_attr\r\n\r\n\r\nc = custom_coord('00h42m30s', '+41d12m00s', frame='icrs')\r\nc.prop\r\n```\r\n\r\nraises\r\n```\r\nTraceback (most recent call last):\r\n  File \"test.py\", line 11, in <module>\r\n    c.prop\r\n  File \"/Users/dstansby/miniconda3/lib/python3.7/site-packages/astropy/coordinates/sky_coordinate.py\", line 600, in __getattr__\r\n    .format(self.__class__.__name__, attr))\r\nAttributeError: 'custom_coord' object has no attribute 'prop'\r\n```",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:929ef39241f0d28993d630c507257f1e4477ddcc929c8308969b3903a5abe16a"
+   }
+  ],
+  "pr": {
+   "title": "Fix astropy__astropy-14096",
+   "body": ""
+  },
+  "diffText": "diff --git a/astropy/coordinates/sky_coordinate.py b/astropy/coordinates/sky_coordinate.py\nindex ab475f7d0d..e2ed86c6b3 100644\n--- a/astropy/coordinates/sky_coordinate.py\n+++ b/astropy/coordinates/sky_coordinate.py\n@@ -871,6 +871,10 @@ class SkyCoord(ShapedLikeNDArray):\n         Overrides getattr to return coordinates that this can be transformed\n         to, based on the alias attr in the primary transform graph.\n         \"\"\"\n+        # First check if this is a property or method defined on the class\n+        if attr in type(self).__dict__:\n+            return object.__getattribute__(self, attr)\n+\n         if \"_sky_coord_frame\" in self.__dict__:\n             if self._is_name(attr):\n                 return self  # Should this be a deepcopy of self?\ndiff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..7fa7888b41\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,11 @@\n+from astropy.coordinates import SkyCoord\n+\n+\n+class custom_coord(SkyCoord):\n+    @property\n+    def prop(self):\n+        return self.random_attr\n+\n+\n+c = custom_coord('00h42m30s', '+41d12m00s', frame='icrs')\n+c.prop\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

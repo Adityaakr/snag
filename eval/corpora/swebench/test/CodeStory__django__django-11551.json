@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:django__django-11551",
+ "corpus": "swebench",
+ "seedId": "django__django-11551",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "7991111af12056ec9a856f35935d273526338c1f",
+  "headSha": "CodeStory-django__django-11551",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 11551
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 11551
+    },
+    "title": "admin.E108 is raised on fields accessible only via instance.",
+    "body": "Description\n\t \n\t\t(last modified by ajcsimons)\n\t \nAs part of startup django validates the ModelAdmin's list_display list/tuple for correctness (django.admin.contrib.checks._check_list_display). Having upgraded django from 2.07 to 2.2.1 I found that a ModelAdmin with a list display that used to pass the checks and work fine in admin now fails validation, preventing django from starting. A PositionField from the django-positions library triggers this bug, explanation why follows.\nfrom django.db import models\nfrom position.Fields import PositionField\nclass Thing(models.Model)\n number = models.IntegerField(default=0)\n order = PositionField()\nfrom django.contrib import admin\nfrom .models import Thing\n@admin.register(Thing)\nclass ThingAdmin(admin.ModelAdmin)\n list_display = ['number', 'order']\nUnder 2.2.1 this raises an incorrect admin.E108 message saying \"The value of list_display[1] refers to 'order' which is not a callable...\".\nUnder 2.0.7 django starts up successfully.\nIf you change 'number' to 'no_number' or 'order' to 'no_order' then the validation correctly complains about those.\nThe reason for this bug is commit ​https://github.com/django/django/commit/47016adbf54b54143d4cf052eeb29fc72d27e6b1 which was proposed and accepted as a fix for bug https://code.djangoproject.com/ticket/28490. The problem is while it fixed that bug it broke the functionality of _check_list_display_item in other cases. The rationale for that change was that after field=getattr(model, item) field could be None if item was a descriptor returning None, but subsequent code incorrectly interpreted field being None as meaning getattr raised an AttributeError. As this was done after trying field = model._meta.get_field(item) and that failing that meant the validation error should be returned. However, after the above change if hasattr(model, item) is false then we no longer even try field = model._meta.get_field(item) before returning an error. The reason hasattr(model, item) is false in the case of a PositionField is its get method throws an exception if called on an instance of the PositionField class on the Thing model class, rather than a Thing instance.\nFor clarity, here are the various logical tests that _check_list_display_item needs to deal with and the behaviour before the above change, after it, and the correct behaviour (which my suggested patch exhibits). Note this is assuming the first 2 tests callable(item) and hasattr(obj, item) are both false (corresponding to item is an actual function/lambda rather than string or an attribute of ThingAdmin).\nhasattr(model, item) returns True or False (which is the same as seeing if getattr(model, item) raises AttributeError)\nmodel._meta.get_field(item) returns a field or raises FieldDoesNotExist\nGet a field from somewhere, could either be from getattr(model,item) if hasattr was True or from get_field.\nIs that field an instance of ManyToManyField?\nIs that field None? (True in case of bug 28490)\n hasattr get_field field is None? field ManyToMany? 2.0 returns 2.2 returns Correct behaviour Comments \n True ok False False [] [] [] - \n True ok False True E109 E109 E109 - \n True ok True False E108 [] [] good bit of 28490 fix, 2.0 was wrong \n True raises False False [] [] [] - \n True raises False True E109 [] E109 Another bug introduced by 28490 fix, fails to check if ManyToMany in get_field raise case \n True raises True False E108 [] [] good bit of 28490 fix, 2.0 was wrong \n False ok False False [] E108 [] bad bit of 28490 fix, bug hit with PositionField \n False ok False True [] E108 E109 both 2.0 and 2.2 wrong \n False ok True False [] E108 [] bad 28490 fix \n False raises False False E108 E108 E108 - \n False raises False True E108 E108 E108 impossible condition, we got no field assigned to be a ManyToMany \n False raises True False E108 E108 E108 impossible condition, we got no field assigned to be None \nThe following code exhibits the correct behaviour in all cases. The key changes are there is no longer a check for hasattr(model, item), as that being false should not prevent us form attempting to get the field via get_field, and only return an E108 in the case both of them fail. If either of those means or procuring it are successful then we need to check if it's a ManyToMany. Whether or not the field is None is irrelevant, and behaviour is contained within the exception catching blocks that should cause it instead of signalled through a variable being set to None which is a source of conflation of different cases.\ndef _check_list_display_item(self, obj, item, label):\n\tif callable(item):\n\t\treturn []\n\telif hasattr(obj, item):\n\t\treturn []\n\telse:\n\t\ttry:\n\t\t\tfield = obj.model._meta.get_field(item)\n\t\texcept FieldDoesNotExist:\n\t\t\ttry:\n\t\t\t\tfield = getattr(obj.model, item)\n\t\t\texcept AttributeError:\n\t\t\t\treturn [\n\t\t\t\t\tchecks.Error(\n\t\t\t\t\t\t\"The value of '%s' refers to '%s', which is not a callable, \"\n\t\t\t\t\t\t\"an attribute of '%s', or an attribute or method on '%s.%s'.\" % (\n\t\t\t\t\t\t\tlabel, item, obj.__class__.__name__,\n\t\t\t\t\t\t\tobj.model._meta.app_label, obj.model._meta.object_name,\n\t\t\t\t\t\t),\n\t\t\t\t\t\tobj=obj.__class__,\n\t\t\t\t\t\tid='admin.E108',\n\t\t\t\t\t)\n\t\t\t\t]\n\t\tif isinstance(field, models.ManyToManyField):\n\t\t\treturn [\n\t\t\t\tchecks.Error(\n\t\t\t\t\t\"The value of '%s' must not be a ManyToManyField.\" % label,\n\t\t\t\t\tobj=obj.__class__,\n\t\t\t\t\tid='admin.E109',\n\t\t\t\t)\n\t\t\t]\n\t\treturn []",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:1f4670dfc7bba37199d6f2678a6b3f4d80d2d63960ecf3cf10c04b00f03a9fb7"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-11551",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/contrib/admin/checks.py b/django/contrib/admin/checks.py\nindex f82c20c2f1..9fd77b5d41 100644\n--- a/django/contrib/admin/checks.py\n+++ b/django/contrib/admin/checks.py\n@@ -720,33 +720,33 @@ class ModelAdminChecks(BaseModelAdminChecks):\n             return []\n         elif hasattr(obj, item):\n             return []\n-        elif hasattr(obj.model, item):\n+        else:\n             try:\n                 field = obj.model._meta.get_field(item)\n             except FieldDoesNotExist:\n-                return []\n-            else:\n-                if isinstance(field, models.ManyToManyField):\n+                try:\n+                    field = getattr(obj.model, item)\n+                except AttributeError:\n                     return [\n                         checks.Error(\n-                            \"The value of '%s' must not be a ManyToManyField.\" % label,\n+                            \"The value of '%s' refers to '%s', which is not a callable, \"\n+                            \"an attribute of '%s', or an attribute or method on '%s.%s'.\" % (\n+                                label, item, obj.__class__.__name__,\n+                                obj.model._meta.app_label, obj.model._meta.object_name,\n+                            ),\n                             obj=obj.__class__,\n-                            id='admin.E109',\n+                            id='admin.E108',\n                         )\n                     ]\n-                return []\n-        else:\n-            return [\n-                checks.Error(\n-                    \"The value of '%s' refers to '%s', which is not a callable, \"\n-                    \"an attribute of '%s', or an attribute or method on '%s.%s'.\" % (\n-                        label, item, obj.__class__.__name__,\n-                        obj.model._meta.app_label, obj.model._meta.object_name,\n-                    ),\n-                    obj=obj.__class__,\n-                    id='admin.E108',\n-                )\n-            ]\n+            if isinstance(field, models.ManyToManyField):\n+                return [\n+                    checks.Error(\n+                        \"The value of '%s' must not be a ManyToManyField.\" % label,\n+                        obj=obj.__class__,\n+                        id='admin.E109',\n+                    )\n+                ]\n+            return []\n \n     def _check_list_display_links(self, obj):\n         \"\"\" Check that list_display_links is a unique subset of list_display.\ndiff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..7b8369ce05\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,77 @@\n+from django.conf import settings\n+from django.db import models\n+from django.contrib import admin\n+from django.core import checks\n+from django.contrib.admin.checks import ModelAdminChecks\n+import django\n+\n+# Configure Django settings\n+settings.configure(\n+    INSTALLED_APPS=[\n+        'django.contrib.admin',\n+        'django.contrib.auth',\n+        'django.contrib.contenttypes',\n+        'django.contrib.sessions',\n+        'django.contrib.messages',\n+        'django.contrib.staticfiles',\n+    ],\n+    DATABASES={\n+        'default': {\n+            'ENGINE': 'django.db.backends.sqlite3',\n+            'NAME': ':memory:',\n+        }\n+    },\n+    SECRET_KEY='dummy-key-for-test'\n+)\n+\n+# Setup Django\n+django.setup()\n+\n+# Mock PositionField to simulate the behavior\n+class PositionField(models.Field):\n+    def __get__(self, instance, owner):\n+        if instance is None:  # Called on class, not instance\n+            raise AttributeError(\"Can't access field on class, only instance\")\n+        return 0  # Dummy value for testing\n+\n+class Thing(models.Model):\n+    number = models.IntegerField(default=0)\n+    order = PositionField()\n+    tags = models.ManyToManyField('self')\n+\n+    class Meta:\n+        app_label = 'myapp'\n+\n+def test_case(display_fields, name):\n+    print(f\"\\nTesting {name}:\")\n+    class TestAdmin(admin.ModelAdmin):\n+        list_display = display_fields\n+\n+    # Create a ModelAdmin checker\n+    checker = ModelAdminChecks()\n+    \n+    # Get the admin class\n+    admin_obj = TestAdmin(Thing, admin.site)\n+    \n+    # Run the checks\n+    errors = checker._check_list_display(admin_obj)\n+    \n+    if errors:\n+        print(\"Found errors:\")\n+        for error in errors:\n+            print(f\"Error {error.id}: {error.msg}\")\n+    else:\n+        print(\"No errors found\")\n+\n+def main():\n+    # Test case 1: Original issue with PositionField\n+    test_case(['number', 'order'], \"PositionField case\")\n+    \n+    # Test case 2: ManyToManyField should raise E109\n+    test_case(['number', 'tags'], \"ManyToManyField case\")\n+    \n+    # Test case 3: Non-existent field should raise E108\n+    test_case(['number', 'nonexistent'], \"Non-existent field case\")\n+\n+if __name__ == '__main__':\n+    main()\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

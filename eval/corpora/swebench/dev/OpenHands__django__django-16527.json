@@ -1,0 +1,142 @@
+{
+ "id": "OpenHands:django__django-16527",
+ "corpus": "swebench",
+ "seedId": "django__django-16527",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "bd366ca2aeffa869b7dbc0b0aa01caea75e6dc31",
+  "headSha": "OpenHands-django__django-16527",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 16527
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 16527
+    },
+    "title": "\"show_save_as_new\" in admin can add without this permission",
+    "body": "Description\n\t \n\t\t(last modified by Mariusz Felisiak)\n\t \nAt \"django/contrib/admin/templatetags/admin_modify.py\" file, line 102, I think you must put one more verification for this tag: \"and has_add_permission\", because \"save_as_new\" is a add modification.\nI rewrite this for my project:\n\t\t\t\"show_save_as_new\": not is_popup\n\t\t\tand has_add_permission # This line that I put!!!\n\t\t\tand has_change_permission\n\t\t\tand change\n\t\t\tand save_as,",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:03a32b190d368658b57a9dc494bfd73b4398f4a320283b4c1175c7ac94560233"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-16527",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/contrib/admin/templatetags/admin_modify.py b/django/contrib/admin/templatetags/admin_modify.py\nindex 9df4b7aadb..38bb0dcbbd 100644\n--- a/django/contrib/admin/templatetags/admin_modify.py\n+++ b/django/contrib/admin/templatetags/admin_modify.py\n@@ -101,6 +101,7 @@ def submit_row(context):\n             ),\n             \"show_save_as_new\": not is_popup\n             and has_change_permission\n+            and has_add_permission\n             and change\n             and save_as,\n             \"show_save_and_add_another\": can_save_and_add_another,\ndiff --git a/test_save_as_new.py b/test_save_as_new.py\nnew file mode 100644\nindex 0000000000..fa2e8deb23\n--- /dev/null\n+++ b/test_save_as_new.py\n@@ -0,0 +1,129 @@\n+import os\n+import sys\n+import django\n+from django.conf import settings\n+\n+# Configure Django settings before importing models\n+if not settings.configured:\n+    settings.configure(\n+        DEBUG=True,\n+        INSTALLED_APPS=[\n+            'django.contrib.admin',\n+            'django.contrib.auth',\n+            'django.contrib.contenttypes',\n+            'django.contrib.sessions',\n+            'django.contrib.messages',\n+            'django.contrib.staticfiles',\n+        ],\n+        MIDDLEWARE=[\n+            'django.contrib.sessions.middleware.SessionMiddleware',\n+            'django.middleware.common.CommonMiddleware',\n+            'django.middleware.csrf.CsrfViewMiddleware',\n+            'django.contrib.auth.middleware.AuthenticationMiddleware',\n+            'django.contrib.messages.middleware.MessageMiddleware',\n+        ],\n+        DATABASES={\n+            'default': {\n+                'ENGINE': 'django.db.backends.sqlite3',\n+                'NAME': ':memory:',\n+            }\n+        },\n+        ROOT_URLCONF='test_save_as_new',\n+        TEMPLATES=[{\n+            'BACKEND': 'django.template.backends.django.DjangoTemplates',\n+            'APP_DIRS': True,\n+            'OPTIONS': {\n+                'context_processors': [\n+                    'django.template.context_processors.debug',\n+                    'django.template.context_processors.request',\n+                    'django.contrib.auth.context_processors.auth',\n+                    'django.contrib.messages.context_processors.messages',\n+                ],\n+            },\n+        }],\n+        SECRET_KEY='dummy-key-for-tests',\n+        STATIC_URL='/static/',\n+    )\n+\n+django.setup()\n+\n+from django.contrib.auth.models import User, Permission\n+from django.contrib.contenttypes.models import ContentType\n+from django.core.management import execute_from_command_line\n+from django.db import models\n+from django.test import Client, TestCase\n+\n+# Create a test model\n+class TestModel(models.Model):\n+    name = models.CharField(max_length=100)\n+\n+    class Meta:\n+        app_label = 'auth'  # Using existing app to avoid migrations\n+\n+# Set up admin\n+from django.contrib import admin\n+\n+class TestModelAdmin(admin.ModelAdmin):\n+    save_as = True\n+\n+admin.site.register(TestModel, TestModelAdmin)\n+\n+# Set up URLs\n+from django.urls import path\n+urlpatterns = [\n+    path('admin/', admin.site.urls),\n+]\n+\n+class SaveAsNewTest(TestCase):\n+    def setUp(self):\n+        # Create superuser\n+        self.superuser = User.objects.create_superuser('admin', 'admin@test.com', 'password')\n+        \n+        # Create limited user\n+        self.limited_user = User.objects.create_user('limited', 'limited@test.com', 'password')\n+        \n+        # Create test object\n+        self.test_obj = TestModel.objects.create(name='Test Object')\n+        \n+        # Get content type\n+        self.content_type = ContentType.objects.get_for_model(TestModel)\n+        \n+        # Get permissions\n+        self.view_perm = Permission.objects.get(\n+            content_type=self.content_type, codename='view_testmodel')\n+        self.change_perm = Permission.objects.get(\n+            content_type=self.content_type, codename='change_testmodel')\n+        self.add_perm = Permission.objects.get(\n+            content_type=self.content_type, codename='add_testmodel')\n+\n+    def test_save_as_new_permissions(self):\n+        client = Client()\n+        \n+        # Test with superuser (should see save as new)\n+        client.login(username='admin', password='password')\n+        response = client.get(f'/admin/auth/testmodel/{self.test_obj.id}/change/')\n+        self.assertEqual(response.status_code, 200)\n+        self.assertContains(response, 'Save as new')\n+        \n+        client.logout()\n+        \n+        # Test with user having only change permission (should not see save as new)\n+        self.limited_user.user_permissions.add(self.change_perm)\n+        client.login(username='limited', password='password')\n+        response = client.get(f'/admin/auth/testmodel/{self.test_obj.id}/change/')\n+        self.assertEqual(response.status_code, 200)\n+        self.assertNotContains(response, 'Save as new')\n+        \n+        # Test with user having both change and add permissions (should see save as new)\n+        self.limited_user.user_permissions.add(self.add_perm)\n+        response = client.get(f'/admin/auth/testmodel/{self.test_obj.id}/change/')\n+        self.assertEqual(response.status_code, 200)\n+        self.assertContains(response, 'Save as new')\n+\n+if __name__ == '__main__':\n+    # Set up database\n+    execute_from_command_line(['manage.py', 'migrate'])\n+    \n+    # Run tests\n+    sys.argv = ['manage.py', 'test']\n+    execute_from_command_line(sys.argv)\n\\ No newline at end of file\ndiff --git a/test_save_as_new_2.py b/test_save_as_new_2.py\nnew file mode 100644\nindex 0000000000..a3f6b42760\n--- /dev/null\n+++ b/test_save_as_new_2.py\n@@ -0,0 +1,138 @@\n+import os\n+import sys\n+import django\n+from django.conf import settings\n+\n+# Configure Django settings before importing models\n+if not settings.configured:\n+    settings.configure(\n+        DEBUG=True,\n+        INSTALLED_APPS=[\n+            'django.contrib.admin',\n+            'django.contrib.auth',\n+            'django.contrib.contenttypes',\n+            'django.contrib.sessions',\n+            'django.contrib.messages',\n+            'django.contrib.staticfiles',\n+        ],\n+        MIDDLEWARE=[\n+            'django.contrib.sessions.middleware.SessionMiddleware',\n+            'django.middleware.common.CommonMiddleware',\n+            'django.middleware.csrf.CsrfViewMiddleware',\n+            'django.contrib.auth.middleware.AuthenticationMiddleware',\n+            'django.contrib.messages.middleware.MessageMiddleware',\n+        ],\n+        DATABASES={\n+            'default': {\n+                'ENGINE': 'django.db.backends.sqlite3',\n+                'NAME': ':memory:',\n+            }\n+        },\n+        ROOT_URLCONF='__main__',\n+        TEMPLATES=[{\n+            'BACKEND': 'django.template.backends.django.DjangoTemplates',\n+            'APP_DIRS': True,\n+            'OPTIONS': {\n+                'context_processors': [\n+                    'django.template.context_processors.debug',\n+                    'django.template.context_processors.request',\n+                    'django.contrib.auth.context_processors.auth',\n+                    'django.contrib.messages.context_processors.messages',\n+                ],\n+            },\n+        }],\n+        SECRET_KEY='dummy-key-for-tests',\n+        STATIC_URL='/static/',\n+    )\n+\n+django.setup()\n+\n+from django.contrib.auth.models import User, Permission\n+from django.contrib.contenttypes.models import ContentType\n+from django.core.management import execute_from_command_line\n+from django.db import models\n+from django.test import Client, TestCase\n+from django.urls import path\n+from django.contrib import admin\n+\n+# Create a test model\n+class TestModel(models.Model):\n+    name = models.CharField(max_length=100)\n+\n+    class Meta:\n+        app_label = 'auth'  # Using existing app to avoid migrations\n+\n+# Set up admin\n+class TestModelAdmin(admin.ModelAdmin):\n+    save_as = True\n+\n+admin.site.register(TestModel, TestModelAdmin)\n+\n+# Set up URLs\n+urlpatterns = [\n+    path('admin/', admin.site.urls),\n+]\n+\n+class SaveAsNewTest(TestCase):\n+    def setUp(self):\n+        # Create superuser\n+        self.superuser = User.objects.create_superuser('admin', 'admin@test.com', 'password')\n+        \n+        # Create limited user with staff status\n+        self.limited_user = User.objects.create_user('limited', 'limited@test.com', 'password', is_staff=True)\n+        \n+        # Create test object\n+        self.test_obj = TestModel.objects.create(name='Test Object')\n+        \n+        # Get content type\n+        self.content_type = ContentType.objects.get_for_model(TestModel)\n+        \n+        # Get permissions\n+        self.view_perm = Permission.objects.get(\n+            content_type=self.content_type, codename='view_testmodel')\n+        self.change_perm = Permission.objects.get(\n+            content_type=self.content_type, codename='change_testmodel')\n+        self.add_perm = Permission.objects.get(\n+            content_type=self.content_type, codename='add_testmodel')\n+\n+    def test_save_as_new_permissions(self):\n+        client = Client()\n+        \n+        # Test with superuser (should see save as new)\n+        client.login(username='admin', password='password')\n+        response = client.get(f'/admin/auth/testmodel/{self.test_obj.id}/change/')\n+        self.assertEqual(response.status_code, 200)\n+        self.assertContains(response, 'Save as new')\n+        \n+        client.logout()\n+        \n+        # Test with user having only change permission (should not see save as new)\n+        self.limited_user.user_permissions.add(self.view_perm, self.change_perm)\n+        client.login(username='limited', password='password')\n+        response = client.get(f'/admin/auth/testmodel/{self.test_obj.id}/change/')\n+        self.assertEqual(response.status_code, 200)\n+        self.assertNotContains(response, 'Save as new')\n+        \n+        # Test with user having both change and add permissions (should see save as new)\n+        self.limited_user.user_permissions.add(self.add_perm)\n+        response = client.get(f'/admin/auth/testmodel/{self.test_obj.id}/change/')\n+        self.assertEqual(response.status_code, 200)\n+        self.assertContains(response, 'Save as new')\n+\n+if __name__ == '__main__':\n+    # Run migrations\n+    execute_from_command_line(['manage.py', 'migrate'])\n+    \n+    # Create the test model table\n+    from django.db import connection\n+    with connection.schema_editor() as schema_editor:\n+        schema_editor.create_model(TestModel)\n+    \n+    # Create permissions for the model\n+    from django.contrib.auth.management import create_permissions\n+    from django.apps import apps\n+    app_config = apps.get_app_config('auth')\n+    create_permissions(app_config, verbosity=0)\n+    \n+    # Run tests\n+    execute_from_command_line(['manage.py', 'test', '__main__.SaveAsNewTest'])\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "OpenHands",
+  "source": "rq34_manual",
+  "strength": "weak",
+  "diffPattern": "divergent",
+  "correctness": "uncertain"
+ },
+ "annotatedBy": "study"
+}

@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:django__django-13516",
+ "corpus": "swebench",
+ "seedId": "django__django-13516",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "b7da588e883e12b8ac3bb8a486e654e30fc1c6c8",
+  "headSha": "CodeStory-django__django-13516",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 13516
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 13516
+    },
+    "title": "flush() on self.stdout/stderr management commands doesn't work.",
+    "body": "Description\n\t\nflush() is notably called during migrate command; it doesn't work, and a long migration effectively prints to stderr no relevant information up until the end:\nOperations to perform:\n Apply all migrations: myapp\nRunning migrations:\nThen nothing more, but the migration is being done.\nThen at the end of the real migration, the rest is flushed:\n Applying myapp.0002_auto_20200817_1030... OK\nExpected behavior:\nOperations to perform:\n Apply all migrations: myapp\nRunning migrations:\n Applying myapp.0002_auto_20200817_1030...\nthen work\nthen OK",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:92f3abc7badfcbc57f631bdb9897a80dd22094c4484f5fae75dfd3eb17d3b6dc"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-13516",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/core/management/base.py b/django/core/management/base.py\nindex e6cbf8c64f..ff1f04f0eb 100644\n--- a/django/core/management/base.py\n+++ b/django/core/management/base.py\n@@ -149,6 +149,13 @@ class OutputWrapper(TextIOBase):\n             msg += ending\n         style_func = style_func or self.style_func\n         self._out.write(style_func(msg))\n+        \n+    def flush(self):\n+        \"\"\"\n+        Flush the underlying output stream.\n+        \"\"\"\n+        if hasattr(self._out, 'flush'):\n+            self._out.flush()\n \n \n class BaseCommand:\ndiff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..8bbe841e1e\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,21 @@\n+from django.core.management.base import BaseCommand, OutputWrapper\n+import sys\n+import time\n+\n+# Create a test command that simulates a long-running migration\n+class TestCommand(BaseCommand):\n+    def handle(self, *args, **options):\n+        self.stdout.write(\"Operations to perform:\", ending=\"\\n\")\n+        self.stdout.write(\" Apply all migrations: myapp\", ending=\"\\n\")\n+        self.stdout.write(\"Running migrations:\", ending=\"\\n\")\n+        self.stdout.write(\"  Applying myapp.0002_auto_20200817_1030...\", ending=\"\")\n+        self.stdout.flush()  # This flush should make the text appear immediately\n+        \n+        # Simulate long running operation\n+        time.sleep(2)\n+        \n+        self.stdout.write(\" OK\", ending=\"\\n\")\n+\n+# Run the test\n+cmd = TestCommand(stdout=sys.stdout, stderr=sys.stderr)\n+cmd.handle()\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq2_divergent",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

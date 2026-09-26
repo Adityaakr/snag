@@ -1,0 +1,140 @@
+{
+ "id": "LearnByInteract:sympy__sympy-11618",
+ "corpus": "swebench",
+ "seedId": "sympy__sympy-11618",
+ "input": {
+  "mode": "local",
+  "repo": "sympy/sympy",
+  "baseSha": "360290c4c401e386db60723ddb0109ed499c9f6e",
+  "headSha": "LearnByInteract-sympy__sympy-11618",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "sympy",
+    "repo": "sympy",
+    "number": 11618
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "sympy",
+     "repo": "sympy",
+     "number": 11618
+    },
+    "title": "distance calculation wrong",
+    "body": "``` python\n>>> Point(2,0).distance(Point(1,0,2))\n1\n```\n\nThe 3rd dimension is being ignored when the Points are zipped together to calculate the distance so `sqrt((2-1)**2 + (0-0)**2)` is being computed instead of `sqrt(5)`.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:56a1e3e4ba5ca13aa124c08bc2680628c061683349b1a5a531095f8160928b01"
+   }
+  ],
+  "pr": {
+   "title": "Fix sympy__sympy-11618",
+   "body": ""
+  },
+  "diffText": "diff --git a/reproduce.py b/reproduce.py\nnew file mode 100644\nindex 0000000000..e4a105f0be\n--- /dev/null\n+++ b/reproduce.py\n@@ -0,0 +1,22 @@\n+from sympy.geometry import Point\n+\n+# Original case\n+p1 = Point(2, 0)\n+p2 = Point(1, 0, 2)\n+print(f\"Case 1 - 2D to 3D: distance between {p1} and {p2} is {p1.distance(p2)}\")\n+\n+# Edge case 1: 1D to 3D\n+p3 = Point(1)\n+p4 = Point(1, 2, 3)\n+print(f\"Case 2 - 1D to 3D: distance between {p3} and {p4} is {p3.distance(p4)}\")\n+\n+# Edge case 2: Same dimension\n+p5 = Point(1, 2)\n+p6 = Point(4, 6)\n+print(f\"Case 3 - Same dimension: distance between {p5} and {p6} is {p5.distance(p6)}\")\n+\n+# Edge case 3: Zero distance\n+p7 = Point(1, 2)\n+p8 = Point(1, 2, 0)\n+print(f\"Case 4 - Zero in extra dimension: distance between {p7} and {p8} is {p7.distance(p8)}\")\n+\ndiff --git a/sympy/geometry/point.py b/sympy/geometry/point.py\nindex 593048464b..0ee6bc61d9 100644\n--- a/sympy/geometry/point.py\n+++ b/sympy/geometry/point.py\n@@ -266,8 +266,13 @@ def distance(self, p):\n         sqrt(x**2 + y**2)\n \n         \"\"\"\n-        return sqrt(sum([(a - b)**2 for a, b in zip(\n-            self.args, p.args if isinstance(p, Point) else p)]))\n+        p_args = p.args if isinstance(p, Point) else p\n+        max_len = max(len(self.args), len(p_args))\n+        # Pad shorter point with zeros\n+        self_coords = list(self.args) + [S.Zero] * (max_len - len(self.args))\n+        p_coords = list(p_args) + [S.Zero] * (max_len - len(p_args))\n+        return sqrt(sum((a - b)**2 for a, b in zip(self_coords, p_coords)))\n+\n \n     def taxicab_distance(self, p):\n         \"\"\"The Taxicab Distance from self to point p.\n@@ -1126,3 +1131,4 @@ def transform(self, matrix):\n         x, y, z = self.args\n         m = Transpose(matrix)\n         return Point3D(*(Matrix(1, 4, [x, y, z, 1])*m).tolist()[0][:3])\n+\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "LearnByInteract",
+  "source": "rq2_divergent",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

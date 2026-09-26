@@ -1,0 +1,140 @@
+{
+ "id": "gold:django__django-16631",
+ "corpus": "swebench",
+ "seedId": "django__django-16631",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "9b224579875e30203d079cc2fee83b116d98eb78",
+  "headSha": "gold-django__django-16631",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 16631
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 16631
+    },
+    "title": "SECRET_KEY_FALLBACKS is not used for sessions",
+    "body": "Description\n\t\nI recently rotated my secret key, made the old one available in SECRET_KEY_FALLBACKS and I'm pretty sure everyone on our site is logged out now.\nI think the docs for ​SECRET_KEY_FALLBACKS may be incorrect when stating the following:\nIn order to rotate your secret keys, set a new SECRET_KEY and move the previous value to the beginning of SECRET_KEY_FALLBACKS. Then remove the old values from the end of the SECRET_KEY_FALLBACKS when you are ready to expire the sessions, password reset tokens, and so on, that make use of them.\nWhen looking at the Django source code, I see that the ​salted_hmac function uses the SECRET_KEY by default and the ​AbstractBaseUser.get_session_auth_hash method does not call salted_hmac with a value for the secret keyword argument.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:81d8ead259f7ecc8f8dbefb510a86739f3af926d4d789191f747a6777b50770f"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-16631",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/contrib/auth/__init__.py b/django/contrib/auth/__init__.py\n--- a/django/contrib/auth/__init__.py\n+++ b/django/contrib/auth/__init__.py\n@@ -199,12 +199,26 @@ def get_user(request):\n             # Verify the session\n             if hasattr(user, \"get_session_auth_hash\"):\n                 session_hash = request.session.get(HASH_SESSION_KEY)\n-                session_hash_verified = session_hash and constant_time_compare(\n-                    session_hash, user.get_session_auth_hash()\n-                )\n+                if not session_hash:\n+                    session_hash_verified = False\n+                else:\n+                    session_auth_hash = user.get_session_auth_hash()\n+                    session_hash_verified = constant_time_compare(\n+                        session_hash, session_auth_hash\n+                    )\n                 if not session_hash_verified:\n-                    request.session.flush()\n-                    user = None\n+                    # If the current secret does not verify the session, try\n+                    # with the fallback secrets and stop when a matching one is\n+                    # found.\n+                    if session_hash and any(\n+                        constant_time_compare(session_hash, fallback_auth_hash)\n+                        for fallback_auth_hash in user.get_session_auth_fallback_hash()\n+                    ):\n+                        request.session.cycle_key()\n+                        request.session[HASH_SESSION_KEY] = session_auth_hash\n+                    else:\n+                        request.session.flush()\n+                        user = None\n \n     return user or AnonymousUser()\n \ndiff --git a/django/contrib/auth/base_user.py b/django/contrib/auth/base_user.py\n--- a/django/contrib/auth/base_user.py\n+++ b/django/contrib/auth/base_user.py\n@@ -5,6 +5,7 @@\n import unicodedata\n import warnings\n \n+from django.conf import settings\n from django.contrib.auth import password_validation\n from django.contrib.auth.hashers import (\n     check_password,\n@@ -135,10 +136,18 @@ def get_session_auth_hash(self):\n         \"\"\"\n         Return an HMAC of the password field.\n         \"\"\"\n+        return self._get_session_auth_hash()\n+\n+    def get_session_auth_fallback_hash(self):\n+        for fallback_secret in settings.SECRET_KEY_FALLBACKS:\n+            yield self._get_session_auth_hash(secret=fallback_secret)\n+\n+    def _get_session_auth_hash(self, secret=None):\n         key_salt = \"django.contrib.auth.models.AbstractBaseUser.get_session_auth_hash\"\n         return salted_hmac(\n             key_salt,\n             self.password,\n+            secret=secret,\n             algorithm=\"sha256\",\n         ).hexdigest()\n \n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "gold",
+  "source": "gold",
+  "strength": "strong"
+ },
+ "annotatedBy": "study"
+}

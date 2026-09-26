@@ -1,0 +1,140 @@
+{
+ "id": "gold:django__django-15695",
+ "corpus": "swebench",
+ "seedId": "django__django-15695",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "647480166bfe7532e8c471fef0146e3a17e6c0c9",
+  "headSha": "gold-django__django-15695",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 15695
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 15695
+    },
+    "title": "RenameIndex() crashes when unnamed index is moving backward and forward.",
+    "body": "Description\n\t\nRenameIndex() should restore the old auto-generated name when an unnamed index for unique_together is moving backward. Now re-applying RenameIndex() crashes. For example:\ntests/migrations/test_operations.py\ndiff --git a/tests/migrations/test_operations.py b/tests/migrations/test_operations.py\nindex cfd28b1b39..c0a55023bb 100644\n\t\t\t\t\t\n\t\t\t\t\t a\n\t\t\t\t \n\t\t\t\t\t\n\t\t\t\t\t b\n\t\t\t\t \n class OperationTests(OperationTestBase): \n29882988        with connection.schema_editor() as editor, self.assertNumQueries(0):\n29892989            operation.database_backwards(app_label, editor, new_state, project_state)\n29902990        self.assertIndexNameExists(table_name, \"new_pony_test_idx\")\n 2991        # Re-apply renaming.\n 2992        with connection.schema_editor() as editor:\n 2993            operation.database_forwards(app_label, editor, project_state, new_state)\n 2994        self.assertIndexNameExists(table_name, \"new_pony_test_idx\")\n29912995        # Deconstruction.\n29922996        definition = operation.deconstruct()\n29932997        self.assertEqual(definition[0], \"RenameIndex\")\ncrashes on PostgreSQL:\ndjango.db.utils.ProgrammingError: relation \"new_pony_test_idx\" already exists",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:50dc6197ac8d8503fb242ad3227f9413a7238d7c666b78c21abdbd3d13dfd8d7"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-15695",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/db/migrations/operations/models.py b/django/db/migrations/operations/models.py\n--- a/django/db/migrations/operations/models.py\n+++ b/django/db/migrations/operations/models.py\n@@ -960,6 +960,9 @@ def database_forwards(self, app_label, schema_editor, from_state, to_state):\n         else:\n             from_model_state = from_state.models[app_label, self.model_name_lower]\n             old_index = from_model_state.get_index_by_name(self.old_name)\n+        # Don't alter when the index name is not changed.\n+        if old_index.name == self.new_name:\n+            return\n \n         to_model_state = to_state.models[app_label, self.model_name_lower]\n         new_index = to_model_state.get_index_by_name(self.new_name)\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "gold",
+  "source": "gold",
+  "strength": "strong"
+ },
+ "annotatedBy": "study"
+}

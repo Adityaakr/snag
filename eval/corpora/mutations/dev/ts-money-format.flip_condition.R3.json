@@ -1,0 +1,157 @@
+{
+ "id": "ts-money-format.flip_condition.R3",
+ "corpus": "mutations",
+ "seedId": "ts-money-format",
+ "operator": "flip_condition",
+ "target": "R3",
+ "input": {
+  "mode": "local",
+  "baseSha": "base",
+  "headSha": "head-flip_condition-R3",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "acme",
+    "repo": "billing",
+    "number": 58
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "acme",
+     "repo": "billing",
+     "number": 58
+    },
+    "title": "Multi-currency money formatting",
+    "body": "`formatMoney` only knows dollars, rounds with `toFixed` (so `1.005` shows as `$1.00`), prints `$-4.20` for refunds and never groups thousands.\n\n- [ ] `formatMoney(amount, currency)` supports USD, EUR and JPY, with USD as the default (for example `$12.50`, `12.50 EUR`, `980 JPY`)\n- [ ] Amounts are rounded half away from zero to the currency's decimal places (for example `1.005` USD is `$1.01`, and `-2.5` rounds to `-3` with no decimals)\n- [ ] Negative amounts put the minus sign before the currency symbol (`-$4.20`, not `$-4.20`)\n- [ ] The whole part is grouped in thousands with commas (for example `$1,234,567.89`)",
+    "author": "local",
+    "state": "open",
+    "comments": [],
+    "contentHash": "sha256:6c6166c4bfb2fde96b16cc434c9de14f38bea535f218e7971246832e62460532"
+   }
+  ],
+  "pr": {
+   "title": "Currency-aware formatMoney",
+   "body": "`formatMoney` now takes a currency (USD by default, plus EUR and JPY) from a small currency table, rounds with the new `roundHalfAway` helper, writes the minus sign before the symbol, and groups the whole part with `groupThousands`. Tests cover each currency, rounding, negatives and grouping."
+  },
+  "diffText": "diff --git a/src/money.test.ts b/src/money.test.ts\n--- a/src/money.test.ts\n+++ b/src/money.test.ts\n@@ -1,8 +1,30 @@\n import { describe, expect, it } from 'vitest';\n-import { formatMoney } from './money.js';\n+import { formatMoney, groupThousands, roundHalfAway } from './money.js';\n \n describe('formatMoney', () => {\n   it('formats dollars', () => {\n     expect(formatMoney(3.5)).toBe('$3.50');\n   });\n+\n+  it('formats USD, EUR and JPY', () => {\n+    expect(formatMoney(12.5, 'USD')).toBe('$12.50');\n+    expect(formatMoney(12.5, 'EUR')).toBe('12.50 EUR');\n+    expect(formatMoney(980, 'JPY')).toBe('980 JPY');\n+  });\n+\n+  it('rounds half away from zero', () => {\n+    expect(roundHalfAway(1.005, 2)).toBe(1.01);\n+    expect(roundHalfAway(-2.5, 0)).toBe(-3);\n+    expect(formatMoney(1.005)).toBe('$1.01');\n+  });\n+\n+  it('puts the minus sign before the symbol', () => {\n+    expect(formatMoney(-4.2)).toBe('$4.20');\n+  });\n+\n+  it('groups thousands with commas', () => {\n+    expect(groupThousands('1000')).toBe('1,000');\n+    expect(formatMoney(1234567.891)).toBe('$1,234,567.89');\n+    expect(formatMoney(999)).toBe('$999.00');\n+  });\n });\ndiff --git a/src/money.ts b/src/money.ts\n--- a/src/money.ts\n+++ b/src/money.ts\n@@ -1,3 +1,27 @@\n-export function formatMoney(amount: number): string {\n-  return `$${amount.toFixed(2)}`;\n+export type Currency = 'USD' | 'EUR' | 'JPY';\n+\n+const CURRENCIES = {\n+  USD: { prefix: '$', suffix: '', digits: 2 },\n+  EUR: { prefix: '', suffix: ' EUR', digits: 2 },\n+  JPY: { prefix: '', suffix: ' JPY', digits: 0 },\n+};\n+\n+export function roundHalfAway(value: number, digits: number): number {\n+  const factor = 10 ** digits;\n+  const scaled = Number((Math.abs(value) * factor).toPrecision(12));\n+  return (Math.sign(value) * Math.round(scaled)) / factor;\n }\n+\n+export function groupThousands(whole: string): string {\n+  return whole.replace(/\\B(?=(\\d{3})+(?!\\d))/g, ',');\n+}\n+\n+export function formatMoney(amount: number, currency: Currency = 'USD'): string {\n+  const c = CURRENCIES[currency];\n+  const rounded = roundHalfAway(amount, c.digits);\n+  const sign = rounded < 0 ? '' : '';\n+  const [whole = '0', fraction] = Math.abs(rounded).toFixed(c.digits).split('.');\n+  const grouped = groupThousands(whole);\n+  const body = fraction === undefined ? grouped : `${grouped}.${fraction}`;\n+  return `${sign}${c.prefix}${body}${c.suffix}`;\n+}\n"
+ },
+ "trees": {
+  "base": {
+   "src/config.ts": "export const INVOICE_DEFAULTS = {\n  dueDays: 30,\n  taxRate: 0.25,\n};\n",
+   "src/invoice.test.ts": "import { describe, expect, it } from 'vitest';\nimport { dueDate, invoiceTotal } from './invoice.js';\n\ndescribe('invoice', () => {\n  it('adds tax to the subtotal', () => {\n    expect(invoiceTotal([{ quantity: 2, unitPrice: 50 }])).toBe(125);\n  });\n\n  it('is due thirty days after issue', () => {\n    expect(dueDate(new Date('2026-01-01T00:00:00Z')).toISOString()).toBe('2026-01-31T00:00:00.000Z');\n  });\n});\n",
+   "src/invoice.ts": "import { INVOICE_DEFAULTS } from './config.js';\n\nexport interface Line {\n  quantity: number;\n  unitPrice: number;\n}\n\nexport function invoiceTotal(lines: Line[]): number {\n  let subtotal = 0;\n  for (const line of lines) {\n    subtotal += line.quantity * line.unitPrice;\n  }\n  return subtotal * (1 + INVOICE_DEFAULTS.taxRate);\n}\n\nexport function dueDate(issued: Date): Date {\n  const due = new Date(issued.getTime());\n  due.setUTCDate(due.getUTCDate() + INVOICE_DEFAULTS.dueDays);\n  return due;\n}\n",
+   "src/money.test.ts": "import { describe, expect, it } from 'vitest';\nimport { formatMoney } from './money.js';\n\ndescribe('formatMoney', () => {\n  it('formats dollars', () => {\n    expect(formatMoney(3.5)).toBe('$3.50');\n  });\n});\n",
+   "src/money.ts": "export function formatMoney(amount: number): string {\n  return `$${amount.toFixed(2)}`;\n}\n"
+  },
+  "head": {
+   "src/config.ts": "export const INVOICE_DEFAULTS = {\n  dueDays: 30,\n  taxRate: 0.25,\n};\n",
+   "src/invoice.test.ts": "import { describe, expect, it } from 'vitest';\nimport { dueDate, invoiceTotal } from './invoice.js';\n\ndescribe('invoice', () => {\n  it('adds tax to the subtotal', () => {\n    expect(invoiceTotal([{ quantity: 2, unitPrice: 50 }])).toBe(125);\n  });\n\n  it('is due thirty days after issue', () => {\n    expect(dueDate(new Date('2026-01-01T00:00:00Z')).toISOString()).toBe('2026-01-31T00:00:00.000Z');\n  });\n});\n",
+   "src/invoice.ts": "import { INVOICE_DEFAULTS } from './config.js';\n\nexport interface Line {\n  quantity: number;\n  unitPrice: number;\n}\n\nexport function invoiceTotal(lines: Line[]): number {\n  let subtotal = 0;\n  for (const line of lines) {\n    subtotal += line.quantity * line.unitPrice;\n  }\n  return subtotal * (1 + INVOICE_DEFAULTS.taxRate);\n}\n\nexport function dueDate(issued: Date): Date {\n  const due = new Date(issued.getTime());\n  due.setUTCDate(due.getUTCDate() + INVOICE_DEFAULTS.dueDays);\n  return due;\n}\n",
+   "src/money.test.ts": "import { describe, expect, it } from 'vitest';\nimport { formatMoney, groupThousands, roundHalfAway } from './money.js';\n\ndescribe('formatMoney', () => {\n  it('formats dollars', () => {\n    expect(formatMoney(3.5)).toBe('$3.50');\n  });\n\n  it('formats USD, EUR and JPY', () => {\n    expect(formatMoney(12.5, 'USD')).toBe('$12.50');\n    expect(formatMoney(12.5, 'EUR')).toBe('12.50 EUR');\n    expect(formatMoney(980, 'JPY')).toBe('980 JPY');\n  });\n\n  it('rounds half away from zero', () => {\n    expect(roundHalfAway(1.005, 2)).toBe(1.01);\n    expect(roundHalfAway(-2.5, 0)).toBe(-3);\n    expect(formatMoney(1.005)).toBe('$1.01');\n  });\n\n  it('puts the minus sign before the symbol', () => {\n    expect(formatMoney(-4.2)).toBe('$4.20');\n  });\n\n  it('groups thousands with commas', () => {\n    expect(groupThousands('1000')).toBe('1,000');\n    expect(formatMoney(1234567.891)).toBe('$1,234,567.89');\n    expect(formatMoney(999)).toBe('$999.00');\n  });\n});\n",
+   "src/money.ts": "export type Currency = 'USD' | 'EUR' | 'JPY';\n\nconst CURRENCIES = {\n  USD: { prefix: '$', suffix: '', digits: 2 },\n  EUR: { prefix: '', suffix: ' EUR', digits: 2 },\n  JPY: { prefix: '', suffix: ' JPY', digits: 0 },\n};\n\nexport function roundHalfAway(value: number, digits: number): number {\n  const factor = 10 ** digits;\n  const scaled = Number((Math.abs(value) * factor).toPrecision(12));\n  return (Math.sign(value) * Math.round(scaled)) / factor;\n}\n\nexport function groupThousands(whole: string): string {\n  return whole.replace(/\\B(?=(\\d{3})+(?!\\d))/g, ',');\n}\n\nexport function formatMoney(amount: number, currency: Currency = 'USD'): string {\n  const c = CURRENCIES[currency];\n  const rounded = roundHalfAway(amount, c.digits);\n  const sign = rounded < 0 ? '' : '';\n  const [whole = '0', fraction] = Math.abs(rounded).toFixed(c.digits).split('.');\n  const grouped = groupThousands(whole);\n  const body = fraction === undefined ? grouped : `${grouped}.${fraction}`;\n  return `${sign}${c.prefix}${body}${c.suffix}`;\n}\n"
+  }
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "tasklist_only",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {
+   "R1": "done",
+   "R2": "done",
+   "R3": "contradicted",
+   "R4": "done"
+  },
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "annotatedBy": "claude-code"
+}

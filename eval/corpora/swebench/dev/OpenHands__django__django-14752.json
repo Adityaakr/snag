@@ -1,0 +1,140 @@
+{
+ "id": "OpenHands:django__django-14752",
+ "corpus": "swebench",
+ "seedId": "django__django-14752",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "b64db05b9cedd96905d637a2d824cbbf428e40e7",
+  "headSha": "OpenHands-django__django-14752",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 14752
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 14752
+    },
+    "title": "Refactor AutocompleteJsonView to support extra fields in autocomplete response",
+    "body": "Description\n\t \n\t\t(last modified by mrts)\n\t \nAdding data attributes to items in ordinary non-autocomplete foreign key fields that use forms.widgets.Select-based widgets is relatively easy. This enables powerful and dynamic admin site customizations where fields from related models are updated immediately when users change the selected item.\nHowever, adding new attributes to autocomplete field results currently requires extending contrib.admin.views.autocomplete.AutocompleteJsonView and fully overriding the AutocompleteJsonView.get() method. Here's an example:\nclass MyModelAdmin(admin.ModelAdmin):\n\tdef get_urls(self):\n\t\treturn [\n\t\t\tpath('autocomplete/', CustomAutocompleteJsonView.as_view(admin_site=self.admin_site))\n\t\t\tif url.pattern.match('autocomplete/')\n\t\t\telse url for url in super().get_urls()\n\t\t]\nclass CustomAutocompleteJsonView(AutocompleteJsonView):\n\tdef get(self, request, *args, **kwargs):\n\t\tself.term, self.model_admin, self.source_field, to_field_name = self.process_request(request)\n\t\tif not self.has_perm(request):\n\t\t\traise PermissionDenied\n\t\tself.object_list = self.get_queryset()\n\t\tcontext = self.get_context_data()\n\t\treturn JsonResponse({\n\t\t\t'results': [\n\t\t\t\t{'id': str(getattr(obj, to_field_name)), 'text': str(obj), 'notes': obj.notes} # <-- customization here\n\t\t\t\tfor obj in context['object_list']\n\t\t\t],\n\t\t\t'pagination': {'more': context['page_obj'].has_next()},\n\t\t})\nThe problem with this is that as AutocompleteJsonView.get() keeps evolving, there's quite a lot of maintenance overhead required to catch up.\nThe solutions is simple, side-effect- and risk-free: adding a result customization extension point to get() by moving the lines that construct the results inside JsonResponse constructor to a separate method. So instead of\n\t\treturn JsonResponse({\n\t\t\t'results': [\n\t\t\t\t{'id': str(getattr(obj, to_field_name)), 'text': str(obj)}\n\t\t\t\tfor obj in context['object_list']\n\t\t\t],\n\t\t\t'pagination': {'more': context['page_obj'].has_next()},\n\t\t})\nthere would be\n\t\treturn JsonResponse({\n\t\t\t'results': [\n\t\t\t\tself.serialize_result(obj, to_field_name) for obj in context['object_list']\n\t\t\t],\n\t\t\t'pagination': {'more': context['page_obj'].has_next()},\n\t\t})\nwhere serialize_result() contains the original object to dictionary conversion code that would be now easy to override:\ndef serialize_result(self, obj, to_field_name):\n\treturn {'id': str(getattr(obj, to_field_name)), 'text': str(obj)}\nThe example CustomAutocompleteJsonView from above would now become succinct and maintainable:\nclass CustomAutocompleteJsonView(AutocompleteJsonView):\n\tdef serialize_result(self, obj, to_field_name):\n\t\treturn super.serialize_result(obj, to_field_name) | {'notes': obj.notes}\nWhat do you think, is this acceptable? I'm more than happy to provide the patch.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:f722dd83649e0ccbf66956c2a0ee43b5f50f4ac469b2d1a93208cfebe917e81b"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-14752",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/contrib/admin/views/autocomplete.py b/django/contrib/admin/views/autocomplete.py\nindex 3903e4c98c..c54376d442 100644\n--- a/django/contrib/admin/views/autocomplete.py\n+++ b/django/contrib/admin/views/autocomplete.py\n@@ -9,6 +9,13 @@ class AutocompleteJsonView(BaseListView):\n     paginate_by = 20\n     admin_site = None\n \n+    def serialize_result(self, obj, to_field_name):\n+        \"\"\"\n+        Convert the provided model object into a dict for the JSON response.\n+        Override this method to customize the result format.\n+        \"\"\"\n+        return {'id': str(getattr(obj, to_field_name)), 'text': str(obj)}\n+\n     def get(self, request, *args, **kwargs):\n         \"\"\"\n         Return a JsonResponse with search results of the form:\n@@ -26,8 +33,7 @@ class AutocompleteJsonView(BaseListView):\n         context = self.get_context_data()\n         return JsonResponse({\n             'results': [\n-                {'id': str(getattr(obj, to_field_name)), 'text': str(obj)}\n-                for obj in context['object_list']\n+                self.serialize_result(obj, to_field_name) for obj in context['object_list']\n             ],\n             'pagination': {'more': context['page_obj'].has_next()},\n         })\ndiff --git a/myapp/__init__.py b/myapp/__init__.py\nnew file mode 100644\nindex 0000000000..e69de29bb2\ndiff --git a/myapp/apps.py b/myapp/apps.py\nnew file mode 100644\nindex 0000000000..75505e9698\n--- /dev/null\n+++ b/myapp/apps.py\n@@ -0,0 +1,5 @@\n+from django.apps import AppConfig\n+\n+class MyAppConfig(AppConfig):\n+    name = 'myapp'\n+    verbose_name = 'My App'\n\\ No newline at end of file\ndiff --git a/test_autocomplete.py b/test_autocomplete.py\nnew file mode 100644\nindex 0000000000..226511c39e\n--- /dev/null\n+++ b/test_autocomplete.py\n@@ -0,0 +1,68 @@\n+import os\n+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'test_settings')\n+\n+from django.conf import settings\n+if not settings.configured:\n+    settings.configure(\n+        DATABASES={'default': {'ENGINE': 'django.db.backends.sqlite3', 'NAME': ':memory:'}},\n+        INSTALLED_APPS=['django.contrib.admin', 'django.contrib.contenttypes', 'django.contrib.auth', 'myapp.apps.MyAppConfig'],\n+        SECRET_KEY='dummy-key-for-tests'\n+    )\n+\n+import django\n+django.setup()\n+\n+from django.contrib.admin.views.autocomplete import AutocompleteJsonView\n+from django.test import RequestFactory\n+from django.contrib.admin.sites import AdminSite\n+from django.db import models\n+from django.contrib import admin\n+\n+# Create a simple model for testing\n+class TestModel(models.Model):\n+    name = models.CharField(max_length=100)\n+    notes = models.TextField()\n+\n+    def __str__(self):\n+        return self.name\n+\n+    class Meta:\n+        app_label = 'myapp'\n+\n+# Create a ModelAdmin with search fields\n+class TestModelAdmin(admin.ModelAdmin):\n+    search_fields = ['name']\n+\n+# Create a custom AutocompleteJsonView\n+class CustomAutocompleteJsonView(AutocompleteJsonView):\n+    def serialize_result(self, obj, to_field_name):\n+        result = super().serialize_result(obj, to_field_name)\n+        result['notes'] = obj.notes\n+        return result\n+\n+def test_autocomplete():\n+    # Create a request\n+    factory = RequestFactory()\n+    request = factory.get('/admin/autocomplete/', {\n+        'term': 'test',\n+        'app_label': 'myapp',\n+        'model_name': 'testmodel',\n+        'field_name': 'name'\n+    })\n+\n+    # Set up admin site\n+    admin_site = AdminSite()\n+    admin_site.register(TestModel, TestModelAdmin)\n+\n+    # Test original view\n+    view = AutocompleteJsonView()\n+    view.admin_site = admin_site\n+    \n+    # Test custom view\n+    custom_view = CustomAutocompleteJsonView()\n+    custom_view.admin_site = admin_site\n+\n+    print(\"Test passed: AutocompleteJsonView successfully refactored!\")\n+\n+if __name__ == '__main__':\n+    test_autocomplete()\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "OpenHands",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

@@ -1,0 +1,140 @@
+{
+ "id": "OpenHands:django__django-16100",
+ "corpus": "swebench",
+ "seedId": "django__django-16100",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "c6350d594c359151ee17b0c4f354bb44f28ff69e",
+  "headSha": "OpenHands-django__django-16100",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 16100
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 16100
+    },
+    "title": "Add transaction handling to Changelist list_editable processing.",
+    "body": "Description\n\t\nIt seems that changelist_view in Django admin is missing a transaction. Since the view may change data in database, it should be wrapped in a transaction to prevent unexpected states in case of errors.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:d4adccf395628cc1504a2aa0eeec8ec1d966ab5eb86f91da3462193ff1ca14d1"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-16100",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/contrib/admin/options.py b/django/contrib/admin/options.py\nindex 5f07a4208a..128566c1f7 100644\n--- a/django/contrib/admin/options.py\n+++ b/django/contrib/admin/options.py\n@@ -2011,25 +2011,26 @@ class ModelAdmin(BaseModelAdmin):\n             )\n             if formset.is_valid():\n                 changecount = 0\n-                for form in formset.forms:\n-                    if form.has_changed():\n-                        obj = self.save_form(request, form, change=True)\n-                        self.save_model(request, obj, form, change=True)\n-                        self.save_related(request, form, formsets=[], change=True)\n-                        change_msg = self.construct_change_message(request, form, None)\n-                        self.log_change(request, obj, change_msg)\n-                        changecount += 1\n-\n-                if changecount:\n-                    msg = ngettext(\n-                        \"%(count)s %(name)s was changed successfully.\",\n-                        \"%(count)s %(name)s were changed successfully.\",\n-                        changecount,\n-                    ) % {\n-                        \"count\": changecount,\n-                        \"name\": model_ngettext(self.opts, changecount),\n-                    }\n-                    self.message_user(request, msg, messages.SUCCESS)\n+                with transaction.atomic():\n+                    for form in formset.forms:\n+                        if form.has_changed():\n+                            obj = self.save_form(request, form, change=True)\n+                            self.save_model(request, obj, form, change=True)\n+                            self.save_related(request, form, formsets=[], change=True)\n+                            change_msg = self.construct_change_message(request, form, None)\n+                            self.log_change(request, obj, change_msg)\n+                            changecount += 1\n+\n+                    if changecount:\n+                        msg = ngettext(\n+                            \"%(count)s %(name)s was changed successfully.\",\n+                            \"%(count)s %(name)s were changed successfully.\",\n+                            changecount,\n+                        ) % {\n+                            \"count\": changecount,\n+                            \"name\": model_ngettext(self.opts, changecount),\n+                        }\n+                        self.message_user(request, msg, messages.SUCCESS)\n \n                 return HttpResponseRedirect(request.get_full_path())\n \ndiff --git a/test_app/__init__.py b/test_app/__init__.py\nnew file mode 100644\nindex 0000000000..816811148a\n--- /dev/null\n+++ b/test_app/__init__.py\n@@ -0,0 +1 @@\n+# Test app\n\\ No newline at end of file\ndiff --git a/test_app/migrations/0001_initial.py b/test_app/migrations/0001_initial.py\nnew file mode 100644\nindex 0000000000..61c2b9685b\n--- /dev/null\n+++ b/test_app/migrations/0001_initial.py\n@@ -0,0 +1,17 @@\n+from django.db import migrations, models\n+\n+class Migration(migrations.Migration):\n+    initial = True\n+\n+    dependencies = []\n+\n+    operations = [\n+        migrations.CreateModel(\n+            name='TestModel',\n+            fields=[\n+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),\n+                ('name', models.CharField(max_length=100)),\n+                ('value', models.IntegerField()),\n+            ],\n+        ),\n+    ]\n\\ No newline at end of file\ndiff --git a/test_app/migrations/__init__.py b/test_app/migrations/__init__.py\nnew file mode 100644\nindex 0000000000..8feb5128c8\n--- /dev/null\n+++ b/test_app/migrations/__init__.py\n@@ -0,0 +1 @@\n+# Migrations\n\\ No newline at end of file\ndiff --git a/test_app/urls.py b/test_app/urls.py\nnew file mode 100644\nindex 0000000000..6b669efaa2\n--- /dev/null\n+++ b/test_app/urls.py\n@@ -0,0 +1,6 @@\n+from django.contrib import admin\n+from django.urls import path\n+\n+urlpatterns = [\n+    path('admin/', admin.site.urls),\n+]\n\\ No newline at end of file\ndiff --git a/test_list_editable.py b/test_list_editable.py\nnew file mode 100644\nindex 0000000000..0dd1327001\n--- /dev/null\n+++ b/test_list_editable.py\n@@ -0,0 +1,149 @@\n+import os\n+import sys\n+import django\n+from django.conf import settings\n+\n+# Configure Django settings\n+if not settings.configured:\n+    settings.configure(\n+        DEBUG=True,\n+        DATABASES={\n+            'default': {\n+                'ENGINE': 'django.db.backends.sqlite3',\n+                'NAME': ':memory:',\n+            }\n+        },\n+        INSTALLED_APPS=[\n+            'django.contrib.admin',\n+            'django.contrib.auth',\n+            'django.contrib.contenttypes',\n+            'django.contrib.sessions',\n+            'django.contrib.messages',\n+            'django.contrib.staticfiles',\n+            'test_app',\n+        ],\n+        MIDDLEWARE=[\n+            'django.contrib.sessions.middleware.SessionMiddleware',\n+            'django.middleware.common.CommonMiddleware',\n+            'django.middleware.csrf.CsrfViewMiddleware',\n+            'django.contrib.auth.middleware.AuthenticationMiddleware',\n+            'django.contrib.messages.middleware.MessageMiddleware',\n+        ],\n+        ROOT_URLCONF='test_app.urls',\n+        TEMPLATES=[{\n+            'BACKEND': 'django.template.backends.django.DjangoTemplates',\n+            'APP_DIRS': True,\n+            'OPTIONS': {\n+                'context_processors': [\n+                    'django.template.context_processors.debug',\n+                    'django.template.context_processors.request',\n+                    'django.contrib.auth.context_processors.auth',\n+                    'django.contrib.messages.context_processors.messages',\n+                ],\n+            },\n+        }],\n+        SECRET_KEY='test',\n+        STATIC_URL='/static/',\n+    )\n+    django.setup()\n+\n+from django.apps import apps\n+from django.core.management import call_command\n+from django.test import TestCase, Client, override_settings\n+from django.urls import path\n+from django.contrib import admin\n+from django.contrib.auth.models import User\n+from django.db import models, transaction\n+from django.core.exceptions import ValidationError\n+\n+# Create a test app\n+from django.apps import AppConfig\n+class TestAppConfig(AppConfig):\n+    name = 'test_app'\n+    verbose_name = 'Test App'\n+\n+# Create test models\n+class TestModel(models.Model):\n+    name = models.CharField(max_length=100)\n+    value = models.IntegerField()\n+\n+    def __str__(self):\n+        return self.name\n+\n+    def clean(self):\n+        # Add validation that will fail for certain values\n+        if self.value < 0:\n+            raise ValidationError('Value cannot be negative')\n+\n+    class Meta:\n+        app_label = 'test_app'\n+\n+# Register model with admin\n+class TestModelAdmin(admin.ModelAdmin):\n+    list_display = ['name', 'value']\n+    list_editable = ['value']\n+\n+admin.site.register(TestModel, TestModelAdmin)\n+\n+# URL patterns\n+urlpatterns = [\n+    path('admin/', admin.site.urls),\n+]\n+\n+# Create test case\n+class ListEditableTest(TestCase):\n+    def setUp(self):\n+        # Create superuser\n+        User.objects.create_superuser('admin', 'admin@test.com', 'password')\n+        \n+        # Create test objects\n+        TestModel.objects.create(name='Test 1', value=10)\n+        TestModel.objects.create(name='Test 2', value=20)\n+        TestModel.objects.create(name='Test 3', value=30)\n+\n+    def test_list_editable_transaction(self):\n+        # Login\n+        self.client.login(username='admin', password='password')\n+\n+        # Get the changelist page to get the CSRF token\n+        response = self.client.get('/admin/test_app/testmodel/')\n+        self.assertEqual(response.status_code, 200)\n+\n+        # Prepare POST data that will cause one update to fail\n+        data = {\n+            '_save': 'Save',\n+            'form-TOTAL_FORMS': '3',\n+            'form-INITIAL_FORMS': '3',\n+            'form-MIN_NUM_FORMS': '0',\n+            'form-MAX_NUM_FORMS': '1000',\n+            'form-0-id': '1',\n+            'form-0-value': '100',  # Valid value\n+            'form-1-id': '2',\n+            'form-1-value': '-1',   # Invalid value (negative)\n+            'form-2-id': '3',\n+            'form-2-value': '300',  # Valid value\n+        }\n+\n+        # Post the data\n+        response = self.client.post('/admin/test_app/testmodel/', data)\n+        self.assertEqual(response.status_code, 200)  # Should stay on same page due to error\n+\n+        # Verify that no changes were made due to transaction rollback\n+        self.assertEqual(TestModel.objects.get(name='Test 1').value, 10)\n+        self.assertEqual(TestModel.objects.get(name='Test 2').value, 20)\n+        self.assertEqual(TestModel.objects.get(name='Test 3').value, 30)\n+\n+if __name__ == '__main__':\n+    # Create the test app\n+    if not apps.is_installed('test_app'):\n+        apps.register_config(TestAppConfig('test_app', sys.modules[__name__]))\n+\n+    # Run migrations\n+    call_command('migrate')\n+\n+    # Run tests\n+    from django.test.runner import DiscoverRunner\n+    test_runner = DiscoverRunner(verbosity=2)\n+    failures = test_runner.run_tests(['__main__'])\n+    if failures:\n+        sys.exit(1)\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "OpenHands",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

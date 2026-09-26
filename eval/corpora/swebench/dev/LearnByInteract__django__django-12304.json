@@ -1,0 +1,140 @@
+{
+ "id": "LearnByInteract:django__django-12304",
+ "corpus": "swebench",
+ "seedId": "django__django-12304",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "4c1b401e8250f9f520b3c7dc369554477ce8b15a",
+  "headSha": "LearnByInteract-django__django-12304",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 12304
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 12304
+    },
+    "title": "Enumeration Types are not usable in templates.",
+    "body": "Description\n\t \n\t\t(last modified by Mariusz Felisiak)\n\t \nThe new ​enumeration types are great but can't be used in Django templates due to their being callable. For example this doesn't work:\n{% if student.year_in_school == YearInSchool.FRESHMAN %}\nThis is because YearInSchool, being a class, is callable, and Django Templates always call callables with no arguments. The call fails because the required value argument is missing.\nThe easy solution would be to declare do_not_call_in_templates = True on the various Choices classes.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:73227906930b96a90ae575dccc143e50a46592fae17cff7a46eca58df76c8614"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-12304",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/template/base.py b/django/template/base.py\nindex 7efc45356c..f970401b75 100644\n--- a/django/template/base.py\n+++ b/django/template/base.py\n@@ -851,10 +851,14 @@ class Variable:\n                 if callable(current):\n                     if getattr(current, 'do_not_call_in_templates', False):\n                         pass\n+                    elif isinstance(current, type) and issubclass(current, Enum):\n+                        # Don't call enumeration types in templates\n+                        pass\n                     elif getattr(current, 'alters_data', False):\n                         current = context.template.engine.string_if_invalid\n                     else:\n                         try:  # method call (assuming no args required)\n+\n                             current = current()\n                         except TypeError:\n                             signature = inspect.signature(current)\n@@ -1043,3 +1047,4 @@ def token_kwargs(bits, parser, support_legacy=False):\n                 return kwargs\n             del bits[:1]\n     return kwargs\n+\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "LearnByInteract",
+  "source": "rq2_divergent",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

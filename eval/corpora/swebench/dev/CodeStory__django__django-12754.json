@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:django__django-12754",
+ "corpus": "swebench",
+ "seedId": "django__django-12754",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "18759b2209ff556aed7f20d83cbf23e3d234e41c",
+  "headSha": "CodeStory-django__django-12754",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 12754
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 12754
+    },
+    "title": "FieldError when migrating field to new model subclass.",
+    "body": "Description\n\t\nAnalogous to #21890. If creating a model subclass and moving a field onto it in the same step, makemigrations works but migrate dies with django.core.exceptions.FieldError: Local field 'title' in class 'Book' clashes with field of the same name from base class 'Readable'.\nFor example, take this model:\nfrom django.db import models\nclass Readable(models.Model):\n\ttitle = models.CharField(max_length=200)\nAnd change to this:\nfrom django.db import models\nclass Readable(models.Model):\n\tpass\nclass Book(Readable):\n\ttitle = models.CharField(max_length=200)\nThe migration generates with CreateModel for Book, then RemoveField for Readable.title. But running it produces the error.\nReversing the order of the migration operations makes it pass. The auto-detector should be able to use this order.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:930829c17a0407ec5286a8be2108372d64089e3f5994c4d7f676ff352d2815e6"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-12754",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/db/migrations/autodetector.py b/django/db/migrations/autodetector.py\nindex 30616c0172..21815f38fd 100644\n--- a/django/db/migrations/autodetector.py\n+++ b/django/db/migrations/autodetector.py\n@@ -343,6 +343,16 @@ class MigrationAutodetector:\n             # construct a dependency graph for intra-app dependencies\n             dependency_graph = {op: set() for op in ops}\n             for op in ops:\n+                # Handle field moves to subclasses\n+                if isinstance(op, operations.CreateModel):\n+                    # Look for fields that might be moved from parent classes\n+                    for field_name, field in op.fields:\n+                        for other_op in ops:\n+                            if isinstance(other_op, operations.RemoveField) and other_op.name == field_name:\n+                                # Make the CreateModel operation depend on the RemoveField operation\n+                                dependency_graph[op].add(other_op)\n+                \n+                # Handle other dependencies\n                 for dep in op._auto_deps:\n                     # Resolve intra-app dependencies to handle circular\n                     # references involving a swappable model.\n@@ -396,6 +406,13 @@ class MigrationAutodetector:\n                     operation.name_lower == dependency[2].lower()\n                 )\n             )\n+        # Field being moved to subclass\n+        elif dependency[2] is not None and dependency[3] == \"moved_to_subclass\":\n+            return (\n+                isinstance(operation, operations.CreateModel) and\n+                operation.name_lower == dependency[1].lower() and\n+                any(dependency[2] == x for x, y in operation.fields)\n+            )\n         # Removed field\n         elif dependency[2] is not None and dependency[3] is False:\n             return (\n@@ -558,6 +575,19 @@ class MigrationAutodetector:\n             dependencies = [\n                 (app_label, model_name, None, False),\n             ]\n+            \n+            # Check if any fields are being moved from parent classes\n+            if model_state.bases:\n+                for base in model_state.bases:\n+                    if isinstance(base, str) and \".\" in base:\n+                        base_app_label, base_name = base.split(\".\", 1)\n+                        if (base_app_label, base_name) in self.old_model_keys:\n+                            old_model_state = self.from_state.models[base_app_label, base_name]\n+                            # Check each field in the new model to see if it exists in the parent\n+                            for field_name, field in model_state.fields.items():\n+                                if field_name in old_model_state.fields:\n+                                    # This field exists in the parent, so we need to wait for its removal\n+                                    dependencies.append((base_app_label, base_name, field_name, \"moved_to_subclass\"))\n             # Depend on all bases\n             for base in model_state.bases:\n                 if isinstance(base, str) and \".\" in base:\ndiff --git a/manage.py b/manage.py\nnew file mode 100644\nindex 0000000000..221a9aa72c\n--- /dev/null\n+++ b/manage.py\n@@ -0,0 +1,15 @@\n+#!/usr/bin/env python\n+import os\n+import sys\n+\n+if __name__ == \"__main__\":\n+    os.environ.setdefault(\"DJANGO_SETTINGS_MODULE\", \"testproject.settings\")\n+    try:\n+        from django.core.management import execute_from_command_line\n+    except ImportError as exc:\n+        raise ImportError(\n+            \"Couldn't import Django. Are you sure it's installed and \"\n+            \"available on your PYTHONPATH environment variable? Did you \"\n+            \"forget to activate a virtual environment?\"\n+        ) from exc\n+    execute_from_command_line(sys.argv)\n\\ No newline at end of file\ndiff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..6ecbfd508a\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,80 @@\n+import os\n+import sys\n+import shutil\n+import django\n+from pathlib import Path\n+\n+# Clean up any existing test files\n+if os.path.exists('testapp'):\n+    shutil.rmtree('testapp')\n+if os.path.exists('testproject'):\n+    shutil.rmtree('testproject')\n+if os.path.exists('db.sqlite3'):\n+    os.remove('db.sqlite3')\n+\n+# Create project structure\n+os.makedirs('testproject', exist_ok=True)\n+os.makedirs('testapp/migrations', exist_ok=True)\n+\n+# Create __init__.py files\n+Path('testproject/__init__.py').touch()\n+Path('testapp/__init__.py').touch()\n+Path('testapp/migrations/__init__.py').touch()\n+\n+# Create settings.py\n+with open('testproject/settings.py', 'w') as f:\n+    f.write('''\n+import os\n+\n+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))\n+\n+SECRET_KEY = 'dummy-key-for-tests'\n+\n+DEBUG = True\n+\n+INSTALLED_APPS = [\n+    'django.contrib.auth',\n+    'django.contrib.contenttypes',\n+    'testapp',\n+]\n+\n+DATABASES = {\n+    'default': {\n+        'ENGINE': 'django.db.backends.sqlite3',\n+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),\n+    }\n+}\n+\n+USE_TZ = False\n+''')\n+\n+# Add current directory to Python path\n+sys.path.append(os.getcwd())\n+\n+# Create initial models.py\n+with open('testapp/models.py', 'w') as f:\n+    f.write('''from django.db import models\n+\n+class Readable(models.Model):\n+    title = models.CharField(max_length=200)\n+''')\n+\n+print(\"Making initial migrations...\")\n+os.system('python manage.py makemigrations testapp')\n+os.system('python manage.py migrate')\n+\n+print(\"\\nUpdating models to move field to subclass...\")\n+# Update models.py to move field to subclass\n+with open('testapp/models.py', 'w') as f:\n+    f.write('''from django.db import models\n+\n+class Readable(models.Model):\n+    pass\n+\n+class Book(Readable):\n+    title = models.CharField(max_length=200)\n+''')\n+\n+print(\"\\nMaking and applying migrations for the field move...\")\n+os.system('python manage.py makemigrations testapp')\n+os.system('python manage.py migrate')\n\\ No newline at end of file\ndiff --git a/test_edge_cases.py b/test_edge_cases.py\nnew file mode 100644\nindex 0000000000..1b301c0084\n--- /dev/null\n+++ b/test_edge_cases.py\n@@ -0,0 +1,142 @@\n+import os\n+import sys\n+import shutil\n+import django\n+from pathlib import Path\n+\n+def run_test(name, initial_model, updated_model):\n+    print(f\"\\n=== Running test: {name} ===\")\n+    \n+    # Clean up any existing test files\n+    if os.path.exists('testapp'):\n+        shutil.rmtree('testapp')\n+    if os.path.exists('testproject'):\n+        shutil.rmtree('testproject')\n+    if os.path.exists('db.sqlite3'):\n+        os.remove('db.sqlite3')\n+\n+    # Create project structure\n+    os.makedirs('testproject', exist_ok=True)\n+    os.makedirs('testapp/migrations', exist_ok=True)\n+\n+    # Create __init__.py files\n+    Path('testproject/__init__.py').touch()\n+    Path('testapp/__init__.py').touch()\n+    Path('testapp/migrations/__init__.py').touch()\n+\n+    # Create settings.py\n+    with open('testproject/settings.py', 'w') as f:\n+        f.write('''\n+import os\n+\n+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))\n+\n+SECRET_KEY = 'dummy-key-for-tests'\n+\n+DEBUG = True\n+\n+INSTALLED_APPS = [\n+    'django.contrib.auth',\n+    'django.contrib.contenttypes',\n+    'testapp',\n+]\n+\n+DATABASES = {\n+    'default': {\n+        'ENGINE': 'django.db.backends.sqlite3',\n+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),\n+    }\n+}\n+\n+USE_TZ = False\n+''')\n+\n+    # Create initial models.py\n+    with open('testapp/models.py', 'w') as f:\n+        f.write(initial_model)\n+\n+    print(\"Making initial migrations...\")\n+    os.system('python manage.py makemigrations testapp')\n+    os.system('python manage.py migrate')\n+\n+    print(\"\\nUpdating models...\")\n+    with open('testapp/models.py', 'w') as f:\n+        f.write(updated_model)\n+\n+    print(\"\\nMaking and applying migrations...\")\n+    os.system('python manage.py makemigrations testapp')\n+    os.system('python manage.py migrate')\n+\n+# Test 1: Multiple fields\n+run_test(\n+    \"Multiple fields\",\n+    '''from django.db import models\n+\n+class Readable(models.Model):\n+    title = models.CharField(max_length=200)\n+    description = models.TextField()\n+    isbn = models.CharField(max_length=13)\n+''',\n+    '''from django.db import models\n+\n+class Readable(models.Model):\n+    pass\n+\n+class Book(Readable):\n+    title = models.CharField(max_length=200)\n+    description = models.TextField()\n+    isbn = models.CharField(max_length=13)\n+'''\n+)\n+\n+# Test 2: Fields with foreign keys\n+run_test(\n+    \"Fields with foreign keys\",\n+    '''from django.db import models\n+\n+class Author(models.Model):\n+    name = models.CharField(max_length=100)\n+\n+class Readable(models.Model):\n+    title = models.CharField(max_length=200)\n+    author = models.ForeignKey(Author, on_delete=models.CASCADE)\n+''',\n+    '''from django.db import models\n+\n+class Author(models.Model):\n+    name = models.CharField(max_length=100)\n+\n+class Readable(models.Model):\n+    pass\n+\n+class Book(Readable):\n+    title = models.CharField(max_length=200)\n+    author = models.ForeignKey(Author, on_delete=models.CASCADE)\n+'''\n+)\n+\n+# Test 3: Fields with unique constraints\n+run_test(\n+    \"Fields with unique constraints\",\n+    '''from django.db import models\n+\n+class Readable(models.Model):\n+    title = models.CharField(max_length=200)\n+    isbn = models.CharField(max_length=13, unique=True)\n+\n+    class Meta:\n+        unique_together = [('title', 'isbn')]\n+''',\n+    '''from django.db import models\n+\n+class Readable(models.Model):\n+    pass\n+\n+class Book(Readable):\n+    title = models.CharField(max_length=200)\n+    isbn = models.CharField(max_length=13, unique=True)\n+\n+    class Meta:\n+        unique_together = [('title', 'isbn')]\n+'''\n+)\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

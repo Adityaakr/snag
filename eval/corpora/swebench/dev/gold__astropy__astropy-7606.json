@@ -1,0 +1,140 @@
+{
+ "id": "gold:astropy__astropy-7606",
+ "corpus": "swebench",
+ "seedId": "astropy__astropy-7606",
+ "input": {
+  "mode": "local",
+  "repo": "astropy/astropy",
+  "baseSha": "3cedd79e6c121910220f8e6df77c54a0b344ea94",
+  "headSha": "gold-astropy__astropy-7606",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "astropy",
+    "repo": "astropy",
+    "number": 7606
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "astropy",
+     "repo": "astropy",
+     "number": 7606
+    },
+    "title": "Unit equality comparison with None raises TypeError for UnrecognizedUnit",
+    "body": "```\r\nIn [12]: x = u.Unit('asdf', parse_strict='silent')\r\n\r\nIn [13]: x == None  # Should be False\r\n---------------------------------------------------------------------------\r\nTypeError                                 Traceback (most recent call last)\r\n<ipython-input-13-2486f2ccf928> in <module>()\r\n----> 1 x == None  # Should be False\r\n\r\n/Users/aldcroft/anaconda3/lib/python3.5/site-packages/astropy/units/core.py in __eq__(self, other)\r\n   1699 \r\n   1700     def __eq__(self, other):\r\n-> 1701         other = Unit(other, parse_strict='silent')\r\n   1702         return isinstance(other, UnrecognizedUnit) and self.name == other.name\r\n   1703 \r\n\r\n/Users/aldcroft/anaconda3/lib/python3.5/site-packages/astropy/units/core.py in __call__(self, s, represents, format, namespace, doc, parse_strict)\r\n   1808 \r\n   1809         elif s is None:\r\n-> 1810             raise TypeError(\"None is not a valid Unit\")\r\n   1811 \r\n   1812         else:\r\n\r\nTypeError: None is not a valid Unit\r\n```",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:ff8af012cb8e776c811b04f324700eb4455f8d8f6e8ef69d2d9096ed60a74a87"
+   }
+  ],
+  "pr": {
+   "title": "Fix astropy__astropy-7606",
+   "body": ""
+  },
+  "diffText": "diff --git a/astropy/units/core.py b/astropy/units/core.py\n--- a/astropy/units/core.py\n+++ b/astropy/units/core.py\n@@ -728,7 +728,7 @@ def __eq__(self, other):\n         try:\n             other = Unit(other, parse_strict='silent')\n         except (ValueError, UnitsError, TypeError):\n-            return False\n+            return NotImplemented\n \n         # Other is Unit-like, but the test below requires it is a UnitBase\n         # instance; if it is not, give up (so that other can try).\n@@ -1710,8 +1710,12 @@ def _unrecognized_operator(self, *args, **kwargs):\n         _unrecognized_operator\n \n     def __eq__(self, other):\n-        other = Unit(other, parse_strict='silent')\n-        return isinstance(other, UnrecognizedUnit) and self.name == other.name\n+        try:\n+            other = Unit(other, parse_strict='silent')\n+        except (ValueError, UnitsError, TypeError):\n+            return NotImplemented\n+\n+        return isinstance(other, type(self)) and self.name == other.name\n \n     def __ne__(self, other):\n         return not (self == other)\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "gold",
+  "source": "gold",
+  "strength": "strong"
+ },
+ "annotatedBy": "study"
+}

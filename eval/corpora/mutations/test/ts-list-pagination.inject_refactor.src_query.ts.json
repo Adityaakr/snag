@@ -1,0 +1,166 @@
+{
+ "id": "ts-list-pagination.inject_refactor.src_query.ts",
+ "corpus": "mutations",
+ "seedId": "ts-list-pagination",
+ "operator": "inject_refactor",
+ "target": "src/query.ts",
+ "input": {
+  "mode": "local",
+  "baseSha": "base",
+  "headSha": "head-inject_refactor-src/query.ts",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "acme",
+    "repo": "api-client",
+    "number": 112
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "acme",
+     "repo": "api-client",
+     "number": 112
+    },
+    "title": "Safer pagination in listAll",
+    "body": "`listAll` pages with the server default size, never gives up on a cursor loop, and returns duplicates when the list shifts while we page through it.\n\n- [ ] `listAll` accepts a `pageSize` option, sent as the `limit` query parameter, that defaults to 50 and is clamped to 1..100 (for example `pageSize: 500` requests `limit=100`)\n- [ ] `listAll` stops after `maxPages` pages (default 10) and throws a `PaginationError` that says how many pages it read\n- [ ] An item that shows up on two pages (same `id`) is returned only once, in the position it first appeared",
+    "author": "local",
+    "state": "open",
+    "comments": [],
+    "contentHash": "sha256:369449877eebfe2fada2e5db678272137995b3215b5e6b44c126bf9fddca3557"
+   }
+  ],
+  "pr": {
+   "title": "Page size, page limit and de-duplication for listAll",
+   "body": "Adds a `pageSize` option (default 50, clamped to 1..100 by `clampPageSize`) that is sent as `limit`, a `maxPages` guard (default 10) that throws `PaginationError` with the page count, and `uniqueById` so an item repeated across pages is returned once. Tests cover each case."
+  },
+  "diffText": "diff --git a/src/client.test.ts b/src/client.test.ts\n--- a/src/client.test.ts\n+++ b/src/client.test.ts\n@@ -1,5 +1,5 @@\n-import { describe, expect, it } from 'vitest';\n-import { listAll, type Page, type Transport } from './client.js';\n+import { describe, expect, it, vi } from 'vitest';\n+import { clampPageSize, listAll, type Page, PaginationError, type Transport } from './client.js';\n \n function pages(...list: Page[]): Transport {\n   let i = 0;\n@@ -15,4 +15,37 @@\n     const items = await listAll(transport, '/items');\n     expect(items.map((item) => item.id)).toEqual(['a', 'b', 'c']);\n   });\n+\n+  it('clamps the page size to 1..100', () => {\n+    expect(clampPageSize(500)).toBe(100);\n+    expect(clampPageSize(0)).toBe(1);\n+    expect(clampPageSize(25)).toBe(25);\n+  });\n+\n+  it('sends the page size as the limit parameter', async () => {\n+    const transport = vi.fn<Transport>(async () => ({ items: [], next_cursor: null }));\n+    await listAll(transport, '/items', { pageSize: 20 });\n+    await listAll(transport, '/items');\n+    expect(transport.mock.calls.map((call) => call[0])).toEqual(['/items?limit=20', '/items?limit=50']);\n+  });\n+\n+  it('stops at the default page limit', async () => {\n+    const transport = vi.fn<Transport>(async () => ({ items: [{ id: 'x' }], next_cursor: 'more' }));\n+    await expect(listAll(transport, '/items')).rejects.toThrow(PaginationError);\n+    expect(transport).toHaveBeenCalledTimes(10);\n+  });\n+\n+  it('says how many pages it read', async () => {\n+    const transport = vi.fn<Transport>(async () => ({ items: [], next_cursor: 'more' }));\n+    await expect(listAll(transport, '/items', { maxPages: 3 })).rejects.toThrow('stopped after 3 pages');\n+  });\n+\n+  it('returns an item seen on two pages once', async () => {\n+    const transport = pages(\n+      { items: [{ id: 'a' }, { id: 'b' }], next_cursor: 'c1' },\n+      { items: [{ id: 'b' }, { id: 'c' }], next_cursor: null },\n+    );\n+    const items = await listAll(transport, '/items');\n+    expect(items.map((item) => item.id)).toEqual(['a', 'b', 'c']);\n+  });\n });\ndiff --git a/src/client.ts b/src/client.ts\n--- a/src/client.ts\n+++ b/src/client.ts\n@@ -13,13 +13,47 @@\n \n export type Transport = (url: string, headers: Record<string, string>) => Promise<Page>;\n \n-export async function listAll(transport: Transport, path: string): Promise<Item[]> {\n+export interface ListOptions {\n+  pageSize?: number;\n+  maxPages?: number;\n+}\n+\n+export class PaginationError extends Error {\n+  constructor(readonly pages: number) {\n+    super(`stopped after ${pages} pages`);\n+    this.name = 'PaginationError';\n+  }\n+}\n+\n+export function clampPageSize(size: number): number {\n+  if (size > 100) return 100;\n+  if (size < 1) return 1;\n+  return Math.floor(size);\n+}\n+\n+export function uniqueById(items: Item[]): Item[] {\n+  const seen = new Set<string>();\n+  return items.filter((item) => {\n+    if (seen.has(item.id)) return false;\n+    seen.add(item.id);\n+    return true;\n+  });\n+}\n+\n+export async function listAll(transport: Transport, path: string, opts: ListOptions = {}): Promise<Item[]> {\n+  const limit = clampPageSize(opts.pageSize ?? 50);\n+  const maxPages = opts.maxPages ?? 10;\n   const items: Item[] = [];\n   let cursor: string | undefined;\n+  let pages = 0;\n   do {\n-    const page = await transport(path + toQueryString({ cursor }), requestHeaders());\n+    if (pages >= maxPages) {\n+      throw new PaginationError(pages);\n+    }\n+    const page = await transport(path + toQueryString({ cursor, limit }), requestHeaders());\n     items.push(...page.items);\n     cursor = page.next_cursor ?? undefined;\n+    pages++;\n   } while (cursor);\n-  return items;\n+  return uniqueById(items);\n }\ndiff --git a/src/query.ts b/src/query.ts\n--- a/src/query.ts\n+++ b/src/query.ts\n@@ -1,10 +1,10 @@\n export type QueryValue = string | number | undefined;\n \n export function toQueryString(params: Record<string, QueryValue>): string {\n-  const parts: string[] = [];\n+  const pairs: string[] = [];\n   for (const [key, value] of Object.entries(params)) {\n     if (value === undefined) continue;\n-    parts.push(`${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`);\n+    pairs.push(`${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`);\n   }\n-  return parts.length ? `?${parts.join('&')}` : '';\n+  return pairs.length ? `?${pairs.join('&')}` : '';\n }\n"
+ },
+ "trees": {
+  "base": {
+   "src/client.test.ts": "import { describe, expect, it } from 'vitest';\nimport { listAll, type Page, type Transport } from './client.js';\n\nfunction pages(...list: Page[]): Transport {\n  let i = 0;\n  return async () => list[i++] ?? { items: [], next_cursor: null };\n}\n\ndescribe('listAll', () => {\n  it('follows next_cursor across pages', async () => {\n    const transport = pages(\n      { items: [{ id: 'a' }, { id: 'b' }], next_cursor: 'c1' },\n      { items: [{ id: 'c' }], next_cursor: null },\n    );\n    const items = await listAll(transport, '/items');\n    expect(items.map((item) => item.id)).toEqual(['a', 'b', 'c']);\n  });\n});\n",
+   "src/client.ts": "import { requestHeaders } from './config.js';\nimport { toQueryString } from './query.js';\n\nexport interface Item {\n  id: string;\n  [key: string]: unknown;\n}\n\nexport interface Page {\n  items: Item[];\n  next_cursor: string | null;\n}\n\nexport type Transport = (url: string, headers: Record<string, string>) => Promise<Page>;\n\nexport async function listAll(transport: Transport, path: string): Promise<Item[]> {\n  const items: Item[] = [];\n  let cursor: string | undefined;\n  do {\n    const page = await transport(path + toQueryString({ cursor }), requestHeaders());\n    items.push(...page.items);\n    cursor = page.next_cursor ?? undefined;\n  } while (cursor);\n  return items;\n}\n",
+   "src/config.ts": "export const CLIENT_DEFAULTS = {\n  userAgent: 'acme-client/1.4.0',\n  timeoutMs: 10000,\n};\n\nexport function requestHeaders(): Record<string, string> {\n  return {\n    'User-Agent': CLIENT_DEFAULTS.userAgent,\n    'X-Timeout-Ms': String(CLIENT_DEFAULTS.timeoutMs),\n  };\n}\n",
+   "src/query.test.ts": "import { describe, expect, it } from 'vitest';\nimport { toQueryString } from './query.js';\n\ndescribe('toQueryString', () => {\n  it('encodes values and skips undefined ones', () => {\n    expect(toQueryString({ q: 'a b', page: undefined })).toBe('?q=a%20b');\n  });\n\n  it('returns an empty string without params', () => {\n    expect(toQueryString({})).toBe('');\n  });\n});\n",
+   "src/query.ts": "export type QueryValue = string | number | undefined;\n\nexport function toQueryString(params: Record<string, QueryValue>): string {\n  const parts: string[] = [];\n  for (const [key, value] of Object.entries(params)) {\n    if (value === undefined) continue;\n    parts.push(`${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`);\n  }\n  return parts.length ? `?${parts.join('&')}` : '';\n}\n"
+  },
+  "head": {
+   "src/client.test.ts": "import { describe, expect, it, vi } from 'vitest';\nimport { clampPageSize, listAll, type Page, PaginationError, type Transport } from './client.js';\n\nfunction pages(...list: Page[]): Transport {\n  let i = 0;\n  return async () => list[i++] ?? { items: [], next_cursor: null };\n}\n\ndescribe('listAll', () => {\n  it('follows next_cursor across pages', async () => {\n    const transport = pages(\n      { items: [{ id: 'a' }, { id: 'b' }], next_cursor: 'c1' },\n      { items: [{ id: 'c' }], next_cursor: null },\n    );\n    const items = await listAll(transport, '/items');\n    expect(items.map((item) => item.id)).toEqual(['a', 'b', 'c']);\n  });\n\n  it('clamps the page size to 1..100', () => {\n    expect(clampPageSize(500)).toBe(100);\n    expect(clampPageSize(0)).toBe(1);\n    expect(clampPageSize(25)).toBe(25);\n  });\n\n  it('sends the page size as the limit parameter', async () => {\n    const transport = vi.fn<Transport>(async () => ({ items: [], next_cursor: null }));\n    await listAll(transport, '/items', { pageSize: 20 });\n    await listAll(transport, '/items');\n    expect(transport.mock.calls.map((call) => call[0])).toEqual(['/items?limit=20', '/items?limit=50']);\n  });\n\n  it('stops at the default page limit', async () => {\n    const transport = vi.fn<Transport>(async () => ({ items: [{ id: 'x' }], next_cursor: 'more' }));\n    await expect(listAll(transport, '/items')).rejects.toThrow(PaginationError);\n    expect(transport).toHaveBeenCalledTimes(10);\n  });\n\n  it('says how many pages it read', async () => {\n    const transport = vi.fn<Transport>(async () => ({ items: [], next_cursor: 'more' }));\n    await expect(listAll(transport, '/items', { maxPages: 3 })).rejects.toThrow('stopped after 3 pages');\n  });\n\n  it('returns an item seen on two pages once', async () => {\n    const transport = pages(\n      { items: [{ id: 'a' }, { id: 'b' }], next_cursor: 'c1' },\n      { items: [{ id: 'b' }, { id: 'c' }], next_cursor: null },\n    );\n    const items = await listAll(transport, '/items');\n    expect(items.map((item) => item.id)).toEqual(['a', 'b', 'c']);\n  });\n});\n",
+   "src/client.ts": "import { requestHeaders } from './config.js';\nimport { toQueryString } from './query.js';\n\nexport interface Item {\n  id: string;\n  [key: string]: unknown;\n}\n\nexport interface Page {\n  items: Item[];\n  next_cursor: string | null;\n}\n\nexport type Transport = (url: string, headers: Record<string, string>) => Promise<Page>;\n\nexport interface ListOptions {\n  pageSize?: number;\n  maxPages?: number;\n}\n\nexport class PaginationError extends Error {\n  constructor(readonly pages: number) {\n    super(`stopped after ${pages} pages`);\n    this.name = 'PaginationError';\n  }\n}\n\nexport function clampPageSize(size: number): number {\n  if (size > 100) return 100;\n  if (size < 1) return 1;\n  return Math.floor(size);\n}\n\nexport function uniqueById(items: Item[]): Item[] {\n  const seen = new Set<string>();\n  return items.filter((item) => {\n    if (seen.has(item.id)) return false;\n    seen.add(item.id);\n    return true;\n  });\n}\n\nexport async function listAll(transport: Transport, path: string, opts: ListOptions = {}): Promise<Item[]> {\n  const limit = clampPageSize(opts.pageSize ?? 50);\n  const maxPages = opts.maxPages ?? 10;\n  const items: Item[] = [];\n  let cursor: string | undefined;\n  let pages = 0;\n  do {\n    if (pages >= maxPages) {\n      throw new PaginationError(pages);\n    }\n    const page = await transport(path + toQueryString({ cursor, limit }), requestHeaders());\n    items.push(...page.items);\n    cursor = page.next_cursor ?? undefined;\n    pages++;\n  } while (cursor);\n  return uniqueById(items);\n}\n",
+   "src/config.ts": "export const CLIENT_DEFAULTS = {\n  userAgent: 'acme-client/1.4.0',\n  timeoutMs: 10000,\n};\n\nexport function requestHeaders(): Record<string, string> {\n  return {\n    'User-Agent': CLIENT_DEFAULTS.userAgent,\n    'X-Timeout-Ms': String(CLIENT_DEFAULTS.timeoutMs),\n  };\n}\n",
+   "src/query.test.ts": "import { describe, expect, it } from 'vitest';\nimport { toQueryString } from './query.js';\n\ndescribe('toQueryString', () => {\n  it('encodes values and skips undefined ones', () => {\n    expect(toQueryString({ q: 'a b', page: undefined })).toBe('?q=a%20b');\n  });\n\n  it('returns an empty string without params', () => {\n    expect(toQueryString({})).toBe('');\n  });\n});\n",
+   "src/query.ts": "export type QueryValue = string | number | undefined;\n\nexport function toQueryString(params: Record<string, QueryValue>): string {\n  const pairs: string[] = [];\n  for (const [key, value] of Object.entries(params)) {\n    if (value === undefined) continue;\n    pairs.push(`${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`);\n  }\n  return pairs.length ? `?${pairs.join('&')}` : '';\n}\n"
+  }
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "tasklist_only",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {
+   "R1": "done",
+   "R2": "done",
+   "R3": "done"
+  },
+  "requirementsAccept": {},
+  "units": [
+   {
+    "file": "src/query.ts",
+    "symbol": "toQueryString",
+    "role": "unexplained_benign",
+    "accept": [
+     "ignored",
+     "supporting"
+    ]
+   }
+  ],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "annotatedBy": "claude-code"
+}

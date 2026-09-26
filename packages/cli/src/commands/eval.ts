@@ -9,11 +9,15 @@ import { join } from 'node:path';
 import { parseArgs } from 'node:util';
 import { BRAND } from '@remit/core';
 import {
+  baselineMetrics,
+  baselineNote,
   computeMetrics,
   type EvalItem,
   goldenItems,
   type ProviderMode,
+  type RunInfo,
   runItems,
+  runSinglePass,
   summaryLine,
   writeReport,
 } from '@remit/eval';
@@ -87,7 +91,9 @@ export async function evalCommand(argv: string[], io: Io, loadItems?: ItemLoader
       `Corpus ${corpus} (${split}) has no items.`,
       corpus === 'shadow'
         ? 'Shadow items come from stored feedback (M8); export them first.'
-        : `Build it with \`pnpm eval:build\`.`,
+        : corpus === 'swebench'
+          ? 'Fetch and build it with `pnpm eval:fetch-a`.'
+          : 'Build it with `pnpm remit mutate --all`.',
     );
 
   const maxUsd = Number(io.env.EVAL_MAX_USD ?? 20);
@@ -113,11 +119,22 @@ export async function evalCommand(argv: string[], io: Io, loadItems?: ItemLoader
     maxUsd,
   });
   const metrics = computeMetrics(outcomes);
-  const baselines: Record<string, { note: string }> = {};
-  if (values.baseline)
-    baselines[values.baseline] = {
-      note: await (await import('@remit/eval')).baselineNote(values.baseline, io.env),
-    };
+  const baselines: NonNullable<RunInfo['baselines']> = {};
+  if (values.baseline) {
+    const note = await baselineNote(values.baseline, io.env);
+    const llm =
+      values.baseline === 'single_pass' ? (p?.llm ?? buildProviders(config, io.env).llm) : undefined;
+    if (llm && note === 'available') {
+      const run = items.slice(0, limit ?? items.length);
+      const variants = [];
+      for (const variant of ['remit_requirements', 'own_requirements'] as const) {
+        const outs = [];
+        for (const it of run) outs.push(await runSinglePass(it, llm, variant));
+        variants.push(baselineMetrics(outs, variant));
+      }
+      baselines[values.baseline] = { note: `live (${llm.model})`, variants };
+    } else baselines[values.baseline] = { note };
+  }
   const info = {
     corpus,
     split,

@@ -1,0 +1,168 @@
+{
+  "id": "ts-list-pagination",
+  "language": "ts",
+  "annotated_by": "claude-code",
+  "split": "test",
+  "summary": "API client pagination: clamped page size sent as limit, a max-pages guard with PaginationError, de-duplication by id.",
+  "requirements": [
+    {
+      "id": "R1",
+      "text": "`listAll` accepts a `pageSize` option, sent as the `limit` query parameter, that defaults to 50 and is clamped to 1..100 (for example `pageSize: 500` requests `limit=100`)",
+      "implementing": [
+        {
+          "file": "src/client.ts",
+          "symbol": "clampPageSize"
+        },
+        {
+          "file": "src/client.ts",
+          "symbol": "listAll",
+          "remove": [
+            "const limit = clampPageSize"
+          ],
+          "replace": [
+            {
+              "from": "{ cursor, limit }",
+              "to": "{ cursor }"
+            }
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "file": "src/client.test.ts",
+          "symbol": "clamps the page size to 1..100"
+        },
+        {
+          "file": "src/client.test.ts",
+          "symbol": "sends the page size as the limit parameter"
+        }
+      ],
+      "flip": {
+        "impl": {
+          "file": "src/client.ts",
+          "symbol": "clampPageSize",
+          "from": "100",
+          "to": "1000"
+        },
+        "test": {
+          "file": "src/client.test.ts",
+          "symbol": "clamps the page size to 1..100",
+          "from": "100",
+          "to": "500"
+        }
+      },
+      "partial": {
+        "impl": {
+          "file": "src/client.ts",
+          "symbol": "clampPageSize",
+          "contains": "if (size < 1)"
+        },
+        "test": {
+          "file": "src/client.test.ts",
+          "symbol": "clamps the page size to 1..100",
+          "contains": "clampPageSize(0)"
+        }
+      },
+      "unwire": {
+        "file": "src/client.ts",
+        "symbol": "listAll",
+        "callee": "clampPageSize"
+      }
+    },
+    {
+      "id": "R2",
+      "text": "`listAll` stops after `maxPages` pages (default 10) and throws a `PaginationError` that says how many pages it read",
+      "implementing": [
+        {
+          "file": "src/client.ts",
+          "symbol": "PaginationError"
+        },
+        {
+          "file": "src/client.ts",
+          "symbol": "listAll",
+          "remove": [
+            "const maxPages",
+            "let pages = 0",
+            "pages >= maxPages",
+            "pages++"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "file": "src/client.test.ts",
+          "symbol": "stops at the default page limit"
+        },
+        {
+          "file": "src/client.test.ts",
+          "symbol": "says how many pages it read"
+        }
+      ],
+      "flip": {
+        "impl": {
+          "file": "src/client.ts",
+          "symbol": "listAll",
+          "from": "10",
+          "to": "100"
+        },
+        "test": {
+          "file": "src/client.test.ts",
+          "symbol": "stops at the default page limit",
+          "from": "10",
+          "to": "100"
+        }
+      }
+    },
+    {
+      "id": "R3",
+      "text": "An item that shows up on two pages (same `id`) is returned only once, in the position it first appeared",
+      "implementing": [
+        {
+          "file": "src/client.ts",
+          "symbol": "uniqueById"
+        },
+        {
+          "file": "src/client.ts",
+          "symbol": "listAll",
+          "replace": [
+            {
+              "from": "uniqueById(items)",
+              "to": "items"
+            }
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "file": "src/client.test.ts",
+          "symbol": "returns an item seen on two pages once"
+        }
+      ]
+    }
+  ],
+  "incidental": [
+    {
+      "file": "src/client.ts",
+      "symbol": "ListOptions",
+      "role": "supporting"
+    }
+  ],
+  "config": {
+    "file": "src/config.ts",
+    "symbol": "CLIENT_DEFAULTS",
+    "from": "10000",
+    "to": "1000"
+  },
+  "unrelatedTest": {
+    "file": "src/query.test.ts",
+    "symbol": "encodes values and skips undefined ones"
+  },
+  "unrelatedCode": {
+    "file": "src/query.ts",
+    "symbol": "toQueryString",
+    "rename": {
+      "from": "parts",
+      "to": "pairs"
+    }
+  }
+}

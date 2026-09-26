@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:django__django-12262",
+ "corpus": "swebench",
+ "seedId": "django__django-12262",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "69331bb851c34f05bc77e9fc24020fe6908b9cd5",
+  "headSha": "CodeStory-django__django-12262",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 12262
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 12262
+    },
+    "title": "Custom template tags raise TemplateSyntaxError when keyword-only arguments with defaults are provided.",
+    "body": "Description\n\t \n\t\t(last modified by P-Seebauer)\n\t \nWhen creating simple tags without variable keyword args, but an keyword argument with a default value. It's not possible to supply any other variable.\n@register.simple_tag\ndef hello(*, greeting='hello'):\n\treturn f'{greeting} world'\n{% hello greeting='hi' %}\nRaises “'hello' received unexpected keyword argument 'greeting'”\nAlso supplying a keyword argument a second time raises the wrong error message:\n#tag\n@register.simple_tag\ndef hi(*, greeting):\n\treturn f'{greeting} world'\n{% hi greeting='hi' greeting='hello' %}\nRaises “'hi' received unexpected keyword argument 'greeting'”\ninstead of \"'hi' received multiple values for keyword argument 'greeting'\"\nSame goes for inclusion tags (is the same code) I already have a fix ready, will push it after creating the ticket (that I have a ticket# for the commit).\nIs actually for all versions since the offending line is from 2.0…",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:4792e03e8f587cc1b343e291f5ed04d44cb9c1882665822bec7a05b10bd666fc"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-12262",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/template/library.py b/django/template/library.py\nindex 20bc86dac8..802ede3eda 100644\n--- a/django/template/library.py\n+++ b/django/template/library.py\n@@ -261,16 +261,16 @@ def parse_bits(parser, bits, params, varargs, varkw, defaults,\n         if kwarg:\n             # The kwarg was successfully extracted\n             param, value = kwarg.popitem()\n-            if param not in params and param not in unhandled_kwargs and varkw is None:\n-                # An unexpected keyword argument was supplied\n-                raise TemplateSyntaxError(\n-                    \"'%s' received unexpected keyword argument '%s'\" %\n-                    (name, param))\n-            elif param in kwargs:\n+            if param in kwargs:\n                 # The keyword argument has already been supplied once\n                 raise TemplateSyntaxError(\n                     \"'%s' received multiple values for keyword argument '%s'\" %\n                     (name, param))\n+            elif param not in params and param not in kwonly and param not in unhandled_kwargs and varkw is None:\n+                # An unexpected keyword argument was supplied\n+                raise TemplateSyntaxError(\n+                    \"'%s' received unexpected keyword argument '%s'\" %\n+                    (name, param))\n             else:\n                 # All good, record the keyword argument\n                 kwargs[str(param)] = value\ndiff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..b645a9c83e\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,88 @@\n+import django\n+from django.conf import settings\n+from django.template import Library, Context\n+from django.template.base import TemplateSyntaxError, Node\n+from django.template.engine import Engine\n+\n+if not settings.configured:\n+    settings.configure()\n+    django.setup()\n+\n+# Test cases\n+def test_keyword_only_with_default():\n+    try:\n+        # Test a keyword-only argument with default value\n+        def hello(*, greeting='hello'):\n+            return f'{greeting} world'\n+        \n+        # Try with a valid keyword argument\n+        result = hello(greeting='hi')\n+        print(\"Test 1a succeeded with result:\", result)\n+        \n+        # Try with default value\n+        result = hello()\n+        print(\"Test 1b succeeded with result:\", result)\n+        \n+    except Exception as e:\n+        print(f\"Test 1 failed with: {str(e)}\")\n+\n+def test_duplicate_keyword():\n+    try:\n+        # Test duplicate keyword argument\n+        def hi(*, greeting):\n+            return f'{greeting} world'\n+        \n+        # Simulate template engine behavior by building kwargs dict\n+        kwargs = {}\n+        # First assignment\n+        kwargs['greeting'] = 'hi'\n+        # Second assignment would happen in template parsing\n+        if 'greeting' in kwargs:\n+            print(\"Test 2 failed as expected with: got multiple values for keyword argument 'greeting'\")\n+        else:\n+            kwargs['greeting'] = 'hello'\n+            result = hi(**kwargs)\n+            print(\"Test 2 succeeded unexpectedly with:\", result)\n+    except Exception as e:\n+        print(f\"Test 2 failed with unexpected error: {str(e)}\")\n+\n+def test_multiple_keyword_only():\n+    try:\n+        # Test multiple keyword-only arguments\n+        def multi_greet(*, greeting='hello', name='world', suffix='!'):\n+            return f'{greeting} {name}{suffix}'\n+        \n+        result = multi_greet(greeting='hi', name='django', suffix='!!!')\n+        print(\"Test 3 succeeded with result:\", result)\n+    except Exception as e:\n+        print(f\"Test 3 failed with: {str(e)}\")\n+\n+def test_mixed_args():\n+    try:\n+        # Test mixing positional and keyword-only arguments\n+        def greet(name, *, greeting='hello', suffix='!'):\n+            return f'{greeting} {name}{suffix}'\n+        \n+        result = greet('django', greeting='hi', suffix='!!!')\n+        print(\"Test 4 succeeded with result:\", result)\n+    except Exception as e:\n+        print(f\"Test 4 failed with: {str(e)}\")\n+\n+def test_default_values():\n+    try:\n+        # Test using default values\n+        def multi_greet(*, greeting='hello', name='world', suffix='!'):\n+            return f'{greeting} {name}{suffix}'\n+        \n+        result = multi_greet(name='django')\n+        print(\"Test 5 succeeded with result:\", result)\n+    except Exception as e:\n+        print(f\"Test 5 failed with: {str(e)}\")\n+\n+# Run all tests\n+print(\"Running tests...\")\n+test_keyword_only_with_default()\n+test_duplicate_keyword()\n+test_multiple_keyword_only()\n+test_mixed_args()\n+test_default_values()\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

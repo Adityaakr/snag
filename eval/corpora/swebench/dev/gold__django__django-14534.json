@@ -1,0 +1,140 @@
+{
+ "id": "gold:django__django-14534",
+ "corpus": "swebench",
+ "seedId": "django__django-14534",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "910ecd1b8df7678f45c3d507dde6bcb1faafa243",
+  "headSha": "gold-django__django-14534",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 14534
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 14534
+    },
+    "title": "BoundWidget.id_for_label ignores id set by ChoiceWidget.options",
+    "body": "Description\n\t\nIf you look at the implementation of BoundField.subwidgets\nclass BoundField:\n\t...\n\tdef subwidgets(self):\n\t\tid_ = self.field.widget.attrs.get('id') or self.auto_id\n\t\tattrs = {'id': id_} if id_ else {}\n\t\tattrs = self.build_widget_attrs(attrs)\n\t\treturn [\n\t\t\tBoundWidget(self.field.widget, widget, self.form.renderer)\n\t\t\tfor widget in self.field.widget.subwidgets(self.html_name, self.value(), attrs=attrs)\n\t\t]\none sees that self.field.widget.subwidgets(self.html_name, self.value(), attrs=attrs) returns a dict and assigns it to widget. Now widget['attrs']['id'] contains the \"id\" we would like to use when rendering the label of our CheckboxSelectMultiple.\nHowever BoundWidget.id_for_label() is implemented as\nclass BoundWidget:\n\t...\n\tdef id_for_label(self):\n\t\treturn 'id_%s_%s' % (self.data['name'], self.data['index'])\nignoring the id available through self.data['attrs']['id']. This re-implementation for rendering the \"id\" is confusing and presumably not intended. Nobody has probably realized that so far, because rarely the auto_id-argument is overridden when initializing a form. If however we do, one would assume that the method BoundWidget.id_for_label renders that string as specified through the auto_id format-string.\nBy changing the code from above to\nclass BoundWidget:\n\t...\n\tdef id_for_label(self):\n\t\treturn self.data['attrs']['id']\nthat function behaves as expected.\nPlease note that this error only occurs when rendering the subwidgets of a widget of type CheckboxSelectMultiple. This has nothing to do with the method BoundField.id_for_label().",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:b0a1313b6e87e77d2a6bcfc287f899df5f7f03400877ae8bc1629599b9ec1860"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-14534",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/forms/boundfield.py b/django/forms/boundfield.py\n--- a/django/forms/boundfield.py\n+++ b/django/forms/boundfield.py\n@@ -277,7 +277,7 @@ def template_name(self):\n \n     @property\n     def id_for_label(self):\n-        return 'id_%s_%s' % (self.data['name'], self.data['index'])\n+        return self.data['attrs'].get('id')\n \n     @property\n     def choice_label(self):\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "gold",
+  "source": "gold",
+  "strength": "strong"
+ },
+ "annotatedBy": "study"
+}

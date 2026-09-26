@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:pytest-dev__pytest-7571",
+ "corpus": "swebench",
+ "seedId": "pytest-dev__pytest-7571",
+ "input": {
+  "mode": "local",
+  "repo": "pytest-dev/pytest",
+  "baseSha": "422685d0bdc110547535036c1ff398b5e1c44145",
+  "headSha": "CodeStory-pytest-dev__pytest-7571",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "pytest-dev",
+    "repo": "pytest",
+    "number": 7571
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "pytest-dev",
+     "repo": "pytest",
+     "number": 7571
+    },
+    "title": "caplog fixture doesn't restore log level after test",
+    "body": "From the documentation at https://docs.pytest.org/en/6.0.0/logging.html#caplog-fixture, \"The log levels set are restored automatically at the end of the test\".\r\nIt used to work, but looks broken in new 6.0 release. Minimal example to reproduce:\r\n\r\n```\r\ndef test_foo(caplog):\r\n    caplog.set_level(42)\r\n\r\ndef test_bar(caplog):\r\n    print(caplog.handler.level)\r\n```\r\n\r\nIt prints \"0\" for pytest<6, \"42\" after.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:78c2d97d82933747e703288ace90064f85259bec6c777110828e17159f1b1809"
+   }
+  ],
+  "pr": {
+   "title": "Fix pytest-dev__pytest-7571",
+   "body": ""
+  },
+  "diffText": "diff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 000000000..568028dc1\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,9 @@\n+import pytest\n+\n+def test_foo(caplog):\n+    print(\"Initial level:\", caplog.handler.level)\n+    caplog.set_level(42)\n+    print(\"After setting level:\", caplog.handler.level)\n+\n+def test_bar(caplog):\n+    print(\"Level in second test:\", caplog.handler.level)\n\\ No newline at end of file\ndiff --git a/src/_pytest/logging.py b/src/_pytest/logging.py\nindex 11031f2f2..6de4f9772 100644\n--- a/src/_pytest/logging.py\n+++ b/src/_pytest/logging.py\n@@ -344,8 +344,8 @@ class LogCaptureFixture:\n     def __init__(self, item: nodes.Node) -> None:\n         \"\"\"Creates a new funcarg.\"\"\"\n         self._item = item\n-        # dict of log name -> log level\n-        self._initial_logger_levels = {}  # type: Dict[Optional[str], int]\n+        # dict of log name -> (logger level, handler level)\n+        self._initial_logger_levels = {}  # type: Dict[Optional[str], Tuple[int, int]]\n \n     def _finalize(self) -> None:\n         \"\"\"Finalizes the fixture.\n@@ -353,9 +353,10 @@ class LogCaptureFixture:\n         This restores the log levels changed by :meth:`set_level`.\n         \"\"\"\n         # restore log levels\n-        for logger_name, level in self._initial_logger_levels.items():\n+        for logger_name, (logger_level, handler_level) in self._initial_logger_levels.items():\n             logger = logging.getLogger(logger_name)\n-            logger.setLevel(level)\n+            logger.setLevel(logger_level)\n+            self.handler.setLevel(handler_level)\n \n     @property\n     def handler(self) -> LogCaptureHandler:\n@@ -432,7 +433,7 @@ class LogCaptureFixture:\n         \"\"\"\n         logger_obj = logging.getLogger(logger)\n         # save the original log-level to restore it during teardown\n-        self._initial_logger_levels.setdefault(logger, logger_obj.level)\n+        self._initial_logger_levels.setdefault(logger, (logger_obj.level, self.handler.level))\n         logger_obj.setLevel(level)\n         self.handler.setLevel(level)\n \n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

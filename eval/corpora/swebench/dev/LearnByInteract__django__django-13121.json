@@ -1,0 +1,140 @@
+{
+ "id": "LearnByInteract:django__django-13121",
+ "corpus": "swebench",
+ "seedId": "django__django-13121",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "ec5aa2161d8015a3fe57dcbbfe14200cd18f0a16",
+  "headSha": "LearnByInteract-django__django-13121",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 13121
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 13121
+    },
+    "title": "durations-only expressions doesn't work on SQLite and MySQL",
+    "body": "Description\n\t\nclass Experiment(models.Model):\n\testimated_time = models.DurationField()\nlist(Experiment.objects.annotate(duration=F('estimated_time') + datime.timedelta(1)))\nTraceback (most recent call last):\n File \"/home/sergey/dev/django/tests/expressions/tests.py\", line 1218, in test_duration_expressions\n\tlist(Experiment.objects.annotate(duration=F('estimated_time') + delta))\n File \"/home/sergey/dev/django/django/db/models/query.py\", line 269, in __iter__\n\tself._fetch_all()\n File \"/home/sergey/dev/django/django/db/models/query.py\", line 1172, in _fetch_all\n\tself._result_cache = list(self._iterable_class(self))\n File \"/home/sergey/dev/django/django/db/models/query.py\", line 63, in __iter__\n\tfor row in compiler.results_iter(results):\n File \"/home/sergey/dev/django/django/db/models/sql/compiler.py\", line 998, in apply_converters\n\tvalue = converter(value, expression, connection)\n File \"/home/sergey/dev/django/django/db/backends/base/operations.py\", line 571, in convert_durationfield_value\n\tvalue = str(decimal.Decimal(value) / decimal.Decimal(1000000))\ndecimal.InvalidOperation: [<class 'decimal.ConversionSyntax'>]",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:96b1a2bef497f0f355ff36088225c3717b9b8417897beea38e5ab92a1e7b447f"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-13121",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/db/backends/base/operations.py b/django/db/backends/base/operations.py\nindex 2e283a3193..7578b85b8d 100644\n--- a/django/db/backends/base/operations.py\n+++ b/django/db/backends/base/operations.py\n@@ -579,8 +579,56 @@ class BaseDatabaseOperations:\n         return []\n \n     def convert_durationfield_value(self, value, expression, connection):\n-        if value is not None:\n-            return datetime.timedelta(0, 0, value)\n+        if value is None:\n+            return None\n+        if isinstance(value, str):\n+            try:\n+                # Try parsing as microseconds first (most common case)\n+                value = int(value)\n+            except ValueError:\n+                try:\n+                    # Handle scientific notation\n+                    value = int(decimal.Decimal(value))\n+                except (decimal.InvalidOperation, ValueError):\n+                    # Handle human-readable format (e.g. \"1 day, 10:11:12\")\n+                    if ' day' in value:\n+                        days, rest = value.split(' day', 1)\n+                        days = int(days)\n+                        if rest.startswith('s'):  # Handle plural\n+                            rest = rest[1:]\n+                        if rest.startswith(', '):  # Handle optional comma\n+                            rest = rest[2:]\n+                        time_part = rest\n+                    else:\n+                        days = 0\n+                        time_part = value\n+\n+                    hours = minutes = seconds = microseconds = 0\n+                    if time_part:\n+                        time_parts = time_part.split(':')\n+                        if len(time_parts) == 3:\n+                            hours, minutes, seconds = map(float, time_parts)\n+                        elif len(time_parts) == 2:\n+                            hours, minutes = map(float, time_parts)\n+                        else:\n+                            hours = float(time_parts[0])\n+                        \n+                        # Handle microseconds in seconds part\n+                        if '.' in str(seconds):\n+                            seconds, micro = str(seconds).split('.')\n+                            microseconds = int((micro + '000000')[:6])\n+                            seconds = int(seconds)\n+                        else:\n+                            seconds = int(seconds)\n+\n+                    return datetime.timedelta(\n+                        days=days,\n+                        hours=int(hours),\n+                        minutes=int(minutes),\n+                        seconds=seconds,\n+                        microseconds=microseconds\n+                    )\n+        return datetime.timedelta(0, 0, value)\n \n     def check_expression_support(self, expression):\n         \"\"\"\n@@ -702,3 +750,4 @@ class BaseDatabaseOperations:\n \n     def ignore_conflicts_suffix_sql(self, ignore_conflicts=None):\n         return ''\n+\ndiff --git a/reproduce.py b/reproduce.py\nnew file mode 100644\nindex 0000000000..f858bfcb1e\n--- /dev/null\n+++ b/reproduce.py\n@@ -0,0 +1,42 @@\n+from django.conf import settings\n+from django.db import models\n+from django.db.models import F\n+import datetime\n+\n+# Configure Django settings\n+settings.configure(\n+    DATABASES={\n+        'default': {\n+            'ENGINE': 'django.db.backends.sqlite3',\n+            'NAME': ':memory:',\n+        }\n+    },\n+    INSTALLED_APPS=['django.contrib.contenttypes'],\n+)\n+\n+import django\n+django.setup()\n+\n+# Define the model\n+class Experiment(models.Model):\n+    estimated_time = models.DurationField()\n+    \n+    class Meta:\n+        app_label = 'testapp'\n+\n+# Create tables\n+from django.db import connection\n+with connection.schema_editor() as schema_editor:\n+    schema_editor.create_model(Experiment)\n+\n+# Create test data\n+exp = Experiment.objects.create(\n+    estimated_time=datetime.timedelta(days=1)\n+)\n+\n+# Try the problematic query\n+try:\n+    delta = datetime.timedelta(days=1)\n+    list(Experiment.objects.annotate(duration=F('estimated_time') + delta))\n+except Exception as e:\n+    print(f\"Error: {e}\")\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "LearnByInteract",
+  "source": "rq2_divergent",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

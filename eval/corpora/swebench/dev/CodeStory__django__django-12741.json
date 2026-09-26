@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:django__django-12741",
+ "corpus": "swebench",
+ "seedId": "django__django-12741",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "537d422942b53bc0a2b6a51968f379c0de07793c",
+  "headSha": "CodeStory-django__django-12741",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 12741
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 12741
+    },
+    "title": "Simplify signature of `DatabaseOperations.execute_sql_flush()`",
+    "body": "Description\n\t\nThe current signature is:\ndef execute_sql_flush(self, using, sql_list):\nThe using argument can be dropped and inferred by the calling instance: self.connection.alias.\ndef execute_sql_flush(self, sql_list):\nSome internal ises of this method are already doing:\nconnection.ops.execute_sql_flush(connection.alias, sql_flush)",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:c789e0180b5b8a52064a8becb520d9bd20379c9ccd229dee453354a1c8c2bd65"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-12741",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/core/management/commands/flush.py b/django/core/management/commands/flush.py\nindex e8ed3967f7..bc8021cf4e 100644\n--- a/django/core/management/commands/flush.py\n+++ b/django/core/management/commands/flush.py\n@@ -60,7 +60,7 @@ Are you sure you want to do this?\n \n         if confirm == 'yes':\n             try:\n-                connection.ops.execute_sql_flush(database, sql_list)\n+                connection.ops.execute_sql_flush(sql_list)\n             except Exception as exc:\n                 raise CommandError(\n                     \"Database %s couldn't be flushed. Possible reasons:\\n\"\ndiff --git a/django/db/backends/base/operations.py b/django/db/backends/base/operations.py\nindex 70ac07ae09..f07580c18b 100644\n--- a/django/db/backends/base/operations.py\n+++ b/django/db/backends/base/operations.py\n@@ -400,9 +400,9 @@ class BaseDatabaseOperations:\n         \"\"\"\n         raise NotImplementedError('subclasses of BaseDatabaseOperations must provide a sql_flush() method')\n \n-    def execute_sql_flush(self, using, sql_list):\n+    def execute_sql_flush(self, sql_list):\n         \"\"\"Execute a list of SQL statements to flush the database.\"\"\"\n-        with transaction.atomic(using=using, savepoint=self.connection.features.can_rollback_ddl):\n+        with transaction.atomic(using=self.connection.alias, savepoint=self.connection.features.can_rollback_ddl):\n             with self.connection.cursor() as cursor:\n                 for sql in sql_list:\n                     cursor.execute(sql)\ndiff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..ced2f00e2a\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,19 @@\n+from django.conf import settings\n+from django.db import connection\n+import os\n+\n+if not settings.configured:\n+    settings.configure(\n+        DATABASES={\n+            'default': {\n+                'ENGINE': 'django.db.backends.sqlite3',\n+                'NAME': ':memory:',\n+            }\n+        }\n+    )\n+\n+# Example showing current usage\n+sql_list = [\"TRUNCATE TABLE test_table\"]\n+connection.ops.execute_sql_flush(sql_list)\n+\n+print(\"Call works with simplified signature\")\n\\ No newline at end of file\ndiff --git a/tests/backends/base/test_operations.py b/tests/backends/base/test_operations.py\nindex 0485fe8465..b0ffe958c8 100644\n--- a/tests/backends/base/test_operations.py\n+++ b/tests/backends/base/test_operations.py\n@@ -172,7 +172,7 @@ class SqlFlushTests(TransactionTestCase):\n             reset_sequences=True,\n             allow_cascade=True,\n         )\n-        connection.ops.execute_sql_flush(connection.alias, sql_list)\n+        connection.ops.execute_sql_flush(sql_list)\n \n         with transaction.atomic():\n             self.assertIs(Author.objects.exists(), False)\ndiff --git a/tests/backends/tests.py b/tests/backends/tests.py\nindex d6c2331378..77dca3ac8b 100644\n--- a/tests/backends/tests.py\n+++ b/tests/backends/tests.py\n@@ -162,8 +162,7 @@ class LongNameTest(TransactionTestCase):\n             VLM_m2m._meta.db_table,\n         ]\n         sql_list = connection.ops.sql_flush(no_style(), tables, reset_sequences=True)\n-        connection.ops.execute_sql_flush(connection.alias, sql_list)\n-\n+        connection.ops.execute_sql_flush(sql_list)\n \n class SequenceResetTest(TestCase):\n \n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

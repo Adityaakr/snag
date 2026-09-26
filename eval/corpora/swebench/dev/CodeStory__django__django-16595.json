@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:django__django-16595",
+ "corpus": "swebench",
+ "seedId": "django__django-16595",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "f9fe062de5fc0896d6bbbf3f260b5c44473b3c77",
+  "headSha": "CodeStory-django__django-16595",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 16595
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 16595
+    },
+    "title": "Migration optimizer does not reduce multiple AlterField",
+    "body": "Description\n\t\nLet's consider the following operations: \noperations = [\n\tmigrations.AddField(\n\t\tmodel_name=\"book\",\n\t\tname=\"title\",\n\t\tfield=models.CharField(max_length=256, null=True),\n\t),\n\tmigrations.AlterField(\n\t\tmodel_name=\"book\",\n\t\tname=\"title\",\n\t\tfield=models.CharField(max_length=128, null=True),\n\t),\n\tmigrations.AlterField(\n\t\tmodel_name=\"book\",\n\t\tname=\"title\",\n\t\tfield=models.CharField(max_length=128, null=True, help_text=\"help\"),\n\t),\n\tmigrations.AlterField(\n\t\tmodel_name=\"book\",\n\t\tname=\"title\",\n\t\tfield=models.CharField(max_length=128, null=True, help_text=\"help\", default=None),\n\t),\n]\nIf I run the optimizer, I get only the AddField, as we could expect. However, if the AddField model is separated from the AlterField (e.g. because of a non-elidable migration, or inside a non-squashed migration), none of the AlterField are reduced:\noptimizer.optimize(operations[1:], \"books\") \n[<AlterField model_name='book', name='title', field=<django.db.models.fields.CharField>>,\n <AlterField model_name='book', name='title', field=<django.db.models.fields.CharField>>,\n <AlterField model_name='book', name='title', field=<django.db.models.fields.CharField>>]\nIndeed, the AlterField.reduce does not consider the the case where operation is also an AlterField. \nIs this behaviour intended? If so, could it be documented? \nOtherwise, would it make sense to add something like\n\t\tif isinstance(operation, AlterField) and self.is_same_field_operation(\n\t\t\toperation\n\t\t):\n\t\t\treturn [operation]",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:b183baef963046aab088262c41ef10b9cc6ad60a7891250ce3b6c588f84720f3"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-16595",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/db/migrations/operations/fields.py b/django/db/migrations/operations/fields.py\nindex cd3aab43ad..5108c95b1f 100644\n--- a/django/db/migrations/operations/fields.py\n+++ b/django/db/migrations/operations/fields.py\n@@ -264,6 +264,11 @@ class AlterField(FieldOperation):\n                     field=self.field,\n                 ),\n             ]\n+        elif isinstance(operation, AlterField) and self.is_same_field_operation(\n+            operation\n+        ):\n+            # Return the latest AlterField operation since it represents the final state\n+            return [operation]\n         return super().reduce(operation, app_label)\n \n \ndiff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..75bdb9f2e6\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,31 @@\n+from django.db import migrations, models\n+from django.db.migrations.optimizer import MigrationOptimizer\n+\n+# Create test operations\n+operations = [\n+    migrations.AlterField(\n+        model_name=\"book\",\n+        name=\"title\",\n+        field=models.CharField(max_length=128, null=True),\n+    ),\n+    migrations.AlterField(\n+        model_name=\"book\",\n+        name=\"title\",\n+        field=models.CharField(max_length=128, null=True, help_text=\"help\"),\n+    ),\n+    migrations.AlterField(\n+        model_name=\"book\",\n+        name=\"title\",\n+        field=models.CharField(max_length=128, null=True, help_text=\"help\", default=None),\n+    ),\n+]\n+\n+# Run the optimizer\n+optimizer = MigrationOptimizer()\n+optimized = optimizer.optimize(operations, \"books\")\n+\n+print(\"Original operations:\", len(operations))\n+print(\"Optimized operations:\", len(optimized))\n+print(\"\\nOptimized operations:\")\n+for op in optimized:\n+    print(f\"  {op}\")\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

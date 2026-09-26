@@ -1,0 +1,140 @@
+{
+ "id": "gold:sympy__sympy-13372",
+ "corpus": "swebench",
+ "seedId": "sympy__sympy-13372",
+ "input": {
+  "mode": "local",
+  "repo": "sympy/sympy",
+  "baseSha": "30379ea6e225e37833a764ac2da7b7fadf5fe374",
+  "headSha": "gold-sympy__sympy-13372",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "sympy",
+    "repo": "sympy",
+    "number": 13372
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "sympy",
+     "repo": "sympy",
+     "number": 13372
+    },
+    "title": "UnboundLocalError in evalf",
+    "body": "```\r\n>>> Mul(x, Max(0, y), evaluate=False).evalf()\r\nx*Max(0, y)\r\n>>> Mul(Max(0, y), x, evaluate=False).evalf()\r\nTraceback (most recent call last):\r\n  File \"./sympy/core/evalf.py\", line 1285, in evalf\r\n    rf = evalf_table[x.func]\r\nKeyError: Max\r\n\r\nDuring handling of the above exception, another exception occurred:\r\n\r\nTraceback (most recent call last):\r\n  File \"<stdin>\", line 1, in <module>\r\n  File \"./sympy/core/evalf.py\", line 1394, in evalf\r\n    result = evalf(self, prec + 4, options)\r\n  File \"./sympy/core/evalf.py\", line 1286, in evalf\r\n    r = rf(x, prec, options)\r\n  File \"./sympy/core/evalf.py\", line 538, in evalf_mul\r\n    arg = evalf(arg, prec, options)\r\n  File \"./sympy/core/evalf.py\", line 1308, in evalf\r\n    r = re, im, reprec, imprec\r\nUnboundLocalError: local variable 'reprec' referenced before assignment\r\n```\r\n\r\nI found this after changing the order of Mul args in https://github.com/sympy/sympy/pull/13059.\r\n\r\nBased on the code, I think the elif clauses that define reprec and imprec should have an `else: raise NotImplementedError`. That appears to fix it, although I didn't try to debug to see why the arg order is mattering here.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:29946be44b1b7c61a53937581458678c9b14b204fc182965b012edc1d0ab6d42"
+   }
+  ],
+  "pr": {
+   "title": "Fix sympy__sympy-13372",
+   "body": ""
+  },
+  "diffText": "diff --git a/sympy/core/evalf.py b/sympy/core/evalf.py\n--- a/sympy/core/evalf.py\n+++ b/sympy/core/evalf.py\n@@ -1301,12 +1301,16 @@ def evalf(x, prec, options):\n             elif re.is_number:\n                 re = re._to_mpmath(prec, allow_ints=False)._mpf_\n                 reprec = prec\n+            else:\n+                raise NotImplementedError\n             if im == 0:\n                 im = None\n                 imprec = None\n             elif im.is_number:\n                 im = im._to_mpmath(prec, allow_ints=False)._mpf_\n                 imprec = prec\n+            else:\n+                raise NotImplementedError\n             r = re, im, reprec, imprec\n         except AttributeError:\n             raise NotImplementedError\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "gold",
+  "source": "gold",
+  "strength": "strong"
+ },
+ "annotatedBy": "study"
+}

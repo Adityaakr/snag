@@ -1,0 +1,140 @@
+{
+ "id": "gold:sympy__sympy-15349",
+ "corpus": "swebench",
+ "seedId": "sympy__sympy-15349",
+ "input": {
+  "mode": "local",
+  "repo": "sympy/sympy",
+  "baseSha": "768da1c6f6ec907524b8ebbf6bf818c92b56101b",
+  "headSha": "gold-sympy__sympy-15349",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "sympy",
+    "repo": "sympy",
+    "number": 15349
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "sympy",
+     "repo": "sympy",
+     "number": 15349
+    },
+    "title": "Incorrect result with Quaterniont.to_rotation_matrix()",
+    "body": "https://github.com/sympy/sympy/blob/ab14b02dba5a7e3e4fb1e807fc8a954f1047a1a1/sympy/algebras/quaternion.py#L489\r\n\r\nThere appears to be an error in the `Quaternion.to_rotation_matrix()` output.  The simplest example I created to illustrate the problem is as follows:\r\n\r\n```\r\n>>import sympy\r\n>>print('Sympy version: ', sympy.__version__)\r\nSympy version: 1.2\r\n\r\n>> from sympy import *\r\n>> x = symbols('x')\r\n>> q = Quaternion(cos(x/2), sin(x/2), 0, 0)\r\n>> trigsimp(q.to_rotation_matrix())\r\nMatrix([\r\n[1,      0,      0],\r\n[0, cos(x), sin(x)],\r\n[0, sin(x), cos(x)]])\r\n```\r\nOne of the `sin(x)` functions should be negative.  What was the reference of the original equations?",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:13c275501a16494b7586e66f13a3784ded93ee412ae98ea55e7a6fae0a7f644d"
+   }
+  ],
+  "pr": {
+   "title": "Fix sympy__sympy-15349",
+   "body": ""
+  },
+  "diffText": "diff --git a/sympy/algebras/quaternion.py b/sympy/algebras/quaternion.py\n--- a/sympy/algebras/quaternion.py\n+++ b/sympy/algebras/quaternion.py\n@@ -529,7 +529,7 @@ def to_rotation_matrix(self, v=None):\n \n         m10 = 2*s*(q.b*q.c + q.d*q.a)\n         m11 = 1 - 2*s*(q.b**2 + q.d**2)\n-        m12 = 2*s*(q.c*q.d + q.b*q.a)\n+        m12 = 2*s*(q.c*q.d - q.b*q.a)\n \n         m20 = 2*s*(q.b*q.d - q.c*q.a)\n         m21 = 2*s*(q.c*q.d + q.b*q.a)\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "gold",
+  "source": "gold",
+  "strength": "strong"
+ },
+ "annotatedBy": "study"
+}
