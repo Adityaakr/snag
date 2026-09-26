@@ -37,6 +37,16 @@ No keys: task-list extraction (9 requirements, one per M6 item; item 2 quotes on
 | shadow.ts:73 | `new_symbol_unreferenced`: `shadowItem` | right | none: the corpus C export format is defined in M6 and first used by M8's exporter |
 | swebench.ts:15 | `secret_like`: high-entropy token | wrong: a PatchDiff run directory name (`20241221_codestory_midwit_claude-3-5-sonnet_swe-search`) | none; guard:secrets does not flag it |
 
+
+### Dogfood run 3: M7 (`pnpm remit review --issue .agent/milestones/M7.md --diff m6-done..HEAD`), 2026-09-26
+
+No keys: task-list extraction (10 requirements), no Jev verdicts; 315 units (the Action bundle in `packages/action/dist` is filtered as generated). Code facts:
+
+| Finding | What Remit said | Right? | Action |
+| --- | --- | --- | --- |
+| fixtures/webhooks/*.json (18 facts) | `secret_like` high-entropy token | wrong: GitHub GraphQL `node_id` values | fixed: `node_id` lines are identifier context in secrets.ts, with a regression test (key patterns on such lines still match) |
+| packages/cli/src/providers.ts:33 | `public_api_changed`: exported `cacheDir` removed | wrong: it is re-exported from @remit/providers, so the CLI API is unchanged | none (re-exports are not declarations; a known limit of the line-based detector) |
+
 ## Eval runs
 
 - 2026-09-26T17:22:28.991Z mutations/dev simulated (not a real measurement): 0/128 items correct, requirement F1 0.30, PR recall 0.85, false alarms 9.94, P0 precision 0.19, cost $0.0000. Report: eval/reports/2026-09-26T17-22-28-991Z (local only, superseded)
