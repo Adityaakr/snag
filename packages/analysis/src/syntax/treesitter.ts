@@ -158,7 +158,7 @@ function jsSymbol(n: Node, parentKinds: SymbolKind[]): Omit<CodeSymbol, 'depth' 
     case 'variable_declarator': {
       const name = n.childForFieldName('name');
       const value = n.childForFieldName('value');
-      if (!name || name.type !== 'identifier' || !value) return null;
+      if (name?.type !== 'identifier' || !value) return null;
       const decl = n.parent;
       const range = decl && decl.namedChildCount === 1 ? decl : n;
       if (['arrow_function', 'function_expression', 'function', 'generator_function'].includes(value.type)) {
@@ -351,7 +351,7 @@ export function commentRanges(lang: ParsedLanguage, tree: Tree): TextRange[] {
     .flatMap((n) => (n ? [{ startIndex: n.startIndex, endIndex: n.endIndex }] : []));
   if (lang === 'py') {
     for (const s of tree.rootNode.descendantsOfType('expression_statement')) {
-      if (!s || s.namedChildCount !== 1 || s.namedChildren[0]?.type !== 'string') continue;
+      if (s?.namedChildCount !== 1 || s.namedChildren[0]?.type !== 'string') continue;
       const parent = s.parent;
       const isFirst = parent?.namedChildren.find((c) => c && c.type !== 'comment')?.id === s.id;
       if (isFirst && (parent?.type === 'module' || parent?.type === 'block')) {

@@ -63,3 +63,15 @@ Append-only. Each entry: date, decision, alternatives, why. Deviations from BUIL
 - Without file contents (a bare diff file), files are rebuilt from hunk lines with blanks elsewhere so tree-sitter can still find symbols.
 - Unparsed files (config, CI, other languages) drop full-line comments (`#`, `//`, `--`, `;`, `/*`, `*`, `<!--`) from the judge view; docs keep everything.
 - Pure renames, mode changes and empty files become one unit with a short description as the judge view.
+
+## 2026-09-26 D11 Code-fact detector heuristics
+- Detectors read two views of each unit: the raw patch (for `suppression_added` and `secret_like`, which live in comments or strings) and the comment-stripped judge view (for everything else, so commented-out code cannot trigger facts).
+- "Net added" counting: a marker only counts when added lines contain more of it than deleted lines, so code moved within a unit does not trigger.
+- Weakening pairs follow 6.4.2 plus: `toHaveBeenCalledTimes` to `toHaveBeenCalled`, `toHaveLength` to `toBeTruthy`, `assert a == b` to `assert a`, `assert_eq!` to a bare `assert!`.
+- `expected_value_changed` needs the same matcher and subject on both sides and a literal on at least one side. It always emits `warn`; the verdict engine raises it to `high` when the test is requirement evidence (6.4.2).
+- `tolerance_widened` also flags an exact matcher replaced by `toBeCloseTo` or `approx`.
+- `retry_or_timeout_added` runs on test units and on test-runner config files (jest, vitest, pytest, playwright, cypress, pyproject).
+- `threshold_lowered` covers coverage numbers, lint rule severities and `--max-warnings`. Required-check removal is covered by `ci_changed` (job removed, high).
+- `ci_changed` is high for broadened `permissions`, a removed job, or a new `pull_request_target` trigger.
+- `new_symbol_unreferenced` uses `git grep -w` over the head SHA (or the working tree); test files and the definition line do not count. Entrypoint files (index, main, cli, bin/, cmd/, pages/, routes/ and similar) and names like `main` or `handler` are excluded.
+- `secret_like` combines known prefixes with a Shannon entropy test (at least `4.2` bits per char, 32+ chars, letters and digits, not plain hex, not on a hash/checksum line). Details are always redacted.
