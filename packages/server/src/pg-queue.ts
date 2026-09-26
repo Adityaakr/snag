@@ -57,16 +57,18 @@ export class PgBossQueue implements JobQueue {
   async start(): Promise<void> {
     if (this.started) return;
     this.started = true;
-    await this.boss.createQueue(DEAD_LETTER).catch(() => {});
+    // Create each queue once; a real failure (for example a lost connection) surfaces instead of being swallowed.
+    const ensure = async (name: string, options?: Parameters<PgBoss['createQueue']>[1]) => {
+      if (!(await this.boss.getQueue(name))) await this.boss.createQueue(name, options);
+    };
+    await ensure(DEAD_LETTER);
     for (const name of QUEUES) {
-      await this.boss
-        .createQueue(name, {
-          retryLimit: this.opts.retryLimit ?? 3,
-          retryDelay: this.opts.retryDelaySeconds ?? 30,
-          retryBackoff: this.opts.retryBackoff ?? true,
-          deadLetter: DEAD_LETTER,
-        })
-        .catch(() => {});
+      await ensure(name, {
+        retryLimit: this.opts.retryLimit ?? 3,
+        retryDelay: this.opts.retryDelaySeconds ?? 30,
+        retryBackoff: this.opts.retryBackoff ?? true,
+        deadLetter: DEAD_LETTER,
+      });
       await this.boss.work<Envelope>(
         name,
         { pollingIntervalSeconds: this.opts.pollingIntervalSeconds ?? 2, batchSize: 1 },

@@ -47,6 +47,9 @@ The setup link is printed to the server log while the App is unconfigured; it wo
 | `METRICS_TOKEN` | bearer token for `/metrics`; without it, keep `/metrics` on an internal network |
 | `TYPESAFE_API_KEY`, `ANTHROPIC_API_KEY` (or `OPENAI_COMPATIBLE_API_KEY` and `OPENAI_COMPATIBLE_BASE_URL`) | providers; without them verdicts are uncertain and only task lists are read |
 | `REMIT_CALIBRATION_DIR` | calibration files (default `eval/calibration`) |
+| `DATABASE_URL` | Postgres; enables the pg-boss queues. Without it, PGlite runs in `${DATA_DIR:-.data}/pgdata` with an in-process queue |
+| `SESSION_SECRET` | signs dashboard sessions (at least 32 characters); the dashboard is off without it |
+| `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | the App's OAuth client for dashboard sign-in (stored by `/setup` when it runs) |
 
 Start it with `pnpm server` (development) or `node packages/server/dist/main.js`.
 
@@ -109,3 +112,20 @@ The `installation.deleted` event deletes everything stored for that installation
 
 - `packages/server/src/app.test.ts` replays the recorded payloads in `fixtures/webhooks/` against FakeGitHub.
 - `packages/server/src/e2e.test.ts` runs the real server on a socket, with LiveGitHub authenticating by App JWT and installation token against a local fake GitHub API over HTTP.
+
+## Storage, queues and the dashboard
+
+- **Database:** Postgres, with the tables from BUILD_PROMPT 10.4 created by the drizzle-kit migrations in `packages/server/drizzle/` at startup.
+  - By default Remit stores verdicts, answers, hashes, paths and line ranges, not code or issue text.
+  - `retention.retain_payloads: true` also stores the full result and the review input for `retention_days`.
+  - A nightly `cleanup` job deletes expired payloads and text columns.
+- **Queues:** pg-boss runs the `review`, `reextract`, `command`, `cleanup` and `recalibrate` queues.
+  - Jobs retry with backoff, and jobs that fail every retry go to the `dead` queue, listed on the dashboard's Metrics page.
+  - Pushes to one PR are debounced.
+  - A review whose PR head moved while it ran is cancelled before it publishes.
+- **Feedback:** labels come from slash commands, from the dashboard (the labeling queue with keys `a`, `d`, `s`, `?`, or the review detail), and from implicit weak labels.
+  - A later commit that changes the evidence lines of a missing or partial finding is a `weak_agree`, kept apart from human labels.
+- **Dashboard:** built with `pnpm --filter @remit/dashboard build` and served at `/`. Sign-in uses GitHub OAuth, and each user sees only the installations they can access on GitHub.
+  - The session cookie is signed, httpOnly, Secure and SameSite=Lax, holds no GitHub token, and lasts 8 hours.
+  - Mutations need the session's CSRF token, and the API is rate limited.
+- **Corpus C:** `GET /api/export/shadow` downloads `remit-shadow-1` records (JSON Lines) for reviews with retained payloads and human feedback. `pnpm eval:export-shadow` writes them as eval items; run `pnpm eval:freeze --append` for new test-split files.

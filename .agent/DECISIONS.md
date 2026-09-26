@@ -230,3 +230,21 @@ Append-only. Each entry: date, decision, alternatives, why. Deviations from BUIL
 - M7 verifier (first run FAIL):
   - The Action loads a calibration: the `calibration-path` input on the default branch, else files bundled into `dist/calibration` (`build.mjs` copies `eval/calibration`, excluding `simulated-jev`), matched by Jev model and question set. Gate mode can fail the job, and calibrated thresholds apply as in the CLI and the App.
   - Other fixes: tests for inline comments and annotation batching (`large_diff`, over 50 annotations); release of the dedupe claim on invalid JSON; the Action reports a skipped config file; the local-development doc uses the setup token.
+
+## 2026-09-27 D31 Persistence, feedback and the dashboard (M8)
+- **Schema:** exactly the 10.4 tables, with these additions:
+  - `reviews.result`: the review result with requirement text and quotes, reason text, claim sentences and fact details replaced, so the dashboard and `/remit explain` work without storing issue text (9.9);
+  - `reviews.has_p0`: for the dashboard filter;
+  - `feedback.repo` and `feedback.pr_number`: so feedback can be found without a join.
+  - When `retain_payloads` is on, `payloads` holds the full result and the review input (issues and diff) until they expire; corpus C exports read them.
+- **Queues:** pg-boss `review`, `reextract`, `command`, `cleanup`, `recalibrate` and `dead`. `command` (slash commands) is added to the four named queues.
+  - Retries: 3 with backoff.
+  - Debounce: `sendDebounced`.
+  - Cancellation: in-process AbortControllers per key, plus a head-SHA re-check before publishing, which covers several workers.
+  - Without `DATABASE_URL` the server uses PGlite on disk and the in-process queue.
+- **Recalibration job:** it stores measured P0 precision from strong human labels in `calibrations` (method `feedback`). Probability maps still come from `remit calibrate` on labeled eval data (11.5).
+- **Implicit weak labels:** a later head whose changed unit (new content hash) overlaps a missing or partial requirement finding's evidence lines. Findings without evidence lines (most missing ones) get no weak label.
+- **Sessions:**
+  - The installations list comes from GitHub at sign-in (`/user/installations`) and is kept in the signed session for 8 hours. Losing access on GitHub takes effect at the next sign-in.
+  - No user token is stored.
+- **Accessibility:** WCAG AA contrast is checked on the design tokens, and the keyboard is tested with Testing Library (Tab order and the queue shortcuts).

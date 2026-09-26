@@ -47,6 +47,18 @@ No keys: task-list extraction (10 requirements), no Jev verdicts; 315 units (the
 | fixtures/webhooks/*.json (18 facts) | `secret_like` high-entropy token | wrong: GitHub GraphQL `node_id` values | fixed: `node_id` lines are identifier context in secrets.ts, with a regression test (key patterns on such lines still match) |
 | packages/cli/src/providers.ts:33 | `public_api_changed`: exported `cacheDir` removed | wrong: it is re-exported from @remit/providers, so the CLI API is unchanged | none (re-exports are not declarations; a known limit of the line-based detector) |
 
+
+### Dogfood run 4: M8 (`pnpm remit review --issue .agent/milestones/M8.md --diff m7-done..HEAD`), 2026-09-27
+
+No keys: task-list extraction (6 requirements), no Jev verdicts; 360 units. Code facts:
+
+| Finding | What Remit said | Right? | Action |
+| --- | --- | --- | --- |
+| pg-queue.ts:60,69 | `catch_broadened`: empty `.catch` on `createQueue` | right: a lost connection would be hidden | fixed: `getQueue` check, then create; errors surface |
+| dashboard-api.ts:149 | `catch_broadened`: empty `.catch` on the request body | right, intended: invalid JSON becomes `null` and the zod check returns 400 | none |
+| db/pglite-server.ts:8 | `new_symbol_unreferenced`: `startPgliteServer` | right: a test harness in src, like fake-harness.ts | none |
+| queue.ts:6 | `public_api_changed`: exported type `Job` removed | right: jobs became serializable `JobSpec` data for pg-boss | none |
+
 ## Eval runs
 
 - 2026-09-26T17:22:28.991Z mutations/dev simulated (not a real measurement): 0/128 items correct, requirement F1 0.30, PR recall 0.85, false alarms 9.94, P0 precision 0.19, cost $0.0000. Report: eval/reports/2026-09-26T17-22-28-991Z (local only, superseded)
