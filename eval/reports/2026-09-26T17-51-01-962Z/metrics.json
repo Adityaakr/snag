@@ -3,8 +3,8 @@
     "corpus": "mutations",
     "split": "dev",
     "mode": "simulated",
-    "gitSha": "f3c635e72750b8aef3f6157d978ac5955a53dbdb",
-    "startedAt": "2026-09-26T17:40:19.484Z",
+    "gitSha": "0b52ee44d7d6e7e83ded1dc50b2ba22ffff4538d",
+    "startedAt": "2026-09-26T17:51:01.962Z",
     "jevModel": "simulated-jev",
     "stoppedForBudget": false,
     "baselines": {}
@@ -691,8 +691,8 @@
       }
     },
     "ops": {
-      "latencyP50": 17,
-      "latencyP95": 25,
+      "latencyP50": 16,
+      "latencyP95": 21,
       "costP50": 0,
       "costTotal": 0,
       "jevInputTokens": 0,
@@ -701,8 +701,8 @@
       "truncationRate": 0
     },
     "stability": {
-      "sampled": 7,
-      "measured": 7,
+      "sampled": 1,
+      "measured": 1,
       "skipped": 0,
       "meanJaccard": 1,
       "deterministic": true

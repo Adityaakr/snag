@@ -17,3 +17,8 @@
 - Correction: the dogfood-fix commit said "with a test" but a failed edit script had skipped the test; added it in the next commit (it fails without the detector change, passes with it).
 - M5: renderers (E.1 to E.4, check run, SARIF) with sanitization and snapshots, `remit review` (local and GitHub, all flags, exit codes 0 to 4), `remit init`, `remit demo` (1.1 s), README quickstart verified in a clean clone, first dogfood run logged (one false positive found and fixed). All items checked; gate next.
 - M5 gate: FAIL (untested flag wiring, missing JSON and check-run snapshots), fixed; re-audit VERDICT: PASS. Tagged m5-done.
+
+## 2026-09-26 M6 closed (BLOCKED-HUMAN on B5)
+- Built corpora B (12 seeds, 9 G.1 operators), A (SWE-bench Verified plus PatchDiff, 1,203 items) and the C format; froze the test split (390 files, guard:split); added metrics, stability, isotonic calibration, dev threshold tuning, baselines, reports, and `remit mutate`, `remit calibrate` and `remit report`.
+- milestone-verifier: first run FAIL (10 gaps, fixed in D28), second run PASS; its notes are addressed in D29.
+- Without keys, every report is simulated and marked "Not a real measurement". B5 (live run), B6 (real seeds) and B4 (optional spot checks) are open.
