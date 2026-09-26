@@ -199,6 +199,8 @@ export class LiveJev implements JevProvider {
                 { retry: { maxRetries: 0 }, ...(opts.signal ? { signal: opts.signal } : {}) },
               );
             } catch (e) {
+              if (opts.signal?.aborted)
+                throw new ProviderError('jev', 'cancelled', 'the request was cancelled');
               throw classifyJevError(e);
             }
           },

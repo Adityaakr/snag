@@ -1,5 +1,5 @@
 /**
- * The smoke check for a running stack (`docker compose --profile fake up`, or the processes it starts): sends a
+ * The smoke check for a running stack (`docker compose up`, or the processes it starts): sends a
  * signed `pull_request.opened` webhook to the server and waits until the fake GitHub has a completed check run and
  * a sticky comment. Exits 0 on success.
  */

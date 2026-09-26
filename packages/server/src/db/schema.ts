@@ -231,3 +231,20 @@ export const payloads = pgTable('payloads', {
   content: jsonb('content').notNull(),
   expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
 });
+
+/** The spend ledger (9.13): one row per review run, reserved at the per-review maximum and settled to real spend. */
+export const spendLedger = pgTable(
+  'spend_ledger',
+  {
+    id: serial('id').primaryKey(),
+    installationId: bigint('installation_id', { mode: 'number' }).notNull(),
+    reviewId: text('review_id').notNull(),
+    amountUsd: doublePrecision('amount_usd').notNull(),
+    settled: boolean('settled').notNull().default(false),
+    createdAt: created(),
+  },
+  (t) => [
+    index('spend_installation_day').on(t.installationId, t.createdAt),
+    uniqueIndex('spend_review').on(t.reviewId),
+  ],
+);

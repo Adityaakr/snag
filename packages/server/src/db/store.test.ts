@@ -311,3 +311,16 @@ describe('redaction and export edges', () => {
     expect(await store.exportable()).toEqual([]);
   });
 });
+
+describe('spend ledger', () => {
+  it('sums reservations and settled spend per installation for today', async () => {
+    const { store } = await dbStore();
+    await store.reserveSpend(1, 'a', 0.5);
+    await store.reserveSpend(1, 'a', 0.5);
+    await store.reserveSpend(2, 'b', 0.5);
+    expect(await store.spendToday(1)).toBeCloseTo(0.5);
+    await store.settleSpend('a', 0.12);
+    expect(await store.spendToday(1)).toBeCloseTo(0.12);
+    expect(await store.spendToday(1, new Date(Date.now() + 2 * 86_400_000))).toBe(0);
+  });
+});

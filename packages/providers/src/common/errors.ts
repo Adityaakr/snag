@@ -13,7 +13,9 @@ export type ProviderErrorKind =
   | 'validation'
   | 'budget'
   | 'cache_miss'
-  | 'config';
+  | 'config'
+  /** The caller cancelled the call (a newer push superseded the review). Never retried or counted as an outage. */
+  | 'cancelled';
 
 const RETRYABLE: ReadonlySet<ProviderErrorKind> = new Set([
   'rate_limited',

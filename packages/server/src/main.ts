@@ -18,7 +18,7 @@ import {
   providersFromEnv,
 } from '@remit/providers';
 import { Hono } from 'hono';
-import { createApp, type ServerDeps } from './app.js';
+import { createApp, type ServerDeps, sameSecret } from './app.js';
 import { openPglite, openPostgres } from './db/client.js';
 import { DbStore } from './db/store.js';
 import { runJob } from './events.js';
@@ -39,10 +39,37 @@ export interface Runtime {
   stop(): Promise<void>;
 }
 
+/** Every `NAME_FILE` variable sets `NAME` from that file (container secrets), unless `NAME` is set directly. */
+export function withFileSecrets(env: Record<string, string | undefined>): Record<string, string | undefined> {
+  const out = { ...env };
+  for (const [key, path] of Object.entries(env))
+    if (key.endsWith('_FILE') && path && out[key.slice(0, -5)] === undefined)
+      out[key.slice(0, -5)] = readFileSync(path, 'utf8').trim();
+  return out;
+}
+
+/** A positive finite number from the environment, or the default; anything else stops startup. */
+export function positiveNumber(
+  env: Record<string, string | undefined>,
+  name: string,
+  fallback: number,
+): number {
+  const raw = env[name];
+  if (raw === undefined || raw === '') return fallback;
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n <= 0) throw new Error(`${name}=${raw} is not a positive number.`);
+  return n;
+}
+
 export async function start(
-  env: Record<string, string | undefined> = process.env,
+  rawEnv: Record<string, string | undefined> = process.env,
   opts: { listen?: boolean } = {},
 ): Promise<Runtime> {
+  const env = withFileSecrets(rawEnv);
+  const dailyBudgetUsd = positiveNumber(env, 'REMIT_DAILY_BUDGET_USD', 20);
+  const reviewsPerHour = positiveNumber(env, 'REMIT_REVIEWS_PER_HOUR', 200);
+  if (env.SETUP_TOKEN !== undefined && env.SETUP_TOKEN.length < 32)
+    throw new Error('SETUP_TOKEN must be at least 32 characters.');
   const role = (env.REMIT_ROLE ?? 'all') as Role;
   if (!['all', 'web', 'worker'].includes(role))
     throw new Error(`REMIT_ROLE ${role} is not all, web or worker.`);
@@ -55,13 +82,8 @@ export async function start(
     : undefined;
   const stored = await secrets?.load();
   const appId = env.GITHUB_APP_ID ?? stored?.appId;
-  // Secrets may come from files (the *_FILE convention for container secrets).
-  const fromFile = (name: string) => {
-    const path = env[`${name}_FILE`];
-    return path ? readFileSync(path, 'utf8').trim() : env[name];
-  };
-  const privateKey = fromFile('GITHUB_APP_PRIVATE_KEY')?.replace(/\\n/g, '\n') ?? stored?.privateKey;
-  const webhookSecret = fromFile('GITHUB_WEBHOOK_SECRET') ?? stored?.webhookSecret ?? '';
+  const privateKey = env.GITHUB_APP_PRIVATE_KEY?.replace(/\\n/g, '\n') ?? stored?.privateKey;
+  const webhookSecret = env.GITHUB_WEBHOOK_SECRET ?? stored?.webhookSecret ?? '';
   const apiUrl = env.GITHUB_API_URL;
   const metrics = new Metrics();
   const hooks = {
@@ -104,7 +126,8 @@ export async function start(
   const maintenance = async (kind: 'cleanup' | 'recalibrate') => {
     if (kind === 'cleanup') {
       const r = await store.cleanup();
-      await store.pruneDeliveries(7);
+      // GitHub signatures carry no timestamp, so delivery ids are kept long enough to block replays.
+      await store.pruneDeliveries(30);
       logger.info(r, 'retention cleanup done');
     } else {
       await store.recalibrateFromFeedback(env.JEV_MODEL ?? 'jev-1.13.0', QUESTION_SET_VERSION);
@@ -122,12 +145,8 @@ export async function start(
     ...(env.PUBLIC_URL ? { publicUrl: env.PUBLIC_URL } : {}),
     ...(secrets ? { secrets } : {}),
     log,
-    ...(env.REMIT_DAILY_BUDGET_USD
-      ? { dailyBudgetUsd: Number(env.REMIT_DAILY_BUDGET_USD) }
-      : { dailyBudgetUsd: 20 }),
-    ...(env.REMIT_REVIEWS_PER_HOUR
-      ? { reviewsPerHour: Number(env.REMIT_REVIEWS_PER_HOUR) }
-      : { reviewsPerHour: 200 }),
+    dailyBudgetUsd,
+    reviewsPerHour,
     ...(env.SESSION_SECRET &&
     (env.GITHUB_CLIENT_ID ?? stored?.clientId) &&
     (env.GITHUB_CLIENT_SECRET ?? stored?.clientSecret)
@@ -181,9 +200,14 @@ export async function start(
     app = new Hono();
     app.get('/healthz', (c) => c.text('ok'));
     app.get('/readyz', (c) => c.text('ready'));
-    app.get('/metrics', (c) =>
-      c.text(metrics.render(), 200, { 'content-type': 'text/plain; version=0.0.4' }),
-    );
+    app.get('/metrics', (c) => {
+      if (
+        env.METRICS_TOKEN &&
+        !sameSecret(c.req.header('authorization') ?? '', `Bearer ${env.METRICS_TOKEN}`)
+      )
+        return c.text('unauthorized', 401);
+      return c.text(metrics.render(), 200, { 'content-type': 'text/plain; version=0.0.4' });
+    });
   } else app = createApp(deps);
 
   if (role !== 'worker') await store.importEvalRuns(env.REMIT_REPORTS_DIR ?? join(EVAL_ROOT, 'reports'));

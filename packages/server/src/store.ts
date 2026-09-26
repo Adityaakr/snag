@@ -58,8 +58,12 @@ export interface Store {
   /** Uninstall: deletes everything stored for the installation (delete_on_uninstall). */
   deleteInstallation(id: number): Promise<void>;
   installationOf(repo: string): Promise<number | null>;
-  /** Provider spend of an installation's reviews since UTC midnight (the daily budget, 9.13). */
+  /** Spend of an installation since UTC midnight from the ledger: settled reviews plus open reservations (9.13). */
   spendToday(installationId: number, now?: Date): Promise<number>;
+  /** Records a review's worst-case spend before it runs. */
+  reserveSpend(installationId: number, reviewId: string, amountUsd: number): Promise<void>;
+  /** Replaces a reservation with the real spend, whatever the outcome (done, cancelled, failed, skipped). */
+  settleSpend(reviewId: string, amountUsd: number): Promise<void>;
 }
 
 export class MemoryStore implements Store {
@@ -114,10 +118,18 @@ export class MemoryStore implements Store {
     for (const [id, inst] of this.installations) if (inst.repos.has(repo)) return id;
     return null;
   }
+  readonly ledger: { installationId: number; reviewId: string; amountUsd: number; at: number }[] = [];
   async spendToday(installationId: number, now = new Date()) {
     const midnight = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
-    return this.reviews
-      .filter((r) => r.installationId === installationId && Date.parse(r.createdAt) >= midnight)
-      .reduce((s, r) => s + r.result.usage.costUsd, 0);
+    return this.ledger
+      .filter((l) => l.installationId === installationId && l.at >= midnight)
+      .reduce((s, l) => s + l.amountUsd, 0);
+  }
+  async reserveSpend(installationId: number, reviewId: string, amountUsd: number) {
+    this.ledger.push({ installationId, reviewId, amountUsd, at: Date.now() });
+  }
+  async settleSpend(reviewId: string, amountUsd: number) {
+    const row = this.ledger.find((l) => l.reviewId === reviewId);
+    if (row) row.amountUsd = amountUsd;
   }
 }

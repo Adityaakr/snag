@@ -97,10 +97,15 @@ async function runPullReview(
   const pull = await gh.getPull(ref);
   if (pull.draft && config.draft_prs === 'skip')
     return { status: 'skipped', reason: 'draft PR (draft_prs: skip)' };
+  // Budget (9.13): reserve this review's worst case in the spend ledger first, so concurrent jobs cannot all pass;
+  // the reservation is settled to the real spend however the review ends (done, cancelled or failed).
+  let reserved = false;
   if (deps.dailyBudgetUsd !== undefined) {
-    const spent = await deps.store.spendToday(installationId);
-    if (spent >= deps.dailyBudgetUsd) {
-      log.warn({ spent, limit: deps.dailyBudgetUsd }, 'daily budget reached; review skipped');
+    await deps.store.reserveSpend(installationId, reviewId, config.budgets.max_usd_per_review);
+    const total = await deps.store.spendToday(installationId);
+    if (total > deps.dailyBudgetUsd) {
+      await deps.store.settleSpend(reviewId, 0);
+      log.warn({ total, limit: deps.dailyBudgetUsd }, 'daily budget reached; review skipped');
       deps.metrics?.inc('remit_budget_skips_total');
       if (config.surfaces.check_run)
         await gh.createCheckRun(ref.owner, ref.repo, {
@@ -115,7 +120,9 @@ async function runPullReview(
         });
       return { status: 'skipped', reason: 'daily budget reached' };
     }
+    reserved = true;
   }
+  let reviewCosts: CostTracker | undefined;
   log.info({ head: pull.headSha }, 'review started');
   check(signal);
   const run = config.surfaces.check_run
@@ -156,7 +163,7 @@ async function runPullReview(
     // A superseded job stops starting provider calls at once, not only at step boundaries.
     const jev = built.jev ? new AbortableJev(built.jev, signal) : undefined;
     const llm = built.llm ? new AbortableLlm(built.llm, signal) : undefined;
-    const reviewCosts = costs ?? new CostTracker(config.budgets.max_usd_per_review);
+    reviewCosts = costs ?? new CostTracker(config.budgets.max_usd_per_review);
     const calibration = deps.calibration?.(jev?.model ?? config.jev.model);
     const result = await runReview(ingest.input, {
       ...(jev ? { jev } : {}),
@@ -244,6 +251,8 @@ async function runPullReview(
     deps.metrics?.observeReview('failed', (Date.now() - started) / 1000, 0, []);
     log.error({ error: (e as Error).message }, 'review failed');
     throw e;
+  } finally {
+    if (reserved) await deps.store.settleSpend(reviewId, reviewCosts?.usage.costUsd ?? 0);
   }
 }
 

@@ -1,6 +1,7 @@
 /**
  * Cancellation for provider calls (BUILD_PROMPT M9): once a job's signal aborts (a newer push superseded it), no new
- * Jev or LLM call starts, and in-flight requests get the signal. The refusal is a fatal error, so it is not retried.
+ * Jev or LLM call starts, and in-flight requests get the signal. Cancellations have their own kind: never retried, and
+ * never counted by circuit breakers as an outage.
  */
 import type { EntryType, Questions } from '@typesafe-ai/sdk';
 import type { z } from 'zod';

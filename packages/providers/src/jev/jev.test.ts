@@ -456,3 +456,34 @@ describe('helpers', () => {
     ]);
   });
 });
+
+describe('cancellation (M9)', () => {
+  it('reports an aborted call as cancelled, without retries, and the breaker ignores it', async () => {
+    const { BreakerJev, CircuitBreaker } = await import('../common/circuit.js');
+    let calls = 0;
+    const hang = (async (_url: string, init?: RequestInit) => {
+      calls++;
+      return new Promise<Response>((_, reject) => {
+        init?.signal?.addEventListener('abort', () =>
+          reject(Object.assign(new Error('aborted'), { name: 'AbortError' })),
+        );
+      });
+    }) as never;
+    const { jev } = live(hang);
+    const breaker = new CircuitBreaker('jev', { failures: 2 });
+    const guarded = new BreakerJev(jev, breaker);
+    for (let i = 0; i < 6; i++) {
+      const controller = new AbortController();
+      const pending = guarded.ask(
+        { kind: 'forward', targetId: `R${i}`, questionSet: 'qs-0.1.0', reviewId: 'r' },
+        { requirement: { text: 't' } },
+        QUESTIONS,
+        { signal: controller.signal },
+      );
+      setTimeout(() => controller.abort(), 5);
+      await expect(pending).rejects.toMatchObject({ kind: 'cancelled', retryable: false });
+    }
+    expect(calls).toBe(6);
+    expect(breaker.state).toBe('closed');
+  });
+});
