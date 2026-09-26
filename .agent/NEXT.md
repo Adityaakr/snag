@@ -1,9 +1,9 @@
 # Next
 
 Milestone: M5 CLI end to end, renderers, demo
-Task: renderers.
+Task: M5 gate.
 
 Next action:
-1. packages/core/src/render/: sanitize (6.10: escape markdown, neutralize @mentions with a zero-width joiner, strip HTML and images, URLs as inline code, strip bidi/invisible, truncate quotes to 200), then sticky comment (E.1, hidden marker), check-run title/summary/annotations model (50 per batch), rework comment (E.2 with JSON block), issue checklist (E.3), terminal table (icons and words, never color alone), JSON, SARIF 2.1.0 (unit and fact findings). Snapshot tests with the golden results.
-2. `remit review` (local and GitHub modes, all 10.1 flags, exit codes 0 to 4), `remit init`, `remit demo` (scenarios 1 and 2 offline, under 10 s).
-3. README quickstart verified in a clean clone; first dogfood run logged in EXPERIMENTS.md (3.5).
+1. Run the `milestone-verifier` subagent on .agent/milestones/M5.md; fix every gap and rerun until VERDICT: PASS.
+2. Set M5 DONE and M6 IN_PROGRESS, log it, commit, `git tag m5-done`.
+3. Start M6 (evaluation system): corpus D runner (`pnpm eval:golden` at 100%), corpus B synthetic seeds (4 each TS, Python, Rust) with annotations and every G.1 mutation operator (apply-and-reparse), corpus A loader (PatchDiff + Zenodo; no network in tests), corpus C export format, splits and freeze (`eval/corpora/test.sha256`, `guard:split`), metrics, isotonic calibration, threshold tuning on dev, baselines, reports (md + html, Satoshi font). Without keys, the dev report is from fakes and marked `not a real measurement`; M10 records the blocker.
