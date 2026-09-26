@@ -71,7 +71,7 @@ Status: DONE
 
 ## M6 Evaluation system
 Status: IN_PROGRESS
-- [ ] The corpus D runner: `pnpm eval:golden` at `100%`.
+- [x] The corpus D runner: `pnpm eval:golden` at `100%`. (evidence: `pnpm eval:golden` Golden accuracy 100% (18/18); eval/src/eval.test.ts, af5f63c)
 - [ ] Corpus B: synthetic seeds, at least 4 each in TS, Python and Rust; when `GITHUB_TOKEN` exists, up to 30 mined real seeds (Appendix G.2); seed annotations; every mutation operator in G.1, with apply-and-reparse checks and expected labels.
 - [ ] The corpus A loader, built from the PatchDiff package and Zenodo results. The label mapping is documented in `docs/eval.md`.
 - [ ] The corpus C export format is defined (it gets populated in M8).
