@@ -26,6 +26,7 @@ import {
 import { loadConfig } from '../config.js';
 import { CliError, EXIT } from '../errors.js';
 import type { Io } from '../io.js';
+import { jevConfigured } from '@remit/providers';
 import { buildProviders } from '../providers.js';
 
 export type ItemLoader = (corpus: string, split: string) => EvalItem[];
@@ -81,7 +82,7 @@ export async function evalCommand(argv: string[], io: Io, loadItems?: ItemLoader
     throw new CliError(`--limit ${values.limit} is not a positive integer.`, 'Pass --limit 20.');
 
   const config = loadConfig(io.cwd, values.config);
-  const keys = Boolean(io.env.TYPESAFE_API_KEY);
+  const keys = jevConfigured(io.env);
   const mode = (values.mode ??
     (corpus === 'golden' ? 'scripted' : keys ? 'live' : 'simulated')) as ProviderMode;
   if (!['scripted', 'simulated', 'live'].includes(mode))
@@ -114,7 +115,7 @@ export async function evalCommand(argv: string[], io: Io, loadItems?: ItemLoader
       : undefined;
   if (mode === 'live' && !p?.jev)
     throw new CliError(
-      'Live mode needs TYPESAFE_API_KEY.',
+      'Live mode needs TYPESAFE_API_KEY or REMIT_JEV_BASE_URL.',
       'Add it to .env, or omit --mode to use the simulated stand-in.',
       EXIT.provider,
     );

@@ -32,7 +32,9 @@ describe('remit doctor', () => {
     expect(io.out).toMatch(
       /✗ FAIL\s+env TYPESAFE_API_KEY\s+not set\n\s+fix: See https:\/\/docs.typesafe.ai\/introduction\/quickstart/,
     );
-    expect(io.out).toMatch(/- skip\s+typesafe\s+skipped: TYPESAFE_API_KEY not set/);
+    expect(io.out).toMatch(
+      /- skip\s+typesafe\s+skipped: neither TYPESAFE_API_KEY nor REMIT_JEV_BASE_URL is set/,
+    );
     expect(io.out).toMatch(/- skip\s+anthropic\s+skipped: ANTHROPIC_API_KEY not set/);
     expect(io.out).toMatch(/! warn\s+env GITHUB_TOKEN/);
   });
@@ -66,6 +68,22 @@ describe('remit doctor', () => {
       deps({ env: { ...env, OPENAI_COMPATIBLE_BASE_URL: '' }, configText: cfg(true) }),
     );
     expect(noBase.checks.find((c) => c.name === 'openai_compatible')?.status).toBe('fail');
+  });
+
+  it('accepts a self-hosted Jev-compatible engine instead of a TypeSafe key', async () => {
+    const env = { REMIT_JEV_BASE_URL: 'http://user:pw@127.0.0.1:8765/', OPENAI_COMPATIBLE_API_KEY: 'k' };
+    const { checks } = await runChecks(
+      deps({
+        env: { ...env, ANTHROPIC_API_KEY: SECRET },
+        configText: 'jev:\n  model: laya-typed-decisions\n',
+        jevProbe: async (m) => ({ model: `${m}@55cf4c4e` }),
+      }),
+    );
+    expect(checks.find((c) => c.name === 'env TYPESAFE_API_KEY')?.status).toBe('warn');
+    expect(checks.find((c) => c.name === 'env REMIT_JEV_BASE_URL')?.detail).toBe(
+      'self-hosted Jev-compatible engine at http://127.0.0.1:8765',
+    );
+    expect(checks.find((c) => c.name === 'typesafe')?.status).toBe('ok');
   });
 
   it('does not require an LLM key in tasklist_only mode', async () => {

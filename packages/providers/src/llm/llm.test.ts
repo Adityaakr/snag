@@ -282,6 +282,26 @@ describe('OpenAiCompatibleLlm', () => {
     expect(g.requests).toHaveLength(0);
   });
 
+  it('treats 402 (out of credits) as a fatal budget error, never retried', async () => {
+    const f = scriptedFetch([
+      { status: 402, body: { error: { message: 'Insufficient credits', code: 402 } } },
+    ]);
+    const llm = new OpenAiCompatibleLlm({
+      model: 'local-model',
+      price: PRICE,
+      apiKey: 'k-not-real',
+      baseURL: 'http://localhost:9999/v1',
+      fetch: f.fetch,
+      retry: { sleep: async () => {} },
+    });
+    await expect(llm.structured(Schema, MSGS, OPTS)).rejects.toMatchObject({
+      kind: 'budget',
+      retryable: false,
+      fix: expect.stringMatching(/credits/),
+    });
+    expect(f.requests).toHaveLength(1);
+  });
+
   it('needs both key and base URL', async () => {
     const llm = new OpenAiCompatibleLlm({ model: 'm', price: PRICE });
     await expect(llm.structured(Schema, MSGS, OPTS)).rejects.toMatchObject({ kind: 'config' });

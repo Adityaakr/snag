@@ -55,6 +55,14 @@ export function classifyOpenAiError(e: unknown): ProviderError {
       'could not reach the endpoint',
       'Check OPENAI_COMPATIBLE_BASE_URL and network access.',
     );
+  // Out of credits or over a spending limit: retrying cannot help, and it is not an outage for the breaker.
+  if (e instanceof OpenAI.APIError && e.status === 402)
+    return new ProviderError(
+      'openai_compatible',
+      'budget',
+      'the account is out of credits (402)',
+      'Add credits to the provider account (for OpenRouter: https://openrouter.ai/settings/credits), or raise the key limit.',
+    );
   if (e instanceof OpenAI.APIError)
     return new ProviderError('openai_compatible', 'server', `server error (${e.status})`);
   return new ProviderError('openai_compatible', 'connection', e instanceof Error ? e.message : String(e));

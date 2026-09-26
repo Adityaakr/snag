@@ -12,6 +12,7 @@ import { BreakerJev, BreakerLlm, type CircuitOptions, processBreaker } from './c
 import type { Logger } from './common/limits.js';
 import { CachedJev } from './jev/cached.js';
 import { LiveJev } from './jev/live.js';
+import { LlmJev } from './jev/llm.js';
 import type { JevProvider } from './jev/types.js';
 import { AnthropicLlm } from './llm/anthropic.js';
 import { CachedLlm } from './llm/cached.js';
@@ -75,8 +76,9 @@ export function operatorPricesFromEnv(
 export function resolvePrices(
   config: RemitConfig,
   operator: OperatorPrices | undefined,
+  model: string = config.extraction.model,
 ): { llm: { input: number; output: number } | undefined; llmAllowed: boolean; jevPerMillionUsd: number } {
-  const m = config.extraction.model;
+  const m = model;
   const repo = Object.hasOwn(config.llm_prices, m) ? config.llm_prices[m] : undefined;
   if (!operator)
     return { llm: repo, llmAllowed: true, jevPerMillionUsd: config.jev.price_per_million_input_usd };
@@ -95,6 +97,14 @@ export function resolvePrices(
       config.jev.price_per_million_input_usd,
     ),
   };
+}
+
+/**
+ * Whether a Jev-compatible engine is configured: TypeSafe (`TYPESAFE_API_KEY`), or a self-hosted server that speaks
+ * the same protocol at `REMIT_JEV_BASE_URL`, such as the local Laya engine (docs/laya.md, DECISIONS D34).
+ */
+export function jevConfigured(env: Record<string, string | undefined>): boolean {
+  return Boolean(env.TYPESAFE_API_KEY || env.REMIT_JEV_BASE_URL);
 }
 
 export function cacheDir(env: Record<string, string | undefined>): string {
@@ -133,54 +143,77 @@ export function providersFromEnv(
       `No price is configured for ${config.extraction.model}; its cost is counted as 0 (set llm_prices in .${BRAND.slug}.yml).`,
     );
 
-  let liveLlm: LlmProvider | undefined;
-  if (!opts.offline && llmAllowed) {
-    if (config.extraction.provider === 'anthropic' && env.ANTHROPIC_API_KEY) {
-      liveLlm = new AnthropicLlm({
-        model: config.extraction.model,
-        price: llmPrice,
+  /** A live LLM for `model` through the extraction provider's credentials, or undefined without them. */
+  const liveFor = (model: string, price: { inputPerMillionUsd: number; outputPerMillionUsd: number }) => {
+    if (opts.offline) return undefined;
+    if (config.extraction.provider === 'anthropic' && env.ANTHROPIC_API_KEY)
+      return new AnthropicLlm({
+        model,
+        price,
         apiKey: env.ANTHROPIC_API_KEY,
         costs,
         ...(opts.logger ? { logger: opts.logger } : {}),
         ...(config.extraction.effort ? { effort: config.extraction.effort } : {}),
       });
-    } else if (
+    if (
       config.extraction.provider === 'openai_compatible' &&
       env.OPENAI_COMPATIBLE_API_KEY &&
       env.OPENAI_COMPATIBLE_BASE_URL
-    ) {
-      liveLlm = new OpenAiCompatibleLlm({
-        model: config.extraction.model,
-        price: llmPrice,
+    )
+      return new OpenAiCompatibleLlm({
+        model,
+        price,
         apiKey: env.OPENAI_COMPATIBLE_API_KEY,
         baseURL: env.OPENAI_COMPATIBLE_BASE_URL,
         costs,
         ...(opts.logger ? { logger: opts.logger } : {}),
       });
-    }
-  }
-  const llm = liveLlm
-    ? new CachedLlm(
-        opts.breakers === false
-          ? liveLlm
-          : new BreakerLlm(liveLlm, processBreaker(liveLlm.provider, opts.breakerOptions)),
-        store,
-        cacheMode,
-      )
-    : opts.offline
-      ? replayOnlyLlm(config, store)
-      : undefined;
+    return undefined;
+  };
+  const wrap = (live: LlmProvider) =>
+    new CachedLlm(
+      opts.breakers === false
+        ? live
+        : new BreakerLlm(live, processBreaker(live.provider, opts.breakerOptions)),
+      store,
+      cacheMode,
+    );
+
+  const liveLlm = llmAllowed ? liveFor(config.extraction.model, llmPrice) : undefined;
+  const llm = liveLlm ? wrap(liveLlm) : opts.offline ? replayOnlyLlm(config, store) : undefined;
   if (!liveLlm && !opts.offline && llmAllowed && config.extraction.mode !== 'tasklist_only')
     notes.push(
       `${config.extraction.provider === 'anthropic' ? 'ANTHROPIC_API_KEY' : 'OPENAI_COMPATIBLE_API_KEY'} is not set; extraction uses the task list only.`,
     );
 
+  if (config.jev.engine === 'llm') {
+    const model = config.jev.llm_model ?? config.extraction.model;
+    const p = resolvePrices(config, opts.operatorPrices, model);
+    const live = p.llmAllowed
+      ? liveFor(model, { inputPerMillionUsd: p.llm?.input ?? 0, outputPerMillionUsd: p.llm?.output ?? 0 })
+      : undefined;
+    const inner = live ? wrap(live) : opts.offline ? replayOnlyLlm(config, store, model) : undefined;
+    if (!p.llmAllowed) notes.push(`${model} has no operator price, so the LLM Jev engine is off.`);
+    else if (!inner)
+      notes.push('The LLM Jev engine needs the extraction provider credentials; Jev questions are skipped.');
+    const jevLlm = inner
+      ? new LlmJev({
+          llm: inner,
+          maxStateTokens: config.jev.max_state_tokens,
+          concurrency: config.jev.concurrency,
+        })
+      : undefined;
+    return { ...(llm ? { llm } : {}), ...(jevLlm ? { jev: jevLlm } : {}), costs, cacheMode, notes };
+  }
+
   const liveJev =
-    !opts.offline && env.TYPESAFE_API_KEY
+    !opts.offline && jevConfigured(env)
       ? new LiveJev({
           model: config.jev.model,
           pricePerMillionUsd: jevPrice,
-          apiKey: env.TYPESAFE_API_KEY,
+          // A self-hosted engine needs no key; the SDK still wants a non-empty string.
+          apiKey: env.TYPESAFE_API_KEY ?? env.REMIT_JEV_API_KEY ?? 'self-hosted',
+          ...(env.REMIT_JEV_BASE_URL ? { baseURL: env.REMIT_JEV_BASE_URL } : {}),
           maxStateTokens: config.jev.max_state_tokens,
           concurrency: config.jev.concurrency,
           costs,
@@ -198,7 +231,7 @@ export function providersFromEnv(
           config.jev.model,
         )
       : undefined;
-  if (!jev) notes.push('TYPESAFE_API_KEY is not set; Jev questions are skipped.');
+  if (!jev) notes.push('TYPESAFE_API_KEY is not set (and no REMIT_JEV_BASE_URL); Jev questions are skipped.');
 
   return {
     ...(llm ? { llm } : {}),
@@ -210,10 +243,10 @@ export function providersFromEnv(
 }
 
 /** An LLM that can only replay recorded answers (for --offline). */
-function replayOnlyLlm(config: RemitConfig, store: FileStore): LlmProvider {
+function replayOnlyLlm(config: RemitConfig, store: FileStore, model = config.extraction.model): LlmProvider {
   const inner: LlmProvider = {
     provider: config.extraction.provider,
-    model: config.extraction.model,
+    model,
     structured: () => Promise.reject(new Error('offline')),
   };
   return new CachedLlm(inner, store, 'replay');

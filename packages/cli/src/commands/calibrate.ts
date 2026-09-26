@@ -17,6 +17,7 @@ import {
 import { loadConfig } from '../config.js';
 import { CliError, EXIT } from '../errors.js';
 import type { Io } from '../io.js';
+import { jevConfigured } from '@remit/providers';
 import { buildProviders } from '../providers.js';
 
 export type DevLoader = (corpus: string) => EvalItem[];
@@ -34,7 +35,7 @@ export async function calibrateCommand(argv: string[], io: Io, loadDev?: DevLoad
     },
   });
   const config = loadConfig(io.cwd, values.config);
-  const mode = (values.mode ?? (io.env.TYPESAFE_API_KEY ? 'live' : 'simulated')) as ProviderMode;
+  const mode = (values.mode ?? (jevConfigured(io.env) ? 'live' : 'simulated')) as ProviderMode;
   if (mode !== 'simulated' && mode !== 'live')
     throw new CliError(`--mode ${mode} is not simulated or live.`, 'Omit --mode to pick automatically.');
   const passes = Number(values.passes);
@@ -56,7 +57,7 @@ export async function calibrateCommand(argv: string[], io: Io, loadDev?: DevLoad
       : undefined;
   if (mode === 'live' && !p?.jev)
     throw new CliError(
-      'Live calibration needs TYPESAFE_API_KEY.',
+      'Live calibration needs TYPESAFE_API_KEY or REMIT_JEV_BASE_URL.',
       'Add it to .env, or pass --mode simulated.',
       EXIT.provider,
     );

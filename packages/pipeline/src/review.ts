@@ -339,7 +339,10 @@ export async function runReview(input: ReviewInput, deps: ReviewDeps): Promise<R
       return undefined;
     }
   };
-  if (!jev) warnings.push('No Jev provider is configured, so there are no verdicts. Set TYPESAFE_API_KEY.');
+  if (!jev)
+    warnings.push(
+      'No Jev provider is configured, so there are no verdicts. Set TYPESAFE_API_KEY or REMIT_JEV_BASE_URL.',
+    );
 
   const reqStateTokens = (r: Requirement) => estimateTokens(requirementState(r));
   const budgetFor = (r: Requirement) => config.jev.max_state_tokens - reqStateTokens(r) - 1500;

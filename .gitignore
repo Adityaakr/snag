@@ -22,3 +22,7 @@ eval/corpora/swebench/raw/
 !packages/action/dist/**
 packages/action/lib/
 packages/dashboard/lib/
+
+# Local Laya verdict engine (Python venv and model cache)
+.venv-laya/
+.laya/
