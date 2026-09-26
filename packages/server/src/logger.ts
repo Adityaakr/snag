@@ -6,6 +6,17 @@ import { pino, type Logger } from 'pino';
 
 export const REDACT_PATHS = [
   'authorization',
+  'cookie',
+  '*.cookie',
+  'headers.cookie',
+  'headers["set-cookie"]',
+  'headers["x-api-key"]',
+  '*.headers.authorization',
+  '*.headers.cookie',
+  '*.headers["x-api-key"]',
+  '*.*.token',
+  '*.*.apiKey',
+  '*.*.privateKey',
   '*.authorization',
   'headers.authorization',
   'headers["x-hub-signature-256"]',

@@ -260,3 +260,22 @@ Append-only. Each entry: date, decision, alternatives, why. Deviations from BUIL
   - The labeling queue is a random sample, drawn server-side, and announces failed saves.
   - Agreement and recalibration count each label once.
   - The dashboard's compiled `lib/` is no longer tracked, and the dashboard takes its name from `BRAND` (the `@remit/core/brand` subpath).
+
+## 2026-09-27 D32 M9 security review follow-ups
+- Cancelled provider calls now have their own `cancelled` error kind. They are not retried, and circuit breakers do not count them. The first review found that aborted calls were classified as retryable connection or server errors, so pushing during a review could open the process-wide breaker.
+- The daily budget uses a `spend_ledger` (migration 0002). Each run reserves `budgets.max_usd_per_review` before it starts, and the run is skipped when today's total, including reservations, exceeds the budget. The reservation is settled to real spend in a `finally`, whatever the outcome. The first review found that only stored reviews counted.
+- The pg-boss debounce test now asserts pg-boss's documented slot semantics: at most one run now and one in the next slot, per slot the burst spans. A burst can straddle a slot boundary, which gave 3 runs for a 1 s window.
+- Other fixes:
+  - every `NAME_FILE` is read at startup;
+  - numeric settings are validated, and `SETUP_TOKEN` must be at least 32 characters;
+  - the worker's `/metrics` honors `METRICS_TOKEN`;
+  - redaction covers nested headers, cookies and API keys;
+  - delivery ids are kept 30 days;
+  - compose binds localhost, and Renovate pins container digests.
+- Still low and accepted:
+  - installation tokens are not narrowed by permission;
+  - the Action's sticky upsert has no bot-author filter;
+  - the rate limit is per web process and only delays;
+  - installation access lasts the 8-hour session;
+  - the image's base tag is pinned by Renovate's first run rather than now.
+- `packages/server/src/pg-queue.test.ts:95`: the test "debounces a burst for the same key into one run" was renamed and re-scoped as "debounces a burst for the same key: at most one run now and one in the next slot, per slot the burst spans". The old bound (at most 2 runs) was wrong when the three sends crossed a 1 s slot boundary; pg-boss then legitimately creates up to 3 runs, and the test flaked on 2026-09-27. The new assertion keeps at most 2 runs within one slot and computes the allowance from the send timestamps. This follows pg-boss's `sendDebounced` source (manager.js, `singletonNextSlot`) rather than weakening the check.

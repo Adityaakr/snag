@@ -121,6 +121,8 @@ export class OpenAiCompatibleLlm implements LlmProvider {
             opts.signal ? { signal: opts.signal } : undefined,
           );
         } catch (e) {
+          if (opts.signal?.aborted)
+            throw new ProviderError('openai_compatible', 'cancelled', 'the request was cancelled');
           throw classifyOpenAiError(e);
         }
       }, this.opts.retry);

@@ -123,3 +123,69 @@ describe('logs and metrics', () => {
     void readFileSync;
   });
 });
+
+describe('startup configuration', () => {
+  it('reads every *_FILE secret, without overriding a direct value', async () => {
+    const { withFileSecrets } = await import('./main.js');
+    const { writeFileSync } = await import('node:fs');
+    const dir = mkdtempSync(join(tmpdir(), 'remit-files-'));
+    writeFileSync(join(dir, 's'), 'from-file\n');
+    const env = withFileSecrets({
+      SESSION_SECRET_FILE: join(dir, 's'),
+      ANTHROPIC_API_KEY_FILE: join(dir, 's'),
+      METRICS_TOKEN: 'direct',
+      METRICS_TOKEN_FILE: join(dir, 's'),
+    });
+    expect(env.SESSION_SECRET).toBe('from-file');
+    expect(env.ANTHROPIC_API_KEY).toBe('from-file');
+    expect(env.METRICS_TOKEN).toBe('direct');
+  });
+
+  it('refuses invalid budgets, rates and short setup tokens', async () => {
+    const { positiveNumber } = await import('./main.js');
+    expect(positiveNumber({}, 'X', 20)).toBe(20);
+    expect(positiveNumber({ X: '2.5' }, 'X', 20)).toBe(2.5);
+    expect(() => positiveNumber({ X: 'twenty' }, 'X', 20)).toThrow(/not a positive number/);
+    expect(() => positiveNumber({ X: '0' }, 'X', 20)).toThrow(/not a positive number/);
+    await expect(start({ REMIT_DAILY_BUDGET_USD: 'lots' }, { listen: false })).rejects.toThrow(
+      /REMIT_DAILY_BUDGET_USD/,
+    );
+    await expect(start({ SETUP_TOKEN: 'short' }, { listen: false })).rejects.toThrow(/at least 32/);
+  });
+
+  it('protects the worker /metrics with METRICS_TOKEN', async () => {
+    const pg = await startPgliteServer();
+    stops.push(pg.stop);
+    const worker = await start(
+      { DATABASE_URL: pg.url, REMIT_ROLE: 'worker', METRICS_TOKEN: 'metrics-token-value' },
+      { listen: false },
+    );
+    runtimes.push(worker);
+    expect((await worker.app.request('/metrics')).status).toBe(401);
+    expect(
+      (await worker.app.request('/metrics', { headers: { authorization: 'Bearer metrics-token-value' } }))
+        .status,
+    ).toBe(200);
+  }, 60_000);
+
+  it('redacts nested request headers and keys', () => {
+    let out = '';
+    const logger = createLogger({
+      destination: new Writable({
+        write: (c, _e, cb) => {
+          out += c;
+          cb();
+        },
+      }),
+    });
+    const secret = ['nested', 'secret', 'value'].join('-');
+    logger.info(
+      {
+        req: { headers: { authorization: secret, cookie: secret, 'x-api-key': secret } },
+        client: { opts: { apiKey: secret } },
+      },
+      'nested',
+    );
+    expect(out).not.toContain(secret);
+  });
+});

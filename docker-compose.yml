@@ -1,4 +1,5 @@
 # Local stack (BUILD_PROMPT M9): Postgres, the web server and the worker, with health checks.
+# For local use only (fixed Postgres password, fake GitHub); see docs/operations.md for production deployments.
 #   docker compose up                 # works with fakes: a fake GitHub serves acme/reports#77, no credentials needed
 #   docker compose run --rm smoke     # sends a signed webhook and waits for the check run and comment
 # To use a real GitHub App instead, set in .env: GITHUB_API_URL=https://api.github.com, GITHUB_APP_ID,
@@ -59,7 +60,7 @@ services:
       <<: *env
       REMIT_ROLE: web
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     depends_on:
       postgres:
         condition: service_healthy

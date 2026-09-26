@@ -22,6 +22,8 @@ One image (`Dockerfile`, non-root, Node 22). `REMIT_ROLE` sets what a process do
 
 ## Local
 
+`docker-compose.yml` is for local use only: it has a fixed Postgres password, binds port 3000 to localhost, and runs a fake GitHub. Use the deploy guides below for production.
+
 - `docker compose up` starts Postgres, a fake GitHub, the web process and the worker. No credentials are needed.
 - `docker compose run --rm smoke` sends a signed webhook and waits for the check run and the sticky comment.
 - `pnpm stack:smoke` runs the same topology as local processes (no Docker): PGlite stands in for Postgres. It is part of `pnpm test:slow`.
@@ -29,7 +31,9 @@ One image (`Dockerfile`, non-root, Node 22). `REMIT_ROLE` sets what a process do
 
 ## Configuration
 
-Set these environment variables. `*_FILE` variants read the value from a file, for mounted secrets.
+Set these environment variables. Every variable also has a `NAME_FILE` form that reads the value from a file, for mounted secrets. Numeric settings are validated at startup.
+
+**Multi-process deployments:** give every process its credentials through the environment or `*_FILE`. `/setup` stores credentials in its own container's `DATA_DIR`, which other replicas and the worker do not see unless `DATA_DIR` is a shared volume.
 
 | Variable | Required | Notes |
 |---|---|---|
@@ -41,9 +45,9 @@ Set these environment variables. `*_FILE` variants read the value from a file, f
 | `GITHUB_API_URL` | no | GitHub Enterprise Server, or the local fake |
 | `TYPESAFE_API_KEY`, `ANTHROPIC_API_KEY` | for real verdicts | without them, verdicts are `uncertain` and only task lists are read |
 | `SESSION_SECRET`, `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | for the dashboard | the session secret must be at least 32 characters |
-| `REMIT_DAILY_BUDGET_USD` | no | per installation, default `20` |
-| `REMIT_REVIEWS_PER_HOUR` | no | per installation, default `200`; past it, PR events wait 5 minutes |
-| `METRICS_TOKEN` | no | bearer token for `/metrics` on the web port |
+| `REMIT_DAILY_BUDGET_USD` | no | per installation, default `20`. Every run reserves `budgets.max_usd_per_review` in the `spend_ledger` table and settles to its real spend, whether it finished, was cancelled or failed. |
+| `REMIT_REVIEWS_PER_HOUR` | no | per installation, default `200`; past it, PR events wait 5 minutes. This smooths bursts and does not cap cost; the daily budget does. The count is kept per web process. |
+| `METRICS_TOKEN` | no | bearer token for `/metrics` on the web and worker ports |
 | `LOG_LEVEL` | no | `info` by default |
 | `OTEL_*` | no | see "Tracing" |
 
@@ -173,7 +177,7 @@ Per-call usage (tokens, cost and latency, with no content) is also stored in the
 **Routine tasks**
 - **Rotate the webhook secret:** set the new value on GitHub and in `GITHUB_WEBHOOK_SECRET`, then restart the web processes. Deliveries signed with the old secret fail until the restart.
 - **Rotate the App private key:** generate a new key on GitHub, deploy it, then delete the old key on GitHub.
-- **Retention:** the `cleanup` job runs nightly at 03:15 UTC (pg-boss schedule, or a daily timer in the single-process mode). It deletes expired payloads and text columns (`retention_days`) and deliveries older than 7 days.
+- **Retention:** the `cleanup` job runs nightly at 03:15 UTC (pg-boss schedule, or a daily timer in the single-process mode). It deletes expired payloads and text columns (`retention_days`) and delivery ids older than 30 days. GitHub signatures carry no timestamp, so ids are kept that long to block replays.
 - **Uninstall:** `installation.deleted` deletes the installation's reviews, findings, feedback and checklists.
 - **Backups:** use the platform's Postgres backups. Default rows hold no code or issue text, so backups contain only verdicts, answers, hashes, paths and line ranges, plus payloads when retention is on.
 

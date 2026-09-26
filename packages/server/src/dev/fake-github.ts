@@ -1,5 +1,5 @@
 /**
- * A local fake GitHub for `docker compose --profile fake up` and the smoke check (BUILD_PROMPT M9): serves the
+ * A local fake GitHub for `docker compose up` and the smoke check (BUILD_PROMPT M9): serves the
  * GitHub API for one golden scenario (acme/reports#77) and writes a freshly generated App private key to
  * `KEY_OUT` (and a random webhook secret to `WEBHOOK_SECRET_OUT`), so the server can run without real credentials.
  */

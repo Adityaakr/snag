@@ -413,14 +413,23 @@ export class DbStore implements Store, DeliveryStore {
   async spendToday(installationId: number, now = new Date()): Promise<number> {
     const midnight = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
     const rows = await this.db
-      .select({ total: sql<number>`coalesce(sum(${t.reviews.costUsd}), 0)::float` })
-      .from(t.reviews)
-      .innerJoin(t.repositories, eq(t.reviews.repositoryId, t.repositories.id))
+      .select({ total: sql<number>`coalesce(sum(${t.spendLedger.amountUsd}), 0)::float` })
+      .from(t.spendLedger)
       .where(
-        and(eq(t.repositories.installationId, installationId), sql`${t.reviews.createdAt} >= ${midnight}`),
+        and(eq(t.spendLedger.installationId, installationId), sql`${t.spendLedger.createdAt} >= ${midnight}`),
       );
     return Number(rows[0]?.total ?? 0);
   }
+  async reserveSpend(installationId: number, reviewId: string, amountUsd: number): Promise<void> {
+    await this.db.insert(t.spendLedger).values({ installationId, reviewId, amountUsd }).onConflictDoNothing();
+  }
+  async settleSpend(reviewId: string, amountUsd: number): Promise<void> {
+    await this.db
+      .update(t.spendLedger)
+      .set({ amountUsd, settled: true })
+      .where(eq(t.spendLedger.reviewId, reviewId));
+  }
+
   async installations() {
     return this.db.select().from(t.installations);
   }

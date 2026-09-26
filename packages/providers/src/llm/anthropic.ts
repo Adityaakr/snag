@@ -157,6 +157,8 @@ export class AnthropicLlm implements LlmProvider {
               opts.signal ? { signal: opts.signal } : undefined,
             );
           } catch (e) {
+            if (opts.signal?.aborted)
+              throw new ProviderError('anthropic', 'cancelled', 'the request was cancelled');
             throw classifyAnthropicError(e);
           }
         },

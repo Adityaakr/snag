@@ -92,14 +92,22 @@ describe('PgBossQueue', () => {
     expect(runs.filter((r) => r.job.kind === 'review' && r.job.repo === 'broken')).toHaveLength(3);
   }, 60_000);
 
-  it('debounces a burst for the same key into one run', async () => {
+  it('debounces a burst for the same key: at most one run now and one in the next slot, per slot the burst spans', async () => {
     const before = runs.length;
-    for (const pr of [11, 12, 13])
-      await queue.enqueue('review:a/burst#1', review('burst', pr), { debounceMs: 1000 });
+    const window = 1000;
+    const sentAt: number[] = [];
+    for (const pr of [11, 12, 13]) {
+      sentAt.push(Date.now());
+      await queue.enqueue('review:a/burst#1', review('burst', pr), { debounceMs: window });
+    }
     await until(() => runs.slice(before).some((r) => r.job.kind === 'review' && r.job.repo === 'burst'));
     await new Promise((r) => setTimeout(r, 2500));
     const burst = runs.slice(before).filter((r) => r.job.kind === 'review' && r.job.repo === 'burst');
-    expect(burst.length).toBeLessThanOrEqual(2);
+    // pg-boss sendDebounced: a slot is floor(now / window); a send takes the current slot or, if taken, the next one.
+    const slots =
+      Math.floor((sentAt.at(-1) as number) / window) - Math.floor((sentAt[0] as number) / window) + 1;
     expect(burst.length).toBeGreaterThanOrEqual(1);
+    expect(burst.length).toBeLessThanOrEqual(slots + 1);
+    expect(burst.length).toBeLessThan(sentAt.length + (slots > 1 ? 1 : 0));
   }, 60_000);
 });
