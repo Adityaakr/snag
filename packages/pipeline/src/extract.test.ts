@@ -244,6 +244,27 @@ describe('extraction modes and fallbacks', () => {
     ]);
   });
 
+  it('treats checkable_in_code 0.4 and 0.6 as no answer, and refines just outside the band', async () => {
+    const x = loadFixture('prose');
+    const run = async (a: number, b: number) =>
+      (
+        await extractRequirements(x.issues, {
+          llm: new FakeLlm(JSON.parse(readFileSync(join(DIR, 'prose', 'llm-script.json'), 'utf8'))),
+          jev: new FakeJev({
+            issue: {
+              R1: { ambiguous: 0.2, checkable_in_code: a },
+              R2: { ambiguous: 0.2, checkable_in_code: b },
+            },
+          }),
+          config: defaultConfig(),
+          reviewId: 'rv',
+        })
+      ).requirements.map((r) => r.checkableInCode);
+    expect(await run(0.4, 0.6)).toEqual([true, true]);
+    expect(await run(0.39, 0.61)).toEqual([true, true]);
+    expect(await run(0.34, 0.35)).toEqual([false, true]);
+  });
+
   it('keeps going with a warning when issue.v0 fails', async () => {
     const x = loadFixture('prose');
     const res = await extractRequirements(x.issues, {

@@ -635,3 +635,42 @@ describe('remaining 6.7 threshold edges (M4 gate)', () => {
     expect(unitVerdict(unit('U1'), rev(over), T, NOCAL).verdict.role).toBe(role);
   });
 });
+
+describe('last 6.7 edges (M4 re-audit)', () => {
+  const rev = (over: Partial<ReverseSignal>): ReverseSignal => ({
+    servesTop: 'none',
+    servesRequirementProbability: 0.1,
+    servesRequirementId: 'R1',
+    plumbing: 0.1,
+    behaviorChange: 0.1,
+    answers: [],
+    ...over,
+  });
+
+  it('unit rule 4: runtime_setting 0.6 is behavioral, 0.59 is not', () => {
+    expect(
+      unitVerdict(unit('U1', { kind: 'config' }), rev({ runtimeSetting: 0.6 }), T, NOCAL).verdict.role,
+    ).toBe('unexplained_behavioral');
+    expect(
+      unitVerdict(unit('U1', { kind: 'config' }), rev({ runtimeSetting: 0.59 }), T, NOCAL).verdict.role,
+    ).toBe('unexplained_benign');
+  });
+
+  it('non-goal: conflict 0.7 is contradicted, 0.69 is respected', () => {
+    const ng = req({ kind: 'non_goal' });
+    expect(statusOf(ctx({ requirement: ng, forward: fwd([0.9, 0.05, 0.03, 0.02], { conflict: 0.7 }) }))).toBe(
+      'contradicted',
+    );
+    expect(
+      statusOf(ctx({ requirement: ng, forward: fwd([0.9, 0.05, 0.03, 0.02], { conflict: 0.69 }) })),
+    ).toBe('done');
+  });
+
+  it('an example counts as checked at 0.5 and as not checked at 0.49', () => {
+    const notes = (checked: number) =>
+      verdictOf(ctx({ forward: fwd([0.1, 0.1, 0.5, 0.3]), tests: tests({ examplesChecked: [checked] }) }))
+        .notes;
+    expect(notes(0.5).some((n) => n.kind === 'examples_not_checked')).toBe(false);
+    expect(notes(0.49)).toContainEqual({ kind: 'examples_not_checked', indexes: [0] });
+  });
+});
