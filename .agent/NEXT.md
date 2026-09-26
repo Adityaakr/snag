@@ -1,10 +1,10 @@
 # Next
 
-Milestone: M8 Persistence, feedback, dashboard
-Task: the Postgres schema and migrations.
+Milestone: M9 Production hardening
+Task: container and deployment.
 
 Next action:
-1. Read BUILD_PROMPT 10.4 and M8 in section 13, and `.agent/milestones/M8.md`.
-2. Add Drizzle schema and drizzle-kit migrations for every table in 10.4, tested on PGlite; implement the server `Store` and `DeliveryStore` on it (parameterized queries only).
-3. pg-boss queues (`review`, `reextract`, `recalibrate`, `cleanup`) with retries and a dead-letter list behind the `JobQueue` interface; payload retention and the cleanup job.
-4. Feedback (slash, dashboard, implicit weak labels), the dashboard pages with GitHub OAuth, and corpus C exports (`remit-shadow-1`), then the end-to-end test.
+1. Read M9 in BUILD_PROMPT section 13 and `.agent/milestones/M9.md`.
+2. Multi-stage Dockerfile (non-root), docker-compose with server, worker and Postgres plus health checks; `docker compose up` works with fakes. Split a worker entry point (pg-boss consumers) from the web server.
+3. docs/operations.md: deploy guides for Fly.io, Railway and Render.
+4. Observability (pino with redact paths and reviewId, Prometheus metrics for reviews, latency, provider calls, tokens, cost, findings and feedback, optional OpenTelemetry); budgets (per-installation daily), rate limiters, circuit breakers, graceful partial results; retention and deletion tests; a load test (50 concurrent PR events); chaos tests; the D30 carry-overs (AbortSignal into runReview, Renovate, CI pnpm audit, docs/security.md, token permissions, slug lookup).

@@ -116,6 +116,14 @@ describe('LiveJev', () => {
     const res = await jev.ask(META, 'state', QUESTIONS);
     expect(res.costUsd).toBeCloseTo(0.042, 10);
     expect(costs.usage).toMatchObject({ jevInputTokens: 1_000_000, calls: 1 });
+    expect(costs.log).toEqual([
+      expect.objectContaining({
+        provider: 'jev',
+        model: 'jev-1.13.0',
+        inputTokens: 1_000_000,
+        outputTokens: 0,
+      }),
+    ]);
     expect(costs.usage.costUsd).toBeCloseTo(0.042, 10);
     expect(logs.find((l) => l.level === 'info')?.obj).toMatchObject({
       model: 'jev-1.13.0',

@@ -8,7 +8,6 @@ export interface Usage {
   calls: number;
 }
 
-/** Accumulates cost per review and refuses calls once the budget is spent (BUILD_PROMPT 7.3). */
 /** One provider call, for the `api_calls` table (10.4): no request or response content, only a hash. */
 export interface CallRecord {
   provider: string;
@@ -24,6 +23,7 @@ export interface CallRecord {
 
 export type CallMetaInput = Omit<CallRecord, 'inputTokens' | 'outputTokens' | 'costUsd' | 'status'>;
 
+/** Accumulates cost per review and refuses calls once the budget is spent (BUILD_PROMPT 7.3). */
 export class CostTracker {
   readonly usage: Usage = { jevInputTokens: 0, llmInputTokens: 0, llmOutputTokens: 0, costUsd: 0, calls: 0 };
   /** Per-call records, capped so a runaway review cannot grow memory without bound. */
