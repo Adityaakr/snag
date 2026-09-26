@@ -240,6 +240,19 @@ describe('requirement rules (6.7), first match wins, exact threshold edges', () 
     expect(statusOf(ctx(over))).toBe(expected);
   });
 
+  it('treats non-goals as contradicted on conflict and respected otherwise', () => {
+    const ng = req({ kind: 'non_goal' });
+    expect(statusOf(ctx({ requirement: ng, forward: fwd([0.9, 0.05, 0.03, 0.02], { conflict: 0.7 }) }))).toBe(
+      'contradicted',
+    );
+    const ok = verdictOf(ctx({ requirement: ng, forward: fwd([0.9, 0.05, 0.03, 0.02], { conflict: 0.2 }) }));
+    expect([ok.verdict.status, ok.verdict.confidence, ok.verdict.reasons[0]?.template]).toEqual([
+      'done',
+      0.8,
+      'req.non_goal_respected',
+    ]);
+  });
+
   it('reports the confidence for each status', () => {
     expect(verdictOf(ctx({ forward: fwd([0.05, 0.05, 0.1, 0.8]) })).verdict.confidence).toBeCloseTo(0.8);
     expect(

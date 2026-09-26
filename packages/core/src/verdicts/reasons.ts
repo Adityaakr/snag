@@ -27,6 +27,10 @@ export const REASONS = {
     text: `The change follows a different reading of an ambiguous requirement (${n(p)}). Ask the author which reading is meant.`,
   }),
   done: (p: number) => ({ template: 'req.done', text: `Implemented (${n(p)}).` }),
+  nonGoalRespected: () => ({
+    template: 'req.non_goal_respected',
+    text: 'No change goes against this exclusion.',
+  }),
   partial: (p: number) => ({
     template: 'req.partial',
     text: `Mostly implemented, but at least one stated case, value or condition is not (${n(p)}).`,
