@@ -104,7 +104,7 @@ Status: DONE
 - [x] An end-to-end test covering webhook, job, review, comment, slash-command feedback, dashboard and export. (evidence: packages/server/src/e2e-m8.test.ts: signed webhook -> pg-boss job -> review stored in Postgres -> sticky comment -> slash agree -> dashboard OAuth sign-in, list, queue and feedback -> JSONL export and eval item, ff6a8b4)
 
 ## M9 Production hardening
-Status: TODO
+Status: BLOCKED-HUMAN
 - [ ] A multi-stage Dockerfile that runs as non-root. `docker-compose.yml` has the server, the worker and Postgres, with health checks.; `docker compose up` works locally with fakes..
 - [x] Deploy guides for Fly.io, Railway and Render in `docs/operations.md`. (evidence: docs/operations.md 'Deploy guides' (Fly.io fly.toml processes and checks, Railway services, Render blueprint), 8d957ba)
 - [x] Observability: structured logs with `reviewId`; Prometheus metrics for reviews, latency, provider calls, tokens, cost, findings and feedback; optional OpenTelemetry. (evidence: pino JSON logs with redact paths and reviewId child loggers (server/src/logger.ts, main.test.ts 'redacts credentials'); Prometheus metrics for reviews, latency histogram, provider calls, tokens, cost, findings, feedback (metrics.ts, main.test.ts); OpenTelemetry remit.review spans via @opentelemetry/api, no-op unless an SDK is registered (review-job.ts, docs/operations.md 'Tracing'), 8d957ba)

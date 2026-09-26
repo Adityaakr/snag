@@ -17,6 +17,9 @@ const compose = parse(readFileSync(join(root, 'docker-compose.yml'), 'utf8'), { 
       depends_on?: Record<string, { condition: string }>;
       environment?: Record<string, string>;
       profiles?: string[];
+      build?: unknown;
+      image?: string;
+      volumes?: string[];
     }
   >;
 };
@@ -30,6 +33,32 @@ describe('Dockerfile', () => {
     expect(runtime).toMatch(/HEALTHCHECK/);
     expect(runtime).toMatch(/CMD \["node", "packages\/server\/dist\/main\.js"\]/);
     expect(dockerfile).toMatch(/--frozen-lockfile/);
+  });
+
+  it('compiles from scratch: stale build info never reaches the build stage', () => {
+    const ignore = readFileSync(join(root, '.dockerignore'), 'utf8').split('\n');
+    expect(ignore).toContain('**/dist');
+    expect(ignore).toContain('**/*.tsbuildinfo');
+    expect(dockerfile).toMatch(/tsc -b --force packages\/server/);
+  });
+
+  it('creates and hands to node every volume mount target the image uses in compose', () => {
+    const runtime = dockerfile.slice(dockerfile.lastIndexOf('FROM '));
+    const targets = new Set<string>();
+    for (const svc of Object.values(compose.services)) {
+      if (!svc.build && !svc.image?.startsWith('remit')) continue;
+      for (const v of svc.volumes ?? []) {
+        const target = v.split(':')[1];
+        if (target) targets.add(target);
+      }
+    }
+    expect(targets.size).toBeGreaterThan(0);
+    const mkdir = runtime.match(/^RUN mkdir -p ([^&]+)&& chown node:node (.+)$/m);
+    expect(mkdir, 'RUN mkdir -p ... && chown node:node ...').not.toBeNull();
+    for (const t of targets) {
+      expect(mkdir?.[1]?.split(/\s+/), t).toContain(t);
+      expect(mkdir?.[2]?.split(/\s+/), t).toContain(t);
+    }
   });
 });
 
