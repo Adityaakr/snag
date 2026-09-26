@@ -73,9 +73,11 @@ export class PgBossQueue implements JobQueue {
     this.handler = handler;
   }
 
-  async start(): Promise<void> {
+  /** Creates the queues and schedules; with `consume: false` (the web role) this process only sends jobs. */
+  async start(opts: { consume?: boolean } = {}): Promise<void> {
     if (this.started) return;
     this.started = true;
+    const consume = opts.consume ?? true;
     // Create each queue once; a real failure (for example a lost connection) surfaces instead of being swallowed.
     const ensure = async (name: string, options?: Parameters<PgBoss['createQueue']>[1]) => {
       if (!(await this.boss.getQueue(name))) await this.boss.createQueue(name, options);
@@ -88,6 +90,7 @@ export class PgBossQueue implements JobQueue {
         retryBackoff: this.opts.retryBackoff ?? true,
         deadLetter: DEAD_LETTER,
       });
+      if (!consume) continue;
       await this.boss.work<Envelope>(
         name,
         { pollingIntervalSeconds: this.opts.pollingIntervalSeconds ?? 2, batchSize: 1 },

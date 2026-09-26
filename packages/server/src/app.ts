@@ -176,6 +176,6 @@ export function createApp(deps: ServerDeps): Hono {
     }
   });
 
-  if (deps.dashboard) mountDashboard(app, deps.dashboard);
+  if (deps.dashboard) mountDashboard(app, { metrics: deps.metrics, ...deps.dashboard });
   return app;
 }

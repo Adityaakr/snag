@@ -29,6 +29,7 @@ export interface DashboardDeps {
   /** The built dashboard (packages/dashboard/dist). */
   staticDir?: string;
   rateLimit?: number;
+  metrics?: { inc(name: string, labels?: Record<string, string>): void };
 }
 
 const COOKIE = `${BRAND.slug}_session`;
@@ -161,6 +162,7 @@ export function mountDashboard(app: Hono, deps: DashboardDeps): void {
       source: 'dashboard',
       createdAt: new Date().toISOString(),
     });
+    deps.metrics?.inc('remit_feedback_total', { label: body.data.label, source: 'dashboard' });
     return c.json({ recorded: body.data.label }, 201);
   });
 
