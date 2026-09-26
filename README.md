@@ -6,7 +6,7 @@ It reads the issue without looking at the PR and lists each requirement with an 
 
 ## Status
 
-Under construction. See `.agent/PROGRESS.md` for milestone status. The CLI, the review pipeline and the renderers work; the GitHub App, the dashboard and live evaluation come later.
+The CLI, the review pipeline, the GitHub App, the dashboard, the GitHub Action and the eval harness work with fakes and recorded answers. Live evaluation is waiting on provider keys. See `docs/HANDOFF.md` for what is left and `.agent/PROGRESS.md` for milestone status.
 
 ## Quickstart
 
