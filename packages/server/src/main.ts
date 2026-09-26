@@ -5,6 +5,7 @@
  * (see docs/github-app.md and docs/operations.md); `.env` is loaded by the process manager, never read here.
  */
 import { randomBytes } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { serve } from '@hono/node-server';
 import { BRAND, QUESTION_SET_VERSION } from '@remit/core';
@@ -48,8 +49,13 @@ export async function start(
     : undefined;
   const stored = await secrets?.load();
   const appId = env.GITHUB_APP_ID ?? stored?.appId;
-  const privateKey = env.GITHUB_APP_PRIVATE_KEY?.replace(/\\n/g, '\n') ?? stored?.privateKey;
-  const webhookSecret = env.GITHUB_WEBHOOK_SECRET ?? stored?.webhookSecret ?? '';
+  // Secrets may come from files (the *_FILE convention for container secrets).
+  const fromFile = (name: string) => {
+    const path = env[`${name}_FILE`];
+    return path ? readFileSync(path, 'utf8').trim() : env[name];
+  };
+  const privateKey = fromFile('GITHUB_APP_PRIVATE_KEY')?.replace(/\\n/g, '\n') ?? stored?.privateKey;
+  const webhookSecret = fromFile('GITHUB_WEBHOOK_SECRET') ?? stored?.webhookSecret ?? '';
   const apiUrl = env.GITHUB_API_URL;
   const metrics = new Metrics();
   const hooks = {

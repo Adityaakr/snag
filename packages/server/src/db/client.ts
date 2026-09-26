@@ -15,6 +15,8 @@ import * as schema from './schema.js';
 export type Db = PgDatabase<PgQueryResultHKT, typeof schema>;
 
 export const MIGRATIONS = join(import.meta.dirname, '..', '..', 'drizzle');
+/** A fixed advisory lock id for migrations. */
+export const MIGRATION_LOCK = 7_212_024;
 
 export interface Database {
   db: Db;
@@ -35,6 +37,14 @@ export async function openPglite(dataDir?: string): Promise<Database & { client:
 export async function openPostgres(connectionString: string): Promise<Database> {
   const pool = new pg.Pool({ connectionString, max: 10 });
   const db = drizzlePg(pool, { schema });
-  await migratePg(db, { migrationsFolder: MIGRATIONS });
+  // Web and worker processes start together: an advisory lock makes exactly one of them run the migrations.
+  const client = await pool.connect();
+  try {
+    await client.query('select pg_advisory_lock($1)', [MIGRATION_LOCK]);
+    await migratePg(drizzlePg(client, { schema }), { migrationsFolder: MIGRATIONS });
+  } finally {
+    await client.query('select pg_advisory_unlock($1)', [MIGRATION_LOCK]).catch(() => undefined);
+    client.release();
+  }
   return { db: db as unknown as Db, connectionString, close: () => pool.end() };
 }

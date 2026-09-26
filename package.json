@@ -31,7 +31,8 @@
     "eval:mine-seeds": "tsx --env-file-if-exists=.env --conditions=source scripts/eval/mine-seeds.ts",
     "server": "tsx --conditions=source packages/server/src/main.ts",
     "build:action": "pnpm --filter @remit/action build",
-    "eval:export-shadow": "tsx --env-file-if-exists=.env --conditions=source scripts/eval/export-shadow.ts"
+    "eval:export-shadow": "tsx --env-file-if-exists=.env --conditions=source scripts/eval/export-shadow.ts",
+    "stack:smoke": "node scripts/dev/stack-smoke.mjs"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.14",
@@ -46,6 +47,7 @@
     "fast-check": "4.10.2",
     "tsx": "4.23.15",
     "typescript": "5.9.3",
-    "vitest": "5.0.2"
+    "vitest": "5.0.2",
+    "yaml": "2.9.1"
   }
 }
