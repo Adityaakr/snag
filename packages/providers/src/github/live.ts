@@ -244,6 +244,16 @@ export class LiveGitHub implements GitHubProvider {
     return { ...snapshot, contentHash: issueContentHash(snapshot) };
   }
 
+  /** Core API rate limit headroom (used by `remit doctor`). */
+  async rateLimit(): Promise<{ limit: number; remaining: number; resetAt: number }> {
+    const { data } = await this.call('rateLimit', () => this.octokit.rateLimit.get());
+    return {
+      limit: data.resources.core.limit,
+      remaining: data.resources.core.remaining,
+      resetAt: data.resources.core.reset * 1000,
+    };
+  }
+
   async closingIssues(ref: PullRef): Promise<IssueRef[]> {
     const query = `query($owner: String!, $repo: String!, $number: Int!) {
       repository(owner: $owner, name: $repo) {
