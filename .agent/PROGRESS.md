@@ -83,15 +83,15 @@ Status: BLOCKED-HUMAN
 
 ## M7 GitHub App and Action
 Status: TODO
-- [ ] A Hono server with `/webhooks`, `/setup` (the manifest flow), `/healthz`, `/readyz` and `/metrics`.
-- [ ] Every event in 10.2 is handled, with signature verification, dedupe, debounce and cancellation of superseded jobs.
-- [ ] Config comes from the default branch only, is validated, and errors show up in the check run.
-- [ ] The sticky comment and the check run with batched annotations, plus optional inline comments and labels.
-- [ ] Slash commands, with permission checks.
-- [ ] The issue-time checklist, with `/remit confirm` and invalidation when the issue is edited.
-- [ ] Rework mode and gate mode (including refusal) work end to end.
-- [ ] The GitHub Action package, with docs per 10.3.
-- [ ] Integration tests replay recorded webhook payloads against FakeGitHub. An end-to-end test runs through a local fake GitHub harness.
+- [x] A Hono server with `/webhooks`, `/setup` (the manifest flow), `/healthz`, `/readyz` and `/metrics`. (evidence: packages/server/src/app.ts (/webhooks, /setup and /setup/callback, /healthz, /readyz, /metrics); app.test.ts 'health, metrics and setup'; main.ts starts it with @hono/node-server, 1554d88)
+- [x] Every event in 10.2 is handled, with signature verification, dedupe, debounce and cancellation of superseded jobs. (evidence: events.ts handles pull_request (5 actions), issues (edited, labeled, assigned), issue_comment (created, edited), check_run rerequested, installation and installation_repositories; HMAC constant-time check before parsing (webhook-verify.ts), delivery dedupe (deliveries.ts), 30 s debounce and cancellation of superseded jobs (queue.ts); app.test.ts and units.test.ts 'job queue', 1554d88)
+- [x] Config comes from the default branch only, is validated, and errors show up in the check run. (evidence: repo-config.ts reads .remit.yml at the default branch only and validates it; errors go to the check run summary (app.test.ts 'config errors appear in the check run'); PRs editing .remit.yml get an after-merge note (units.test.ts), 1554d88)
+- [x] The sticky comment and the check run with batched annotations, plus optional inline comments and labels. (evidence: review-job.ts publish(): sticky upsert by hidden marker (providers github/sticky.ts), check run in progress then completed with annotations batched 50 per update, optional inline comments and labels; review-job.test.ts reproduces the golden verdicts through the GitHub path; app.test.ts 'adds inline comments and labels', 1554d88)
+- [x] Slash commands, with permission checks. (evidence: slash.ts and events.ts runSlash: review, agree, disagree, explain, confirm, help; write or triage permission (issue author for confirm); bots ignored; app.test.ts 'slash commands', 1554d88)
+- [x] The issue-time checklist, with `/remit confirm` and invalidation when the issue is edited. (evidence: checklist.ts: posted on label or assign, /remit confirm stores it by content hash, reviews use it, an issue edit invalidates and re-posts it; app.test.ts 'issue-time checklist', 1554d88)
+- [x] Rework mode and gate mode (including refusal) work end to end. (evidence: app.test.ts 'modes': the rework request with mention; gate refused without calibration (neutral) and failure with calibration evidence; action.test.ts gate exit codes, 1554d88)
+- [x] The GitHub Action package, with docs per 10.3. (evidence: packages/action (action.yml node24, src/action.ts, build.mjs, committed dist/index.js with grammars); action.test.ts; bundle.slow.test.ts runs the bundle against a local fake GitHub API; docs/github-action.md covers pull_request, pull_request_target, permissions and SHA pinning, 1554d88)
+- [x] Integration tests replay recorded webhook payloads against FakeGitHub. An end-to-end test runs through a local fake GitHub harness. (evidence: fixtures/webhooks/*.json replayed in packages/server/src/app.test.ts against FakeGitHub; e2e.test.ts runs the real server on a socket with LiveGitHub (App JWT, per-job installation tokens) against fake-github-server.ts over HTTP, 1554d88)
 - [ ] `docs/github-app.md` exists, and the `security-reviewer` subagent returns `VERDICT: PASS`.
 
 ## M8 Persistence, feedback, dashboard
