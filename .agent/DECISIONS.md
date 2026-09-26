@@ -122,3 +122,11 @@ Append-only. Each entry: date, decision, alternatives, why. Deviations from BUIL
 - Example question ids are 0-based to match `requirement.examples[{i}]` (`example_0_checked`); reports show them 1-based.
 - `tests.v0` Choice options use the description `` `tests` entry {id} ({file}) ``, and `claims.v0` `about` reuses the C.4 requirement option form, since C.3 and C.6 only say "one option per test unit / requirement".
 - `rerank.v0` question ids are `c_<unit id>`; the judge view is truncated so state plus one question stays under the 32k per-question limit, and batches stay under Remit's 56k per-request budget.
+
+## 2026-09-26 D19 Verdict engine and routing details
+- "c2 is the largest level" compares the raw coverage distribution (ties count as largest); thresholds use calibrated values. Calibration keys: `forward.coverage.level3`, `forward.coverage.level2`, `forward.coverage.missing`, `forward.conflict`, `tests.asserts_as_stated`, `tests.asserts_differently`, `tests.example_contradicted`, `issue.ambiguous`, `issue.checkable_in_code`, `preexisting.already_implemented`, `reverse.serves`, `reverse.plumbing`, `reverse.behavior_change`, `reverse.runtime_setting`, `reverse.loosens_test`.
+- Confidence for `not_checkable` is `1 - checkable`, for `deferred` the deferral probability, for `preexisting` the already-implemented probability. "One step" of lowered confidence is `0.1`.
+- Missing forward answers (a failed Jev call) give `uncertain` with a reason; missing reverse answers give a unit role `uncertain`.
+- An `examples_not_checked` note (golden 18) lists examples with `example_i_checked < 0.5` on partial or done requirements.
+- Finding types and routes: `done` and `deferred` requirements get no finding; `preexisting` is P2 route `none` (info); `unexplained_benign` and unit `uncertain` are P2 `reviewer_attention`; test integrity uses the first weakening fact's id (`F-X1`) or `F-U<n>-integrity`; other facts become `fact` findings: high P1, warn P2, info P2 route `none`; weakening facts on test units are covered by the integrity finding instead. A claim mismatch that raises a finding to P0 also routes it `send_back`.
+- Content keys: requirements hash the issue ref and normalized quote; units reuse `contentHash`; facts add kind and detail.

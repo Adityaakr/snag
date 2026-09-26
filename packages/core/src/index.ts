@@ -9,3 +9,5 @@ export * from './config/schema.js';
 export * from './extract/index.js';
 export * from './text/sanitize.js';
 export * from './questions/index.js';
+export * from './routing/index.js';
+export * from './verdicts/index.js';
