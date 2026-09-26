@@ -49,6 +49,7 @@ export async function openPostgres(
     await client.query('select pg_advisory_lock($1)', [MIGRATION_LOCK]);
     await migratePg(drizzlePg(client, { schema }), { migrationsFolder: MIGRATIONS });
   } finally {
+    // If the connection died, Postgres already released the session lock; nothing is left to unlock.
     await client.query('select pg_advisory_unlock($1)', [MIGRATION_LOCK]).catch(() => undefined);
     client.release();
   }

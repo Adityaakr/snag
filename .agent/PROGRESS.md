@@ -106,13 +106,13 @@ Status: DONE
 ## M9 Production hardening
 Status: TODO
 - [ ] A multi-stage Dockerfile that runs as non-root. `docker-compose.yml` has the server, the worker and Postgres, with health checks.; `docker compose up` works locally with fakes..
-- [ ] Deploy guides for Fly.io, Railway and Render in `docs/operations.md`.
-- [ ] Observability: structured logs with `reviewId`; Prometheus metrics for reviews, latency, provider calls, tokens, cost, findings and feedback; optional OpenTelemetry.
-- [ ] Budgets, rate limiters, circuit breakers and graceful partial results, all with tests.
-- [ ] Retention and deletion jobs, with tests.
-- [ ] A load test with fakes: 50 concurrent PR events. Record p50 and p95 latency and the error rate in `docs/operations.md`.
-- [ ] Chaos tests: Jev 400, 429, 529 and timeouts; GitHub 5xx; a database restart.
-- [ ] Docs: `docs/security.md` (the threat model); `docs/operations.md` (a runbook with SLOs and alerts); CHANGELOG and CONTRIBUTING.
+- [x] Deploy guides for Fly.io, Railway and Render in `docs/operations.md`. (evidence: docs/operations.md 'Deploy guides' (Fly.io fly.toml processes and checks, Railway services, Render blueprint), 8d957ba)
+- [x] Observability: structured logs with `reviewId`; Prometheus metrics for reviews, latency, provider calls, tokens, cost, findings and feedback; optional OpenTelemetry. (evidence: pino JSON logs with redact paths and reviewId child loggers (server/src/logger.ts, main.test.ts 'redacts credentials'); Prometheus metrics for reviews, latency histogram, provider calls, tokens, cost, findings, feedback (metrics.ts, main.test.ts); OpenTelemetry remit.review spans via @opentelemetry/api, no-op unless an SDK is registered (review-job.ts, docs/operations.md 'Tracing'), 8d957ba)
+- [x] Budgets, rate limiters, circuit breakers and graceful partial results, all with tests. (evidence: per-review CostTracker budget, per-installation daily budget and hourly review rate (limits.test.ts), circuit breakers (providers/src/common/circuit.ts, circuit.test.ts), partial results on provider failure (chaos.test.ts), cancellation reaching providers (units.test.ts), 8d957ba)
+- [x] Retention and deletion jobs, with tests. (evidence: nightly cleanup job and uninstall deletion through the job path (server/src/retention.test.ts), daily timers without pg-boss (main.test.ts), DbStore cleanup and expiry (db/store.test.ts), 8d957ba)
+- [x] A load test with fakes: 50 concurrent PR events. Record p50 and p95 latency and the error rate in `docs/operations.md`. (evidence: server/src/load.slow.test.ts: 50 concurrent PR events, 50 reviewed, 0 errors, p50 2.0 s, p95 3.1 s, recorded in docs/operations.md 'Load test', 8d957ba)
+- [x] Chaos tests: Jev 400, 429, 529 and timeouts; GitHub 5xx; a database restart. (evidence: server/src/chaos.test.ts: Jev 400, 429, 529 and timeouts through LiveJev; GitHub 5xx transient and persistent through LiveGitHub; a database restart under pg-boss and the Postgres store (found and fixed an unhandled pool error), 8d957ba)
+- [x] Docs: `docs/security.md` (the threat model); `docs/operations.md` (a runbook with SLOs and alerts); CHANGELOG and CONTRIBUTING. (evidence: docs/security.md (threat model per 9.14), docs/operations.md (runbook, SLOs, alerts), CHANGELOG.md, CONTRIBUTING.md, 8d957ba)
 - [ ] The `security-reviewer` subagent returns `VERDICT: PASS`.
 
 ## M10 Eval-driven improvement

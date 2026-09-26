@@ -59,6 +59,19 @@ No keys: task-list extraction (6 requirements), no Jev verdicts; 360 units. Code
 | db/pglite-server.ts:8 | `new_symbol_unreferenced`: `startPgliteServer` | right: a test harness in src, like fake-harness.ts | none |
 | queue.ts:6 | `public_api_changed`: exported type `Job` removed | right: jobs became serializable `JobSpec` data for pg-boss | none |
 
+
+### Dogfood run 5: M9 (`pnpm remit review --issue .agent/milestones/M9.md --diff m8-done..HEAD`), 2026-09-27
+
+No keys: task-list extraction (9 requirements), no Jev verdicts; 175 units. Code facts:
+
+| Finding | What Remit said | Right? | Action |
+| --- | --- | --- | --- |
+| ci.yml:24 | `ci_changed` | right, intended: audit, slow and docker jobs | none |
+| chaos.test.ts:57 | `retry_or_timeout_added`: `timeoutMs` 50 | right, intended: the Jev timeout chaos case | none |
+| chaos.test.ts:175 | `catch_broadened`: empty `.catch` | right, intended: polling while the database restarts | none |
+| db/client.ts:52 | `catch_broadened`: empty `.catch` on the advisory unlock | right, intended: a dead connection already released the lock | comment added |
+| db/client.ts:37, pglite-server.ts:16, main.ts:42 | `public_api_changed` | right: optional parameters and new members, backwards compatible | none |
+
 ## Eval runs
 
 - 2026-09-26T17:22:28.991Z mutations/dev simulated (not a real measurement): 0/128 items correct, requirement F1 0.30, PR recall 0.85, false alarms 9.94, P0 precision 0.19, cost $0.0000. Report: eval/reports/2026-09-26T17-22-28-991Z (local only, superseded)
