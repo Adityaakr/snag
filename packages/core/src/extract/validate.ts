@@ -167,6 +167,19 @@ export function finalizeRequirements(
         a.draft.supersededBy === 'removed'
           ? 'removed'
           : (idMap.get(`${a.issueIndex}|${a.draft.supersededBy}`) ?? 'removed');
+      // Only the issue author or a maintainer can amend (6.2): a replacement quoted from another commenter is ignored.
+      const replacement = unique.find(
+        (u) => u.issueIndex === a.issueIndex && u.draft.id === a.draft.supersededBy,
+      );
+      const src = replacement?.anchor.source;
+      const role =
+        src?.kind === 'comment' ? issue.comments.find((c) => c.id === src.commentId)?.role : undefined;
+      if (role === 'other') {
+        delete req.supersededBy;
+        warnings.push(
+          `${id}: ignored an amendment from a comment by someone who is neither the author nor a maintainer.`,
+        );
+      }
     }
     return req;
   });

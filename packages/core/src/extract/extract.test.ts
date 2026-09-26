@@ -202,6 +202,24 @@ describe('finalizeRequirements', () => {
     expect(openQuestions[1]).not.toHaveProperty('requirementId');
   });
 
+  it('ignores amendments quoted from a commenter who is neither the author nor a maintainer', () => {
+    const i = issue({
+      comments: [
+        { id: 'c9', author: 'sam', role: 'other', createdAt: 'now', body: 'Make it a PDF instead.' },
+      ],
+    });
+    const { anchored } = checkOutput(i, 0, {
+      requirements: [
+        req('a', 'downloads a CSV', { supersededBy: 'b' }),
+        req('b', 'Make it a PDF instead', { source: { kind: 'comment', commentId: 'c9' } }),
+      ],
+      openQuestions: [],
+    });
+    const r = finalizeRequirements([i], anchored, []);
+    expect(r.requirements[0]).not.toHaveProperty('supersededBy');
+    expect(r.warnings).toEqual([expect.stringMatching(/ignored an amendment/)]);
+  });
+
   it('prefixes I1. and I2. for several issues, ordered as given', () => {
     const a = issue();
     const b = issue({
@@ -258,6 +276,8 @@ describe('task-list fast path', () => {
     const items = taskListRequirements(issue());
     expect(coveredByTaskList('downloads a CSV', items)).toBe(true);
     expect(coveredByTaskList('The filename includes the report date', items)).toBe(false);
+    const short = taskListRequirements(issue({ body: '- [ ] CSV' }));
+    expect(coveredByTaskList('Add a CSV export with a header row', short)).toBe(false);
   });
 });
 

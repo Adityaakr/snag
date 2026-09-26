@@ -11,3 +11,4 @@
 - M2: Jev adapter, LLM adapter (native structured output for Opus 5.5), GitHub adapter (msw), record and replay, `remit doctor`, config schema, `pnpm test:live`, `guard:tests`. All items checked; gate next.
 - M2 gate: milestone-verifier VERDICT: FAIL (doctor item claimed live model verification that needs keys). Unchecked it, added `pending:` live tests, set M2 BLOCKED-HUMAN on B2, fixed three audit notes. Moving to M3.
 - M3 gate: milestone-verifier VERDICT: PASS; fixed its gaps (B3 live cassette test and blocker, architecture test scope, amendment authority, short task items). Tagged m3-done.
+- Correction: the first M3 follow-up commit carried the DECISIONS note but a failed edit script had skipped the amendment-authority and short-item code changes. Applied them with tests in the next commit and moved the local `m3-done` tag to it (nothing is pushed).
