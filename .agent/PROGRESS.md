@@ -96,12 +96,12 @@ Status: DONE
 
 ## M8 Persistence, feedback, dashboard
 Status: TODO
-- [ ] The Postgres schema and migrations from 10.4, with PGlite in tests.
-- [ ] pg-boss queues with retries and a dead-letter list.
-- [ ] Feedback from slash commands and the dashboard, plus implicit weak labels.
-- [ ] The dashboard pages from 10.4, with GitHub OAuth and authorization. Accessibility checks include a keyboard navigation test and contrast.
-- [ ] Corpus C exports from stored labels.
-- [ ] An end-to-end test covering webhook, job, review, comment, slash-command feedback, dashboard and export.
+- [x] The Postgres schema and migrations from 10.4, with PGlite in tests. (evidence: packages/server/src/db/schema.ts (every 10.4 table) and drizzle/0000_init.sql; openPglite/openPostgres apply migrations; DbStore passes the shared Store contract on PGlite (db/store.test.ts, including a check that every table exists, data minimization and retention cleanup), ff6a8b4)
+- [x] pg-boss queues with retries and a dead-letter list. (evidence: packages/server/src/pg-queue.ts: review, reextract, command, cleanup and recalibrate queues with retryLimit and backoff, a dead-letter queue, sendDebounced, per-key cancellation, nightly schedules; pg-queue.test.ts runs real pg-boss on PGlite over the Postgres protocol (retries, dead letters, debounce); dashboard lists dead letters, ff6a8b4)
+- [x] Feedback from slash commands and the dashboard, plus implicit weak labels. (evidence: slash agree/disagree (events.ts), dashboard POST /api/reviews/:id/findings/:fid/feedback and the labeling queue (dashboard-api.ts, Queue.tsx), implicit weak_agree labels on changed evidence lines (weak-labels.ts, weak-labels.test.ts), stored apart by source; recalibration job reads strong labels, ff6a8b4)
+- [x] The dashboard pages from 10.4, with GitHub OAuth and authorization. Accessibility checks include a keyboard navigation test and contrast. (evidence: packages/dashboard: Reviews (filters, cost, latency), Review detail (requirements with evidence links, units with roles and facts, raw answers, warnings, versions, JSON download), Labeling queue (a/d/s/?), Metrics (eval runs, reliability diagrams, agreement by type, cost and latency percentiles, dead letters), Settings; GitHub OAuth with per-installation authorization, CSRF, secure cookies and rate limits (dashboard-api.ts, dashboard-api.test.ts); a11y.test.tsx checks WCAG AA contrast, focus style, Tab order and queue shortcuts, ff6a8b4)
+- [x] Corpus C exports from stored labels. (evidence: packages/server/src/export.ts (remit-shadow-1 records from retained payloads and feedback; eval items split by repo#pr), GET /api/export/shadow, pnpm eval:export-shadow, ff6a8b4)
+- [x] An end-to-end test covering webhook, job, review, comment, slash-command feedback, dashboard and export. (evidence: packages/server/src/e2e-m8.test.ts: signed webhook -> pg-boss job -> review stored in Postgres -> sticky comment -> slash agree -> dashboard OAuth sign-in, list, queue and feedback -> JSONL export and eval item, ff6a8b4)
 
 ## M9 Production hardening
 Status: TODO
