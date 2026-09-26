@@ -14,13 +14,15 @@ export function Queue() {
   const label = useCallback(
     async (l: 'agree' | 'disagree') => {
       if (!item) return;
-      await api(
-        `/api/reviews/${encodeURIComponent(item.reviewId)}/findings/${encodeURIComponent(item.finding.id)}/feedback`,
-        {
-          method: 'POST',
-          body: { label: l },
-        },
-      );
+      try {
+        await api(
+          `/api/reviews/${encodeURIComponent(item.reviewId)}/findings/${encodeURIComponent(item.finding.id)}/feedback`,
+          { method: 'POST', body: { label: l } },
+        );
+      } catch {
+        setMessage(`Could not save the label for ${item.finding.id}. Try again.`);
+        return;
+      }
       setMessage(`Recorded ${l} for ${item.finding.id}.`);
       setIndex((i) => i + 1);
     },

@@ -56,7 +56,21 @@ async function setup(login = 'maya', installationIds = [4242]) {
       },
       staticDir,
       deadLetters: async () => [
-        { id: 'j1', key: 'review:acme/reports#77', kind: 'review', createdOn: new Date(0) },
+        {
+          id: 'j1',
+          key: 'review:acme/reports#77',
+          kind: 'review',
+          createdOn: new Date(0),
+          installationId: 4242,
+        },
+        {
+          id: 'j2',
+          key: 'review:other/secret#1',
+          kind: 'review',
+          createdOn: new Date(0),
+          installationId: 9999,
+        },
+        { id: 'j3', key: 'cleanup', kind: 'cleanup', createdOn: new Date(0) },
       ],
       rateLimit: 1000,
     },
@@ -176,7 +190,11 @@ describe('dashboard API', () => {
     };
     expect(settings.installations.map((i) => i.id)).toEqual([4242]);
     expect(settings.repositories).toHaveLength(1);
-    expect(await (await get('/api/dead-letters')).json()).toHaveLength(1);
+    expect(((await (await get('/api/dead-letters')).json()) as { id: string }[]).map((d) => d.id)).toEqual([
+      'j1',
+    ]);
+    const outsider = await setup('eve', []);
+    expect(await (await outsider.get('/api/dead-letters')).json()).toEqual([]);
     const me = (await (await get('/api/me')).json()) as { login: string; csrf: string };
     expect(me.login).toBe('maya');
     expect((await app.request('/')).headers.get('content-security-policy')).toContain("default-src 'self'");

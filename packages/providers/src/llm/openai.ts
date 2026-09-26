@@ -6,6 +6,7 @@ import OpenAI from 'openai';
 import { estimateTokens } from '@remit/core';
 import { z } from 'zod';
 import type { CostTracker } from '../common/budget.js';
+import { cacheKey } from '../cache/store.js';
 import { ProviderError } from '../common/errors.js';
 import { type Logger, silentLogger } from '../common/limits.js';
 import { type RetryOptions, withRetry } from '../common/retry.js';
@@ -101,6 +102,7 @@ export class OpenAiCompatibleLlm implements LlmProvider {
     const usage = { inputTokens: 0, outputTokens: 0 };
     let model = this.model;
     const call = async (msgs: LlmMessage[]): Promise<string> => {
+      const started = Date.now();
       const estimate = estimateTokens([opts.system, ...msgs.map((m) => m.content)].join('\n'));
       this.opts.costs?.ensure('openai_compatible', llmCost(this.opts.price, estimate, 0));
       const res = await withRetry(async () => {
@@ -127,7 +129,13 @@ export class OpenAiCompatibleLlm implements LlmProvider {
       const outT = res.usage?.completion_tokens ?? 0;
       usage.inputTokens += inT;
       usage.outputTokens += outT;
-      this.opts.costs?.addLlm(inT, outT, llmCost(this.opts.price, inT, outT));
+      this.opts.costs?.addLlm(inT, outT, llmCost(this.opts.price, inT, outT), {
+        provider: 'openai_compatible',
+        model: res.model,
+        kind: opts.kind ?? 'structured',
+        requestHash: cacheKey({ system: opts.system, msgs, promptVersion: opts.promptVersion }),
+        latencyMs: Date.now() - started,
+      });
       this.logger.info(
         {
           provider: 'openai_compatible',

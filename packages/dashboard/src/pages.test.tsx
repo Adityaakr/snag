@@ -63,10 +63,16 @@ describe('Review detail page', () => {
         repo: 'acme/reports',
         pr: 77,
         headSha: 'abcdef1234',
-        feedback: [],
+        feedback: [{ findingId: 'F-R1', label: 'agree', login: 'dev' }],
         result: {
           usage: { costUsd: 0.01, latencyMs: 900 },
-          versions: { questionSet: 'qs-0.1.0', jevModel: 'jev-1.13.0' },
+          versions: {
+            questionSet: 'qs-0.1.0',
+            extractionPrompt: 'xp-0.1.0',
+            jevModel: 'jev-1.13.0',
+            llmModel: 'claude-opus-5-5',
+          },
+          findings: [{ id: 'F-R1', priority: 'P0' }],
           requirements: [{ id: 'R1', quote: 'Export as CSV' }],
           requirementVerdicts: [
             {
@@ -84,7 +90,13 @@ describe('Review detail page', () => {
               facts: [{ kind: 'test_skipped', severity: 'high' }],
             },
           ],
-          unitVerdicts: [{ unitId: 'U1', role: 'unexplained_behavioral' }],
+          unitVerdicts: [
+            {
+              unitId: 'U1',
+              role: 'unexplained_behavioral',
+              answers: [{ call: 'reverse.v0', question: 'serves', value: 'none' }],
+            },
+          ],
           warnings: ['TYPESAFE_API_KEY is not set.'],
         },
       },
@@ -98,6 +110,51 @@ describe('Review detail page', () => {
     expect(screen.getByText('test_skipped (high)')).toBeTruthy();
     expect(screen.getByText('TYPESAFE_API_KEY is not set.')).toBeTruthy();
     expect(screen.getByText(/uncalibrated/)).toBeTruthy();
+    expect(screen.getByText(/extraction xp-0\.1\.0/)).toBeTruthy();
+    expect(screen.getByText(/LLM claude-opus-5-5/)).toBeTruthy();
+    expect(screen.getByText('agree (dev)')).toBeTruthy();
+    expect(screen.getAllByRole('heading', { name: 'reverse.v0' })).toHaveLength(1);
+    expect(screen.getAllByRole('heading', { name: 'forward.v0' })).toHaveLength(1);
+  });
+
+  it('records feedback from the review detail and announces failures', async () => {
+    const detail = {
+      id: 'rev1',
+      repo: 'acme/reports',
+      pr: 77,
+      headSha: 'abc',
+      feedback: [],
+      result: {
+        usage: { costUsd: 0, latencyMs: 0 },
+        versions: { questionSet: 'qs-0.1.0', extractionPrompt: 'xp-0.1.0', jevModel: 'jev-1.13.0' },
+        requirements: [],
+        requirementVerdicts: [],
+        units: [],
+        unitVerdicts: [],
+        findings: [{ id: 'F-R1', priority: 'P0' }],
+        warnings: [],
+      },
+    };
+    let fail = false;
+    const posts: string[] = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init: RequestInit = {}) => {
+        if (init.method === 'POST') {
+          posts.push(`${url} ${String(init.body)}`);
+          return new Response('{}', { status: fail ? 500 : 201 });
+        }
+        return new Response(JSON.stringify(detail));
+      }),
+    );
+    render(<ReviewDetail id="rev1" />);
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: 'Disagree' }));
+    expect(await screen.findByText('Recorded disagree for F-R1.')).toBeTruthy();
+    expect(posts).toEqual(['/api/reviews/rev1/findings/F-R1/feedback {"label":"disagree"}']);
+    fail = true;
+    await user.click(screen.getByRole('button', { name: 'Agree' }));
+    expect(await screen.findByText('Could not save the label for F-R1.')).toBeTruthy();
   });
 
   it('reports a review the user cannot see', async () => {
@@ -145,12 +202,22 @@ describe('Metrics and settings pages', () => {
     serve({
       '/api/settings': {
         installations: [{ id: 4242, account: 'acme' }],
-        repositories: [{ fullName: 'acme/reports', installationId: 4242, configHash: null }],
+        repositories: [
+          {
+            fullName: 'acme/reports',
+            installationId: 4242,
+            configHash: 'abcdef123456',
+            config: { mode: 'rework' },
+          },
+          { fullName: 'acme/other', installationId: 4242, configHash: null, config: null },
+        ],
         defaults: { mode: 'comment_only' },
       },
     });
     render(<Settings />);
     expect(await screen.findByText('acme/reports')).toBeTruthy();
+    expect(screen.getByText(/"mode": "rework"/)).toBeTruthy();
+    expect(screen.getByText(/defaults \(not reviewed yet\)/)).toBeTruthy();
     expect(screen.getByText(/"mode": "comment_only"/)).toBeTruthy();
   });
 });

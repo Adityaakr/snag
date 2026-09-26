@@ -24,6 +24,25 @@ export function queueOf(job: JobSpec): QueueName {
   }
 }
 
+export interface DeadLetter {
+  id: string;
+  key: string;
+  kind: string;
+  createdOn: Date;
+  /** Present for jobs tied to one installation; the dashboard shows a dead letter only to its installation's users. */
+  installationId?: number;
+}
+
+/** The installation a job belongs to (slash jobs carry it in their webhook payload). */
+export function installationOf(job: JobSpec): number | undefined {
+  if (job.kind === 'review' || job.kind === 'issue') return job.installationId;
+  if (job.kind === 'slash') {
+    const id = (job.event as { installation?: { id?: unknown } } | null)?.installation?.id;
+    return typeof id === 'number' ? id : undefined;
+  }
+  return undefined;
+}
+
 interface Envelope {
   key: string;
   job: JobSpec;
@@ -118,9 +137,18 @@ export class PgBossQueue implements JobQueue {
   }
 
   /** Jobs that failed every retry (the dashboard's dead-letter list). */
-  async deadLetters(): Promise<{ id: string; key: string; kind: string; createdOn: Date }[]> {
+  async deadLetters(): Promise<DeadLetter[]> {
     const jobs = await this.boss.findJobs<Envelope>(DEAD_LETTER);
-    return jobs.map((j) => ({ id: j.id, key: j.data.key, kind: j.data.job.kind, createdOn: j.createdOn }));
+    return jobs.map((j) => {
+      const installationId = installationOf(j.data.job);
+      return {
+        id: j.id,
+        key: j.data.key,
+        kind: j.data.job.kind,
+        createdOn: j.createdOn,
+        ...(installationId !== undefined ? { installationId } : {}),
+      };
+    });
   }
 
   /** Waits until every queue is drained (tests and graceful shutdown). */

@@ -13,7 +13,11 @@ const packages = [
   'eval',
 ];
 const src = (name: string) => fileURLToPath(new URL(`./packages/${name}/src/index.ts`, import.meta.url));
-const alias = Object.fromEntries(packages.map((name) => [`@remit/${name}`, src(name)]));
+// Subpath exports first: aliases match by prefix, in order.
+const alias = Object.fromEntries([
+  ['@remit/core/brand', fileURLToPath(new URL('./packages/core/src/brand.ts', import.meta.url))],
+  ...packages.map((name) => [`@remit/${name}`, src(name)]),
+]);
 
 export default defineConfig({
   resolve: { alias },

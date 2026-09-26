@@ -38,6 +38,8 @@ export const repositories = pgTable(
     fullName: text('full_name').notNull(),
     defaultBranch: text('default_branch').notNull().default('main'),
     configHash: text('config_hash'),
+    /** The effective config at the last review (for the settings page). */
+    config: jsonb('config'),
   },
   (t) => [uniqueIndex('repositories_full_name').on(t.fullName)],
 );
