@@ -33,7 +33,9 @@ export function entropy(s: string): number {
 }
 
 const CANDIDATE = /["'`]([A-Za-z0-9+/=_-]{32,})["'`]/g;
-const HASH_CONTEXT = /\b(sha\d*|hash|integrity|checksum|digest|nonce|uuid|commit|etag|fixture|example)\b/i;
+// GitHub GraphQL node ids ("node_id": "MDEwOl...") are opaque identifiers, not credentials (dogfood M7).
+const HASH_CONTEXT =
+  /\b(sha\d*|hash|integrity|checksum|digest|nonce|uuid|commit|etag|fixture|example|node_id)\b/i;
 
 /** Returns the kind of secret on a line, or null. */
 export function secretKind(content: string): string | null {

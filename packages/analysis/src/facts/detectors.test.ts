@@ -879,3 +879,14 @@ describe('fact ids and redaction', () => {
     expect(secretKind('no secrets here')).toBeNull();
   });
 });
+
+describe('secret_like and GitHub node ids (dogfood M7)', () => {
+  it('ignores GraphQL node ids but still flags key patterns on the same kind of line', () => {
+    expect(secretKind('  "node_id": "MDIzOkludGVncmF0aW9uSW5zdGFsbGF0aW9uNDI0Mg==",')).toBeNull();
+    const key = ['sk', 'ant', 'api03', 'a'.repeat(30)].join('-');
+    expect(secretKind(`  "node_id": "${key}",`)).toBe('Anthropic API key');
+    expect(secretKind('  "token": "MDIzOkludGVncmF0aW9uSW5zdGFsbGF0aW9uNDI0Mg==",')).toBe(
+      'high-entropy token',
+    );
+  });
+});
