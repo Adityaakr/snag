@@ -18,3 +18,4 @@ export * from './syntax/strip.js';
 export * from './syntax/treesitter.js';
 export * from './units/build.js';
 export * from './facts/index.js';
+export * from './retrieval/index.js';
