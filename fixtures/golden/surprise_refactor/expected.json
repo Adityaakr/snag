@@ -13,6 +13,32 @@
       "role": "ignored"
     }
   ],
+  "filtered": [
+    {
+      "file": "src/utils/math.ts",
+      "reason": "formatting_only"
+    }
+  ],
+  "findings": [
+    {
+      "unit": {
+        "file": "src/utils/format.ts",
+        "symbol": "upper"
+      },
+      "type": "unit",
+      "priority": "P2",
+      "route": "reviewer_attention"
+    },
+    {
+      "unit": {
+        "file": "src/utils/format.ts",
+        "symbol": "padLeft"
+      },
+      "type": "unit",
+      "priority": "P2",
+      "route": "reviewer_attention"
+    }
+  ],
   "noFindingsOfPriority": [
     "P0",
     "P1"

@@ -365,39 +365,45 @@ export async function runReview(input: ReviewInput, deps: ReviewDeps): Promise<R
     return a ? forwardSignal(a) : undefined;
   };
 
+  /** Candidate selection for one pool (6.5 steps 3 and 4), running rerank.v0 when more than 40 units score. */
+  const choose = async (
+    r: Requirement,
+    ranked: ReturnType<Retriever['rank']>,
+    budget: number,
+    size: (u: ChangeUnit) => number,
+    tag: string,
+  ) => {
+    const sel = selectCandidates(ranked, budget, size);
+    if (sel.kind !== 'rerank') return { units: sel.units, order: ranked.map((x) => x.unit) };
+    const batches = rerankBatches(
+      r,
+      sel.pool.map((u) => ({ id: u.id, file: u.file, judgeView: u.judgeView })),
+    );
+    const relevance = new Map<string, number>();
+    for (const [i, b] of batches.entries()) {
+      const a = await ask('rerank', `${r.id}#${tag}${i + 1}`, b.state, b.questions);
+      for (const [qid, ans] of Object.entries(a ?? {})) relevance.set(qid.replace(/^c_/, ''), ans.noul ?? 0);
+    }
+    const applied = applyRerank(sel.pool, relevance, sel.rest, budget, size);
+    return { units: applied.units, order: [...applied.units, ...applied.rest] };
+  };
+
   // Stage 3: forward, tests and reverse calls (parallel; the provider limits concurrency).
   const forwardCands = new Map<string, { used: ChangeUnit[]; ranked: ChangeUnit[] }>();
   const forward = new Map<string, ForwardSignal | undefined>();
   const tests = new Map<string, TestsSignal | undefined>();
   await Promise.all(
     active.map(async (r) => {
-      const ranked = implRetriever.rank(r);
       const budget = budgetFor(r);
-      let sel = selectCandidates(ranked, budget, sizeOf);
-      let chosen: ChangeUnit[];
-      let rankedOrder = ranked.map((x) => x.unit);
-      if (sel.kind === 'rerank') {
-        const batches = rerankBatches(
-          r,
-          sel.pool.map((u) => ({ id: u.id, file: u.file, judgeView: u.judgeView })),
-        );
-        const relevance = new Map<string, number>();
-        for (const [i, b] of batches.entries()) {
-          const a = await ask('rerank', `${r.id}#b${i + 1}`, b.state, b.questions);
-          for (const [qid, ans] of Object.entries(a ?? {}))
-            relevance.set(qid.replace(/^c_/, ''), ans.noul ?? 0);
-        }
-        const applied = applyRerank(sel.pool, relevance, sel.rest, budget, sizeOf);
-        chosen = applied.units;
-        rankedOrder = [...applied.units, ...applied.rest];
-        sel = { kind: 'ranked', units: chosen, rest: applied.rest };
-      } else chosen = sel.units;
+      const impl = await choose(r, implRetriever.rank(r), budget, sizeOf, 'b');
+      const chosen = impl.units;
+      const rankedOrder = impl.order;
       forwardCands.set(r.id, { used: chosen, ranked: rankedOrder });
       forward.set(r.id, await forwardCall(r, chosen, r.id));
 
       if (r.kind !== 'non_goal') {
-        const testSel = selectCandidates(testRetriever.rank(r), budget, testSize);
-        const testUnits = testSel.kind === 'rerank' ? testSel.pool.slice(0, 40) : testSel.units;
+        // Tests use the same procedure over test units only (6.5 step 6), rerank included.
+        const testUnits = (await choose(r, testRetriever.rank(r), budget, testSize, 't')).units;
         if (testUnits.length || r.examples.length) {
           const entries = testUnits.map((u) => ({
             id: u.id,

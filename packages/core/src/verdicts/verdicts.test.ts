@@ -534,3 +534,104 @@ describe('unit rules (6.7)', () => {
     });
   });
 });
+
+describe('remaining 6.7 threshold edges (M4 gate)', () => {
+  it.each<[string, Partial<RequirementContext>, string]>([
+    [
+      'asserts_differently 0.69 is not contradicted',
+      { tests: tests({ assertsAsStated: 0.1, assertsDifferently: 0.69 }) },
+      'done',
+    ],
+    [
+      'example contradicted 0.69 is not contradicted',
+      { tests: tests({ examplesContradicted: [0.1, 0.69] }) },
+      'done',
+    ],
+  ])('%s', (_n, over, expected) => {
+    expect(statusOf(ctx(over))).toBe(expected);
+  });
+
+  it('claim mismatch: partial counts, about 0.59 or another requirement does not', () => {
+    const missing = {
+      forward: fwd([0.6, 0.2, 0.1, 0.1]),
+      widened: true,
+      preexisting: { alreadyImplemented: 0.1, answers: [] },
+    };
+    expect(
+      verdictOf(ctx({ forward: fwd([0.1, 0.1, 0.5, 0.3]), claims: [claim()] })).verdict.claimMismatch,
+    ).toEqual({ sentence: 'All done.' });
+    expect(
+      verdictOf(ctx({ ...missing, claims: [claim({ aboutProbability: 0.59 })] })).verdict.claimMismatch,
+    ).toBeUndefined();
+    expect(
+      verdictOf(ctx({ ...missing, claims: [claim({ about: 'R2' })] })).verdict.claimMismatch,
+    ).toBeUndefined();
+  });
+
+  it('forward and reverse agree when the evidence unit serves a requirement', () => {
+    const agreeing = new Map<string, UnitContext>([
+      [
+        'U1',
+        {
+          unit: unit('U1'),
+          reverse: {
+            servesTop: 'R1',
+            servesRequirementProbability: 0.8,
+            servesRequirementId: 'R1',
+            plumbing: 0.1,
+            behaviorChange: 0.8,
+            answers: [],
+          },
+        },
+      ],
+      ['U9', { unit: unit('U9', { kind: 'test' }) }],
+    ]);
+    const o = verdictOf(ctx({ units: agreeing }));
+    expect(o.disagreeingUnit).toBeUndefined();
+    expect(o.verdict.confidence).toBeCloseTo(0.8); // not lowered
+  });
+
+  const rev = (over: Partial<ReverseSignal>): ReverseSignal => ({
+    servesTop: 'none',
+    servesRequirementProbability: 0.1,
+    servesRequirementId: 'R1',
+    plumbing: 0.1,
+    behaviorChange: 0.1,
+    answers: [],
+    ...over,
+  });
+  it.each<[string, Partial<ReverseSignal>, string]>([
+    [
+      'serves 0.4 and behavior 0.4 (band edges) is uncertain',
+      { servesRequirementProbability: 0.4, behaviorChange: 0.4 },
+      'uncertain',
+    ],
+    [
+      'serves 0.54 and behavior 0.59 is uncertain',
+      { servesRequirementProbability: 0.54, behaviorChange: 0.59 },
+      'uncertain',
+    ],
+    [
+      'serves 0.6 (upper band edge, top answer none) and behavior 0.5 is uncertain',
+      { servesRequirementProbability: 0.6, behaviorChange: 0.5 },
+      'uncertain',
+    ],
+    [
+      'serves 0.39 is below the band',
+      { servesRequirementProbability: 0.39, behaviorChange: 0.5 },
+      'unexplained_benign',
+    ],
+    [
+      'serves 0.61 (top answer none) is above the band',
+      { servesRequirementProbability: 0.61, behaviorChange: 0.5 },
+      'unexplained_benign',
+    ],
+    [
+      'behavior 0.39 is below the band',
+      { servesRequirementProbability: 0.5, behaviorChange: 0.39 },
+      'unexplained_benign',
+    ],
+  ])('unit rule 5: %s', (_n, over, role) => {
+    expect(unitVerdict(unit('U1'), rev(over), T, NOCAL).verdict.role).toBe(role);
+  });
+});

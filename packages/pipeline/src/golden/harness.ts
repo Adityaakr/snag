@@ -95,6 +95,8 @@ export interface Expected {
   reasons?: Record<string, string>;
   requirementIds?: string[];
   mustNotAppearInJudgeViews?: string[];
+  tested?: Record<string, string>;
+  filtered?: (UnitSelector & { reason: string })[];
   sameVerdictsAs?: string;
 }
 
