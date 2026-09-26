@@ -1,0 +1,14 @@
+Build Remit end to end exactly as specified in BUILD_PROMPT.md, following its operating protocol in section 3. Work milestone by milestone, starting from the first one that .agent/PROGRESS.md does not mark DONE or BLOCKED-HUMAN. Commit after every completed task and keep .agent/NEXT.md and .agent/PROGRESS.md current.
+
+This goal is met only when your most recent turn shows the full output of both of these commands, run in that same turn:
+1. pnpm verify, exiting with code 0
+2. pnpm progress --check, printing ALL REQUIRED MILESTONES TERMINAL and exiting with code 0
+
+Constraints for the whole run:
+- Never edit BUILD_PROMPT.md, GOAL.txt, loop.sh or START_HERE.md.
+- Never delete, skip or weaken a test, and never lower a threshold, to make a check pass.
+- Never modify eval test-split files after they are frozen.
+- Never print, log or commit secrets.
+- Mark a milestone BLOCKED-HUMAN only for the human-only items in BUILD_PROMPT.md section 3.8, with exact unblock steps in .agent/BLOCKERS.md.
+
+Stop after 150 turns in this session. Before stopping for any reason, update .agent/NEXT.md with the exact next action and commit, so a fresh session can continue from the files alone.
