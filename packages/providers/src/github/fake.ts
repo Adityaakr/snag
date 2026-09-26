@@ -1,7 +1,27 @@
 import { type IssueRef, type IssueSnapshot, issueContentHash } from '@remit/core';
 import { ProviderError } from '../common/errors.js';
 import { commentRole, isBotComment } from './roles.js';
-import type { ContentResult, GitHubMining, MergedPull, PullFile, PullRef, PullSnapshot } from './types.js';
+import type {
+  CheckRunInput,
+  ContentResult,
+  GitHubMining,
+  GitHubWriter,
+  IssueComment,
+  MergedPull,
+  PullFile,
+  PullRef,
+  PullSnapshot,
+  RepoPermission,
+} from './types.js';
+
+export interface FakeCheckRun extends CheckRunInput {
+  id: number;
+  owner: string;
+  repo: string;
+  /** Every annotation sent across create and update calls. */
+  annotations: NonNullable<NonNullable<CheckRunInput['output']>['annotations']>;
+  updates: number;
+}
 
 export interface FakeIssue {
   title: string;
@@ -27,13 +47,23 @@ export interface FakePull
 }
 
 /** In-memory GitHub for tests (BUILD_PROMPT M2): pulls, files, issues, contents at a SHA. Records every call. */
-export class FakeGitHub implements GitHubMining {
+export class FakeGitHub implements GitHubMining, GitHubWriter {
   readonly calls: string[] = [];
   readonly pulls = new Map<string, FakePull>();
   readonly issues = new Map<string, FakeIssue>();
   /** `owner/repo@sha:path` -> content (a Buffer for binary). */
   readonly contents = new Map<string, string | Buffer>();
   readonly licenses = new Map<string, string>();
+  readonly checkRuns: FakeCheckRun[] = [];
+  /** Comments posted through the writer, per `owner/repo#n`. */
+  readonly posted = new Map<string, IssueComment[]>();
+  readonly labels = new Map<string, string[]>();
+  readonly reviewComments: { pull: string; headSha: string; path: string; line: number; body: string }[] = [];
+  readonly permissions = new Map<string, RepoPermission>();
+  readonly defaultBranches = new Map<string, string>();
+  /** The login the writer posts as. */
+  botLogin = 'remit[bot]';
+  private nextId = 1000;
   readonly merged = new Map<string, string>();
 
   private key(owner: string, repo: string, n: number) {
@@ -146,5 +176,103 @@ export class FakeGitHub implements GitHubMining {
   async getLicense(owner: string, repo: string): Promise<string | null> {
     this.calls.push(`getLicense ${owner}/${repo}`);
     return this.licenses.get(`${owner}/${repo}`) ?? null;
+  }
+
+  async createCheckRun(owner: string, repo: string, input: CheckRunInput): Promise<{ id: number }> {
+    this.calls.push(`createCheckRun ${owner}/${repo}@${input.headSha}`);
+    const run: FakeCheckRun = {
+      ...input,
+      id: this.nextId++,
+      owner,
+      repo,
+      annotations: [...(input.output?.annotations ?? [])],
+      updates: 0,
+    };
+    this.assertBatch(input.output?.annotations);
+    this.checkRuns.push(run);
+    return { id: run.id };
+  }
+
+  async updateCheckRun(
+    owner: string,
+    repo: string,
+    id: number,
+    input: Partial<Omit<CheckRunInput, 'name' | 'headSha'>>,
+  ): Promise<void> {
+    this.calls.push(`updateCheckRun ${owner}/${repo} ${id}`);
+    const run = this.checkRuns.find((r) => r.id === id && r.owner === owner && r.repo === repo);
+    if (!run) throw new ProviderError('github', 'bad_request', 'not found (404)');
+    this.assertBatch(input.output?.annotations);
+    if (input.status) run.status = input.status;
+    if (input.conclusion) run.conclusion = input.conclusion;
+    if (input.output) {
+      run.output = { title: input.output.title, summary: input.output.summary };
+      run.annotations.push(...(input.output.annotations ?? []));
+    }
+    run.updates++;
+  }
+
+  private assertBatch(annotations: unknown[] | undefined) {
+    if ((annotations?.length ?? 0) > 50)
+      throw new ProviderError('github', 'bad_request', 'unprocessable (422): more than 50 annotations');
+  }
+
+  async listIssueComments(ref: IssueRef): Promise<IssueComment[]> {
+    const key = this.key(ref.owner, ref.repo, ref.number);
+    this.calls.push(`listIssueComments ${key}`);
+    const original = (this.issues.get(key)?.comments ?? []).map((c, i) => ({
+      id: i + 1,
+      body: c.body,
+      author: c.author,
+      authorIsBot: c.userType === 'Bot',
+    }));
+    return [...original, ...(this.posted.get(key) ?? [])];
+  }
+
+  async createIssueComment(ref: IssueRef, body: string): Promise<{ id: number }> {
+    const key = this.key(ref.owner, ref.repo, ref.number);
+    this.calls.push(`createIssueComment ${key}`);
+    const c = { id: this.nextId++, body, author: this.botLogin, authorIsBot: true };
+    this.posted.set(key, [...(this.posted.get(key) ?? []), c]);
+    return { id: c.id };
+  }
+
+  async updateIssueComment(owner: string, repo: string, id: number, body: string): Promise<void> {
+    this.calls.push(`updateIssueComment ${owner}/${repo} ${id}`);
+    for (const [key, list] of this.posted)
+      if (key.startsWith(`${owner}/${repo}#`)) {
+        const c = list.find((x) => x.id === id);
+        if (c) {
+          c.body = body;
+          return;
+        }
+      }
+    throw new ProviderError('github', 'bad_request', 'not found (404)');
+  }
+
+  async addLabels(ref: IssueRef, labels: string[]): Promise<void> {
+    const key = this.key(ref.owner, ref.repo, ref.number);
+    this.calls.push(`addLabels ${key}`);
+    this.labels.set(key, [...new Set([...(this.labels.get(key) ?? []), ...labels])]);
+  }
+
+  async createReviewComments(
+    ref: PullRef,
+    headSha: string,
+    comments: { path: string; line: number; body: string }[],
+  ): Promise<void> {
+    const pull = this.key(ref.owner, ref.repo, ref.number);
+    this.calls.push(`createReviewComments ${pull}`);
+    for (const c of comments) this.reviewComments.push({ pull, headSha, ...c });
+  }
+
+  async getPermission(owner: string, repo: string, user: string): Promise<RepoPermission> {
+    this.calls.push(`getPermission ${owner}/${repo} ${user}`);
+    return this.permissions.get(`${owner}/${repo}:${user}`) ?? 'none';
+  }
+
+  async getDefaultBranch(owner: string, repo: string): Promise<string> {
+    this.calls.push(`getDefaultBranch ${owner}/${repo}`);
+    return this.defaultBranches.get(`${owner}/${repo}`) ?? 'main';
   }
 }

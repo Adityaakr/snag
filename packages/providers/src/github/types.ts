@@ -74,3 +74,58 @@ export interface GitHubMining extends GitHubProvider {
   /** The repository license as an SPDX id, or null. */
   getLicense(owner: string, repo: string): Promise<string | null>;
 }
+
+export interface CheckRunOutput {
+  title: string;
+  summary: string;
+  /** At most 50 per request (the API limit); callers batch. */
+  annotations?: {
+    path: string;
+    start_line: number;
+    end_line: number;
+    annotation_level: 'notice' | 'warning' | 'failure';
+    title: string;
+    message: string;
+  }[];
+}
+
+export interface CheckRunInput {
+  name: string;
+  headSha: string;
+  status: 'queued' | 'in_progress' | 'completed';
+  conclusion?: 'neutral' | 'success' | 'failure' | 'cancelled' | 'action_required';
+  output?: CheckRunOutput;
+  externalId?: string;
+}
+
+export interface IssueComment {
+  id: number;
+  body: string;
+  author: string;
+  authorIsBot: boolean;
+}
+
+export type RepoPermission = 'admin' | 'maintain' | 'write' | 'triage' | 'read' | 'none';
+
+/** Write side for the GitHub App and the Action (BUILD_PROMPT 10.2, 10.3). */
+export interface GitHubWriter extends GitHubProvider {
+  createCheckRun(owner: string, repo: string, input: CheckRunInput): Promise<{ id: number }>;
+  updateCheckRun(
+    owner: string,
+    repo: string,
+    id: number,
+    input: Partial<Omit<CheckRunInput, 'name' | 'headSha'>>,
+  ): Promise<void>;
+  listIssueComments(ref: IssueRef): Promise<IssueComment[]>;
+  createIssueComment(ref: IssueRef, body: string): Promise<{ id: number }>;
+  updateIssueComment(owner: string, repo: string, id: number, body: string): Promise<void>;
+  addLabels(ref: IssueRef, labels: string[]): Promise<void>;
+  /** Inline comments on the head commit, posted as one review with event COMMENT. */
+  createReviewComments(
+    ref: PullRef,
+    headSha: string,
+    comments: { path: string; line: number; body: string }[],
+  ): Promise<void>;
+  getPermission(owner: string, repo: string, user: string): Promise<RepoPermission>;
+  getDefaultBranch(owner: string, repo: string): Promise<string>;
+}
