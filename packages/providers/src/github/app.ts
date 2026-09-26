@@ -73,6 +73,17 @@ export async function installationToken(
   }, creds.retry);
 }
 
+/** The App's own slug (`GET /app` with the app JWT), for recognizing its bot comments. */
+export async function appSlug(creds: AppCredentials, nowMs = Date.now()): Promise<string> {
+  const octokit = client(appJwt(creds.appId, creds.privateKey, nowMs), creds);
+  try {
+    const { data } = await octokit.apps.getAuthenticated();
+    return data?.slug ?? String(data?.id ?? creds.appId);
+  } catch (e) {
+    throw classifyGitHubError(e);
+  }
+}
+
 export interface ManifestConversion {
   id: number;
   slug: string;

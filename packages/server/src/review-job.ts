@@ -18,6 +18,8 @@ import {
 import { trace } from '@opentelemetry/api';
 import { ingestPullRequest, runReview } from '@remit/pipeline';
 import {
+  AbortableJev,
+  AbortableLlm,
   CostTracker,
   type GitHubWriter,
   type JevProvider,
@@ -149,7 +151,11 @@ async function runPullReview(
       notes.push(
         `This PR edits ${CONFIG_PATH}; the change applies after it is merged into the default branch.`,
       );
-    const { jev, llm, costs } = deps.providers(config);
+    const built = deps.providers(config);
+    const costs = built.costs;
+    // A superseded job stops starting provider calls at once, not only at step boundaries.
+    const jev = built.jev ? new AbortableJev(built.jev, signal) : undefined;
+    const llm = built.llm ? new AbortableLlm(built.llm, signal) : undefined;
     const reviewCosts = costs ?? new CostTracker(config.budgets.max_usd_per_review);
     const calibration = deps.calibration?.(jev?.model ?? config.jev.model);
     const result = await runReview(ingest.input, {
