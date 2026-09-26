@@ -46,8 +46,8 @@ Status: IN_PROGRESS
 - [x] The task-list fast path and all three `extraction.mode` values. (evidence: pipeline extract.test.ts modes tests + core tasklist tests, 0637168)
 - [x] Amendments, non-goals, examples, open questions with readings, and `checkableInCode`. (evidence: fixtures amended, non_goals, examples, two_issues (readings), prose; checkableInCode refinement test, 0637168)
 - [x] The `issue.v0` Jev call for each requirement (ambiguity and checkability). (evidence: core questions/issue.test.ts (spec wording) + pipeline issue.v0 tests, 0637168)
-- [ ] At least 12 extraction fixtures, with scripted LLM outputs and expected validated results: a checklist issue; a prose issue; an issue amended by a later comment; explicit non-goals; input and output examples; a non-English issue; a requirement that only appears in an image; a very long issue; prompt injection in the issue text; duplicate requirements; a vague issue; two linked issues. With keys, live cassettes are recorded and any differences are noted.
-- [ ] `remit extract <issue-url|file>`.
+- [x] At least 12 extraction fixtures, with scripted LLM outputs and expected validated results: a checklist issue; a prose issue; an issue amended by a later comment; explicit non-goals; input and output examples; a non-English issue; a requirement that only appears in an image; a very long issue; prompt injection in the issue text; duplicate requirements; a vague issue; two linked issues. With keys, live cassettes are recorded and any differences are noted. (evidence: pipeline/src/extract.test.ts runs fixtures/extraction/* (12); live cassettes need keys (B1, D17), b918cf4)
+- [x] `remit extract <issue-url|file>`. (evidence: cli/src/commands/extract.test.ts; `pnpm remit extract fixtures/extraction/checklist/issue.md`, b918cf4)
 
 ## M4 Retrieval, Jev question sets, verdicts, routing
 Status: TODO
