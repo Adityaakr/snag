@@ -1,6 +1,10 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.5.14/schema.json",
-  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
   "files": {
     "includes": [
       "**",
@@ -10,18 +14,36 @@
       "!schemas",
       "!eval/cassettes",
       "!fixtures/cassettes",
-      "!**/__tests__/fixtures"
+      "!**/__tests__/fixtures",
+      "!.claude/settings.json"
     ]
   },
-  "formatter": { "enabled": true, "indentStyle": "space", "indentWidth": 2, "lineWidth": 110 },
-  "javascript": { "formatter": { "quoteStyle": "single", "trailingCommas": "all", "semicolons": "always" } },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 110
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "trailingCommas": "all",
+      "semicolons": "always"
+    }
+  },
   "linter": {
     "enabled": true,
     "rules": {
       "recommended": true,
-      "suspicious": { "noExplicitAny": "error" },
-      "style": { "noNonNullAssertion": "error" }
+      "suspicious": {
+        "noExplicitAny": "error"
+      },
+      "style": {
+        "noNonNullAssertion": "error"
+      }
     }
   },
-  "assist": { "enabled": true }
+  "assist": {
+    "enabled": true
+  }
 }
