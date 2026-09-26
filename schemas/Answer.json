@@ -1,0 +1,55 @@
+{
+  "$id": "urn:remit:schema:Answer",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "call": {
+      "type": "string"
+    },
+    "question": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "choice",
+        "score",
+        "noul"
+      ]
+    },
+    "value": {
+      "type": [
+        "string",
+        "number"
+      ]
+    },
+    "probabilities": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      }
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "calibratedValue": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    }
+  },
+  "required": [
+    "call",
+    "question",
+    "type",
+    "value"
+  ],
+  "additionalProperties": false
+}

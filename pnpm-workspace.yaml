@@ -1,2 +1,6 @@
 packages:
   - "packages/*"
+
+# Dependency build scripts are off by default (pnpm 11). esbuild ships its binary as an optional dependency.
+allowBuilds:
+  esbuild: false

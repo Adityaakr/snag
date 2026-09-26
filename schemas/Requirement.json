@@ -1,0 +1,175 @@
+{
+  "$id": "urn:remit:schema:Requirement",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^(I\\d+\\.)?R\\d+$"
+    },
+    "issue": {
+      "type": "object",
+      "properties": {
+        "owner": {
+          "type": "string",
+          "minLength": 1
+        },
+        "repo": {
+          "type": "string",
+          "minLength": 1
+        },
+        "number": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "owner",
+        "repo",
+        "number"
+      ],
+      "additionalProperties": false
+    },
+    "text": {
+      "type": "string",
+      "minLength": 1
+    },
+    "quote": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "title",
+            "body",
+            "comment",
+            "tasklist"
+          ]
+        },
+        "commentId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "additionalProperties": false
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "behavior",
+        "constraint",
+        "non_goal",
+        "test",
+        "docs",
+        "config",
+        "migration",
+        "performance",
+        "security",
+        "ux"
+      ]
+    },
+    "explicitness": {
+      "type": "string",
+      "enum": [
+        "explicit",
+        "implied"
+      ]
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "must",
+        "should",
+        "could"
+      ]
+    },
+    "examples": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "input": {
+            "type": "string"
+          },
+          "expected": {
+            "type": "string"
+          },
+          "quote": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "input",
+          "expected",
+          "quote"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "checkableInCode": {
+      "type": "boolean"
+    },
+    "signals": {
+      "type": "object",
+      "properties": {
+        "ambiguous": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "checkable": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "required": [
+        "ambiguous",
+        "checkable"
+      ],
+      "additionalProperties": false
+    },
+    "openQuestion": {
+      "type": "object",
+      "properties": {
+        "readings": {
+          "maxItems": 2,
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "readings"
+      ],
+      "additionalProperties": false
+    },
+    "supersededBy": {
+      "type": "string"
+    },
+    "confirmed": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "id",
+    "issue",
+    "text",
+    "quote",
+    "source",
+    "kind",
+    "explicitness",
+    "priority",
+    "examples",
+    "checkableInCode"
+  ],
+  "additionalProperties": false
+}

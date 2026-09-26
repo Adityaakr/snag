@@ -1,0 +1,126 @@
+{
+  "$id": "urn:remit:schema:UnitVerdict",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "unitId": {
+      "type": "string"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "implements",
+        "supporting",
+        "unexplained_behavioral",
+        "unexplained_benign",
+        "ignored",
+        "uncertain"
+      ]
+    },
+    "servesRequirementId": {
+      "type": "string"
+    },
+    "testIntegrity": {
+      "type": "object",
+      "properties": {
+        "loosened": {
+          "type": "number",
+          "minimum": 0
+        },
+        "factIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "loosened",
+        "factIds"
+      ],
+      "additionalProperties": false
+    },
+    "answers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "call": {
+            "type": "string"
+          },
+          "question": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "choice",
+              "score",
+              "noul"
+            ]
+          },
+          "value": {
+            "type": [
+              "string",
+              "number"
+            ]
+          },
+          "probabilities": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "calibratedValue": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        },
+        "required": [
+          "call",
+          "question",
+          "type",
+          "value"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "reasons": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "template": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "template",
+          "text"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "unitId",
+    "role",
+    "answers",
+    "reasons"
+  ],
+  "additionalProperties": false
+}

@@ -18,13 +18,15 @@
     "test:slow": "vitest run --config vitest.slow.config.ts",
     "test:live": "REMIT_ALLOW_NETWORK=1 vitest run --config vitest.live.config.ts",
     "guard": "node scripts/guard.mjs",
-    "progress": "node scripts/progress.mjs"
+    "progress": "node scripts/progress.mjs",
+    "schemas": "tsx packages/core/src/contracts/write-schemas.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.14",
     "@types/node": "22.20.4",
     "@vitest/coverage-v8": "5.0.2",
     "fast-check": "4.10.2",
+    "tsx": "4.23.15",
     "typescript": "5.9.3",
     "vitest": "5.0.2"
   }

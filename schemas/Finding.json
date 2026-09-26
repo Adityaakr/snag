@@ -1,0 +1,114 @@
+{
+  "$id": "urn:remit:schema:Finding",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^F-[A-Z0-9.]+(-[a-z_]+)?$"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "requirement",
+        "unit",
+        "test_integrity",
+        "fact",
+        "ambiguity"
+      ]
+    },
+    "targetId": {
+      "type": "string"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "P0",
+        "P1",
+        "P2"
+      ]
+    },
+    "route": {
+      "type": "string",
+      "enum": [
+        "send_back",
+        "ask_author",
+        "reviewer_attention",
+        "none"
+      ]
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "locations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "file": {
+            "type": "string"
+          },
+          "lines": {
+            "type": "array",
+            "prefixItems": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              }
+            ],
+            "items": false,
+            "minItems": 2,
+            "maxItems": 2
+          }
+        },
+        "required": [
+          "file",
+          "lines"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "reasons": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "template": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "template",
+          "text"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "contentKey": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "type",
+    "targetId",
+    "priority",
+    "route",
+    "confidence",
+    "locations",
+    "reasons",
+    "contentKey"
+  ],
+  "additionalProperties": false
+}

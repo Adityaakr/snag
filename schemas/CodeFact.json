@@ -1,0 +1,60 @@
+{
+  "$id": "urn:remit:schema:CodeFact",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^X\\d+$"
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "assertion_removed",
+        "assertion_weakened",
+        "expected_value_changed",
+        "test_skipped",
+        "test_focused",
+        "test_deleted",
+        "snapshot_updated",
+        "tolerance_widened",
+        "retry_or_timeout_added",
+        "suppression_added",
+        "catch_broadened",
+        "threshold_lowered",
+        "ci_changed",
+        "dependency_added",
+        "public_api_changed",
+        "new_symbol_unreferenced",
+        "secret_like"
+      ]
+    },
+    "severity": {
+      "type": "string",
+      "enum": [
+        "info",
+        "warn",
+        "high"
+      ]
+    },
+    "unitId": {
+      "type": "string"
+    },
+    "line": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "detail": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "kind",
+    "severity",
+    "unitId",
+    "detail"
+  ],
+  "additionalProperties": false
+}
