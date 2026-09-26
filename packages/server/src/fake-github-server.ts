@@ -23,7 +23,10 @@ export function fakeGitHubApi(
     const payload = p
       ? (JSON.parse(Buffer.from(p, 'base64url').toString()) as { iss?: string; exp?: number })
       : {};
-    if (!s || !v.verify(appPublicKey, Buffer.from(s, 'base64url')) || payload.iss !== appId)
+    const signed = appPublicKey
+      ? Boolean(s) && v.verify(appPublicKey, Buffer.from(s as string, 'base64url'))
+      : Boolean(s);
+    if (!signed || payload.iss !== appId)
       return c.json({ message: 'A JSON web token could not be decoded' }, 401);
     const token = `ghs_fake${randomBytes(8).toString('hex')}`;
     tokens.push(token);
@@ -181,5 +184,20 @@ export function fakeGitHubApi(
       },
     });
   });
+  /** Test and smoke-check introspection: check runs, posted comments and labels. */
+  app.get('/__fake/state', (c) =>
+    c.json({
+      checkRuns: gh.checkRuns.map((r) => ({
+        id: r.id,
+        repo: `${r.owner}/${r.repo}`,
+        status: r.status,
+        conclusion: r.conclusion ?? null,
+        title: r.output?.title ?? null,
+      })),
+      comments: Object.fromEntries(
+        [...gh.posted.entries()].map(([k, v]) => [k, v.map((x) => x.body.slice(0, 200))]),
+      ),
+    }),
+  );
   return { app, tokens };
 }
