@@ -28,7 +28,11 @@ The App reviews every pull request that links an issue. It posts one sticky comm
 3. GitHub redirects to `/setup/callback`, and the server exchanges the one-time code for the App's credentials.
    - With `SECRETS_ENCRYPTION_KEY` set, the credentials are stored encrypted in `${DATA_DIR:-.data}/app-secrets.enc`. The key must be at least 32 characters (generate one with `openssl rand -base64 48`); it is stretched with scrypt and a random salt, and the file uses AES-256-GCM. Stored credentials are never overwritten: to set up again, delete the file deliberately.
    - Without it, the page shows `GITHUB_APP_ID`, `GITHUB_WEBHOOK_SECRET` and `GITHUB_APP_PRIVATE_KEY` once. Put them in the server's environment; they are not stored.
-4. Follow the install link and choose repositories.
+4. Restart the server so it loads the new credentials (webhooks are refused until then), then follow the install link and choose repositories.
+
+The setup link is printed to the server log while the App is unconfigured; it works once and stops working as soon as credentials exist.
+
+**Linked issues** are read only from the PR's own repository with the job's token (tokens are narrowed to one repository). An issue in another repository is skipped with a warning.
 
 ## Environment
 

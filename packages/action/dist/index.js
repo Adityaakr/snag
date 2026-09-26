@@ -81189,6 +81189,16 @@ async function runAction(io) {
   }
   const ref = { owner, repo, number: event.pull_request.number };
   const ingest = await ingestPullRequest(gh, ref);
+  const foreign = ingest.input.issues.filter((i2) => i2.ref.owner.toLowerCase() !== owner.toLowerCase());
+  if (foreign.length) {
+    ingest.input.issues = ingest.input.issues.filter((i2) => !foreign.includes(i2));
+    ingest.input.issueRefs = ingest.input.issues.map((i2) => i2.ref);
+    if (!ingest.input.issues.length) ingest.input.linkStrength = "none";
+    for (const i2 of foreign)
+      ingest.warnings.push(
+        `Issue ${i2.ref.owner}/${i2.ref.repo}#${i2.ref.number} is outside this account, so it was not used.`
+      );
+  }
   const p = (io.providers ?? providersFromEnv)(config2, { ...keys, REMIT_CACHE_MODE: "live" });
   const reviewId = `action_${env.GITHUB_RUN_ID ?? "local"}_${env.GITHUB_RUN_ATTEMPT ?? "1"}`;
   const result = await runReview(ingest.input, {

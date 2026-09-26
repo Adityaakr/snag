@@ -309,6 +309,8 @@ describe('health, metrics and setup', () => {
     expect(done.headers.get('cache-control')).toBe('no-store');
     expect(await done.text()).toContain('https://github.com/apps/remit/installations/new');
     expect(saved).toHaveLength(1);
+    // The token is single use: after a successful setup the flow is closed.
+    expect((await app.request('/setup?token=setup-token-for-tests')).status).toBe(404);
     const noUrl = createApp({ ...deps, publicUrl: undefined as unknown as string });
     expect((await noUrl.request('/setup?token=setup-token-for-tests')).status).toBe(500);
   });
@@ -329,5 +331,15 @@ describe('health, metrics and setup', () => {
     expect(
       (await app.request('/metrics', { headers: { authorization: 'Bearer metrics-token' } })).status,
     ).toBe(200);
+  });
+});
+
+describe('feedback dedupe', () => {
+  it('records one label per finding and person when a command comment is edited', async () => {
+    const { hook, store } = setup();
+    await hook('pull_request', 'pull_request.opened');
+    await hook('issue_comment', 'issue_comment.agree');
+    await hook('issue_comment', 'issue_comment.agree');
+    expect(store.feedbackRows).toHaveLength(1);
   });
 });

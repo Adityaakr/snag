@@ -101,7 +101,10 @@ export function createApp(deps: ServerDeps): Hono {
     },
   );
 
-  const setupClosed = async () => !deps.setupToken || (await (deps.configured?.() ?? Promise.resolve(false)));
+  // One use per process: after a successful callback, setup stays closed even without stored credentials.
+  let setupUsed = false;
+  const setupClosed = async () =>
+    setupUsed || !deps.setupToken || (await (deps.configured?.() ?? Promise.resolve(false)));
   for (const path of ['/setup', '/setup/*'])
     app.use(path, async (c, next) => {
       await next();
@@ -155,8 +158,10 @@ export function createApp(deps: ServerDeps): Hono {
       };
       if (deps.secrets) {
         await deps.secrets.save(secrets);
+        setupUsed = true;
         return c.html(setupDonePage(conv.htmlUrl, true));
       }
+      setupUsed = true;
       return c.html(setupDonePage(conv.htmlUrl, false, secrets));
     } catch {
       return c.html(

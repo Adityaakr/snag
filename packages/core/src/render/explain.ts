@@ -4,6 +4,7 @@
  */
 import type { Thresholds } from '../config/schema.js';
 import type { Answer, ReviewResult } from '../contracts/index.js';
+import { stripInvisible } from '../text/sanitize.js';
 import { neutralizeMentions, plain } from './sanitize.js';
 
 function answerLine(a: Answer): string {
@@ -74,7 +75,8 @@ export function explainFinding(r: ReviewResult, id: string, thresholds: Threshol
 export function explainMarkdown(r: ReviewResult, id: string, thresholds: Thresholds): string | null {
   const text = explainFinding(r, id, thresholds);
   if (text === null) return null;
-  const body = neutralizeMentions(text);
+  // Paths and symbol names are not otherwise cleaned: strip bidi and invisible characters from the whole body.
+  const body = neutralizeMentions(stripInvisible(text));
   const longest = Math.max(0, ...[...body.matchAll(/`+/g)].map((m) => m[0].length));
   const fence = '`'.repeat(Math.max(3, longest + 1));
   return `${fence}text\n${body.trimEnd()}\n${fence}\n`;

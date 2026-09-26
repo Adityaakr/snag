@@ -216,3 +216,14 @@ Append-only. Each entry: date, decision, alternatives, why. Deviations from BUIL
   - pino with redact paths in the server (M9, next to the CLI's existing pino logger);
   - Renovate and a CI `pnpm audit` step (M9 supply chain);
   - `docs/security.md` (M9 threat model).
+- Second security review: PASS. Its lows were addressed:
+  - explain strips bidi and invisible characters;
+  - the setup token is single use per process;
+  - the Action drops linked issues from other accounts;
+  - an edited command does not record the same feedback twice;
+  - the docs cover restarting after setup and single-repository tokens.
+- Still open and low, recorded for M9 hardening:
+  - installation tokens are not narrowed by permission;
+  - the slug is not looked up via `GET /app` when `GITHUB_APP_SLUG` is unset;
+  - the Action has no bot-author check on its sticky comment (its login depends on the token used);
+  - the setup link is printed to logs (accepted bootstrap step, documented).
