@@ -80,3 +80,24 @@ Counts from the fetch on `2026-09-26`: `500` gold; `277` problem; `926` clean (`
 - `scripted`: recorded answers (golden only).
 - `simulated`: a heuristic stand-in for Jev that answers from lexical overlap and never reads labels. It is a plumbing check and a weak baseline. Every report from it starts with "Not a real measurement".
 - `live`: cached real providers over `eval/cassettes/`. Runs stop at `EVAL_MAX_USD` (default `$20`).
+
+## Metrics and calibration
+
+- **Metrics** (`packages/eval/src/metrics.ts`) follow 11.4:
+  - requirement precision, recall and F1 for the problem classes, with a confusion matrix and the abstention rate;
+  - unit and test-integrity precision and recall;
+  - PR-level "any P0" precision and recall, the false-alarm rate on clean items, and AUROC;
+  - P0 precision;
+  - per-operator detection (the G.1 Expected column);
+  - label slices for corpus A, human feedback for corpus C;
+  - latency, cost, tokens and truncation.
+- **The 11.8 targets table** reports every applicable target as met, not met or n/a:
+  - The clean-seed false-alarm target counts clean seeds only (items with no operator).
+  - The ECE target uses the out-of-sample ECE after isotonic calibration (5-fold cross-validation), never the raw ECE.
+- **Stability:** extraction runs twice on about 10% of issues (by a hash of the issue content). The report gives mean Jaccard over normalized quotes. Live runs use an uncached provider for the second extraction. Task-list extraction is deterministic, and the report says so.
+- **Calibration** (`remit calibrate`):
+  - One isotonic map per question key, fitted on dev labels (identity below `50` samples). Corpus C pairs join from M8, and dogfood pairs join once runs have live probabilities.
+  - Thresholds are tuned on dev with that map applied (cost weights `3` / `2` / `1` from config `eval`).
+  - The result is written to `eval/calibration/<jev-model>/<question-set>.json`. `remit review` applies it only when the Jev model and question set match.
+- **Baselines** (`remit eval ... --baseline single_pass`): the B.2 prompt, once with Remit's extracted requirements and once extracting its own. `pr_agent` is optional and prints a notice when it cannot run.
+- **Reports** go to `eval/reports/<timestamp>/` (`report.md`, `report.html`, `metrics.json`, item dumps). `remit report <dir>` re-renders them. Reports are local unless force-added; the committed M6 report keeps the dumps its "Worst items" section links to.

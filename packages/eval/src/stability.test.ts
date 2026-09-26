@@ -2,6 +2,7 @@ import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { ConfigSchema } from '@remit/core';
+import { FakeLlm } from '@remit/providers';
 import { describe, expect, it } from 'vitest';
 import { SEEDS_ROOT, seedItems } from './mutations/generate.js';
 import { loadSeed } from './mutations/seed.js';
@@ -46,5 +47,39 @@ describe('appendEvalRun', () => {
     writeFileSync(p, '# E\n\n## Eval runs\n\n- old\n\n## Later\n\ntext\n');
     appendEvalRun(p, '- new');
     expect(readFileSync(p, 'utf8')).toBe('# E\n\n## Eval runs\n\n- old\n- new\n\n## Later\n\ntext\n');
+  });
+});
+
+describe('extraction stability with an LLM', () => {
+  it('scores disagreement between two runs', async () => {
+    const [item] = await seedItems(loadSeed(join(SEEDS_ROOT, 'ts-job-intervals')));
+    if (!item) throw new Error('item');
+    const issue = item.input.issues[0];
+    if (!issue) throw new Error('issue');
+    const llmItem = { ...item, config: ConfigSchema.parse({ extraction: { mode: 'llm' } }) };
+    const tasks = issue.body
+      .split('\n')
+      .filter((l) => l.startsWith('- [ ] '))
+      .map((l) => l.slice(6));
+    const req = (i: number, text: string) => ({
+      id: `R${i}`,
+      text,
+      quote: text,
+      source: { kind: 'body' },
+      kind: 'behavior',
+      explicitness: 'explicit',
+      priority: 'must',
+      examples: [],
+      checkableInCode: true,
+    });
+    const out = (n: number) => ({
+      requirements: tasks.slice(0, n).map((t, i) => req(i + 1, t)),
+      openQuestions: [],
+    });
+    const key = `extract:${issue.ref.owner}/${issue.ref.repo}#${issue.ref.number}`;
+    const a = new FakeLlm({ [key]: [out(2)] });
+    const b = new FakeLlm({ [key]: [out(1)] });
+    const r = await measureStability([llmItem], a, b, 1);
+    expect(r).toMatchObject({ measured: 1, deterministic: false, meanJaccard: 0.5 });
   });
 });

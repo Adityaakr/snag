@@ -46,6 +46,18 @@ describe('mutation seeds', () => {
           whole.set(key, [...(whole.get(key) ?? []), r.id]);
         }
       for (const [key, ids] of whole) expect(ids, `${key} is reverted whole by ${ids}`).toHaveLength(1);
+      // Reverting a symbol whole also undoes another requirement's part of it: that must be declared in dropLabels.
+      for (const r of seed.seed.requirements)
+        for (const u of [...r.implementing, ...r.tests]) {
+          if (!(u.remove || u.replace)) continue;
+          const owner = whole.get(`${u.file}|${u.symbol ?? '*'}`)?.[0];
+          const dropper = seed.seed.requirements.find((x) => x.id === owner);
+          if (dropper && dropper.id !== r.id)
+            expect(
+              dropper.dropLabels?.[r.id],
+              `${dropper.id} reverts ${u.symbol} whole but has no dropLabels.${r.id}`,
+            ).toBeDefined();
+        }
     });
 
     it('leaves no reference to a symbol that drop_requirement deleted', async () => {
