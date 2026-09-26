@@ -44,3 +44,8 @@ Append-only. Each entry: date, decision, alternatives, why. Deviations from BUIL
 - Alternatives: write it silently.
 - Why: a local safety hook (prism-guard) flagged it as a permissions change; the human decides.
 - Update 2026-09-26: the human approved; `.claude/settings.json` written verbatim from Appendix A.1 and excluded from Biome formatting so it stays byte-identical (checked by scripts/__tests__/settings.test.ts).
+
+## 2026-09-26 D8 Local git ingest lives in `packages/analysis/src/git`
+- Decision: `LocalGit` (execFile, no shell, refs validated) sits in analysis beside the diff parser.
+- Alternatives: providers (reserved for network calls by 3.4 rule 7), pipeline.
+- Why: local git is filesystem I/O, not a network provider; `remit units --diff <range>` needs it in M1.
