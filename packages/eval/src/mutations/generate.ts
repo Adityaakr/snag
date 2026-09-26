@@ -12,7 +12,7 @@ import type { ReviewInput } from '@remit/pipeline';
 import { CORPORA_ROOT, itemFileName, saveItem } from '../corpora/files.js';
 import type { EvalItem } from '../item.js';
 import { allMutations, cleanLabels, type Mutation } from './operators.js';
-import { type LoadedSeed, loadSeed, seedDirs } from './seed.js';
+import { type LoadedSeed, loadSeed } from './seed.js';
 
 export const SEEDS_ROOT = join(CORPORA_ROOT, 'mutations', 'seeds');
 
@@ -101,18 +101,4 @@ export async function writeSeedItems(
     operators[op] = (operators[op] ?? 0) + 1;
   }
   return { seed: seed.seed.id, split, items: items.length, operators };
-}
-
-/** Regenerates corpus B from every seed under `seedsRoot`. Returns the counts per split. */
-export async function writeMutationCorpus(
-  seedsRoot = SEEDS_ROOT,
-  corporaRoot = CORPORA_ROOT,
-): Promise<{ dev: number; test: number; seeds: number }> {
-  const counts = { dev: 0, test: 0, seeds: 0 };
-  for (const dir of seedDirs(seedsRoot)) {
-    const r = await writeSeedItems(dir, corporaRoot);
-    counts[r.split] += r.items;
-    counts.seeds++;
-  }
-  return counts;
 }
