@@ -63,3 +63,19 @@ describe('CircuitBreaker', () => {
     ).toEqual({});
   });
 });
+
+describe('half-open trials', () => {
+  it('stays open when the trial fails without counting (a cancellation)', async () => {
+    let now = 0;
+    const b = new CircuitBreaker('jev', { failures: 1, cooldownMs: 100, now: () => now });
+    await expect(b.run(down)).rejects.toThrow();
+    now = 200;
+    await expect(
+      b.run(() => Promise.reject(new ProviderError('jev', 'cancelled', 'cancelled'))),
+    ).rejects.toThrow('cancelled');
+    expect(b.state).toBe('open');
+    now = 400;
+    expect(await b.run(async () => 'ok')).toBe('ok');
+    expect(b.state).toBe('closed');
+  });
+});

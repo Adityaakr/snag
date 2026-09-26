@@ -45,7 +45,7 @@ Set these environment variables. Every variable also has a `NAME_FILE` form that
 | `GITHUB_API_URL` | no | GitHub Enterprise Server, or the local fake |
 | `TYPESAFE_API_KEY`, `ANTHROPIC_API_KEY` | for real verdicts | without them, verdicts are `uncertain` and only task lists are read |
 | `SESSION_SECRET`, `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | for the dashboard | the session secret must be at least 32 characters |
-| `REMIT_DAILY_BUDGET_USD` | no | per installation, default `20`. Every run reserves `budgets.max_usd_per_review` in the `spend_ledger` table and settles to its real spend, whether it finished, was cancelled or failed. |
+| `REMIT_DAILY_BUDGET_USD` | no | per installation, default `20`. Every run reserves `budgets.max_usd_per_review` (capped at a quarter of this budget) in the `spend_ledger` table and settles to its real spend, whether it finished, was cancelled or failed. |
 | `REMIT_REVIEWS_PER_HOUR` | no | per installation, default `200`; past it, PR events wait 5 minutes. This smooths bursts and does not cap cost; the daily budget does. The count is kept per web process. |
 | `METRICS_TOKEN` | no | bearer token for `/metrics` on the web and worker ports |
 | `LOG_LEVEL` | no | `info` by default |

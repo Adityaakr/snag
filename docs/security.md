@@ -43,7 +43,7 @@ The attacker gets Remit to post `@org/everyone`, links or images by putting them
 
 The attacker opens or pushes many PRs, or huge ones, to burn provider spend.
 - Per-review budget: the `CostTracker` refuses calls past `budgets.max_usd_per_review`, and the review finishes with partial results.
-- Per-installation daily budget (`REMIT_DAILY_BUDGET_USD`). Each run reserves its per-review maximum in the spend ledger before it starts and settles to its real spend however it ends, so cancelled, failed and retried runs all count. Concurrent runs cannot all pass the check. Past the budget, reviews are skipped with a neutral check run.
+- Per-installation daily budget (`REMIT_DAILY_BUDGET_USD`). Each run reserves its per-review maximum (capped at a quarter of the daily budget) in the spend ledger before it starts and settles to its real spend however it ends, so cancelled, failed and retried runs all count. Concurrent runs cannot all pass the check. Past the budget, reviews are skipped with a neutral check run.
 - Per-installation hourly rate (`REMIT_REVIEWS_PER_HOUR`): extra events wait 5 minutes and collapse by PR. This smooths bursts; the budget caps cost.
 - Pushes to one PR within 30 s collapse into one review, and a newer push cancels the running one before it spends more.
 - Cancelled calls are neither retried nor counted as outages, so pushing during a review cannot open the shared circuit breaker.

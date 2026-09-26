@@ -105,6 +105,8 @@ export class MemoryStore implements Store {
   async deleteInstallation(id: number) {
     const repos = this.installations.get(id)?.repos ?? new Set<string>();
     this.installations.delete(id);
+    for (let i = this.ledger.length - 1; i >= 0; i--)
+      if ((this.ledger[i] as { installationId: number }).installationId === id) this.ledger.splice(i, 1);
     const owned = (repo: string) => repos.has(repo);
     for (let i = this.reviews.length - 1; i >= 0; i--) {
       const r = this.reviews[i] as ReviewRecord;
