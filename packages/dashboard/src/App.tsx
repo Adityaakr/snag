@@ -1,3 +1,4 @@
+import { BRAND } from '@remit/core/brand';
 import { useEffect, useState } from 'react';
 import { ApiError, api, setCsrf } from './api.js';
 import { Metrics } from './pages/Metrics.js';
@@ -43,7 +44,7 @@ export function App() {
     <>
       <style>{css}</style>
       <header>
-        <strong>Remit</strong>
+        <strong>{BRAND.name}</strong>
         <nav aria-label="Main">
           {PAGES.map(([href, label]) => (
             <a key={href} href={href} aria-current={hash.startsWith(href) ? 'page' : undefined}>

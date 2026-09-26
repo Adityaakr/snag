@@ -248,3 +248,15 @@ Append-only. Each entry: date, decision, alternatives, why. Deviations from BUIL
   - The installations list comes from GitHub at sign-in (`/user/installations`) and is kept in the signed session for 8 hours. Losing access on GitHub takes effect at the next sign-in.
   - No user token is stored.
 - **Accessibility:** WCAG AA contrast is checked on the design tokens, and the keyboard is tested with Testing Library (Tab order and the queue shortcuts).
+- M8 verifier (first run FAIL), fixes:
+  - `reviews.result` now drops code as well as text: unit patches, judge views, before and after text, and test titles. A test asserts that no diff line is stored by default.
+  - `/api/dead-letters` shows only jobs of the user's installations; slash jobs carry the installation in their payload. Jobs without an installation (cleanup, recalibrate) are hidden.
+  - `eval_runs` is filled from `eval/reports/*/metrics.json` at startup and by the nightly `recalibrate` job (`REMIT_REPORTS_DIR`).
+  - Without `DATABASE_URL`, daily timers run `cleanup` and `recalibrate`.
+  - Expired payloads are never exported.
+  - `api_calls` is written from a per-call log in `CostTracker` (provider, model, kind, request hash, tokens, cost, latency; no content).
+  - `repositories.config` and `config_hash` (migration 0001) hold the effective config from the last review, and the settings page shows it.
+  - Review detail has per-finding feedback buttons, the extraction prompt and LLM versions, and raw answers grouped by call.
+  - The labeling queue is a random sample, drawn server-side, and announces failed saves.
+  - Agreement and recalibration count each label once.
+  - The dashboard's compiled `lib/` is no longer tracked, and the dashboard takes its name from `BRAND` (the `@remit/core/brand` subpath).

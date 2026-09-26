@@ -6,7 +6,7 @@ import { randomBytes } from 'node:crypto';
 import { join } from 'node:path';
 import { serve } from '@hono/node-server';
 import { BRAND, QUESTION_SET_VERSION } from '@remit/core';
-import { CALIBRATION_ROOT, loadCalibration } from '@remit/eval';
+import { CALIBRATION_ROOT, EVAL_ROOT, loadCalibration } from '@remit/eval';
 import { type AppCredentials, installationToken, LiveGitHub, providersFromEnv } from '@remit/providers';
 import { createApp } from './app.js';
 import { Metrics } from './metrics.js';
@@ -62,7 +62,10 @@ export async function start(env: Record<string, string | undefined> = process.en
       if (kind === 'cleanup') {
         await store.cleanup();
         await store.pruneDeliveries(7);
-      } else await store.recalibrateFromFeedback(env.JEV_MODEL ?? 'jev-1.13.0', QUESTION_SET_VERSION);
+      } else {
+        await store.recalibrateFromFeedback(env.JEV_MODEL ?? 'jev-1.13.0', QUESTION_SET_VERSION);
+        await store.importEvalRuns(env.REMIT_REPORTS_DIR ?? join(EVAL_ROOT, 'reports'));
+      }
     },
     ...(env.PUBLIC_URL ? { publicUrl: env.PUBLIC_URL } : {}),
     ...(secrets ? { secrets } : {}),
@@ -102,7 +105,16 @@ export async function start(env: Record<string, string | undefined> = process.en
       providersFromEnv(config, { ...env, REMIT_CACHE_MODE: env.REMIT_CACHE_MODE ?? 'live' }),
     calibration: (jevModel) => loadCalibration(env.REMIT_CALIBRATION_DIR ?? CALIBRATION_ROOT, jevModel),
   });
+  const reportsDir = env.REMIT_REPORTS_DIR ?? join(EVAL_ROOT, 'reports');
+  await store.importEvalRuns(reportsDir);
   if (queue instanceof PgBossQueue) await queue.start();
+  else {
+    // Without pg-boss, the nightly jobs run on timers so retention still holds (9.9).
+    const day = 24 * 3600_000;
+    setInterval(() => void queue.enqueue('cleanup', { kind: 'cleanup' }), day).unref();
+    setInterval(() => void queue.enqueue('recalibrate', { kind: 'recalibrate' }), day).unref();
+    void queue.enqueue('cleanup', { kind: 'cleanup' });
+  }
   const port = Number(env.PORT ?? 3000);
   serve({ fetch: app.fetch, port });
   log(`${BRAND.name} server listening`, { port, configured: Boolean(creds) });

@@ -1,7 +1,7 @@
 import { PgBoss } from 'pg-boss';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { startPgliteServer } from './db/pglite-server.js';
-import { PgBossQueue, queueOf } from './pg-queue.js';
+import { installationOf, PgBossQueue, queueOf } from './pg-queue.js';
 import type { JobSpec } from './queue.js';
 
 let stop: () => Promise<void> = async () => {};
@@ -82,7 +82,13 @@ describe('PgBossQueue', () => {
     await queue.enqueue('review:a/broken#1', review('broken'));
     await until(async () => (await queue.deadLetters()).some((d) => d.key === 'review:a/broken#1'));
     const dead = await queue.deadLetters();
-    expect(dead.find((d) => d.key === 'review:a/broken#1')).toMatchObject({ kind: 'review' });
+    expect(dead.find((d) => d.key === 'review:a/broken#1')).toMatchObject({
+      kind: 'review',
+      installationId: 1,
+    });
+    expect(installationOf({ kind: 'slash', event: { installation: { id: 7 } } })).toBe(7);
+    expect(installationOf({ kind: 'slash', event: null })).toBeUndefined();
+    expect(installationOf({ kind: 'cleanup' })).toBeUndefined();
     expect(runs.filter((r) => r.job.kind === 'review' && r.job.repo === 'broken')).toHaveLength(3);
   }, 60_000);
 

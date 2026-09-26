@@ -9,6 +9,11 @@
       "source": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./brand": {
+      "source": "./src/brand.ts",
+      "types": "./dist/brand.d.ts",
+      "default": "./dist/brand.js"
     }
   },
   "scripts": {

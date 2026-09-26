@@ -3,7 +3,9 @@
  * dashboard and the corpus C export need. Every query is parameterized through Drizzle (9.11).
  */
 import { createHash } from 'node:crypto';
-import type { ReviewResult } from '@remit/core';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { QUESTION_SET_VERSION, type ReviewResult } from '@remit/core';
 import type { ReviewInput } from '@remit/pipeline';
 import { and, desc, eq, inArray, lt, sql } from 'drizzle-orm';
 import type { DeliveryStore } from '../deliveries.js';
@@ -176,6 +178,13 @@ export class DbStore implements Store, DeliveryStore {
             locations: f.locations,
           })),
         );
+      if (r.apiCalls?.length)
+        await tx.insert(t.apiCalls).values(r.apiCalls.map((c) => ({ reviewId: r.id, ...c })));
+      if (r.config)
+        await tx
+          .update(t.repositories)
+          .set({ config: r.config, configHash: hash(JSON.stringify(r.config)) })
+          .where(eq(t.repositories.id, repositoryId));
       if (retain) {
         const expiresAt = new Date(
           new Date(r.createdAt).getTime() + (r.retention?.retentionDays ?? 14) * 86_400_000,
@@ -355,7 +364,11 @@ export class DbStore implements Store, DeliveryStore {
   async agreementByType(installationIds: number[]) {
     if (!installationIds.length) return [];
     return this.db
-      .select({ type: t.findings.type, label: t.feedback.label, n: sql<number>`count(*)::int` })
+      .select({
+        type: t.findings.type,
+        label: t.feedback.label,
+        n: sql<number>`count(distinct ${t.feedback.id})::int`,
+      })
       .from(t.feedback)
       .innerJoin(t.findings, eq(t.findings.contentKey, t.feedback.contentKey))
       .innerJoin(t.reviews, eq(t.findings.reviewId, t.reviews.id))
@@ -446,7 +459,14 @@ export class DbStore implements Store, DeliveryStore {
       })
       .from(t.reviews)
       .innerJoin(t.repositories, eq(t.reviews.repositoryId, t.repositories.id))
-      .innerJoin(t.payloads, and(eq(t.payloads.reviewId, t.reviews.id), eq(t.payloads.kind, 'input')))
+      .innerJoin(
+        t.payloads,
+        and(
+          eq(t.payloads.reviewId, t.reviews.id),
+          eq(t.payloads.kind, 'input'),
+          sql`${t.payloads.expiresAt} > now()`,
+        ),
+      )
       .where(installationIds?.length ? inArray(t.repositories.installationId, installationIds) : sql`true`)
       .orderBy(desc(t.reviews.createdAt));
     const out: { review: ReviewRecord; input: ReviewInput; feedback: FeedbackRecord[] }[] = [];
@@ -478,7 +498,11 @@ export class DbStore implements Store, DeliveryStore {
     questionSet: string,
   ): Promise<{ n: number; p0Precision: number | null }> {
     const rows = await this.db
-      .select({ priority: t.findings.priority, label: t.feedback.label, n: sql<number>`count(*)::int` })
+      .select({
+        priority: t.findings.priority,
+        label: t.feedback.label,
+        n: sql<number>`count(distinct ${t.feedback.id})::int`,
+      })
       .from(t.feedback)
       .innerJoin(t.findings, eq(t.findings.contentKey, t.feedback.contentKey))
       .where(inArray(t.feedback.label, ['agree', 'disagree']))
@@ -505,5 +529,46 @@ export class DbStore implements Store, DeliveryStore {
       active: true,
     });
     return { n, p0Precision };
+  }
+
+  async apiCallsFor(reviewId: string) {
+    return this.db.select().from(t.apiCalls).where(eq(t.apiCalls.reviewId, reviewId));
+  }
+
+  /** Imports eval runs from report directories (`eval/reports/<run>/metrics.json`); stored runs are skipped. */
+  async importEvalRuns(reportsDir: string): Promise<number> {
+    if (!existsSync(reportsDir)) return 0;
+    let added = 0;
+    for (const name of readdirSync(reportsDir)) {
+      const file = join(reportsDir, name, 'metrics.json');
+      if (!existsSync(file)) continue;
+      let parsed: {
+        info: { corpus: string; split: string; gitSha: string; startedAt: string };
+        metrics: { ops?: { costTotal?: number } };
+      };
+      try {
+        parsed = JSON.parse(readFileSync(file, 'utf8'));
+      } catch {
+        // A partial or foreign directory is skipped; the dashboard shows the runs that parsed.
+        continue;
+      }
+      const rows = await this.db
+        .insert(t.evalRuns)
+        .values({
+          id: name,
+          corpus: parsed.info.corpus,
+          split: parsed.info.split,
+          gitSha: parsed.info.gitSha,
+          questionSet: QUESTION_SET_VERSION,
+          metrics: parsed.metrics,
+          reportPath: join(reportsDir, name, 'report.md'),
+          costUsd: parsed.metrics.ops?.costTotal ?? 0,
+          createdAt: new Date(parsed.info.startedAt),
+        })
+        .onConflictDoNothing()
+        .returning();
+      added += rows.length;
+    }
+    return added;
   }
 }

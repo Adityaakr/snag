@@ -21,3 +21,4 @@ eval/corpora/swebench/raw/
 !packages/action/dist/
 !packages/action/dist/**
 packages/action/lib/
+packages/dashboard/lib/

@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm';
 import { afterAll, describe, expect, it } from 'vitest';
 import { fakeRepo } from '../fake-harness.js';
 import { reviewPullRequest } from '../review-job.js';
+import { CostTracker } from '@remit/providers';
 import { MemoryStore, type ReviewRecord, type Store } from '../store.js';
 import { openPglite } from './client.js';
 import { NOT_RETAINED, redactResult } from './redact.js';
@@ -202,5 +203,78 @@ describe('redactResult', () => {
     expect(red.findings.every((f) => f.reasons.every((x) => x.text === x.template))).toBe(true);
     expect(red.units.every((u) => u.facts.every((f) => f.detail === f.kind))).toBe(true);
     expect(r.result.requirements[0]?.quote).not.toBe(NOT_RETAINED);
+  });
+});
+
+describe('DbStore data minimization and records', () => {
+  it('stores no code by default: no patches, judge views or before/after text', async () => {
+    const { store } = await dbStore();
+    const r = await reviewed(store);
+    const stored = await store.latestReview('acme/reports', 77);
+    const text = JSON.stringify(stored?.result);
+    for (const u of r.result.units) {
+      if (u.patch) expect(text.includes(u.patch)).toBe(false);
+      expect(stored?.result.units.find((x) => x.id === u.id)).toMatchObject({ patch: '', judgeView: '' });
+    }
+    expect(text).not.toContain('+import');
+    expect(text).not.toContain('diff --git');
+  });
+
+  it('persists per-call usage and the effective config', async () => {
+    const { store, d } = await dbStore();
+    const repo = fakeRepo('three_reqs_one_missing', { config: 'mode: rework\n' });
+    await store.addInstallation(4242, 'acme', ['acme/reports']);
+    const out = await reviewPullRequest(repo.gh, 4242, repo.pr, {
+      providers: (config) => {
+        const p = repo.providers(config);
+        const costs = new CostTracker(1);
+        costs.addJev(100, 0.001, {
+          provider: 'jev',
+          model: 'jev-1.13.0',
+          kind: 'forward',
+          requestHash: 'h1',
+          latencyMs: 12,
+        });
+        return { ...p, costs };
+      },
+      store,
+      newId: () => 'rev_calls',
+    });
+    expect(out.status).toBe('done');
+    expect(await store.apiCallsFor('rev_calls')).toEqual([
+      expect.objectContaining({
+        provider: 'jev',
+        kind: 'forward',
+        inputTokens: 100,
+        requestHash: 'h1',
+        status: 'ok',
+      }),
+    ]);
+    const [repoRow] = await store.repositoriesOf([4242]);
+    expect(repoRow?.configHash).toMatch(/^[0-9a-f]{32}$/);
+    expect((repoRow?.config as { mode?: string } | null)?.mode).toBe('rework');
+    void d;
+  });
+
+  it('imports eval runs from report directories once', async () => {
+    const { store } = await dbStore();
+    const { mkdtempSync, mkdirSync, writeFileSync } = await import('node:fs');
+    const { tmpdir } = await import('node:os');
+    const { join } = await import('node:path');
+    const dir = mkdtempSync(join(tmpdir(), 'remit-reports-'));
+    mkdirSync(join(dir, 'run-a'));
+    writeFileSync(
+      join(dir, 'run-a', 'metrics.json'),
+      JSON.stringify({
+        info: { corpus: 'mutations', split: 'dev', gitSha: 'abc', startedAt: '2026-09-26T00:00:00Z' },
+        metrics: { ops: { costTotal: 0.5 } },
+      }),
+    );
+    mkdirSync(join(dir, 'broken'));
+    writeFileSync(join(dir, 'broken', 'metrics.json'), '{not json');
+    expect(await store.importEvalRuns(dir)).toBe(1);
+    expect(await store.importEvalRuns(dir)).toBe(0);
+    expect(await store.importEvalRuns(join(dir, 'missing'))).toBe(0);
+    expect((await store.evalRuns())[0]).toMatchObject({ id: 'run-a', corpus: 'mutations', costUsd: 0.5 });
   });
 });

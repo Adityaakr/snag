@@ -110,11 +110,13 @@ describe('M8 end to end', () => {
       finding: { id: string };
     }[];
     expect(queued.some((q) => q.finding.id === 'F-R3')).toBe(false);
-    const other = stored?.result.findings.find((f) => f.id !== 'F-R3');
+    // The fixture has one finding; the dashboard labels it too (a second person, a second source).
+    const other = stored?.result.findings.find((f) => f.id === 'F-R3');
+    expect(other).toBeDefined();
     if (other) {
       const res = await app.request(`/api/reviews/${reviews[0]?.id}/findings/${other.id}/feedback`, {
         method: 'POST',
-        body: JSON.stringify({ label: 'disagree' }),
+        body: JSON.stringify({ label: 'agree' }),
         headers: { cookie, 'x-csrf-token': me.csrf, 'content-type': 'application/json' },
       });
       expect(res.status).toBe(201);
@@ -124,7 +126,7 @@ describe('M8 end to end', () => {
     const jsonl = await (await app.request('/api/export/shadow', { headers: { cookie } })).text();
     const record = JSON.parse(jsonl.trim().split('\n')[0] ?? '{}');
     expect(record).toMatchObject({ format: 'remit-shadow-1', repo: 'acme/reports', prNumber: 77 });
-    expect(record.feedback.length).toBe(other ? 2 : 1);
+    expect(record.feedback.length).toBe(2);
     const root = mkdtempSync(join(tmpdir(), 'remit-shadow-'));
     const counts = writeShadowCorpus(await shadowRecords(store), root);
     expect(counts.dev + counts.test).toBe(1);

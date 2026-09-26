@@ -8,6 +8,7 @@ import { jsonSchemaOutputFormat } from '@anthropic-ai/sdk/helpers/json-schema';
 import { estimateTokens } from '@remit/core';
 import { z } from 'zod';
 import type { CostTracker } from '../common/budget.js';
+import { cacheKey } from '../cache/store.js';
 import { ProviderError } from '../common/errors.js';
 import { type Logger, silentLogger } from '../common/limits.js';
 import { type RetryOptions, withRetry } from '../common/retry.js';
@@ -135,6 +136,7 @@ export class AnthropicLlm implements LlmProvider {
     const usage = { inputTokens: 0, outputTokens: 0 };
     let model = this.model;
     const call = async (msgs: LlmMessage[]): Promise<string> => {
+      const started = Date.now();
       const estimate = estimateTokens([opts.system, ...msgs.map((m) => m.content)].join('\n'));
       this.opts.costs?.ensure('anthropic', llmCost(this.opts.price, estimate, 0));
       const res = await withRetry(
@@ -181,6 +183,13 @@ export class AnthropicLlm implements LlmProvider {
         res.usage.input_tokens,
         res.usage.output_tokens,
         llmCost(this.opts.price, res.usage.input_tokens, res.usage.output_tokens),
+        {
+          provider: 'anthropic',
+          model: res.model,
+          kind: opts.kind ?? 'structured',
+          requestHash: cacheKey({ system: opts.system, msgs, promptVersion: opts.promptVersion }),
+          latencyMs: Date.now() - started,
+        },
       );
       this.logger.info(
         {

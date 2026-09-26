@@ -8,6 +8,13 @@
       "when": 1790447611091,
       "tag": "0000_init",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790449199480,
+      "tag": "0001_repository_config",
+      "breakpoints": true
     }
   ]
 }

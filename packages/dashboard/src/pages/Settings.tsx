@@ -3,7 +3,7 @@ import { api } from '../api.js';
 
 interface SettingsResponse {
   installations: { id: number; account: string }[];
-  repositories: { fullName: string; installationId: number; configHash: string | null }[];
+  repositories: { fullName: string; installationId: number; configHash: string | null; config: unknown }[];
   defaults: unknown;
 }
 
@@ -29,12 +29,20 @@ export function Settings() {
         {s.repositories.map((r) => (
           <li key={r.fullName}>
             {r.fullName}{' '}
-            <span className="muted">config {r.configHash ? r.configHash.slice(0, 8) : 'default'}</span>
+            <span className="muted">
+              config {r.configHash ? r.configHash.slice(0, 8) : 'defaults (not reviewed yet)'}
+            </span>
+            {r.config ? (
+              <details>
+                <summary>Effective config at the last review (read-only)</summary>
+                <pre>{JSON.stringify(r.config, null, 2)}</pre>
+              </details>
+            ) : null}
           </li>
         ))}
       </ul>
       <h2>Effective defaults (read-only)</h2>
-      <p className="muted">Each repository overrides these in .remit.yml on its default branch.</p>
+      <p className="muted">Each repository overrides these in its config file on the default branch.</p>
       <pre>{JSON.stringify(s.defaults, null, 2)}</pre>
     </section>
   );

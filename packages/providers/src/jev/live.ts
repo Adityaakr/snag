@@ -19,6 +19,7 @@ import {
   UnprocessableEntityError,
 } from '@typesafe-ai/sdk';
 import type { CostTracker } from '../common/budget.js';
+import { cacheKey } from '../cache/store.js';
 import { ProviderError } from '../common/errors.js';
 import { type Logger, RateLimiter, Semaphore, silentLogger } from '../common/limits.js';
 import { type RetryOptions, withRetry } from '../common/retry.js';
@@ -187,6 +188,7 @@ export class LiveJev implements JevProvider {
     this.opts.costs?.ensure('jev', (tokens * this.opts.pricePerMillionUsd) / 1e6);
     return this.semaphore.run(async () => {
       let validationRetries = 0;
+      const started = Date.now();
       for (;;) {
         const res = await withRetry(
           async () => {
@@ -219,7 +221,13 @@ export class LiveJev implements JevProvider {
         );
         const inputTokens = res.usage.input_tokens;
         const costUsd = (inputTokens * this.opts.pricePerMillionUsd) / 1e6;
-        this.opts.costs?.addJev(inputTokens, costUsd);
+        this.opts.costs?.addJev(inputTokens, costUsd, {
+          provider: 'jev',
+          model: this.model,
+          kind: meta.kind,
+          requestHash: cacheKey({ state, questions }),
+          latencyMs: Date.now() - started,
+        });
         this.logger.info(
           {
             provider: 'jev',

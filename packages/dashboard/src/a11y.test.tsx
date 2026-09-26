@@ -153,6 +153,23 @@ describe('keyboard navigation', () => {
     await waitFor(() => expect(screen.getByText('Nothing left to label. Thank you.')).toBeTruthy());
   });
 
+  it('announces a label that could not be saved and keeps the finding', async () => {
+    mockApi({ '/api/queue': [item('F-R1')] });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (_url: string, init: RequestInit = {}) =>
+        init.method === 'POST'
+          ? new Response('{}', { status: 500 })
+          : new Response(JSON.stringify([item('F-R1')])),
+      ),
+    );
+    render(<Queue />);
+    await screen.findByLabelText('Finding F-R1');
+    await userEvent.setup().keyboard('a');
+    expect(await screen.findByText('Could not save the label for F-R1. Try again.')).toBeTruthy();
+    expect(screen.getByLabelText('Finding F-R1')).toBeTruthy();
+  });
+
   it('asks to sign in when there is no session', async () => {
     vi.stubGlobal(
       'fetch',

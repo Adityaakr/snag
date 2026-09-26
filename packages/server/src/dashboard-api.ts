@@ -21,7 +21,9 @@ export interface DashboardDeps {
   oauth: OAuthOptions;
   publicUrl: string;
   /** The dead-letter list, when the durable queue runs. */
-  deadLetters?: () => Promise<{ id: string; key: string; kind: string; createdOn: Date }[]>;
+  deadLetters?: () => Promise<
+    { id: string; key: string; kind: string; createdOn: Date; installationId?: number }[]
+  >;
   /** For tests: replaces the GitHub code exchange and user lookup. */
   signIn?: (code: string) => Promise<OAuthUser>;
   /** The built dashboard (packages/dashboard/dist). */
@@ -162,13 +164,13 @@ export function mountDashboard(app: Hono, deps: DashboardDeps): void {
     return c.json({ recorded: body.data.label }, 201);
   });
 
-  /** The labeling queue: sampled findings with no human label yet. */
+  /** The labeling queue: a random sample of up to 20 findings with no human label yet. */
   app.get('/api/queue', async (c) => {
     const s = me(c);
     const rows = await deps.store.listReviews({ installationIds: s.installationIds, limit: 200 });
     const items: unknown[] = [];
     for (const row of rows) {
-      if (items.length >= 20) break;
+      if (items.length >= 200) break;
       const r = await deps.store.getReview(row.id);
       if (!r) continue;
       const labeled = new Set(
@@ -177,7 +179,7 @@ export function mountDashboard(app: Hono, deps: DashboardDeps): void {
           .map((f) => f.contentKey),
       );
       for (const f of r.result.findings) {
-        if (labeled.has(f.contentKey) || items.length >= 20) continue;
+        if (labeled.has(f.contentKey) || items.length >= 200) continue;
         const req = r.result.requirements.find((q) => q.id === f.targetId);
         items.push({
           reviewId: r.id,
@@ -195,7 +197,12 @@ export function mountDashboard(app: Hono, deps: DashboardDeps): void {
         });
       }
     }
-    return c.json(items);
+    // Fisher-Yates shuffle, so labels are not biased toward the newest reviews.
+    for (let i = items.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [items[i], items[j]] = [items[j], items[i]];
+    }
+    return c.json(items.slice(0, 20));
   });
 
   app.get('/api/metrics', async (c) => {
@@ -246,6 +253,8 @@ export function mountDashboard(app: Hono, deps: DashboardDeps): void {
         fullName: r.fullName,
         installationId: r.installationId,
         configHash: r.configHash,
+        // The effective config from the last review, or the defaults before any review.
+        config: r.config ?? null,
       })),
       defaults: {
         mode: defaults.mode,
@@ -261,11 +270,16 @@ export function mountDashboard(app: Hono, deps: DashboardDeps): void {
     const s = me(c);
     return c.body(toJsonl(await shadowRecords(deps.store, s.installationIds)), 200, {
       'content-type': 'application/x-ndjson',
-      'content-disposition': 'attachment; filename="remit-shadow.jsonl"',
+      'content-disposition': `attachment; filename="${BRAND.slug}-shadow.jsonl"`,
     });
   });
 
-  app.get('/api/dead-letters', async (c) => c.json(deps.deadLetters ? await deps.deadLetters() : []));
+  // Only dead letters of the user's installations; jobs without an installation (cleanup, recalibrate) stay hidden.
+  app.get('/api/dead-letters', async (c) => {
+    const s = me(c);
+    const all = deps.deadLetters ? await deps.deadLetters() : [];
+    return c.json(all.filter((d) => d.installationId !== undefined && canSee(s, d.installationId)));
+  });
 
   const dir = deps.staticDir;
   if (dir && existsSync(join(dir, 'index.html'))) {

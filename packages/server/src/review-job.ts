@@ -98,6 +98,7 @@ export async function reviewPullRequest(
         `This PR edits ${CONFIG_PATH}; the change applies after it is merged into the default branch.`,
       );
     const { jev, llm, costs } = deps.providers(config);
+    const reviewCosts = costs ?? new CostTracker(config.budgets.max_usd_per_review);
     const calibration = deps.calibration?.(jev?.model ?? config.jev.model);
     const result = await runReview(ingest.input, {
       ...(jev ? { jev } : {}),
@@ -106,7 +107,7 @@ export async function reviewPullRequest(
       config,
       reviewId,
       // The providers record spend on this tracker, so the per-review budget holds (9.13).
-      costs: costs ?? new CostTracker(config.budgets.max_usd_per_review),
+      costs: reviewCosts,
       contents: ingest.contents,
       confirmed: async (issue) => {
         const c = await deps.store.getChecklist(`${issue.ref.owner}/${issue.ref.repo}`, issue.ref.number);
@@ -131,6 +132,8 @@ export async function reviewPullRequest(
         retainPayloads: config.retention.retain_payloads,
         retentionDays: config.retention.retention_days,
       },
+      apiCalls: [...reviewCosts.log],
+      config,
     };
     const previous = await deps.store.latestReview(repo, ref.number);
     await deps.store.saveReview(record);

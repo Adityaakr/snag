@@ -2,7 +2,8 @@
  * What the App remembers (BUILD_PROMPT 10.2, 10.4): reviews, confirmed and pending issue checklists, feedback labels
  * and installations. In memory for M7; the Postgres tables replace this in M8 behind the same interface.
  */
-import type { Requirement, ReviewResult } from '@remit/core';
+import type { RemitConfig, Requirement, ReviewResult } from '@remit/core';
+import type { CallRecord } from '@remit/providers';
 import type { ReviewInput } from '@remit/pipeline';
 
 export interface ReviewRecord {
@@ -16,6 +17,10 @@ export interface ReviewRecord {
   /** The review input (issue snapshots and diff), stored only when payloads are retained. */
   input?: ReviewInput;
   retention?: { retainPayloads: boolean; retentionDays: number };
+  /** Per-call provider usage (the `api_calls` table), without content. */
+  apiCalls?: CallRecord[];
+  /** The effective repository config used for this review. */
+  config?: RemitConfig;
 }
 
 export interface ChecklistRecord {
