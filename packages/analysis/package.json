@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@remit/core": "workspace:*",
+    "diff": "9.0.0",
     "tree-sitter-javascript": "0.25.0",
     "tree-sitter-python": "0.25.0",
     "tree-sitter-rust": "0.24.0",
