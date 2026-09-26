@@ -2,7 +2,7 @@ import { createVerify, generateKeyPairSync } from 'node:crypto';
 import { HttpResponse, http } from 'msw';
 import { setupServer } from 'msw/node';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
-import { appJwt, convertManifest, installationToken } from './app.js';
+import { appJwt, appSlug, convertManifest, installationToken } from './app.js';
 import { FakeGitHub } from './fake.js';
 import { LiveGitHub } from './live.js';
 
@@ -181,5 +181,7 @@ describe('GitHub App auth', () => {
     expect(auth).toMatch(/^bearer ey/i);
     expect(await convertManifest('abc123')).toMatchObject({ id: 5, slug: 'remit', webhookSecret: 'w' });
     await expect(convertManifest('bad code!')).rejects.toThrow(/invalid manifest code/);
+    server.use(http.get(`${API}/app`, () => HttpResponse.json({ id: 1, slug: 'remit-acme' })));
+    expect(await appSlug({ appId: '1', privateKey: pem })).toBe('remit-acme');
   });
 });

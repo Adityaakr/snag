@@ -342,3 +342,34 @@ describe('cross-process supersession', () => {
     expect(repo.gh.posted.get('acme/reports#77')).toBeUndefined();
   });
 });
+
+describe('cancellation reaches the providers', () => {
+  it('stops starting Jev calls as soon as the job is superseded', async () => {
+    const full = fakeRepo('three_reqs_one_missing');
+    const fullJev = full.providers({} as never).jev;
+    await reviewPullRequest(full.gh, 1, full.pr, {
+      providers: (c) => ({ ...full.providers(c), jev: fullJev }),
+      store: new MemoryStore(),
+    });
+    const allCalls = fullJev.calls.length;
+
+    const repo = fakeRepo('three_reqs_one_missing');
+    const controller = new AbortController();
+    const jev = repo.providers({} as never).jev;
+    const original = jev.ask.bind(jev);
+    jev.ask = (async (...args: Parameters<typeof original>) => {
+      const out = await original(...args);
+      controller.abort();
+      return out;
+    }) as typeof jev.ask;
+    const out = await reviewPullRequest(
+      repo.gh,
+      1,
+      repo.pr,
+      { providers: (c) => ({ ...repo.providers(c), jev }), store: new MemoryStore() },
+      controller.signal,
+    );
+    expect(out).toEqual({ status: 'cancelled' });
+    expect(jev.calls.length).toBeLessThan(allCalls);
+  });
+});

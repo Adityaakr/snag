@@ -94,6 +94,8 @@ services:
       REMIT_URL: http://server:3000
       FAKE_GITHUB_URL: http://fake-github:4000
       GITHUB_WEBHOOK_SECRET_FILE: ${GITHUB_WEBHOOK_SECRET_FILE:-/shared/webhook-secret}
+    volumes:
+      - shared:/shared:ro
     depends_on:
       worker:
         condition: service_healthy

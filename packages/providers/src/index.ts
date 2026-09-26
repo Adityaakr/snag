@@ -1,6 +1,7 @@
 import { BRAND } from '@remit/core';
 
 export * from './cache/store.js';
+export * from './common/abort.js';
 export * from './common/budget.js';
 export * from './common/circuit.js';
 export * from './common/errors.js';
@@ -10,6 +11,7 @@ export * from './env.js';
 export {
   type AppCredentials,
   appJwt,
+  appSlug,
   convertManifest,
   installationToken,
   type ManifestConversion,

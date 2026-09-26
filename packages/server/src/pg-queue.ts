@@ -53,6 +53,8 @@ export interface PgQueueOptions {
   retryDelaySeconds?: number;
   retryBackoff?: boolean;
   pollingIntervalSeconds?: number;
+  /** Jobs this process runs at once per queue (pg-boss localConcurrency; default 4). */
+  concurrency?: number;
   /** Cron for the nightly jobs (UTC). Null disables scheduling (tests). */
   cleanupCron?: string | null;
   recalibrateCron?: string | null;
@@ -93,7 +95,11 @@ export class PgBossQueue implements JobQueue {
       if (!consume) continue;
       await this.boss.work<Envelope>(
         name,
-        { pollingIntervalSeconds: this.opts.pollingIntervalSeconds ?? 2, batchSize: 1 },
+        {
+          pollingIntervalSeconds: this.opts.pollingIntervalSeconds ?? 2,
+          batchSize: 1,
+          localConcurrency: this.opts.concurrency ?? 4,
+        },
         async (jobs) => {
           for (const j of jobs) await this.run(j.data);
         },

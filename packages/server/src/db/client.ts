@@ -34,8 +34,14 @@ export async function openPglite(dataDir?: string): Promise<Database & { client:
 }
 
 /** Postgres through node-postgres, migrated. Only parameterized queries go through Drizzle (9.11). */
-export async function openPostgres(connectionString: string): Promise<Database> {
+export async function openPostgres(
+  connectionString: string,
+  opts: { onError?: (error: Error) => void } = {},
+): Promise<Database> {
   const pool = new pg.Pool({ connectionString, max: 10 });
+  // An idle connection dropped by the server (a database restart, a failover) emits 'error' on the pool; without a
+  // listener that crashes the process. The pool replaces the connection on the next query.
+  pool.on('error', (e) => opts.onError?.(e));
   const db = drizzlePg(pool, { schema });
   // Web and worker processes start together: an advisory lock makes exactly one of them run the migrations.
   const client = await pool.connect();

@@ -10,7 +10,13 @@ import { join } from 'node:path';
 import { serve } from '@hono/node-server';
 import { BRAND, QUESTION_SET_VERSION } from '@remit/core';
 import { CALIBRATION_ROOT, EVAL_ROOT, loadCalibration } from '@remit/eval';
-import { type AppCredentials, installationToken, LiveGitHub, providersFromEnv } from '@remit/providers';
+import {
+  type AppCredentials,
+  appSlug,
+  installationToken,
+  LiveGitHub,
+  providersFromEnv,
+} from '@remit/providers';
 import { Hono } from 'hono';
 import { createApp, type ServerDeps } from './app.js';
 import { openPglite, openPostgres } from './db/client.js';
@@ -64,7 +70,9 @@ export async function start(
   };
   // Postgres and pg-boss when DATABASE_URL is set; otherwise PGlite on disk with the in-process queue.
   const database = env.DATABASE_URL
-    ? await openPostgres(env.DATABASE_URL)
+    ? await openPostgres(env.DATABASE_URL, {
+        onError: (e) => logger.warn({ error: e.message }, 'database connection dropped'),
+      })
     : await openPglite(join(env.DATA_DIR ?? '.data', 'pgdata'));
   const store = new DbStore(database.db);
   let boss: import('pg-boss').PgBoss | undefined;
@@ -78,7 +86,14 @@ export async function start(
   } else queue = new MemoryQueue(hooks);
   const creds: AppCredentials | null =
     appId && privateKey ? { appId, privateKey, ...(apiUrl ? { baseUrl: apiUrl } : {}) } : null;
-  const slug = env.GITHUB_APP_SLUG ?? stored?.slug;
+  let slug = env.GITHUB_APP_SLUG ?? stored?.slug;
+  if (!slug && creds) {
+    // Known slug means only this App's comments are ever edited (sticky upsert by author).
+    slug = await appSlug(creds).catch((e: Error) => {
+      logger.warn({ error: e.message }, 'could not read the App slug; sticky comments match any bot');
+      return undefined;
+    });
+  }
   // Setup is only possible before the App is configured, and only with this one-time token (printed once here).
   const setupToken =
     creds || role === 'worker' ? undefined : (env.SETUP_TOKEN ?? randomBytes(24).toString('hex'));

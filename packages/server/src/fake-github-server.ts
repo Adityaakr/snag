@@ -9,7 +9,8 @@ import { Hono } from 'hono';
 
 export function fakeGitHubApi(
   gh: FakeGitHub,
-  appPublicKey: KeyObject,
+  /** The App public key; null accepts any JWT for the App id (local stacks with a generated key). */
+  appPublicKey: KeyObject | null,
   appId: string,
 ): { app: Hono; tokens: string[] } {
   const app = new Hono();
@@ -32,6 +33,12 @@ export function fakeGitHubApi(
     tokens.push(token);
     return c.json({ token, expires_at: new Date(Date.now() + 3600_000).toISOString() }, 201);
   });
+
+  app.get('/app', (c) =>
+    (c.req.header('authorization') ?? '').toLowerCase().startsWith('bearer ')
+      ? c.json({ id: Number(appId), slug: 'remit' })
+      : c.json({ message: 'A JSON web token could not be decoded' }, 401),
+  );
 
   app.use('/repos/*', async (c, next) => {
     const auth = c.req.header('authorization') ?? '';
