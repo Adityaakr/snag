@@ -41,7 +41,20 @@ MAX_BODY_BYTES = 4 * 1024 * 1024
 if not 128 <= MAX_LEN <= 8192:
     raise SystemExit("LAYA_MAX_LEN must be between 128 and 8192")
 
-router = Router(device=os.environ.get("LAYA_DEVICE") or None, preload=True)
+router = Router(device=os.environ.get("LAYA_DEVICE") or None, preload=True, max_loaded=3)
+
+# Remit's own fine-tuned checkpoint (scripts/laya/train.py, DECISIONS D35), served as `remit-laya`. The router only
+# knows its built-in names, so this one is a direct Agent with its own window and option budget from its config.
+REMIT_DIR = os.environ.get("LAYA_REMIT_DIR") or os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "..", "..", ".laya", "remit-laya-v1"
+)
+remit_agent = None
+if os.path.exists(os.path.join(REMIT_DIR, "model.safetensors")):
+    from laya.agent import Agent
+
+    remit_agent = Agent(os.path.abspath(REMIT_DIR), device=os.environ.get("LAYA_DEVICE") or None)
+    CHECKPOINTS["remit-laya"] = "remit"
+REMIT_HEAD = int(remit_agent.cfg.get("head_max_len", 512)) if remit_agent else 512
 pool = ThreadPoolExecutor(max_workers=1)
 gate = asyncio.Lock()
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
@@ -77,7 +90,7 @@ def fits(key: str, state: Any, questions: Dict[str, Any]) -> str | None:
     """Returns a reason when any question would be truncated at MAX_LEN, else None."""
     from laya.common import serialize_state
 
-    agent = router.load(key)
+    agent = remit_agent if key == "remit" else router.load(key)
     tok = agent.tok
     state_tokens = len(tok(serialize_state(state), add_special_tokens=False)["input_ids"])
     for qid, q in questions.items():
@@ -91,7 +104,13 @@ def fits(key: str, state: Any, questions: Dict[str, Any]) -> str | None:
 
 @app.get("/health")
 def health() -> Dict[str, Any]:
-    return {"status": "ok", "max_len": MAX_LEN, "default_model": DEFAULT_MODEL, "snapshot": SNAPSHOT}
+    return {
+        "status": "ok",
+        "max_len": MAX_LEN,
+        "default_model": DEFAULT_MODEL,
+        "snapshot": SNAPSHOT,
+        "remit_laya": os.path.abspath(REMIT_DIR) if remit_agent else None,
+    }
 
 
 @app.get("/v1/models")
@@ -122,9 +141,15 @@ async def systemone(request: Request):
             reason = await loop.run_in_executor(pool, lambda: fits(key, state, questions))
             if reason:
                 return overflow(reason)
-            result = await loop.run_in_executor(
-                pool, lambda: router.predict(state, questions, model=key, max_len=MAX_LEN)
-            )
+            if key == "remit":
+                result = await loop.run_in_executor(
+                    pool,
+                    lambda: remit_agent.system_one(state, questions, max_len=MAX_LEN, head_max_len=REMIT_HEAD),
+                )
+            else:
+                result = await loop.run_in_executor(
+                    pool, lambda: router.predict(state, questions, model=key, max_len=MAX_LEN)
+                )
         except HTTPException:
             raise
         except ValueError as e:
@@ -134,8 +159,9 @@ async def systemone(request: Request):
             raise HTTPException(status_code=422, detail=text)
         except Exception:  # noqa: BLE001 -- never leak paths or weights to clients
             raise HTTPException(status_code=500, detail="inference failed")
+    version = remit_agent.cfg.get("model_name", "remit-laya") if key == "remit" else SNAPSHOT
     return {
-        "model": f"{name}@{SNAPSHOT}",
+        "model": f"{name}@{version}",
         "answers": result["answers"],
         "usage": {"input_tokens": int(result.get("usage", {}).get("input_tokens", 0)), "output_tokens": 0},
     }
