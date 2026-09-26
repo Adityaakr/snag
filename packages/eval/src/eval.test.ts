@@ -123,7 +123,13 @@ describe('reports (11.9) and stored corpora', () => {
           {
             ...m,
             calibration: {
-              k: { n: 2, ece: 0, brier: 0, bins: [{ lo: 0.9, hi: 1, n: 2, meanP: 0.95, accuracy: 1 }] },
+              k: {
+                n: 2,
+                ece: 0,
+                eceCalibrated: null,
+                brier: 0,
+                bins: [{ lo: 0.9, hi: 1, n: 2, meanP: 0.95, accuracy: 1 }],
+              },
             },
           },
           outcomes,

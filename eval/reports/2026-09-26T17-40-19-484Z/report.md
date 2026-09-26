@@ -2,22 +2,22 @@
 
 > Not a real measurement. Answers came from the simulated Jev stand-in (no keys), so these numbers check the plumbing, not model quality.
 
-Run `2026-09-26T17:22:28.991Z`, git `f51bf4125bf8`, provider mode `simulated`, Jev `simulated-jev`, questions `qs-0.1.0`, extraction `xp-0.1.0`.
+Run `2026-09-26T17:40:19.484Z`, git `f3c635e72750`, provider mode `simulated`, Jev `simulated-jev`, questions `qs-0.1.0`, extraction `xp-0.1.0`.
 
 ## Summary
 
 | Metric | Value |
 |---|---|
 | Items | `128` (`0` fully correct, `0.0%`) |
-| Requirement problems: precision / recall / F1 | `0.17` / `0.95` / `0.30` |
+| Requirement problems: precision / recall / F1 | `0.18` / `0.95` / `0.30` |
 | Abstention rate (uncertain) | `0.0%` of `512` labeled requirements |
 | Unexplained behavioral units: precision / recall | `0.01` / `0.89` |
 | Test integrity: precision / recall | `0.50` / `1.00` |
 | PR level (any P0 vs problem): precision / recall | `0.87` / `0.85` |
 | False alarms (P0 or P1 per clean PR) | `9.94` over `18` clean items |
-| P0 precision | `0.19` (`57` of `299`) |
+| P0 precision | `0.20` (`59` of `299`) |
 | AUROC, problem vs clean (strongest P0/P1 finding) | `0.54` |
-| Latency p50 / p95 | `16 ms` / `20 ms` |
+| Latency p50 / p95 | `17 ms` / `25 ms` |
 | Cost total / p50 per review | `$0.0000` / `$0.0000` |
 | Tokens: Jev in / LLM in / LLM out | `0` / `0` / `0` |
 | Truncation rate | `0.0%` |
@@ -30,15 +30,15 @@ Run `2026-09-26T17:22:28.991Z`, git `f51bf4125bf8`, provider mode `simulated`, J
 | Recall: flip_condition | `>= 0.60` | `0.85` | yes |
 | Recall: weaken_assertion | `>= 0.90` | `1.00` | yes |
 | Recall: inject_config | `>= 0.70` | `0.89` | yes |
-| False alarms on clean seeds | `<= 0.15` | `9.94` | no |
-| P0 precision | `>= 0.80` | `0.19` | no |
-| ECE (raw) forward.coverage.level3 | `<= 0.10` after calibration | `0.66` | no |
-| ECE (raw) forward.coverage.level2 | `<= 0.10` after calibration | `0.19` | no |
-| ECE (raw) forward.coverage.missing | `<= 0.10` after calibration | `0.51` | no |
-| ECE (raw) forward.conflict | `<= 0.10` after calibration | `0.06` | yes |
-| ECE (raw) tests.asserts_differently | `<= 0.10` after calibration | `0.06` | yes |
-| ECE (raw) reverse.loosens_test | `<= 0.10` after calibration | `0.10` | no |
-| ECE (raw) reverse.behavior_change | `<= 0.10` after calibration | `0.56` | no |
+| False alarms on clean seeds | `<= 0.15` | `9.44` | no |
+| P0 precision | `>= 0.80` | `0.20` | no |
+| ECE after calibration (5-fold) forward.coverage.level3 | `<= 0.10` | `0.09` | yes |
+| ECE after calibration (5-fold) forward.coverage.level2 | `<= 0.10` | `0.01` | yes |
+| ECE after calibration (5-fold) forward.coverage.missing | `<= 0.10` | `0.07` | yes |
+| ECE after calibration (5-fold) forward.conflict | `<= 0.10` | `0.00` | yes |
+| ECE after calibration (5-fold) tests.asserts_differently | `<= 0.10` | `0.00` | yes |
+| ECE after calibration (5-fold) reverse.loosens_test | `<= 0.10` | `0.01` | yes |
+| ECE after calibration (5-fold) reverse.behavior_change | `<= 0.10` | `0.00` | yes |
 
 ## Mutation operators
 
@@ -54,6 +54,10 @@ Run `2026-09-26T17:22:28.991Z`, git `f51bf4125bf8`, provider mode `simulated`, J
 | unwire | `9` | `1.00` | `0` |
 | weaken_assertion | `9` | `1.00` | `0` |
 
+## Extraction stability
+
+Mean Jaccard over quotes `1.00` on `7` of `7` sampled issues (task-list extraction, deterministic by construction).
+
 ## Requirement confusion matrix
 
 Rows are labels, columns are verdicts.
@@ -61,21 +65,21 @@ Rows are labels, columns are verdicts.
 | label \ verdict | contradicted | deferred | done | missing | partial |
 |---|---|---|---|---|---|
 | contradicted | `0` | `0` | `3` | `8` | `9` |
-| done | `0` | `1` | `55` | `220` | `153` |
-| missing | `0` | `0` | `0` | `37` | `8` |
+| done | `0` | `1` | `55` | `218` | `153` |
+| missing | `0` | `0` | `0` | `39` | `8` |
 | partial | `0` | `0` | `1` | `10` | `7` |
 
-## Calibration (raw)
+## Calibration
 
-| Question key | Samples | ECE | Brier |
-|---|---|---|---|
-| forward.conflict | `512` | `0.06` | `0.04` |
-| forward.coverage.level2 | `512` | `0.19` | `0.11` |
-| forward.coverage.level3 | `512` | `0.66` | `0.60` |
-| forward.coverage.missing | `512` | `0.51` | `0.42` |
-| reverse.behavior_change | `101` | `0.56` | `0.40` |
-| reverse.loosens_test | `724` | `0.10` | `0.02` |
-| tests.asserts_differently | `512` | `0.06` | `0.04` |
+| Question key | Samples | ECE raw | ECE after isotonic (5-fold) | Brier raw |
+|---|---|---|---|---|
+| forward.conflict | `512` | `0.06` | `0.00` | `0.04` |
+| forward.coverage.level2 | `512` | `0.19` | `0.01` | `0.11` |
+| forward.coverage.level3 | `512` | `0.66` | `0.09` | `0.59` |
+| forward.coverage.missing | `512` | `0.51` | `0.07` | `0.41` |
+| reverse.behavior_change | `101` | `0.56` | `0.00` | `0.40` |
+| reverse.loosens_test | `721` | `0.10` | `0.01` | `0.02` |
+| tests.asserts_differently | `512` | `0.06` | `0.00` | `0.04` |
 
 ## Worst items
 

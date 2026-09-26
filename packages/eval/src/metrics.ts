@@ -1,7 +1,8 @@
 /**
  * Metrics (BUILD_PROMPT 11.4): requirement, unit and PR level accuracy, operator recall, calibration, operations.
  */
-import { bins, brier, collectPairs, ece, type Bin } from './calibration.js';
+import { type Bin, bins, brier, collectPairs, crossValidated, ece, MIN_SAMPLES } from './calibration.js';
+import type { Stability } from './stability.js';
 import { NON_PROBLEM_STATUSES, PROBLEM_STATUSES } from './item.js';
 import type { ItemOutcome } from './runner.js';
 
@@ -44,7 +45,14 @@ export interface Metrics {
   unitBehavioral: Prf;
   testIntegrity: Prf;
   /** `auroc` ranks items by their strongest P0 or P1 finding (11.8: corpus A has no target, only AUROC). */
-  pr: Prf & { falseAlarmRate: number; cleanItems: number; problemItems: number; auroc: number | null };
+  pr: Prf & {
+    falseAlarmRate: number;
+    cleanItems: number;
+    problemItems: number;
+    auroc: number | null;
+    /** P0 or P1 findings per clean seed (items with no operator), the 11.8 noise target. */
+    cleanSeedFalseAlarmRate: number | null;
+  };
   p0Precision: { value: number; p0: number; correct: number };
   /** Per G.1 operator: `recall` is the share of items whose injected problem was detected (see `detected`). */
   operators: Record<string, { items: number; passed: number; detected: number; recall: number }>;
@@ -58,7 +66,13 @@ export interface Metrics {
   };
   /** Corpus A slices by label source and strength: items, labeled problems, and items with a P0. */
   slices: Record<string, { items: number; problem: number; flagged: number }>;
-  calibration: Record<string, { n: number; ece: number; brier: number; bins: Bin[] }>;
+  /** Raw ECE, plus the out-of-sample ECE after isotonic calibration (5-fold) when there are at least 50 samples. */
+  calibration: Record<
+    string,
+    { n: number; ece: number; eceCalibrated: number | null; brier: number; bins: Bin[] }
+  >;
+  /** Extraction stability (11.4); set by the runner when extraction can run twice. */
+  stability?: Stability;
   ops: {
     latencyP50: number;
     latencyP95: number;
@@ -172,6 +186,8 @@ export function computeMetrics(outcomes: readonly ItemOutcome[]): Metrics {
   let cleanItems = 0;
   let problemItems = 0;
   let falseAlarms = 0;
+  let cleanSeeds = 0;
+  let cleanSeedAlarms = 0;
   let p0 = 0;
   let p0Correct = 0;
   const operators: Metrics['operators'] = {};
@@ -222,6 +238,10 @@ export function computeMetrics(outcomes: readonly ItemOutcome[]): Metrics {
       cleanItems++;
       if (c.pr.predictedProblem) prFp++;
       falseAlarms += c.p0p1;
+      if (!o.item.operator) {
+        cleanSeeds++;
+        cleanSeedAlarms += c.p0p1;
+      }
     }
     for (const f of o.result.findings.filter((x) => x.priority === 'P0')) {
       p0++;
@@ -258,7 +278,13 @@ export function computeMetrics(outcomes: readonly ItemOutcome[]): Metrics {
   const pairs = collectPairs(outcomes);
   const calibration: Metrics['calibration'] = {};
   for (const [k, ps] of Object.entries(pairs))
-    calibration[k] = { n: ps.length, ece: ece(ps), brier: brier(ps), bins: bins(ps) };
+    calibration[k] = {
+      n: ps.length,
+      ece: ece(ps),
+      eceCalibrated: ps.length >= MIN_SAMPLES ? ece(crossValidated(ps, 5)) : null,
+      brier: brier(ps),
+      bins: bins(ps),
+    };
 
   const truncated = outcomes.filter((o) =>
     o.result.warnings.some((w) => /overflow|could not shrink|over the \d+ token unit cap|split a/.test(w)),
@@ -280,6 +306,7 @@ export function computeMetrics(outcomes: readonly ItemOutcome[]): Metrics {
       cleanItems,
       problemItems,
       auroc: auroc(scored),
+      cleanSeedFalseAlarmRate: cleanSeeds ? cleanSeedAlarms / cleanSeeds : null,
     },
     p0Precision: { value: p0 ? p0Correct / p0 : 0, p0, correct: p0Correct },
     operators,

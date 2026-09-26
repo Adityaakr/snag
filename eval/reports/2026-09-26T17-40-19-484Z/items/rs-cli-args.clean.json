@@ -1,0 +1,1614 @@
+{
+  "id": "rs-cli-args.clean",
+  "labels": {
+    "requirements": {
+      "R1": "done",
+      "R2": "done",
+      "R3": "done",
+      "R4": "done"
+    },
+    "requirementsAccept": {},
+    "units": [
+      {
+        "file": "src/args.rs",
+        "symbol": "expand_alias",
+        "role": "implements"
+      },
+      {
+        "file": "src/args.rs",
+        "symbol": "parse_args",
+        "role": "implements"
+      },
+      {
+        "file": "tests/cli.rs",
+        "symbol": "accepts_short_aliases",
+        "role": "implements"
+      },
+      {
+        "file": "src/args.rs",
+        "symbol": "ArgError",
+        "role": "implements"
+      },
+      {
+        "file": "src/args.rs",
+        "symbol": "parse_jobs",
+        "role": "implements"
+      },
+      {
+        "file": "tests/cli.rs",
+        "symbol": "rejects_jobs_outside_one_to_sixty_four",
+        "role": "implements"
+      },
+      {
+        "file": "tests/cli.rs",
+        "symbol": "double_dash_ends_flag_parsing",
+        "role": "implements"
+      },
+      {
+        "file": "src/args.rs",
+        "symbol": "dedup_files",
+        "role": "implements"
+      },
+      {
+        "file": "tests/cli.rs",
+        "symbol": "drops_duplicate_files",
+        "role": "implements"
+      }
+    ],
+    "facts": [],
+    "testIntegrity": [],
+    "claimMismatch": [],
+    "pr": "clean"
+  },
+  "comparison": {
+    "requirements": [
+      {
+        "id": "R1",
+        "expected": "done",
+        "actual": "done",
+        "ok": true
+      },
+      {
+        "id": "R2",
+        "expected": "done",
+        "actual": "partial",
+        "ok": false
+      },
+      {
+        "id": "R3",
+        "expected": "done",
+        "actual": "missing",
+        "ok": false
+      },
+      {
+        "id": "R4",
+        "expected": "done",
+        "actual": "missing",
+        "ok": false
+      }
+    ],
+    "units": [
+      {
+        "file": "src/args.rs",
+        "symbol": "expand_alias",
+        "expected": "implements",
+        "actual": "implements",
+        "ok": true
+      },
+      {
+        "file": "src/args.rs",
+        "symbol": "parse_args",
+        "expected": "implements",
+        "actual": "unexplained_behavioral",
+        "ok": false
+      },
+      {
+        "file": "tests/cli.rs",
+        "symbol": "accepts_short_aliases",
+        "expected": "implements",
+        "actual": "implements",
+        "ok": true
+      },
+      {
+        "file": "src/args.rs",
+        "symbol": "ArgError",
+        "expected": "implements",
+        "actual": "implements",
+        "ok": true
+      },
+      {
+        "file": "src/args.rs",
+        "symbol": "parse_jobs",
+        "expected": "implements",
+        "actual": "implements",
+        "ok": true
+      },
+      {
+        "file": "tests/cli.rs",
+        "symbol": "rejects_jobs_outside_one_to_sixty_four",
+        "expected": "implements",
+        "actual": "unexplained_behavioral",
+        "ok": false
+      },
+      {
+        "file": "tests/cli.rs",
+        "symbol": "double_dash_ends_flag_parsing",
+        "expected": "implements",
+        "actual": "unexplained_behavioral",
+        "ok": false
+      },
+      {
+        "file": "src/args.rs",
+        "symbol": "dedup_files",
+        "expected": "implements",
+        "actual": "unexplained_behavioral",
+        "ok": false
+      },
+      {
+        "file": "tests/cli.rs",
+        "symbol": "drops_duplicate_files",
+        "expected": "implements",
+        "actual": "unexplained_behavioral",
+        "ok": false
+      }
+    ],
+    "facts": [],
+    "testIntegrity": [],
+    "claimMismatch": [],
+    "pr": {
+      "expected": "clean",
+      "predictedProblem": true
+    },
+    "p0p1": 8,
+    "passed": false
+  },
+  "result": {
+    "schemaVersion": "1.0.0",
+    "product": {
+      "name": "Remit",
+      "version": "0.1.0"
+    },
+    "input": {
+      "mode": "local",
+      "baseSha": "base",
+      "headSha": "head",
+      "issues": [
+        {
+          "owner": "lintr",
+          "repo": "argkit",
+          "number": 33
+        }
+      ],
+      "linkStrength": "closing"
+    },
+    "versions": {
+      "questionSet": "qs-0.1.0",
+      "extractionPrompt": "xp-0.1.0",
+      "jevModel": "simulated-jev"
+    },
+    "requirements": [
+      {
+        "id": "R1",
+        "issue": {
+          "owner": "lintr",
+          "repo": "argkit",
+          "number": 33
+        },
+        "text": "`-v` is a short alias for `--verbose` and `-j` for `--jobs` (for example `-j 8`)",
+        "quote": "`-v` is a short alias for `--verbose` and `-j` for `--jobs` (for example `-j 8`)",
+        "source": {
+          "kind": "tasklist"
+        },
+        "kind": "behavior",
+        "explicitness": "explicit",
+        "priority": "must",
+        "examples": [],
+        "checkableInCode": true,
+        "signals": {
+          "ambiguous": 0.3,
+          "checkable": 0.85
+        }
+      },
+      {
+        "id": "R2",
+        "issue": {
+          "owner": "lintr",
+          "repo": "argkit",
+          "number": 33
+        },
+        "text": "`--jobs` only accepts values from 1 to 64; anything else fails with `ArgError::JobsOutOfRange`",
+        "quote": "`--jobs` only accepts values from 1 to 64; anything else fails with `ArgError::JobsOutOfRange`",
+        "source": {
+          "kind": "tasklist"
+        },
+        "kind": "behavior",
+        "explicitness": "explicit",
+        "priority": "must",
+        "examples": [],
+        "checkableInCode": true,
+        "signals": {
+          "ambiguous": 0.3,
+          "checkable": 0.85
+        }
+      },
+      {
+        "id": "R3",
+        "issue": {
+          "owner": "lintr",
+          "repo": "argkit",
+          "number": 33
+        },
+        "text": "A bare `--` ends flag parsing: every later argument is treated as a file, even if it starts with `-`",
+        "quote": "A bare `--` ends flag parsing: every later argument is treated as a file, even if it starts with `-`",
+        "source": {
+          "kind": "tasklist"
+        },
+        "kind": "behavior",
+        "explicitness": "explicit",
+        "priority": "must",
+        "examples": [],
+        "checkableInCode": true,
+        "signals": {
+          "ambiguous": 0.3,
+          "checkable": 0.85
+        }
+      },
+      {
+        "id": "R4",
+        "issue": {
+          "owner": "lintr",
+          "repo": "argkit",
+          "number": 33
+        },
+        "text": "Duplicate files are dropped, keeping the first occurrence (for example `a b a` gives `a b`)",
+        "quote": "Duplicate files are dropped, keeping the first occurrence (for example `a b a` gives `a b`)",
+        "source": {
+          "kind": "tasklist"
+        },
+        "kind": "behavior",
+        "explicitness": "explicit",
+        "priority": "must",
+        "examples": [],
+        "checkableInCode": true,
+        "signals": {
+          "ambiguous": 0.3,
+          "checkable": 0.85
+        }
+      }
+    ],
+    "units": [
+      {
+        "id": "U1",
+        "file": "src/args.rs",
+        "language": "rs",
+        "kind": "source",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              15,
+              15
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/src/args.rs\n+++ b/src/args.rs\n@@ -12,6 +12,7 @@\n     UnknownFlag(String),\n     MissingValue(String),\n     BadNumber(String),\n+    JobsOutOfRange(u32),\n }\n \n fn parse_jobs(value: &str) -> Result<u32, ArgError> {\n",
+        "judgeView": "--- a/src/args.rs\n+++ b/src/args.rs\n@@ -12,6 +12,7 @@\n     UnknownFlag(String),\n     MissingValue(String),\n     BadNumber(String),\n+    JobsOutOfRange(u32),\n }\n \n fn parse_jobs(value: &str) -> Result<u32, ArgError> {\n",
+        "contentHash": "136785f284e76fe3c90a95435eefa37af423dbeca4281dd5c92475bf87dd070a",
+        "tokenEstimate": 73,
+        "facts": [],
+        "symbol": {
+          "name": "ArgError",
+          "kind": "class",
+          "startLine": 10,
+          "endLine": 16
+        },
+        "before": "#[derive(Debug, PartialEq)]\npub enum ArgError {\n    UnknownFlag(String),\n    MissingValue(String),\n    BadNumber(String),\n}",
+        "after": "#[derive(Debug, PartialEq)]\npub enum ArgError {\n    UnknownFlag(String),\n    MissingValue(String),\n    BadNumber(String),\n    JobsOutOfRange(u32),\n}"
+      },
+      {
+        "id": "U2",
+        "file": "src/args.rs",
+        "language": "rs",
+        "kind": "source",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              19,
+              23
+            ]
+          ],
+          "old": [
+            [
+              18,
+              18
+            ]
+          ]
+        },
+        "patch": "--- a/src/args.rs\n+++ b/src/args.rs\n@@ -15,6 +16,10 @@\n }\n \n fn parse_jobs(value: &str) -> Result<u32, ArgError> {\n-    value.parse().map_err(|_| ArgError::BadNumber(value.to_string()))\n+    let jobs: u32 = value.parse().map_err(|_| ArgError::BadNumber(value.to_string()))?;\n+    if jobs < 1 || jobs > 64 {\n+        return Err(ArgError::JobsOutOfRange(jobs));\n+    }\n+    Ok(jobs)\n }\n \n",
+        "judgeView": "--- a/src/args.rs\n+++ b/src/args.rs\n@@ -15,6 +16,10 @@\n }\n \n fn parse_jobs(value: &str) -> Result<u32, ArgError> {\n-    value.parse().map_err(|_| ArgError::BadNumber(value.to_string()))\n+    let jobs: u32 = value.parse().map_err(|_| ArgError::BadNumber(value.to_string()))?;\n+    if jobs < 1 || jobs > 64 {\n+        return Err(ArgError::JobsOutOfRange(jobs));\n+    }\n+    Ok(jobs)\n }\n \n",
+        "contentHash": "083df0adaf0c25f3975c50520d6f79966d8346eee58f4c6665e0fdfe52bbadf8",
+        "tokenEstimate": 129,
+        "facts": [],
+        "symbol": {
+          "name": "parse_jobs",
+          "kind": "function",
+          "startLine": 18,
+          "endLine": 24
+        },
+        "before": "fn parse_jobs(value: &str) -> Result<u32, ArgError> {\n    value.parse().map_err(|_| ArgError::BadNumber(value.to_string()))\n}",
+        "after": "fn parse_jobs(value: &str) -> Result<u32, ArgError> {\n    let jobs: u32 = value.parse().map_err(|_| ArgError::BadNumber(value.to_string()))?;\n    if jobs < 1 || jobs > 64 {\n        return Err(ArgError::JobsOutOfRange(jobs));\n    }\n    Ok(jobs)\n}"
+      },
+      {
+        "id": "U3",
+        "file": "src/args.rs",
+        "language": "rs",
+        "kind": "source",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              26,
+              33
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/src/args.rs\n+++ b/src/args.rs\n@@ -19,2 +24,10 @@\n }\n \n+fn expand_alias(arg: &str) -> &str {\n+    match arg {\n+        \"-v\" => \"--verbose\",\n+        \"-j\" => \"--jobs\",\n+        other => other,\n+    }\n+}\n+\n",
+        "judgeView": "--- a/src/args.rs\n+++ b/src/args.rs\n@@ -19,2 +24,10 @@\n }\n \n+fn expand_alias(arg: &str) -> &str {\n+    match arg {\n+        \"-v\" => \"--verbose\",\n+        \"-j\" => \"--jobs\",\n+        other => other,\n+    }\n+}\n+\n",
+        "contentHash": "d8b5982fa392c8bb6040a1aa8c37f196a84c7ced88a1eecdc3847d1408ba1b23",
+        "tokenEstimate": 70,
+        "facts": [],
+        "symbol": {
+          "name": "expand_alias",
+          "kind": "function",
+          "startLine": 26,
+          "endLine": 32
+        },
+        "after": "fn expand_alias(arg: &str) -> &str {\n    match arg {\n        \"-v\" => \"--verbose\",\n        \"-j\" => \"--jobs\",\n        other => other,\n    }\n}"
+      },
+      {
+        "id": "U4",
+        "file": "src/args.rs",
+        "language": "rs",
+        "kind": "source",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              34,
+              38
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/src/args.rs\n+++ b/src/args.rs\n@@ -21,2 +34,7 @@\n+fn dedup_files(files: Vec<String>) -> Vec<String> {\n+    let mut seen = std::collections::HashSet::new();\n+    files.into_iter().filter(|f| seen.insert(f.clone())).collect()\n+}\n+\n pub fn parse_args(argv: &[&str]) -> Result<Args, ArgError> {\n     let mut args = Args { verbose: false, jobs: DEFAULT_JOBS, files: Vec::new() };\n",
+        "judgeView": "--- a/src/args.rs\n+++ b/src/args.rs\n@@ -21,2 +34,7 @@\n+fn dedup_files(files: Vec<String>) -> Vec<String> {\n+    let mut seen = std::collections::HashSet::new();\n+    files.into_iter().filter(|f| seen.insert(f.clone())).collect()\n+}\n+\n pub fn parse_args(argv: &[&str]) -> Result<Args, ArgError> {\n     let mut args = Args { verbose: false, jobs: DEFAULT_JOBS, files: Vec::new() };\n",
+        "contentHash": "837141b848a8df2b062b909368fd3bf422205fb27db6fad5b47387789b0ff75e",
+        "tokenEstimate": 127,
+        "facts": [],
+        "symbol": {
+          "name": "dedup_files",
+          "kind": "function",
+          "startLine": 34,
+          "endLine": 37
+        },
+        "after": "fn dedup_files(files: Vec<String>) -> Vec<String> {\n    let mut seen = std::collections::HashSet::new();\n    files.into_iter().filter(|f| seen.insert(f.clone())).collect()\n}"
+      },
+      {
+        "id": "U5",
+        "file": "src/args.rs",
+        "language": "rs",
+        "kind": "source",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              41,
+              41
+            ],
+            [
+              44,
+              50
+            ],
+            [
+              53,
+              53
+            ],
+            [
+              60,
+              60
+            ]
+          ],
+          "old": [
+            [
+              25,
+              25
+            ],
+            [
+              28,
+              28
+            ]
+          ]
+        },
+        "patch": "--- a/src/args.rs\n+++ b/src/args.rs\n@@ -21,16 +39,24 @@\n pub fn parse_args(argv: &[&str]) -> Result<Args, ArgError> {\n     let mut args = Args { verbose: false, jobs: DEFAULT_JOBS, files: Vec::new() };\n+    let mut only_files = false;\n     let mut iter = argv.iter();\n     while let Some(&arg) = iter.next() {\n-        match arg {\n+        if only_files {\n+            args.files.push(arg.to_string());\n+            continue;\n+        }\n+        let flag = expand_alias(arg);\n+        match flag {\n+            \"--\" => only_files = true,\n             \"--verbose\" => args.verbose = true,\n             \"--jobs\" => {\n-                let value = iter.next().ok_or(ArgError::MissingValue(arg.to_string()))?;\n+                let value = iter.next().ok_or(ArgError::MissingValue(flag.to_string()))?;\n                 args.jobs = parse_jobs(value)?;\n             }\n             other if other.starts_with(\"--\") => return Err(ArgError::UnknownFlag(other.to_string())),\n             file => args.files.push(file.to_string()),\n         }\n     }\n+    args.files = dedup_files(args.files);\n     Ok(args)\n }\n",
+        "judgeView": "--- a/src/args.rs\n+++ b/src/args.rs\n@@ -21,16 +39,24 @@\n pub fn parse_args(argv: &[&str]) -> Result<Args, ArgError> {\n     let mut args = Args { verbose: false, jobs: DEFAULT_JOBS, files: Vec::new() };\n+    let mut only_files = false;\n     let mut iter = argv.iter();\n     while let Some(&arg) = iter.next() {\n-        match arg {\n+        if only_files {\n+            args.files.push(arg.to_string());\n+            continue;\n+        }\n+        let flag = expand_alias(arg);\n+        match flag {\n+            \"--\" => only_files = true,\n             \"--verbose\" => args.verbose = true,\n             \"--jobs\" => {\n-                let value = iter.next().ok_or(ArgError::MissingValue(arg.to_string()))?;\n+                let value = iter.next().ok_or(ArgError::MissingValue(flag.to_string()))?;\n                 args.jobs = parse_jobs(value)?;\n             }\n             other if other.starts_with(\"--\") => return Err(ArgError::UnknownFlag(other.to_string())),\n             file => args.files.push(file.to_string()),\n         }\n     }\n+    args.files = dedup_files(args.files);\n     Ok(args)\n }\n",
+        "contentHash": "9d1b84ebc28b7de1e955360dcd57c46f6c6859d4939b8bcd3df0e47a0f30a49f",
+        "tokenEstimate": 366,
+        "facts": [],
+        "symbol": {
+          "name": "parse_args",
+          "kind": "function",
+          "startLine": 39,
+          "endLine": 62
+        },
+        "before": "pub fn parse_args(argv: &[&str]) -> Result<Args, ArgError> {\n    let mut args = Args { verbose: false, jobs: DEFAULT_JOBS, files: Vec::new() };\n    let mut iter = argv.iter();\n    while let Some(&arg) = iter.next() {\n        match arg {\n            \"--verbose\" => args.verbose = true,\n            \"--jobs\" => {\n                let value = iter.next().ok_or(ArgError::MissingValue(arg.to_string()))?;\n                args.jobs = parse_jobs(value)?;\n            }\n            other if other.starts_with(\"--\") => return Err(ArgError::UnknownFlag(other.to_string())),\n            file => args.files.push(file.to_string()),\n        }\n    }\n    Ok(args)\n}",
+        "after": "pub fn parse_args(argv: &[&str]) -> Result<Args, ArgError> {\n    let mut args = Args { verbose: false, jobs: DEFAULT_JOBS, files: Vec::new() };\n    let mut only_files = false;\n    let mut iter = argv.iter();\n    while let Some(&arg) = iter.next() {\n        if only_files {\n            args.files.push(arg.to_string());\n            continue;\n        }\n        let flag = expand_alias(arg);\n        match flag {\n            \"--\" => only_files = true,\n            \"--verbose\" => args.verbose = true,\n            \"--jobs\" => {\n                let value = iter.next().ok_or(ArgError::MissingValue(flag.to_string()))?;\n                args.jobs = parse_jobs(value)?;\n            }\n            other if other.starts_with(\"--\") => return Err(ArgError::UnknownFlag(other.to_string())),\n            file => args.files.push(file.to_string()),\n        }\n    }\n    args.files = dedup_files(args.files);\n    Ok(args)\n}"
+      },
+      {
+        "id": "U6",
+        "file": "tests/cli.rs",
+        "language": "rs",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              25,
+              31
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/tests/cli.rs\n+++ b/tests/cli.rs\n@@ -22,3 +22,10 @@\n fn reports_a_bad_jobs_number() {\n     assert_eq!(parse_args(&[\"--jobs\", \"many\"]), Err(ArgError::BadNumber(\"many\".to_string())));\n }\n+\n+#[test]\n+fn accepts_short_aliases() {\n+    assert_eq!(parse_args(&[\"-v\"]).unwrap().verbose, true);\n+    assert_eq!(parse_args(&[\"-j\", \"8\"]).unwrap().jobs, 8);\n+}\n+\n",
+        "judgeView": "--- a/tests/cli.rs\n+++ b/tests/cli.rs\n@@ -22,3 +22,10 @@\n fn reports_a_bad_jobs_number() {\n     assert_eq!(parse_args(&[\"--jobs\", \"many\"]), Err(ArgError::BadNumber(\"many\".to_string())));\n }\n+\n+#[test]\n+fn accepts_short_aliases() {\n+    assert_eq!(parse_args(&[\"-v\"]).unwrap().verbose, true);\n+    assert_eq!(parse_args(&[\"-j\", \"8\"]).unwrap().jobs, 8);\n+}\n+\n",
+        "contentHash": "eaed175abc64698f088eebabb3238ce30bf2b791d47ba5de0721a483b2c12147",
+        "tokenEstimate": 119,
+        "facts": [],
+        "symbol": {
+          "name": "accepts_short_aliases",
+          "kind": "test",
+          "startLine": 26,
+          "endLine": 30
+        },
+        "after": "#[test]\nfn accepts_short_aliases() {\n    assert_eq!(parse_args(&[\"-v\"]).unwrap().verbose, true);\n    assert_eq!(parse_args(&[\"-j\", \"8\"]).unwrap().jobs, 8);\n}",
+        "testTitles": [
+          "accepts_short_aliases"
+        ]
+      },
+      {
+        "id": "U7",
+        "file": "tests/cli.rs",
+        "language": "rs",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              32,
+              38
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/tests/cli.rs\n+++ b/tests/cli.rs\n@@ -24,0 +32,7 @@\n+#[test]\n+fn rejects_jobs_outside_one_to_sixty_four() {\n+    assert_eq!(parse_args(&[\"--jobs\", \"0\"]), Err(ArgError::JobsOutOfRange(0)));\n+    assert_eq!(parse_args(&[\"--jobs\", \"65\"]).is_err(), true);\n+    assert_eq!(parse_args(&[\"--jobs\", \"64\"]).map(|a| a.jobs), Ok(64));\n+}\n+\n",
+        "judgeView": "--- a/tests/cli.rs\n+++ b/tests/cli.rs\n@@ -24,0 +32,7 @@\n+#[test]\n+fn rejects_jobs_outside_one_to_sixty_four() {\n+    assert_eq!(parse_args(&[\"--jobs\", \"0\"]), Err(ArgError::JobsOutOfRange(0)));\n+    assert_eq!(parse_args(&[\"--jobs\", \"65\"]).is_err(), true);\n+    assert_eq!(parse_args(&[\"--jobs\", \"64\"]).map(|a| a.jobs), Ok(64));\n+}\n+\n",
+        "contentHash": "fb53eea72b5193b2d2294b725559ef10678106f6d1b5eaff47fb4ed18ca883e7",
+        "tokenEstimate": 111,
+        "facts": [],
+        "symbol": {
+          "name": "rejects_jobs_outside_one_to_sixty_four",
+          "kind": "test",
+          "startLine": 32,
+          "endLine": 37
+        },
+        "after": "#[test]\nfn rejects_jobs_outside_one_to_sixty_four() {\n    assert_eq!(parse_args(&[\"--jobs\", \"0\"]), Err(ArgError::JobsOutOfRange(0)));\n    assert_eq!(parse_args(&[\"--jobs\", \"65\"]).is_err(), true);\n    assert_eq!(parse_args(&[\"--jobs\", \"64\"]).map(|a| a.jobs), Ok(64));\n}",
+        "testTitles": [
+          "rejects_jobs_outside_one_to_sixty_four"
+        ]
+      },
+      {
+        "id": "U8",
+        "file": "tests/cli.rs",
+        "language": "rs",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              39,
+              45
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/tests/cli.rs\n+++ b/tests/cli.rs\n@@ -24,0 +39,7 @@\n+#[test]\n+fn double_dash_ends_flag_parsing() {\n+    let args = parse_args(&[\"--verbose\", \"--\", \"--weird-name\", \"-v\"]).unwrap();\n+    assert_eq!(args.files, vec![\"--weird-name\".to_string(), \"-v\".to_string()]);\n+    assert_eq!(args.verbose, true);\n+}\n+\n",
+        "judgeView": "--- a/tests/cli.rs\n+++ b/tests/cli.rs\n@@ -24,0 +39,7 @@\n+#[test]\n+fn double_dash_ends_flag_parsing() {\n+    let args = parse_args(&[\"--verbose\", \"--\", \"--weird-name\", \"-v\"]).unwrap();\n+    assert_eq!(args.files, vec![\"--weird-name\".to_string(), \"-v\".to_string()]);\n+    assert_eq!(args.verbose, true);\n+}\n+\n",
+        "contentHash": "1cf5d2c448cfa607ba34c634176e3e1b2b3ead7c077873b95643b0b25702d9c9",
+        "tokenEstimate": 103,
+        "facts": [],
+        "symbol": {
+          "name": "double_dash_ends_flag_parsing",
+          "kind": "test",
+          "startLine": 39,
+          "endLine": 44
+        },
+        "after": "#[test]\nfn double_dash_ends_flag_parsing() {\n    let args = parse_args(&[\"--verbose\", \"--\", \"--weird-name\", \"-v\"]).unwrap();\n    assert_eq!(args.files, vec![\"--weird-name\".to_string(), \"-v\".to_string()]);\n    assert_eq!(args.verbose, true);\n}",
+        "testTitles": [
+          "double_dash_ends_flag_parsing"
+        ]
+      },
+      {
+        "id": "U9",
+        "file": "tests/cli.rs",
+        "language": "rs",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              46,
+              50
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/tests/cli.rs\n+++ b/tests/cli.rs\n@@ -24,0 +46,5 @@\n+#[test]\n+fn drops_duplicate_files() {\n+    let args = parse_args(&[\"a\", \"b\", \"a\"]).unwrap();\n+    assert_eq!(args.files, vec![\"a\".to_string(), \"b\".to_string()]);\n+}\n",
+        "judgeView": "--- a/tests/cli.rs\n+++ b/tests/cli.rs\n@@ -24,0 +46,5 @@\n+#[test]\n+fn drops_duplicate_files() {\n+    let args = parse_args(&[\"a\", \"b\", \"a\"]).unwrap();\n+    assert_eq!(args.files, vec![\"a\".to_string(), \"b\".to_string()]);\n+}\n",
+        "contentHash": "2237f803c812a5c01722a838dec4c8fb3b523a517a483b4194b32979278c96b4",
+        "tokenEstimate": 74,
+        "facts": [],
+        "symbol": {
+          "name": "drops_duplicate_files",
+          "kind": "test",
+          "startLine": 46,
+          "endLine": 50
+        },
+        "after": "#[test]\nfn drops_duplicate_files() {\n    let args = parse_args(&[\"a\", \"b\", \"a\"]).unwrap();\n    assert_eq!(args.files, vec![\"a\".to_string(), \"b\".to_string()]);\n}",
+        "testTitles": [
+          "drops_duplicate_files"
+        ]
+      }
+    ],
+    "requirementVerdicts": [
+      {
+        "requirementId": "R1",
+        "status": "done",
+        "confidence": 0.7,
+        "calibrated": false,
+        "tested": "as_stated",
+        "evidence": [
+          {
+            "unitId": "U3",
+            "file": "src/args.rs",
+            "lines": [
+              [
+                26,
+                33
+              ]
+            ],
+            "probability": 0.8
+          }
+        ],
+        "testEvidence": [
+          {
+            "unitId": "U6",
+            "file": "tests/cli.rs",
+            "lines": [
+              [
+                25,
+                31
+              ]
+            ],
+            "probability": 0.75
+          }
+        ],
+        "answers": [
+          {
+            "call": "issue.v0",
+            "question": "ambiguous",
+            "type": "noul",
+            "value": 0.3
+          },
+          {
+            "call": "issue.v0",
+            "question": "checkable_in_code",
+            "type": "noul",
+            "value": 0.85
+          },
+          {
+            "call": "forward.v0",
+            "question": "coverage",
+            "type": "score",
+            "value": 2.55,
+            "probabilities": {
+              "0": 0.05,
+              "1": 0.05,
+              "2": 0.2,
+              "3": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "forward.v0",
+            "question": "conflict",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "forward.v0",
+            "question": "evidence",
+            "type": "choice",
+            "value": "U3",
+            "probabilities": {
+              "U3": 0.8,
+              "U5": 0.039999999999999994,
+              "U4": 0.039999999999999994,
+              "U2": 0.039999999999999994,
+              "U1": 0.039999999999999994,
+              "none": 0.039999999999999994
+            },
+            "confidence": 0.8
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_as_stated",
+            "type": "noul",
+            "value": 0.7
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_differently",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "tests.v0",
+            "question": "test_evidence",
+            "type": "choice",
+            "value": "U6",
+            "probabilities": {
+              "U6": 0.75,
+              "U7": 0.0625,
+              "U8": 0.0625,
+              "U9": 0.0625,
+              "none": 0.0625
+            },
+            "confidence": 0.75
+          }
+        ],
+        "reasons": [
+          {
+            "template": "req.done",
+            "text": "Implemented (`0.70`)."
+          }
+        ]
+      },
+      {
+        "requirementId": "R2",
+        "status": "partial",
+        "confidence": 0.5,
+        "calibrated": false,
+        "tested": "as_stated",
+        "evidence": [
+          {
+            "unitId": "U2",
+            "file": "src/args.rs",
+            "lines": [
+              [
+                19,
+                23
+              ]
+            ],
+            "probability": 0.8
+          }
+        ],
+        "testEvidence": [
+          {
+            "unitId": "U7",
+            "file": "tests/cli.rs",
+            "lines": [
+              [
+                32,
+                38
+              ]
+            ],
+            "probability": 0.75
+          }
+        ],
+        "answers": [
+          {
+            "call": "issue.v0",
+            "question": "ambiguous",
+            "type": "noul",
+            "value": 0.3
+          },
+          {
+            "call": "issue.v0",
+            "question": "checkable_in_code",
+            "type": "noul",
+            "value": 0.85
+          },
+          {
+            "call": "forward.v0",
+            "question": "coverage",
+            "type": "score",
+            "value": 1.8,
+            "probabilities": {
+              "0": 0.1,
+              "1": 0.2,
+              "2": 0.5,
+              "3": 0.2
+            },
+            "confidence": 0.5
+          },
+          {
+            "call": "forward.v0",
+            "question": "conflict",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "forward.v0",
+            "question": "evidence",
+            "type": "choice",
+            "value": "U2",
+            "probabilities": {
+              "U1": 0.039999999999999994,
+              "U2": 0.8,
+              "U5": 0.039999999999999994,
+              "U4": 0.039999999999999994,
+              "U3": 0.039999999999999994,
+              "none": 0.039999999999999994
+            },
+            "confidence": 0.8
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_as_stated",
+            "type": "noul",
+            "value": 0.7
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_differently",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "tests.v0",
+            "question": "test_evidence",
+            "type": "choice",
+            "value": "U7",
+            "probabilities": {
+              "U7": 0.75,
+              "U6": 0.0625,
+              "U8": 0.0625,
+              "U9": 0.0625,
+              "none": 0.0625
+            },
+            "confidence": 0.75
+          }
+        ],
+        "reasons": [
+          {
+            "template": "req.partial",
+            "text": "Mostly implemented, but at least one stated case, value or condition is not (`0.50`)."
+          }
+        ]
+      },
+      {
+        "requirementId": "R3",
+        "status": "missing",
+        "confidence": 0.8999999999999999,
+        "calibrated": false,
+        "tested": "untested",
+        "evidence": [],
+        "testEvidence": [],
+        "answers": [
+          {
+            "call": "issue.v0",
+            "question": "ambiguous",
+            "type": "noul",
+            "value": 0.3
+          },
+          {
+            "call": "issue.v0",
+            "question": "checkable_in_code",
+            "type": "noul",
+            "value": 0.85
+          },
+          {
+            "call": "forward.v0",
+            "question": "coverage",
+            "type": "score",
+            "value": 0.43000000000000005,
+            "probabilities": {
+              "0": 0.72,
+              "1": 0.18,
+              "2": 0.05,
+              "3": 0.05
+            },
+            "confidence": 0.72
+          },
+          {
+            "call": "forward.v0",
+            "question": "conflict",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "forward.v0",
+            "question": "evidence",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "U5": 0.039999999999999994,
+              "U1": 0.039999999999999994,
+              "U2": 0.039999999999999994,
+              "U3": 0.039999999999999994,
+              "U4": 0.039999999999999994,
+              "none": 0.8
+            },
+            "confidence": 0.8
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_as_stated",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_differently",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "tests.v0",
+            "question": "test_evidence",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "U8": 0.0625,
+              "U6": 0.0625,
+              "U7": 0.0625,
+              "U9": 0.0625,
+              "none": 0.75
+            },
+            "confidence": 0.75
+          },
+          {
+            "call": "preexisting.v0",
+            "question": "already_implemented",
+            "type": "noul",
+            "value": 0.2
+          }
+        ],
+        "reasons": [
+          {
+            "template": "req.missing",
+            "text": "No change implements this (`0.90`)."
+          }
+        ]
+      },
+      {
+        "requirementId": "R4",
+        "status": "missing",
+        "confidence": 0.8999999999999999,
+        "calibrated": false,
+        "tested": "untested",
+        "evidence": [],
+        "testEvidence": [],
+        "answers": [
+          {
+            "call": "issue.v0",
+            "question": "ambiguous",
+            "type": "noul",
+            "value": 0.3
+          },
+          {
+            "call": "issue.v0",
+            "question": "checkable_in_code",
+            "type": "noul",
+            "value": 0.85
+          },
+          {
+            "call": "forward.v0",
+            "question": "coverage",
+            "type": "score",
+            "value": 0.43000000000000005,
+            "probabilities": {
+              "0": 0.72,
+              "1": 0.18,
+              "2": 0.05,
+              "3": 0.05
+            },
+            "confidence": 0.72
+          },
+          {
+            "call": "forward.v0",
+            "question": "conflict",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "forward.v0",
+            "question": "evidence",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "U4": 0.039999999999999994,
+              "U5": 0.039999999999999994,
+              "U1": 0.039999999999999994,
+              "U2": 0.039999999999999994,
+              "U3": 0.039999999999999994,
+              "none": 0.8
+            },
+            "confidence": 0.8
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_as_stated",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_differently",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "tests.v0",
+            "question": "test_evidence",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "U9": 0.0625,
+              "U8": 0.0625,
+              "U6": 0.0625,
+              "U7": 0.0625,
+              "none": 0.75
+            },
+            "confidence": 0.75
+          },
+          {
+            "call": "preexisting.v0",
+            "question": "already_implemented",
+            "type": "noul",
+            "value": 0.2
+          }
+        ],
+        "reasons": [
+          {
+            "template": "req.missing",
+            "text": "No change implements this (`0.90`)."
+          }
+        ]
+      }
+    ],
+    "unitVerdicts": [
+      {
+        "unitId": "U1",
+        "role": "implements",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "R2",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.7,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.07500000000000001
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.implements",
+            "text": "Implements R2."
+          }
+        ],
+        "servesRequirementId": "R2"
+      },
+      {
+        "unitId": "U2",
+        "role": "implements",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "R2",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.7,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.07500000000000001
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.implements",
+            "text": "Implements R2."
+          }
+        ],
+        "servesRequirementId": "R2"
+      },
+      {
+        "unitId": "U3",
+        "role": "implements",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "R1",
+            "probabilities": {
+              "R1": 0.7,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.07500000000000001
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.implements",
+            "text": "Implements R1."
+          }
+        ],
+        "servesRequirementId": "R1"
+      },
+      {
+        "unitId": "U4",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      },
+      {
+        "unitId": "U5",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      },
+      {
+        "unitId": "U6",
+        "role": "implements",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "R1",
+            "probabilities": {
+              "R1": 0.7,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.07500000000000001
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.implements",
+            "text": "Implements R1."
+          }
+        ],
+        "servesRequirementId": "R1"
+      },
+      {
+        "unitId": "U7",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      },
+      {
+        "unitId": "U8",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      },
+      {
+        "unitId": "U9",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      }
+    ],
+    "claims": [
+      {
+        "sentence": "Short flag aliases, jobs range check, `--` terminator and file dedup",
+        "claimsDone": 0.2,
+        "claimsDeferred": 0.1
+      },
+      {
+        "sentence": "parse_args now runs each argument through a new expand_alias helper that maps -v to --verbose and -j to --jobs. parse_jobs rejects values outside 1 to 64 with a new ArgError::JobsOutOfRange variant.",
+        "claimsDone": 0.2,
+        "claimsDeferred": 0.1
+      },
+      {
+        "sentence": "After a bare --, every remaining argument is pushed as a file.",
+        "requirementId": "R3",
+        "claimsDone": 0.2,
+        "claimsDeferred": 0.1
+      },
+      {
+        "sentence": "Finally, dedup_files removes repeated file names while keeping the first occurrence.",
+        "requirementId": "R4",
+        "claimsDone": 0.2,
+        "claimsDeferred": 0.1
+      },
+      {
+        "sentence": "Integration tests in tests/cli.rs cover each flag.",
+        "claimsDone": 0.2,
+        "claimsDeferred": 0.1
+      }
+    ],
+    "findings": [
+      {
+        "id": "F-R3",
+        "type": "requirement",
+        "targetId": "R3",
+        "priority": "P0",
+        "route": "send_back",
+        "confidence": 0.8999999999999999,
+        "locations": [],
+        "reasons": [
+          {
+            "template": "req.missing",
+            "text": "No change implements this (`0.90`)."
+          }
+        ],
+        "contentKey": "req:07cfb0ce8782ae9811a5eadb56d453ca"
+      },
+      {
+        "id": "F-R4",
+        "type": "requirement",
+        "targetId": "R4",
+        "priority": "P0",
+        "route": "send_back",
+        "confidence": 0.8999999999999999,
+        "locations": [],
+        "reasons": [
+          {
+            "template": "req.missing",
+            "text": "No change implements this (`0.90`)."
+          }
+        ],
+        "contentKey": "req:c9319be1f5925300930c9a2d69d85efc"
+      },
+      {
+        "id": "F-R2",
+        "type": "requirement",
+        "targetId": "R2",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.5,
+        "locations": [
+          {
+            "file": "src/args.rs",
+            "lines": [
+              19,
+              23
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "req.partial",
+            "text": "Mostly implemented, but at least one stated case, value or condition is not (`0.50`)."
+          }
+        ],
+        "contentKey": "req:90c8190ceaa6dad349d20da2d4c523a4"
+      },
+      {
+        "id": "F-U4",
+        "type": "unit",
+        "targetId": "U4",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.65,
+        "locations": [
+          {
+            "file": "src/args.rs",
+            "lines": [
+              34,
+              38
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ],
+        "contentKey": "unit:837141b848a8df2b062b909368fd3bf4"
+      },
+      {
+        "id": "F-U5",
+        "type": "unit",
+        "targetId": "U5",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.65,
+        "locations": [
+          {
+            "file": "src/args.rs",
+            "lines": [
+              41,
+              41
+            ]
+          },
+          {
+            "file": "src/args.rs",
+            "lines": [
+              44,
+              50
+            ]
+          },
+          {
+            "file": "src/args.rs",
+            "lines": [
+              53,
+              53
+            ]
+          },
+          {
+            "file": "src/args.rs",
+            "lines": [
+              60,
+              60
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ],
+        "contentKey": "unit:9d1b84ebc28b7de1e955360dcd57c46f"
+      },
+      {
+        "id": "F-U7",
+        "type": "unit",
+        "targetId": "U7",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.65,
+        "locations": [
+          {
+            "file": "tests/cli.rs",
+            "lines": [
+              32,
+              38
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ],
+        "contentKey": "unit:fb53eea72b5193b2d2294b725559ef10"
+      },
+      {
+        "id": "F-U8",
+        "type": "unit",
+        "targetId": "U8",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.65,
+        "locations": [
+          {
+            "file": "tests/cli.rs",
+            "lines": [
+              39,
+              45
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ],
+        "contentKey": "unit:1cf5d2c448cfa607ba34c634176e3e1b"
+      },
+      {
+        "id": "F-U9",
+        "type": "unit",
+        "targetId": "U9",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.65,
+        "locations": [
+          {
+            "file": "tests/cli.rs",
+            "lines": [
+              46,
+              50
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ],
+        "contentKey": "unit:2237f803c812a5c01722a838dec4c8fb"
+      }
+    ],
+    "summary": {
+      "counts": {
+        "done": 1,
+        "partial": 1,
+        "missing": 2,
+        "implements": 4,
+        "unexplained_behavioral": 5,
+        "P0": 2,
+        "P1": 6
+      },
+      "mode": "comment_only"
+    },
+    "warnings": [],
+    "usage": {
+      "jevInputTokens": 0,
+      "llmInputTokens": 0,
+      "llmOutputTokens": 0,
+      "costUsd": 0,
+      "latencyMs": 0,
+      "calls": 0
+    }
+  }
+}

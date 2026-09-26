@@ -41,6 +41,10 @@ export async function mutateCommand(argv: string[], io: Io): Promise<number> {
         'Fix the seed annotation.',
       );
     }
+    if (r.frozen) {
+      io.out(`${r.seed}: test split is frozen; left unchanged\n`);
+      continue;
+    }
     const ops = Object.entries(r.operators)
       .map(([k, v]) => `${k} ${v}`)
       .join(', ');

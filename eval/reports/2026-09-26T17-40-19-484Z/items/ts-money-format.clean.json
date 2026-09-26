@@ -1,0 +1,1694 @@
+{
+  "id": "ts-money-format.clean",
+  "labels": {
+    "requirements": {
+      "R1": "done",
+      "R2": "done",
+      "R3": "done",
+      "R4": "done"
+    },
+    "requirementsAccept": {},
+    "units": [
+      {
+        "file": "src/money.ts",
+        "symbol": "Currency",
+        "role": "implements"
+      },
+      {
+        "file": "src/money.ts",
+        "symbol": "CURRENCIES",
+        "role": "implements"
+      },
+      {
+        "file": "src/money.ts",
+        "symbol": "formatMoney",
+        "role": "implements"
+      },
+      {
+        "file": "src/money.test.ts",
+        "symbol": "formats USD, EUR and JPY",
+        "role": "implements"
+      },
+      {
+        "file": "src/money.ts",
+        "symbol": "roundHalfAway",
+        "role": "implements"
+      },
+      {
+        "file": "src/money.test.ts",
+        "symbol": "rounds half away from zero",
+        "role": "implements"
+      },
+      {
+        "file": "src/money.test.ts",
+        "symbol": "puts the minus sign before the symbol",
+        "role": "implements"
+      },
+      {
+        "file": "src/money.ts",
+        "symbol": "groupThousands",
+        "role": "implements"
+      },
+      {
+        "file": "src/money.test.ts",
+        "symbol": "groups thousands with commas",
+        "role": "implements"
+      }
+    ],
+    "facts": [],
+    "testIntegrity": [],
+    "claimMismatch": [],
+    "pr": "clean"
+  },
+  "comparison": {
+    "requirements": [
+      {
+        "id": "R1",
+        "expected": "done",
+        "actual": "partial",
+        "ok": false
+      },
+      {
+        "id": "R2",
+        "expected": "done",
+        "actual": "missing",
+        "ok": false
+      },
+      {
+        "id": "R3",
+        "expected": "done",
+        "actual": "missing",
+        "ok": false
+      },
+      {
+        "id": "R4",
+        "expected": "done",
+        "actual": "missing",
+        "ok": false
+      }
+    ],
+    "units": [
+      {
+        "file": "src/money.ts",
+        "symbol": "Currency",
+        "expected": "implements",
+        "actual": "implements",
+        "ok": true
+      },
+      {
+        "file": "src/money.ts",
+        "symbol": "CURRENCIES",
+        "expected": "implements",
+        "actual": "implements",
+        "ok": true
+      },
+      {
+        "file": "src/money.ts",
+        "symbol": "formatMoney",
+        "expected": "implements",
+        "actual": "unexplained_behavioral",
+        "ok": false
+      },
+      {
+        "file": "src/money.test.ts",
+        "symbol": "formats USD, EUR and JPY",
+        "expected": "implements",
+        "actual": "implements",
+        "ok": true
+      },
+      {
+        "file": "src/money.ts",
+        "symbol": "roundHalfAway",
+        "expected": "implements",
+        "actual": "unexplained_behavioral",
+        "ok": false
+      },
+      {
+        "file": "src/money.test.ts",
+        "symbol": "rounds half away from zero",
+        "expected": "implements",
+        "actual": "implements",
+        "ok": true
+      },
+      {
+        "file": "src/money.test.ts",
+        "symbol": "puts the minus sign before the symbol",
+        "expected": "implements",
+        "actual": "implements",
+        "ok": true
+      },
+      {
+        "file": "src/money.ts",
+        "symbol": "groupThousands",
+        "expected": "implements",
+        "actual": "unexplained_behavioral",
+        "ok": false
+      },
+      {
+        "file": "src/money.test.ts",
+        "symbol": "groups thousands with commas",
+        "expected": "implements",
+        "actual": "implements",
+        "ok": true
+      }
+    ],
+    "facts": [],
+    "testIntegrity": [],
+    "claimMismatch": [],
+    "pr": {
+      "expected": "clean",
+      "predictedProblem": true
+    },
+    "p0p1": 8,
+    "passed": false
+  },
+  "result": {
+    "schemaVersion": "1.0.0",
+    "product": {
+      "name": "Remit",
+      "version": "0.1.0"
+    },
+    "input": {
+      "mode": "local",
+      "baseSha": "base",
+      "headSha": "head",
+      "issues": [
+        {
+          "owner": "acme",
+          "repo": "billing",
+          "number": 58
+        }
+      ],
+      "linkStrength": "closing"
+    },
+    "versions": {
+      "questionSet": "qs-0.1.0",
+      "extractionPrompt": "xp-0.1.0",
+      "jevModel": "simulated-jev"
+    },
+    "requirements": [
+      {
+        "id": "R1",
+        "issue": {
+          "owner": "acme",
+          "repo": "billing",
+          "number": 58
+        },
+        "text": "`formatMoney(amount, currency)` supports USD, EUR and JPY, with USD as the default (for example `$12.50`, `12.50 EUR`, `980 JPY`)",
+        "quote": "`formatMoney(amount, currency)` supports USD, EUR and JPY, with USD as the default (for example `$12.50`, `12.50 EUR`, `980 JPY`)",
+        "source": {
+          "kind": "tasklist"
+        },
+        "kind": "behavior",
+        "explicitness": "explicit",
+        "priority": "must",
+        "examples": [],
+        "checkableInCode": true,
+        "signals": {
+          "ambiguous": 0.3,
+          "checkable": 0.85
+        }
+      },
+      {
+        "id": "R2",
+        "issue": {
+          "owner": "acme",
+          "repo": "billing",
+          "number": 58
+        },
+        "text": "Amounts are rounded half away from zero to the currency's decimal places (for example `1.005` USD is `$1.01`, and `-2.5` rounds to `-3` with no decimals)",
+        "quote": "Amounts are rounded half away from zero to the currency's decimal places (for example `1.005` USD is `$1.01`, and `-2.5` rounds to `-3` with no decimals)",
+        "source": {
+          "kind": "tasklist"
+        },
+        "kind": "behavior",
+        "explicitness": "explicit",
+        "priority": "must",
+        "examples": [],
+        "checkableInCode": true,
+        "signals": {
+          "ambiguous": 0.3,
+          "checkable": 0.85
+        }
+      },
+      {
+        "id": "R3",
+        "issue": {
+          "owner": "acme",
+          "repo": "billing",
+          "number": 58
+        },
+        "text": "Negative amounts put the minus sign before the currency symbol (`-$4.20`, not `$-4.20`)",
+        "quote": "Negative amounts put the minus sign before the currency symbol (`-$4.20`, not `$-4.20`)",
+        "source": {
+          "kind": "tasklist"
+        },
+        "kind": "behavior",
+        "explicitness": "explicit",
+        "priority": "must",
+        "examples": [],
+        "checkableInCode": true,
+        "signals": {
+          "ambiguous": 0.3,
+          "checkable": 0.85
+        }
+      },
+      {
+        "id": "R4",
+        "issue": {
+          "owner": "acme",
+          "repo": "billing",
+          "number": 58
+        },
+        "text": "The whole part is grouped in thousands with commas (for example `$1,234,567.89`)",
+        "quote": "The whole part is grouped in thousands with commas (for example `$1,234,567.89`)",
+        "source": {
+          "kind": "tasklist"
+        },
+        "kind": "behavior",
+        "explicitness": "explicit",
+        "priority": "must",
+        "examples": [],
+        "checkableInCode": true,
+        "signals": {
+          "ambiguous": 0.3,
+          "checkable": 0.85
+        }
+      }
+    ],
+    "units": [
+      {
+        "id": "U1",
+        "file": "src/money.test.ts",
+        "language": "ts",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              2,
+              2
+            ]
+          ],
+          "old": [
+            [
+              2,
+              2
+            ]
+          ]
+        },
+        "patch": "--- a/src/money.test.ts\n+++ b/src/money.test.ts\n@@ -1,5 +1,5 @@\n import { describe, expect, it } from 'vitest';\n-import { formatMoney } from './money.js';\n+import { formatMoney, groupThousands, roundHalfAway } from './money.js';\n \n describe('formatMoney', () => {\n   it('formats dollars', () => {\n",
+        "judgeView": "--- a/src/money.test.ts\n+++ b/src/money.test.ts\n@@ -1,5 +1,5 @@\n import { describe, expect, it } from 'vitest';\n-import { formatMoney } from './money.js';\n+import { formatMoney, groupThousands, roundHalfAway } from './money.js';\n \n describe('formatMoney', () => {\n   it('formats dollars', () => {\n",
+        "contentHash": "65e355794cda96e3ec201dc1386adeb5692f3a41037bf2127e14ed62817c9c98",
+        "tokenEstimate": 99,
+        "facts": []
+      },
+      {
+        "id": "U2",
+        "file": "src/money.test.ts",
+        "language": "ts",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              8,
+              14
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/src/money.test.ts\n+++ b/src/money.test.ts\n@@ -5,3 +5,10 @@\n   it('formats dollars', () => {\n     expect(formatMoney(3.5)).toBe('$3.50');\n   });\n+\n+  it('formats USD, EUR and JPY', () => {\n+    expect(formatMoney(12.5, 'USD')).toBe('$12.50');\n+    expect(formatMoney(12.5, 'EUR')).toBe('12.50 EUR');\n+    expect(formatMoney(980, 'JPY')).toBe('980 JPY');\n+  });\n+\n",
+        "judgeView": "--- a/src/money.test.ts\n+++ b/src/money.test.ts\n@@ -5,3 +5,10 @@\n   it('formats dollars', () => {\n     expect(formatMoney(3.5)).toBe('$3.50');\n   });\n+\n+  it('formats USD, EUR and JPY', () => {\n+    expect(formatMoney(12.5, 'USD')).toBe('$12.50');\n+    expect(formatMoney(12.5, 'EUR')).toBe('12.50 EUR');\n+    expect(formatMoney(980, 'JPY')).toBe('980 JPY');\n+  });\n+\n",
+        "contentHash": "75136d6bf7204987c32dff818c6f904c11ca3b7e6e84c53f0e73ec24c463f736",
+        "tokenEstimate": 123,
+        "facts": [],
+        "symbol": {
+          "name": "formats USD, EUR and JPY",
+          "kind": "test",
+          "startLine": 9,
+          "endLine": 13
+        },
+        "after": "  it('formats USD, EUR and JPY', () => {\n    expect(formatMoney(12.5, 'USD')).toBe('$12.50');\n    expect(formatMoney(12.5, 'EUR')).toBe('12.50 EUR');\n    expect(formatMoney(980, 'JPY')).toBe('980 JPY');\n  });",
+        "testTitles": [
+          "formatMoney",
+          "formats USD, EUR and JPY"
+        ]
+      },
+      {
+        "id": "U3",
+        "file": "src/money.test.ts",
+        "language": "ts",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              15,
+              20
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/src/money.test.ts\n+++ b/src/money.test.ts\n@@ -7,0 +15,6 @@\n+  it('rounds half away from zero', () => {\n+    expect(roundHalfAway(1.005, 2)).toBe(1.01);\n+    expect(roundHalfAway(-2.5, 0)).toBe(-3);\n+    expect(formatMoney(1.005)).toBe('$1.01');\n+  });\n+\n",
+        "judgeView": "--- a/src/money.test.ts\n+++ b/src/money.test.ts\n@@ -7,0 +15,6 @@\n+  it('rounds half away from zero', () => {\n+    expect(roundHalfAway(1.005, 2)).toBe(1.01);\n+    expect(roundHalfAway(-2.5, 0)).toBe(-3);\n+    expect(formatMoney(1.005)).toBe('$1.01');\n+  });\n+\n",
+        "contentHash": "b62f31a1278503f86aa7700c3aa64b1b9f0e160fed533a4c821299781d9aae1f",
+        "tokenEstimate": 87,
+        "facts": [],
+        "symbol": {
+          "name": "rounds half away from zero",
+          "kind": "test",
+          "startLine": 15,
+          "endLine": 19
+        },
+        "after": "  it('rounds half away from zero', () => {\n    expect(roundHalfAway(1.005, 2)).toBe(1.01);\n    expect(roundHalfAway(-2.5, 0)).toBe(-3);\n    expect(formatMoney(1.005)).toBe('$1.01');\n  });",
+        "testTitles": [
+          "formatMoney",
+          "rounds half away from zero"
+        ]
+      },
+      {
+        "id": "U4",
+        "file": "src/money.test.ts",
+        "language": "ts",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              21,
+              24
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/src/money.test.ts\n+++ b/src/money.test.ts\n@@ -7,0 +21,4 @@\n+  it('puts the minus sign before the symbol', () => {\n+    expect(formatMoney(-4.2)).toBe('-$4.20');\n+  });\n+\n",
+        "judgeView": "--- a/src/money.test.ts\n+++ b/src/money.test.ts\n@@ -7,0 +21,4 @@\n+  it('puts the minus sign before the symbol', () => {\n+    expect(formatMoney(-4.2)).toBe('-$4.20');\n+  });\n+\n",
+        "contentHash": "d547bb0fd235444e8b8ecbfec77ebd58bf77349d1347bbc398b14f506bd80a54",
+        "tokenEstimate": 59,
+        "facts": [],
+        "symbol": {
+          "name": "puts the minus sign before the symbol",
+          "kind": "test",
+          "startLine": 21,
+          "endLine": 23
+        },
+        "after": "  it('puts the minus sign before the symbol', () => {\n    expect(formatMoney(-4.2)).toBe('-$4.20');\n  });",
+        "testTitles": [
+          "formatMoney",
+          "puts the minus sign before the symbol"
+        ]
+      },
+      {
+        "id": "U5",
+        "file": "src/money.test.ts",
+        "language": "ts",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              25,
+              29
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/src/money.test.ts\n+++ b/src/money.test.ts\n@@ -8,1 +25,6 @@\n+  it('groups thousands with commas', () => {\n+    expect(groupThousands('1000')).toBe('1,000');\n+    expect(formatMoney(1234567.891)).toBe('$1,234,567.89');\n+    expect(formatMoney(999)).toBe('$999.00');\n+  });\n });\n",
+        "judgeView": "--- a/src/money.test.ts\n+++ b/src/money.test.ts\n@@ -8,1 +25,6 @@\n+  it('groups thousands with commas', () => {\n+    expect(groupThousands('1000')).toBe('1,000');\n+    expect(formatMoney(1234567.891)).toBe('$1,234,567.89');\n+    expect(formatMoney(999)).toBe('$999.00');\n+  });\n });\n",
+        "contentHash": "3e406d4c4c732b41297920c1edb3568846780913ecad8358713cc20d6b61a307",
+        "tokenEstimate": 94,
+        "facts": [],
+        "symbol": {
+          "name": "groups thousands with commas",
+          "kind": "test",
+          "startLine": 25,
+          "endLine": 29
+        },
+        "after": "  it('groups thousands with commas', () => {\n    expect(groupThousands('1000')).toBe('1,000');\n    expect(formatMoney(1234567.891)).toBe('$1,234,567.89');\n    expect(formatMoney(999)).toBe('$999.00');\n  });",
+        "testTitles": [
+          "formatMoney",
+          "groups thousands with commas"
+        ]
+      },
+      {
+        "id": "U6",
+        "file": "src/money.ts",
+        "language": "ts",
+        "kind": "source",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              1,
+              2
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/src/money.ts\n+++ b/src/money.ts\n@@ -2,0 +1,2 @@\n+export type Currency = 'USD' | 'EUR' | 'JPY';\n+\n",
+        "judgeView": "--- a/src/money.ts\n+++ b/src/money.ts\n@@ -2,0 +1,2 @@\n+export type Currency = 'USD' | 'EUR' | 'JPY';\n+\n",
+        "contentHash": "ff8b4be44ec9d02f46e1bc0b22505666dd54def0e3e0568e92f983955b713590",
+        "tokenEstimate": 35,
+        "facts": [],
+        "symbol": {
+          "name": "Currency",
+          "kind": "block",
+          "startLine": 1,
+          "endLine": 1
+        },
+        "after": "export type Currency = 'USD' | 'EUR' | 'JPY';"
+      },
+      {
+        "id": "U7",
+        "file": "src/money.ts",
+        "language": "ts",
+        "kind": "source",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              3,
+              8
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/src/money.ts\n+++ b/src/money.ts\n@@ -2,0 +3,6 @@\n+const CURRENCIES = {\n+  USD: { prefix: '$', suffix: '', digits: 2 },\n+  EUR: { prefix: '', suffix: ' EUR', digits: 2 },\n+  JPY: { prefix: '', suffix: ' JPY', digits: 0 },\n+};\n+\n",
+        "judgeView": "--- a/src/money.ts\n+++ b/src/money.ts\n@@ -2,0 +3,6 @@\n+const CURRENCIES = {\n+  USD: { prefix: '$', suffix: '', digits: 2 },\n+  EUR: { prefix: '', suffix: ' EUR', digits: 2 },\n+  JPY: { prefix: '', suffix: ' JPY', digits: 0 },\n+};\n+\n",
+        "contentHash": "e309b83baad6478a977e1be0acdf52f915e90e02e21ac5abc01d53b09feb9727",
+        "tokenEstimate": 78,
+        "facts": [],
+        "symbol": {
+          "name": "CURRENCIES",
+          "kind": "block",
+          "startLine": 3,
+          "endLine": 7
+        },
+        "after": "const CURRENCIES = {\n  USD: { prefix: '$', suffix: '', digits: 2 },\n  EUR: { prefix: '', suffix: ' EUR', digits: 2 },\n  JPY: { prefix: '', suffix: ' JPY', digits: 0 },\n};"
+      },
+      {
+        "id": "U8",
+        "file": "src/money.ts",
+        "language": "ts",
+        "kind": "source",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              9,
+              12
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/src/money.ts\n+++ b/src/money.ts\n@@ -3,1 +9,5 @@\n+export function roundHalfAway(value: number, digits: number): number {\n+  const factor = 10 ** digits;\n+  const scaled = Number((Math.abs(value) * factor).toPrecision(12));\n+  return (Math.sign(value) * Math.round(scaled)) / factor;\n }\n",
+        "judgeView": "--- a/src/money.ts\n+++ b/src/money.ts\n@@ -3,1 +9,5 @@\n+export function roundHalfAway(value: number, digits: number): number {\n+  const factor = 10 ** digits;\n+  const scaled = Number((Math.abs(value) * factor).toPrecision(12));\n+  return (Math.sign(value) * Math.round(scaled)) / factor;\n }\n",
+        "contentHash": "89d8464a610d28b6e8049d2bbe675fa369ef918b917938493311dd68b1935b83",
+        "tokenEstimate": 97,
+        "facts": [],
+        "symbol": {
+          "name": "roundHalfAway",
+          "kind": "function",
+          "startLine": 9,
+          "endLine": 13
+        },
+        "after": "export function roundHalfAway(value: number, digits: number): number {\n  const factor = 10 ** digits;\n  const scaled = Number((Math.abs(value) * factor).toPrecision(12));\n  return (Math.sign(value) * Math.round(scaled)) / factor;\n}"
+      },
+      {
+        "id": "U9",
+        "file": "src/money.ts",
+        "language": "ts",
+        "kind": "source",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              14,
+              18
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/src/money.ts\n+++ b/src/money.ts\n@@ -3,1 +13,6 @@\n }\n+\n+export function groupThousands(whole: string): string {\n+  return whole.replace(/\\B(?=(\\d{3})+(?!\\d))/g, ',');\n+}\n+\n",
+        "judgeView": "--- a/src/money.ts\n+++ b/src/money.ts\n@@ -3,1 +13,6 @@\n }\n+\n+export function groupThousands(whole: string): string {\n+  return whole.replace(/\\B(?=(\\d{3})+(?!\\d))/g, ',');\n+}\n+\n",
+        "contentHash": "8a50136620cf9656c2dd6e396f86aa85b35764c273f90da337bdf2ec27de12ab",
+        "tokenEstimate": 59,
+        "facts": [],
+        "symbol": {
+          "name": "groupThousands",
+          "kind": "function",
+          "startLine": 15,
+          "endLine": 17
+        },
+        "after": "export function groupThousands(whole: string): string {\n  return whole.replace(/\\B(?=(\\d{3})+(?!\\d))/g, ',');\n}"
+      },
+      {
+        "id": "U10",
+        "file": "src/money.ts",
+        "language": "ts",
+        "kind": "source",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              19,
+              27
+            ]
+          ],
+          "old": [
+            [
+              1,
+              2
+            ]
+          ]
+        },
+        "patch": "--- a/src/money.ts\n+++ b/src/money.ts\n@@ -1,2 +0,0 @@\n-export function formatMoney(amount: number): string {\n-  return `$${amount.toFixed(2)}`;\n@@ -3,0 +19,9 @@\n+export function formatMoney(amount: number, currency: Currency = 'USD'): string {\n+  const c = CURRENCIES[currency];\n+  const rounded = roundHalfAway(amount, c.digits);\n+  const sign = rounded < 0 ? '-' : '';\n+  const [whole = '0', fraction] = Math.abs(rounded).toFixed(c.digits).split('.');\n+  const grouped = groupThousands(whole);\n+  const body = fraction === undefined ? grouped : `${grouped}.${fraction}`;\n+  return `${sign}${c.prefix}${body}${c.suffix}`;\n+}\n",
+        "judgeView": "--- a/src/money.ts\n+++ b/src/money.ts\n@@ -1,2 +0,0 @@\n-export function formatMoney(amount: number): string {\n-  return `$${amount.toFixed(2)}`;\n@@ -3,0 +19,9 @@\n+export function formatMoney(amount: number, currency: Currency = 'USD'): string {\n+  const c = CURRENCIES[currency];\n+  const rounded = roundHalfAway(amount, c.digits);\n+  const sign = rounded < 0 ? '-' : '';\n+  const [whole = '0', fraction] = Math.abs(rounded).toFixed(c.digits).split('.');\n+  const grouped = groupThousands(whole);\n+  const body = fraction === undefined ? grouped : `${grouped}.${fraction}`;\n+  return `${sign}${c.prefix}${body}${c.suffix}`;\n+}\n",
+        "contentHash": "1a91cebde2d50561decd332fce00629272e18b48843c951818127f008e0b7df5",
+        "tokenEstimate": 209,
+        "facts": [
+          {
+            "id": "X1",
+            "kind": "public_api_changed",
+            "severity": "warn",
+            "unitId": "U10",
+            "line": 19,
+            "detail": "signature of exported function `formatMoney` changed"
+          }
+        ],
+        "symbol": {
+          "name": "formatMoney",
+          "kind": "function",
+          "startLine": 19,
+          "endLine": 27
+        },
+        "before": "export function formatMoney(amount: number): string {\n  return `$${amount.toFixed(2)}`;\n}",
+        "after": "export function formatMoney(amount: number, currency: Currency = 'USD'): string {\n  const c = CURRENCIES[currency];\n  const rounded = roundHalfAway(amount, c.digits);\n  const sign = rounded < 0 ? '-' : '';\n  const [whole = '0', fraction] = Math.abs(rounded).toFixed(c.digits).split('.');\n  const grouped = groupThousands(whole);\n  const body = fraction === undefined ? grouped : `${grouped}.${fraction}`;\n  return `${sign}${c.prefix}${body}${c.suffix}`;\n}"
+      }
+    ],
+    "requirementVerdicts": [
+      {
+        "requirementId": "R1",
+        "status": "partial",
+        "confidence": 0.4,
+        "calibrated": false,
+        "tested": "as_stated",
+        "evidence": [
+          {
+            "unitId": "U10",
+            "file": "src/money.ts",
+            "lines": [
+              [
+                19,
+                27
+              ]
+            ],
+            "probability": 0.8
+          }
+        ],
+        "testEvidence": [
+          {
+            "unitId": "U2",
+            "file": "src/money.test.ts",
+            "lines": [
+              [
+                8,
+                14
+              ]
+            ],
+            "probability": 0.75
+          }
+        ],
+        "answers": [
+          {
+            "call": "issue.v0",
+            "question": "ambiguous",
+            "type": "noul",
+            "value": 0.3
+          },
+          {
+            "call": "issue.v0",
+            "question": "checkable_in_code",
+            "type": "noul",
+            "value": 0.85
+          },
+          {
+            "call": "forward.v0",
+            "question": "coverage",
+            "type": "score",
+            "value": 1.8,
+            "probabilities": {
+              "0": 0.1,
+              "1": 0.2,
+              "2": 0.5,
+              "3": 0.2
+            },
+            "confidence": 0.5
+          },
+          {
+            "call": "forward.v0",
+            "question": "conflict",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "forward.v0",
+            "question": "evidence",
+            "type": "choice",
+            "value": "U10",
+            "probabilities": {
+              "U10": 0.8,
+              "U6": 0.039999999999999994,
+              "U7": 0.039999999999999994,
+              "U8": 0.039999999999999994,
+              "U9": 0.039999999999999994,
+              "none": 0.039999999999999994
+            },
+            "confidence": 0.8
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_as_stated",
+            "type": "noul",
+            "value": 0.7
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_differently",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "tests.v0",
+            "question": "test_evidence",
+            "type": "choice",
+            "value": "U2",
+            "probabilities": {
+              "U2": 0.75,
+              "U5": 0.05,
+              "U4": 0.05,
+              "U3": 0.05,
+              "U1": 0.05,
+              "none": 0.05
+            },
+            "confidence": 0.75
+          }
+        ],
+        "reasons": [
+          {
+            "template": "req.partial",
+            "text": "Mostly implemented, but at least one stated case, value or condition is not (`0.50`)."
+          },
+          {
+            "template": "check.disagree",
+            "text": "Forward and reverse checks disagree."
+          }
+        ]
+      },
+      {
+        "requirementId": "R2",
+        "status": "missing",
+        "confidence": 0.8999999999999999,
+        "calibrated": false,
+        "tested": "as_stated",
+        "evidence": [],
+        "testEvidence": [
+          {
+            "unitId": "U3",
+            "file": "src/money.test.ts",
+            "lines": [
+              [
+                15,
+                20
+              ]
+            ],
+            "probability": 0.75
+          }
+        ],
+        "answers": [
+          {
+            "call": "issue.v0",
+            "question": "ambiguous",
+            "type": "noul",
+            "value": 0.3
+          },
+          {
+            "call": "issue.v0",
+            "question": "checkable_in_code",
+            "type": "noul",
+            "value": 0.85
+          },
+          {
+            "call": "forward.v0",
+            "question": "coverage",
+            "type": "score",
+            "value": 0.43000000000000005,
+            "probabilities": {
+              "0": 0.72,
+              "1": 0.18,
+              "2": 0.05,
+              "3": 0.05
+            },
+            "confidence": 0.72
+          },
+          {
+            "call": "forward.v0",
+            "question": "conflict",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "forward.v0",
+            "question": "evidence",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "U10": 0.039999999999999994,
+              "U6": 0.039999999999999994,
+              "U8": 0.039999999999999994,
+              "U7": 0.039999999999999994,
+              "U9": 0.039999999999999994,
+              "none": 0.8
+            },
+            "confidence": 0.8
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_as_stated",
+            "type": "noul",
+            "value": 0.7
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_differently",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "tests.v0",
+            "question": "test_evidence",
+            "type": "choice",
+            "value": "U3",
+            "probabilities": {
+              "U3": 0.75,
+              "U2": 0.05,
+              "U1": 0.05,
+              "U4": 0.05,
+              "U5": 0.05,
+              "none": 0.05
+            },
+            "confidence": 0.75
+          },
+          {
+            "call": "preexisting.v0",
+            "question": "already_implemented",
+            "type": "noul",
+            "value": 0.2
+          }
+        ],
+        "reasons": [
+          {
+            "template": "req.missing",
+            "text": "No change implements this (`0.90`)."
+          }
+        ]
+      },
+      {
+        "requirementId": "R3",
+        "status": "missing",
+        "confidence": 0.8999999999999999,
+        "calibrated": false,
+        "tested": "as_stated",
+        "evidence": [],
+        "testEvidence": [
+          {
+            "unitId": "U4",
+            "file": "src/money.test.ts",
+            "lines": [
+              [
+                21,
+                24
+              ]
+            ],
+            "probability": 0.75
+          }
+        ],
+        "answers": [
+          {
+            "call": "issue.v0",
+            "question": "ambiguous",
+            "type": "noul",
+            "value": 0.3
+          },
+          {
+            "call": "issue.v0",
+            "question": "checkable_in_code",
+            "type": "noul",
+            "value": 0.85
+          },
+          {
+            "call": "forward.v0",
+            "question": "coverage",
+            "type": "score",
+            "value": 0.43000000000000005,
+            "probabilities": {
+              "0": 0.72,
+              "1": 0.18,
+              "2": 0.05,
+              "3": 0.05
+            },
+            "confidence": 0.72
+          },
+          {
+            "call": "forward.v0",
+            "question": "conflict",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "forward.v0",
+            "question": "evidence",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "U6": 0.039999999999999994,
+              "U10": 0.039999999999999994,
+              "U8": 0.039999999999999994,
+              "U7": 0.039999999999999994,
+              "U9": 0.039999999999999994,
+              "none": 0.8
+            },
+            "confidence": 0.8
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_as_stated",
+            "type": "noul",
+            "value": 0.7
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_differently",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "tests.v0",
+            "question": "test_evidence",
+            "type": "choice",
+            "value": "U4",
+            "probabilities": {
+              "U4": 0.75,
+              "U1": 0.05,
+              "U2": 0.05,
+              "U3": 0.05,
+              "U5": 0.05,
+              "none": 0.05
+            },
+            "confidence": 0.75
+          },
+          {
+            "call": "preexisting.v0",
+            "question": "already_implemented",
+            "type": "noul",
+            "value": 0.2
+          }
+        ],
+        "reasons": [
+          {
+            "template": "req.missing",
+            "text": "No change implements this (`0.90`)."
+          }
+        ]
+      },
+      {
+        "requirementId": "R4",
+        "status": "missing",
+        "confidence": 0.8999999999999999,
+        "calibrated": false,
+        "tested": "as_stated",
+        "evidence": [],
+        "testEvidence": [
+          {
+            "unitId": "U5",
+            "file": "src/money.test.ts",
+            "lines": [
+              [
+                25,
+                29
+              ]
+            ],
+            "probability": 0.75
+          }
+        ],
+        "answers": [
+          {
+            "call": "issue.v0",
+            "question": "ambiguous",
+            "type": "noul",
+            "value": 0.3
+          },
+          {
+            "call": "issue.v0",
+            "question": "checkable_in_code",
+            "type": "noul",
+            "value": 0.85
+          },
+          {
+            "call": "forward.v0",
+            "question": "coverage",
+            "type": "score",
+            "value": 0.43000000000000005,
+            "probabilities": {
+              "0": 0.72,
+              "1": 0.18,
+              "2": 0.05,
+              "3": 0.05
+            },
+            "confidence": 0.72
+          },
+          {
+            "call": "forward.v0",
+            "question": "conflict",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "forward.v0",
+            "question": "evidence",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "U10": 0.039999999999999994,
+              "U9": 0.039999999999999994,
+              "U6": 0.039999999999999994,
+              "U7": 0.039999999999999994,
+              "U8": 0.039999999999999994,
+              "none": 0.8
+            },
+            "confidence": 0.8
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_as_stated",
+            "type": "noul",
+            "value": 0.7
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_differently",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "tests.v0",
+            "question": "test_evidence",
+            "type": "choice",
+            "value": "U5",
+            "probabilities": {
+              "U5": 0.75,
+              "U1": 0.05,
+              "U2": 0.05,
+              "U3": 0.05,
+              "U4": 0.05,
+              "none": 0.05
+            },
+            "confidence": 0.75
+          },
+          {
+            "call": "preexisting.v0",
+            "question": "already_implemented",
+            "type": "noul",
+            "value": 0.2
+          }
+        ],
+        "reasons": [
+          {
+            "template": "req.missing",
+            "text": "No change implements this (`0.90`)."
+          }
+        ]
+      }
+    ],
+    "unitVerdicts": [
+      {
+        "unitId": "U1",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      },
+      {
+        "unitId": "U2",
+        "role": "implements",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "R1",
+            "probabilities": {
+              "R1": 0.7,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.07500000000000001
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.implements",
+            "text": "Implements R1."
+          }
+        ],
+        "servesRequirementId": "R1"
+      },
+      {
+        "unitId": "U3",
+        "role": "implements",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "R2",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.7,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.07500000000000001
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.implements",
+            "text": "Implements R2."
+          }
+        ],
+        "servesRequirementId": "R2"
+      },
+      {
+        "unitId": "U4",
+        "role": "implements",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "R3",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.7,
+              "R4": 0.07500000000000001,
+              "none": 0.07500000000000001
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.implements",
+            "text": "Implements R3."
+          }
+        ],
+        "servesRequirementId": "R3"
+      },
+      {
+        "unitId": "U5",
+        "role": "implements",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "R4",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.7,
+              "none": 0.07500000000000001
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.implements",
+            "text": "Implements R4."
+          }
+        ],
+        "servesRequirementId": "R4"
+      },
+      {
+        "unitId": "U6",
+        "role": "implements",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "R1",
+            "probabilities": {
+              "R1": 0.7,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.07500000000000001
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.implements",
+            "text": "Implements R1."
+          }
+        ],
+        "servesRequirementId": "R1"
+      },
+      {
+        "unitId": "U7",
+        "role": "implements",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "R1",
+            "probabilities": {
+              "R1": 0.7,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.07500000000000001
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.implements",
+            "text": "Implements R1."
+          }
+        ],
+        "servesRequirementId": "R1"
+      },
+      {
+        "unitId": "U8",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      },
+      {
+        "unitId": "U9",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      },
+      {
+        "unitId": "U10",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      }
+    ],
+    "claims": [
+      {
+        "sentence": "Currency-aware formatMoney",
+        "requirementId": "R1",
+        "claimsDone": 0.2,
+        "claimsDeferred": 0.1
+      },
+      {
+        "sentence": "formatMoney now takes a currency (USD by default, plus EUR and JPY) from a small currency table, rounds with the new roundHalfAway helper, writes the minus sign before the symbol, and groups the whole part with groupThousands.",
+        "claimsDone": 0.2,
+        "claimsDeferred": 0.1
+      },
+      {
+        "sentence": "Tests cover each currency, rounding, negatives and grouping.",
+        "claimsDone": 0.2,
+        "claimsDeferred": 0.1
+      }
+    ],
+    "findings": [
+      {
+        "id": "F-R2",
+        "type": "requirement",
+        "targetId": "R2",
+        "priority": "P0",
+        "route": "send_back",
+        "confidence": 0.8999999999999999,
+        "locations": [],
+        "reasons": [
+          {
+            "template": "req.missing",
+            "text": "No change implements this (`0.90`)."
+          }
+        ],
+        "contentKey": "req:a85403b8d89d72f7dfd1fd1d9e2761d3"
+      },
+      {
+        "id": "F-R3",
+        "type": "requirement",
+        "targetId": "R3",
+        "priority": "P0",
+        "route": "send_back",
+        "confidence": 0.8999999999999999,
+        "locations": [],
+        "reasons": [
+          {
+            "template": "req.missing",
+            "text": "No change implements this (`0.90`)."
+          }
+        ],
+        "contentKey": "req:88e35d9caa39120e2300da28b1e2ce2b"
+      },
+      {
+        "id": "F-R4",
+        "type": "requirement",
+        "targetId": "R4",
+        "priority": "P0",
+        "route": "send_back",
+        "confidence": 0.8999999999999999,
+        "locations": [],
+        "reasons": [
+          {
+            "template": "req.missing",
+            "text": "No change implements this (`0.90`)."
+          }
+        ],
+        "contentKey": "req:4c3c10fbfdba62f62a811b6eb8a89af3"
+      },
+      {
+        "id": "F-R1",
+        "type": "requirement",
+        "targetId": "R1",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.4,
+        "locations": [
+          {
+            "file": "src/money.ts",
+            "lines": [
+              19,
+              27
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "req.partial",
+            "text": "Mostly implemented, but at least one stated case, value or condition is not (`0.50`)."
+          },
+          {
+            "template": "check.disagree",
+            "text": "Forward and reverse checks disagree."
+          }
+        ],
+        "contentKey": "req:4441ee4d194dd2abcc8bd247f205574d"
+      },
+      {
+        "id": "F-U1",
+        "type": "unit",
+        "targetId": "U1",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.65,
+        "locations": [
+          {
+            "file": "src/money.test.ts",
+            "lines": [
+              2,
+              2
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ],
+        "contentKey": "unit:65e355794cda96e3ec201dc1386adeb5"
+      },
+      {
+        "id": "F-U8",
+        "type": "unit",
+        "targetId": "U8",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.65,
+        "locations": [
+          {
+            "file": "src/money.ts",
+            "lines": [
+              9,
+              12
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ],
+        "contentKey": "unit:89d8464a610d28b6e8049d2bbe675fa3"
+      },
+      {
+        "id": "F-U9",
+        "type": "unit",
+        "targetId": "U9",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.65,
+        "locations": [
+          {
+            "file": "src/money.ts",
+            "lines": [
+              14,
+              18
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ],
+        "contentKey": "unit:8a50136620cf9656c2dd6e396f86aa85"
+      },
+      {
+        "id": "F-U10",
+        "type": "unit",
+        "targetId": "U10",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.55,
+        "locations": [
+          {
+            "file": "src/money.ts",
+            "lines": [
+              19,
+              27
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          },
+          {
+            "template": "check.disagree",
+            "text": "Forward and reverse checks disagree."
+          }
+        ],
+        "contentKey": "unit:1a91cebde2d50561decd332fce006292"
+      },
+      {
+        "id": "F-X1",
+        "type": "fact",
+        "targetId": "X1",
+        "priority": "P2",
+        "route": "reviewer_attention",
+        "confidence": 1,
+        "locations": [
+          {
+            "file": "src/money.ts",
+            "lines": [
+              19,
+              19
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "fact",
+            "text": "signature of exported function `formatMoney` changed"
+          }
+        ],
+        "contentKey": "unit:1a91cebde2d50561decd332fce006292:public_api_changed:837629dc07fddea953cfe6ef856c8b24"
+      }
+    ],
+    "summary": {
+      "counts": {
+        "partial": 1,
+        "missing": 3,
+        "unexplained_behavioral": 4,
+        "implements": 6,
+        "P0": 3,
+        "P1": 5,
+        "P2": 1
+      },
+      "mode": "comment_only"
+    },
+    "warnings": [],
+    "usage": {
+      "jevInputTokens": 0,
+      "llmInputTokens": 0,
+      "llmOutputTokens": 0,
+      "costUsd": 0,
+      "latencyMs": 0,
+      "calls": 0
+    }
+  }
+}

@@ -25,7 +25,6 @@ No keys, so extraction used the task-list fast path and there were no Jev verdic
 | X4 | `new_symbol_unreferenced` `renderChecklist` | right | none (used by the issue checklist in M7) |
 | X5, X6 | `suppression_added` `biome-ignore` in sanitize.ts | right | none (deliberate: control-character regexes, justified inline) |
 | verdicts | 7 requirements `uncertain`, 154 units `uncertain` | expected without Jev | rerun with keys (B1) |
-- 2026-09-26T17:22:28.991Z mutations/dev simulated (not a real measurement): 0/128 items correct, requirement F1 0.30, PR recall 0.85, false alarms 9.94, P0 precision 0.19, cost $0.0000. Report: eval/reports/2026-09-26T17-22-28-991Z
 
 ### Dogfood run 2: M6 (`pnpm remit review --issue .agent/milestones/M6.md --diff m5-done..HEAD`), 2026-09-26
 
@@ -37,3 +36,8 @@ No keys: task-list extraction (9 requirements, one per M6 item; item 2 quotes on
 | generate.ts:107 | `new_symbol_unreferenced`: `writeMutationCorpus` | right | fixed: removed (the CLI loops over `writeSeedItems`) |
 | shadow.ts:73 | `new_symbol_unreferenced`: `shadowItem` | right | none: the corpus C export format is defined in M6 and first used by M8's exporter |
 | swebench.ts:15 | `secret_like`: high-entropy token | wrong: a PatchDiff run directory name (`20241221_codestory_midwit_claude-3-5-sonnet_swe-search`) | none; guard:secrets does not flag it |
+
+## Eval runs
+
+- 2026-09-26T17:22:28.991Z mutations/dev simulated (not a real measurement): 0/128 items correct, requirement F1 0.30, PR recall 0.85, false alarms 9.94, P0 precision 0.19, cost $0.0000. Report: eval/reports/2026-09-26T17-22-28-991Z
+- 2026-09-26T17:40:19.484Z mutations/dev simulated (not a real measurement): 0/128 items correct, requirement F1 0.30, PR recall 0.85, false alarms 9.94, P0 precision 0.20, cost $0.0000. Report: eval/reports/2026-09-26T17-40-19-484Z

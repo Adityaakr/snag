@@ -61,3 +61,28 @@ describe('guard:split', () => {
     expect(checkSplit(mkdtempSync(join(tmpdir(), 'remit-split-')))).toEqual([]);
   });
 });
+
+describe('guard:split after the freeze tag', () => {
+  it('keeps the tagged manifest append-only, so re-freezing cannot hide a change', async () => {
+    const { execFileSync } = await import('node:child_process');
+    const { root, put } = repo();
+    const git = (...args: string[]) => execFileSync('git', args, { cwd: root, stdio: 'ignore' });
+    git('init', '-q');
+    git('-c', 'user.email=t@example.com', '-c', 'user.name=t', 'commit', '-q', '--allow-empty', '-m', 'init');
+    freeze(root);
+    git('add', '-A');
+    git('-c', 'user.email=t@example.com', '-c', 'user.name=t', 'commit', '-q', '-m', 'freeze');
+    git('tag', 'm6-done');
+    expect(checkSplit(root)).toEqual([]);
+    put('eval/corpora/mutations/test/a.json', '{"a":2}');
+    rmSync(join(root, 'eval/corpora/test.sha256'));
+    freeze(root);
+    expect(checkSplit(root)).toEqual([
+      'eval/corpora/mutations/test/a.json: eval/corpora/test.sha256 differs from the m6-done freeze',
+    ]);
+    rmSync(join(root, 'eval/corpora/test.sha256'));
+    expect(checkSplit(root)).toContain(
+      'eval/corpora/swebench/test/c.json: eval/corpora/test.sha256 differs from the m6-done freeze',
+    );
+  });
+});

@@ -1,0 +1,1485 @@
+{
+  "id": "rs-config-parser.clean",
+  "labels": {
+    "requirements": {
+      "R1": "done",
+      "R2": "done",
+      "R3": "done",
+      "R4": "done"
+    },
+    "requirementsAccept": {},
+    "units": [
+      {
+        "file": "src/parser.rs",
+        "symbol": "unquote",
+        "role": "implements"
+      },
+      {
+        "file": "src/parser.rs",
+        "symbol": "parse_config",
+        "role": "implements"
+      },
+      {
+        "file": "src/parser.rs",
+        "symbol": "strips_double_quotes_from_values",
+        "role": "implements"
+      },
+      {
+        "file": "src/parser.rs",
+        "symbol": "skips_semicolon_comments",
+        "role": "implements"
+      },
+      {
+        "file": "src/parser.rs",
+        "symbol": "Config/get",
+        "role": "implements"
+      },
+      {
+        "file": "src/parser.rs",
+        "symbol": "keys_are_case_insensitive",
+        "role": "implements"
+      },
+      {
+        "file": "src/parser.rs",
+        "symbol": "Config/get_bool",
+        "role": "implements"
+      },
+      {
+        "file": "src/parser.rs",
+        "symbol": "reads_boolean_words",
+        "role": "implements"
+      }
+    ],
+    "facts": [],
+    "testIntegrity": [],
+    "claimMismatch": [],
+    "pr": "clean"
+  },
+  "comparison": {
+    "requirements": [
+      {
+        "id": "R1",
+        "expected": "done",
+        "actual": "missing",
+        "ok": false
+      },
+      {
+        "id": "R2",
+        "expected": "done",
+        "actual": "missing",
+        "ok": false
+      },
+      {
+        "id": "R3",
+        "expected": "done",
+        "actual": "missing",
+        "ok": false
+      },
+      {
+        "id": "R4",
+        "expected": "done",
+        "actual": "done",
+        "ok": true
+      }
+    ],
+    "units": [
+      {
+        "file": "src/parser.rs",
+        "symbol": "unquote",
+        "expected": "implements",
+        "actual": "unexplained_behavioral",
+        "ok": false
+      },
+      {
+        "file": "src/parser.rs",
+        "symbol": "parse_config",
+        "expected": "implements",
+        "actual": "unexplained_behavioral",
+        "ok": false
+      },
+      {
+        "file": "src/parser.rs",
+        "symbol": "strips_double_quotes_from_values",
+        "expected": "implements",
+        "actual": "implements",
+        "ok": true
+      },
+      {
+        "file": "src/parser.rs",
+        "symbol": "skips_semicolon_comments",
+        "expected": "implements",
+        "actual": "unexplained_behavioral",
+        "ok": false
+      },
+      {
+        "file": "src/parser.rs",
+        "symbol": "Config/get",
+        "expected": "implements",
+        "ok": false
+      },
+      {
+        "file": "src/parser.rs",
+        "symbol": "keys_are_case_insensitive",
+        "expected": "implements",
+        "actual": "implements",
+        "ok": true
+      },
+      {
+        "file": "src/parser.rs",
+        "symbol": "Config/get_bool",
+        "expected": "implements",
+        "ok": false
+      },
+      {
+        "file": "src/parser.rs",
+        "symbol": "reads_boolean_words",
+        "expected": "implements",
+        "actual": "implements",
+        "ok": true
+      }
+    ],
+    "facts": [],
+    "testIntegrity": [],
+    "claimMismatch": [],
+    "pr": {
+      "expected": "clean",
+      "predictedProblem": true
+    },
+    "p0p1": 7,
+    "passed": false
+  },
+  "result": {
+    "schemaVersion": "1.0.0",
+    "product": {
+      "name": "Remit",
+      "version": "0.1.0"
+    },
+    "input": {
+      "mode": "local",
+      "baseSha": "base",
+      "headSha": "head",
+      "issues": [
+        {
+          "owner": "confkit",
+          "repo": "confkit",
+          "number": 27
+        }
+      ],
+      "linkStrength": "closing"
+    },
+    "versions": {
+      "questionSet": "qs-0.1.0",
+      "extractionPrompt": "xp-0.1.0",
+      "jevModel": "simulated-jev"
+    },
+    "requirements": [
+      {
+        "id": "R1",
+        "issue": {
+          "owner": "confkit",
+          "repo": "confkit",
+          "number": 27
+        },
+        "text": "Values wrapped in double quotes have the quotes removed (for example `name = \"my app\"` reads as `my app`)",
+        "quote": "Values wrapped in double quotes have the quotes removed (for example `name = \"my app\"` reads as `my app`)",
+        "source": {
+          "kind": "tasklist"
+        },
+        "kind": "behavior",
+        "explicitness": "explicit",
+        "priority": "must",
+        "examples": [],
+        "checkableInCode": true,
+        "signals": {
+          "ambiguous": 0.3,
+          "checkable": 0.85
+        }
+      },
+      {
+        "id": "R2",
+        "issue": {
+          "owner": "confkit",
+          "repo": "confkit",
+          "number": 27
+        },
+        "text": "Lines starting with `;` are comments, just like lines starting with `#`",
+        "quote": "Lines starting with `;` are comments, just like lines starting with `#`",
+        "source": {
+          "kind": "tasklist"
+        },
+        "kind": "behavior",
+        "explicitness": "explicit",
+        "priority": "must",
+        "examples": [],
+        "checkableInCode": true,
+        "signals": {
+          "ambiguous": 0.3,
+          "checkable": 0.85
+        }
+      },
+      {
+        "id": "R3",
+        "issue": {
+          "owner": "confkit",
+          "repo": "confkit",
+          "number": 27
+        },
+        "text": "Keys are case-insensitive: `Port`, `PORT` and `port` all read the same value",
+        "quote": "Keys are case-insensitive: `Port`, `PORT` and `port` all read the same value",
+        "source": {
+          "kind": "tasklist"
+        },
+        "kind": "behavior",
+        "explicitness": "explicit",
+        "priority": "must",
+        "examples": [],
+        "checkableInCode": true,
+        "signals": {
+          "ambiguous": 0.3,
+          "checkable": 0.85
+        }
+      },
+      {
+        "id": "R4",
+        "issue": {
+          "owner": "confkit",
+          "repo": "confkit",
+          "number": 27
+        },
+        "text": "`Config::get_bool` reads `true`/`false`, `yes`/`no` and `on`/`off`, and returns `None` for anything else",
+        "quote": "`Config::get_bool` reads `true`/`false`, `yes`/`no` and `on`/`off`, and returns `None` for anything else",
+        "source": {
+          "kind": "tasklist"
+        },
+        "kind": "behavior",
+        "explicitness": "explicit",
+        "priority": "must",
+        "examples": [],
+        "checkableInCode": true,
+        "signals": {
+          "ambiguous": 0.3,
+          "checkable": 0.85
+        }
+      }
+    ],
+    "units": [
+      {
+        "id": "U1",
+        "file": "src/parser.rs",
+        "language": "rs",
+        "kind": "source",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              28,
+              28
+            ]
+          ],
+          "old": [
+            [
+              28,
+              28
+            ]
+          ]
+        },
+        "patch": "--- a/src/parser.rs\n+++ b/src/parser.rs\n@@ -25,6 +25,6 @@\n \n impl Config {\n     pub fn get(&self, key: &str) -> Option<&str> {\n-        self.values.get(key).map(|v| v.as_str())\n+        self.values.get(&key.to_ascii_lowercase()).map(|v| v.as_str())\n     }\n \n",
+        "judgeView": "--- a/src/parser.rs\n+++ b/src/parser.rs\n@@ -25,6 +25,6 @@\n \n impl Config {\n     pub fn get(&self, key: &str) -> Option<&str> {\n-        self.values.get(key).map(|v| v.as_str())\n+        self.values.get(&key.to_ascii_lowercase()).map(|v| v.as_str())\n     }\n \n",
+        "contentHash": "e7891c7fe9684ffa61f4a450993aeb3b891bf67d34312ad7925157a986b4ffeb",
+        "tokenEstimate": 86,
+        "facts": [],
+        "symbol": {
+          "name": "get",
+          "kind": "method",
+          "startLine": 27,
+          "endLine": 29
+        },
+        "before": "    pub fn get(&self, key: &str) -> Option<&str> {\n        self.values.get(key).map(|v| v.as_str())\n    }",
+        "after": "    pub fn get(&self, key: &str) -> Option<&str> {\n        self.values.get(&key.to_ascii_lowercase()).map(|v| v.as_str())\n    }"
+      },
+      {
+        "id": "U2",
+        "file": "src/parser.rs",
+        "language": "rs",
+        "kind": "source",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              31,
+              42
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/src/parser.rs\n+++ b/src/parser.rs\n@@ -29,5 +29,17 @@\n     }\n \n+    pub fn get_bool(&self, key: &str) -> Option<bool> {\n+        match self.get(key)? {\n+            \"no\" => Some(false),\n+            \"yes\" => Some(true),\n+            \"true\" => Some(true),\n+            \"false\" => Some(false),\n+            \"on\" => Some(true),\n+            \"off\" => Some(false),\n+            _ => None,\n+        }\n+    }\n+\n     pub fn len(&self) -> usize {\n         self.values.len()\n     }\n",
+        "judgeView": "--- a/src/parser.rs\n+++ b/src/parser.rs\n@@ -29,5 +29,17 @@\n     }\n \n+    pub fn get_bool(&self, key: &str) -> Option<bool> {\n+        match self.get(key)? {\n+            \"no\" => Some(false),\n+            \"yes\" => Some(true),\n+            \"true\" => Some(true),\n+            \"false\" => Some(false),\n+            \"on\" => Some(true),\n+            \"off\" => Some(false),\n+            _ => None,\n+        }\n+    }\n+\n     pub fn len(&self) -> usize {\n         self.values.len()\n     }\n",
+        "contentHash": "40fb2b2ec7c3e8e80014dda4b37f172328800737c310de46ea1691f7b76d2d60",
+        "tokenEstimate": 159,
+        "facts": [],
+        "symbol": {
+          "name": "get_bool",
+          "kind": "method",
+          "startLine": 31,
+          "endLine": 41
+        },
+        "after": "    pub fn get_bool(&self, key: &str) -> Option<bool> {\n        match self.get(key)? {\n            \"no\" => Some(false),\n            \"yes\" => Some(true),\n            \"true\" => Some(true),\n            \"false\" => Some(false),\n            \"on\" => Some(true),\n            \"off\" => Some(false),\n            _ => None,\n        }\n    }"
+      },
+      {
+        "id": "U3",
+        "file": "src/parser.rs",
+        "language": "rs",
+        "kind": "source",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              53,
+              60
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/src/parser.rs\n+++ b/src/parser.rs\n@@ -38,6 +50,14 @@\n     Ok((line[..eq].trim(), line[eq + 1..].trim()))\n }\n \n+fn unquote(value: &str) -> &str {\n+    if value.len() >= 2 && value.starts_with('\"') && value.ends_with('\"') {\n+        &value[1..value.len() - 1]\n+    } else {\n+        value\n+    }\n+}\n+\n pub fn parse_config(text: &str) -> Result<Config, ParseError> {\n     let mut config = Config::default();\n     for (index, raw) in text.lines().enumerate() {\n",
+        "judgeView": "--- a/src/parser.rs\n+++ b/src/parser.rs\n@@ -38,6 +50,14 @@\n     Ok((line[..eq].trim(), line[eq + 1..].trim()))\n }\n \n+fn unquote(value: &str) -> &str {\n+    if value.len() >= 2 && value.starts_with('\"') && value.ends_with('\"') {\n+        &value[1..value.len() - 1]\n+    } else {\n+        value\n+    }\n+}\n+\n pub fn parse_config(text: &str) -> Result<Config, ParseError> {\n     let mut config = Config::default();\n     for (index, raw) in text.lines().enumerate() {\n",
+        "contentHash": "00df13cf2700c13199f54ed4c41712e83ec7eebd675e7e1a42491c0a3588ab34",
+        "tokenEstimate": 155,
+        "facts": [],
+        "symbol": {
+          "name": "unquote",
+          "kind": "function",
+          "startLine": 53,
+          "endLine": 59
+        },
+        "after": "fn unquote(value: &str) -> &str {\n    if value.len() >= 2 && value.starts_with('\"') && value.ends_with('\"') {\n        &value[1..value.len() - 1]\n    } else {\n        value\n    }\n}"
+      },
+      {
+        "id": "U4",
+        "file": "src/parser.rs",
+        "language": "rs",
+        "kind": "source",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              69,
+              69
+            ],
+            [
+              73,
+              73
+            ]
+          ],
+          "old": [
+            [
+              49,
+              49
+            ],
+            [
+              53,
+              53
+            ]
+          ]
+        },
+        "patch": "--- a/src/parser.rs\n+++ b/src/parser.rs\n@@ -46,11 +66,11 @@\n             return Err(ParseError::LineTooLong(number));\n         }\n         let line = raw.trim();\n-        if line.is_empty() || line.starts_with('#') {\n+        if line.is_empty() || line.starts_with('#') || line.starts_with(';') {\n             continue;\n         }\n         let (key, value) = split_pair(line, number)?;\n-        config.values.insert(key.to_string(), value.to_string());\n+        config.values.insert(key.to_ascii_lowercase(), unquote(value).to_string());\n     }\n     Ok(config)\n }\n",
+        "judgeView": "--- a/src/parser.rs\n+++ b/src/parser.rs\n@@ -46,11 +66,11 @@\n             return Err(ParseError::LineTooLong(number));\n         }\n         let line = raw.trim();\n-        if line.is_empty() || line.starts_with('#') {\n+        if line.is_empty() || line.starts_with('#') || line.starts_with(';') {\n             continue;\n         }\n         let (key, value) = split_pair(line, number)?;\n-        config.values.insert(key.to_string(), value.to_string());\n+        config.values.insert(key.to_ascii_lowercase(), unquote(value).to_string());\n     }\n     Ok(config)\n }\n",
+        "contentHash": "ccfe49220bea613a7fdbb01b6927a58aa03707083e5d528f484d2faf0f1b76b2",
+        "tokenEstimate": 188,
+        "facts": [],
+        "symbol": {
+          "name": "parse_config",
+          "kind": "function",
+          "startLine": 61,
+          "endLine": 76
+        },
+        "before": "pub fn parse_config(text: &str) -> Result<Config, ParseError> {\n    let mut config = Config::default();\n    for (index, raw) in text.lines().enumerate() {\n        let number = index + 1;\n        if raw.len() > MAX_LINE_LEN {\n            return Err(ParseError::LineTooLong(number));\n        }\n        let line = raw.trim();\n        if line.is_empty() || line.starts_with('#') {\n            continue;\n        }\n        let (key, value) = split_pair(line, number)?;\n        config.values.insert(key.to_string(), value.to_string());\n    }\n    Ok(config)\n}",
+        "after": "pub fn parse_config(text: &str) -> Result<Config, ParseError> {\n    let mut config = Config::default();\n    for (index, raw) in text.lines().enumerate() {\n        let number = index + 1;\n        if raw.len() > MAX_LINE_LEN {\n            return Err(ParseError::LineTooLong(number));\n        }\n        let line = raw.trim();\n        if line.is_empty() || line.starts_with('#') || line.starts_with(';') {\n            continue;\n        }\n        let (key, value) = split_pair(line, number)?;\n        config.values.insert(key.to_ascii_lowercase(), unquote(value).to_string());\n    }\n    Ok(config)\n}"
+      },
+      {
+        "id": "U5",
+        "file": "src/parser.rs",
+        "language": "rs",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              109,
+              116
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/src/parser.rs\n+++ b/src/parser.rs\n@@ -86,3 +106,11 @@\n         let long = format!(\"key = {}\", \"x\".repeat(MAX_LINE_LEN));\n         assert_eq!(parse_config(&long).unwrap_err(), ParseError::LineTooLong(1));\n     }\n+\n+    #[test]\n+    fn strips_double_quotes_from_values() {\n+        let cfg = parse_config(\"name = \\\"my app\\\"\\nbare = plain\\n\").unwrap();\n+        assert_eq!(cfg.get(\"name\"), Some(\"my app\"));\n+        assert_eq!(cfg.get(\"bare\"), Some(\"plain\"));\n+    }\n+\n",
+        "judgeView": "--- a/src/parser.rs\n+++ b/src/parser.rs\n@@ -86,3 +106,11 @@\n         let long = format!(\"key = {}\", \"x\".repeat(MAX_LINE_LEN));\n         assert_eq!(parse_config(&long).unwrap_err(), ParseError::LineTooLong(1));\n     }\n+\n+    #[test]\n+    fn strips_double_quotes_from_values() {\n+        let cfg = parse_config(\"name = \\\"my app\\\"\\nbare = plain\\n\").unwrap();\n+        assert_eq!(cfg.get(\"name\"), Some(\"my app\"));\n+        assert_eq!(cfg.get(\"bare\"), Some(\"plain\"));\n+    }\n+\n",
+        "contentHash": "4f0adbf3b9cb4c73097ee9032174739b66bd433ad0c63469966a664b0221ba22",
+        "tokenEstimate": 158,
+        "facts": [],
+        "symbol": {
+          "name": "strips_double_quotes_from_values",
+          "kind": "test",
+          "startLine": 110,
+          "endLine": 115
+        },
+        "after": "    #[test]\n    fn strips_double_quotes_from_values() {\n        let cfg = parse_config(\"name = \\\"my app\\\"\\nbare = plain\\n\").unwrap();\n        assert_eq!(cfg.get(\"name\"), Some(\"my app\"));\n        assert_eq!(cfg.get(\"bare\"), Some(\"plain\"));\n    }",
+        "testTitles": [
+          "strips_double_quotes_from_values"
+        ]
+      },
+      {
+        "id": "U6",
+        "file": "src/parser.rs",
+        "language": "rs",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              117,
+              123
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/src/parser.rs\n+++ b/src/parser.rs\n@@ -88,0 +117,7 @@\n+    #[test]\n+    fn skips_semicolon_comments() {\n+        let cfg = parse_config(\"; legacy comment\\nname = demo\\n\").unwrap();\n+        assert_eq!(cfg.get(\"name\"), Some(\"demo\"));\n+        assert_eq!(cfg.len(), 1);\n+    }\n+\n",
+        "judgeView": "--- a/src/parser.rs\n+++ b/src/parser.rs\n@@ -88,0 +117,7 @@\n+    #[test]\n+    fn skips_semicolon_comments() {\n+        let cfg = parse_config(\"; legacy comment\\nname = demo\\n\").unwrap();\n+        assert_eq!(cfg.get(\"name\"), Some(\"demo\"));\n+        assert_eq!(cfg.len(), 1);\n+    }\n+\n",
+        "contentHash": "88cbfe8ebbd0bbe9111ab85a62bdbe0adb3678b2dc67c0b498833d1555196299",
+        "tokenEstimate": 94,
+        "facts": [],
+        "symbol": {
+          "name": "skips_semicolon_comments",
+          "kind": "test",
+          "startLine": 117,
+          "endLine": 122
+        },
+        "after": "    #[test]\n    fn skips_semicolon_comments() {\n        let cfg = parse_config(\"; legacy comment\\nname = demo\\n\").unwrap();\n        assert_eq!(cfg.get(\"name\"), Some(\"demo\"));\n        assert_eq!(cfg.len(), 1);\n    }",
+        "testTitles": [
+          "skips_semicolon_comments"
+        ]
+      },
+      {
+        "id": "U7",
+        "file": "src/parser.rs",
+        "language": "rs",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              124,
+              130
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/src/parser.rs\n+++ b/src/parser.rs\n@@ -88,0 +124,7 @@\n+    #[test]\n+    fn keys_are_case_insensitive() {\n+        let cfg = parse_config(\"Port = 8080\\n\").unwrap();\n+        assert_eq!(cfg.get(\"port\"), Some(\"8080\"));\n+        assert_eq!(cfg.get(\"PORT\"), Some(\"8080\"));\n+    }\n+\n",
+        "judgeView": "--- a/src/parser.rs\n+++ b/src/parser.rs\n@@ -88,0 +124,7 @@\n+    #[test]\n+    fn keys_are_case_insensitive() {\n+        let cfg = parse_config(\"Port = 8080\\n\").unwrap();\n+        assert_eq!(cfg.get(\"port\"), Some(\"8080\"));\n+        assert_eq!(cfg.get(\"PORT\"), Some(\"8080\"));\n+    }\n+\n",
+        "contentHash": "126e769a762e1ccc6525d674c579450323e09e3ce38c16eb8aff019423199c26",
+        "tokenEstimate": 94,
+        "facts": [],
+        "symbol": {
+          "name": "keys_are_case_insensitive",
+          "kind": "test",
+          "startLine": 124,
+          "endLine": 129
+        },
+        "after": "    #[test]\n    fn keys_are_case_insensitive() {\n        let cfg = parse_config(\"Port = 8080\\n\").unwrap();\n        assert_eq!(cfg.get(\"port\"), Some(\"8080\"));\n        assert_eq!(cfg.get(\"PORT\"), Some(\"8080\"));\n    }",
+        "testTitles": [
+          "keys_are_case_insensitive"
+        ]
+      },
+      {
+        "id": "U8",
+        "file": "src/parser.rs",
+        "language": "rs",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              131,
+              141
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/src/parser.rs\n+++ b/src/parser.rs\n@@ -89,1 +131,12 @@\n+    #[test]\n+    fn reads_boolean_words() {\n+        let cfg = parse_config(\"a = true\\nb = false\\nc = yes\\nd = no\\ne = on\\nf = off\\ng = maybe\\n\").unwrap();\n+        assert_eq!(cfg.get_bool(\"d\"), Some(false));\n+        assert_eq!(cfg.get_bool(\"c\"), Some(true));\n+        assert_eq!(cfg.get_bool(\"a\"), Some(true));\n+        assert_eq!(cfg.get_bool(\"b\"), Some(false));\n+        assert_eq!(cfg.get_bool(\"e\"), Some(true));\n+        assert_eq!(cfg.get_bool(\"f\"), Some(false));\n+        assert_eq!(cfg.get_bool(\"g\"), None);\n+    }\n }\n",
+        "judgeView": "--- a/src/parser.rs\n+++ b/src/parser.rs\n@@ -89,1 +131,12 @@\n+    #[test]\n+    fn reads_boolean_words() {\n+        let cfg = parse_config(\"a = true\\nb = false\\nc = yes\\nd = no\\ne = on\\nf = off\\ng = maybe\\n\").unwrap();\n+        assert_eq!(cfg.get_bool(\"d\"), Some(false));\n+        assert_eq!(cfg.get_bool(\"c\"), Some(true));\n+        assert_eq!(cfg.get_bool(\"a\"), Some(true));\n+        assert_eq!(cfg.get_bool(\"b\"), Some(false));\n+        assert_eq!(cfg.get_bool(\"e\"), Some(true));\n+        assert_eq!(cfg.get_bool(\"f\"), Some(false));\n+        assert_eq!(cfg.get_bool(\"g\"), None);\n+    }\n }\n",
+        "contentHash": "b9e1df01171746bca66df0e49b655f8c4b59461926d638699ae1572d62fc9a05",
+        "tokenEstimate": 196,
+        "facts": [],
+        "symbol": {
+          "name": "reads_boolean_words",
+          "kind": "test",
+          "startLine": 131,
+          "endLine": 141
+        },
+        "after": "    #[test]\n    fn reads_boolean_words() {\n        let cfg = parse_config(\"a = true\\nb = false\\nc = yes\\nd = no\\ne = on\\nf = off\\ng = maybe\\n\").unwrap();\n        assert_eq!(cfg.get_bool(\"d\"), Some(false));\n        assert_eq!(cfg.get_bool(\"c\"), Some(true));\n        assert_eq!(cfg.get_bool(\"a\"), Some(true));\n        assert_eq!(cfg.get_bool(\"b\"), Some(false));\n        assert_eq!(cfg.get_bool(\"e\"), Some(true));\n        assert_eq!(cfg.get_bool(\"f\"), Some(false));\n        assert_eq!(cfg.get_bool(\"g\"), None);\n    }",
+        "testTitles": [
+          "reads_boolean_words"
+        ]
+      }
+    ],
+    "requirementVerdicts": [
+      {
+        "requirementId": "R1",
+        "status": "missing",
+        "confidence": 0.8999999999999999,
+        "calibrated": false,
+        "tested": "as_stated",
+        "evidence": [],
+        "testEvidence": [
+          {
+            "unitId": "U5",
+            "file": "src/parser.rs",
+            "lines": [
+              [
+                109,
+                116
+              ]
+            ],
+            "probability": 0.75
+          }
+        ],
+        "answers": [
+          {
+            "call": "issue.v0",
+            "question": "ambiguous",
+            "type": "noul",
+            "value": 0.3
+          },
+          {
+            "call": "issue.v0",
+            "question": "checkable_in_code",
+            "type": "noul",
+            "value": 0.85
+          },
+          {
+            "call": "forward.v0",
+            "question": "coverage",
+            "type": "score",
+            "value": 0.43000000000000005,
+            "probabilities": {
+              "0": 0.72,
+              "1": 0.18,
+              "2": 0.05,
+              "3": 0.05
+            },
+            "confidence": 0.72
+          },
+          {
+            "call": "forward.v0",
+            "question": "conflict",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "forward.v0",
+            "question": "evidence",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "U1": 0.04999999999999999,
+              "U4": 0.04999999999999999,
+              "U2": 0.04999999999999999,
+              "U3": 0.04999999999999999,
+              "none": 0.8
+            },
+            "confidence": 0.8
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_as_stated",
+            "type": "noul",
+            "value": 0.7
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_differently",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "tests.v0",
+            "question": "test_evidence",
+            "type": "choice",
+            "value": "U5",
+            "probabilities": {
+              "U5": 0.75,
+              "U8": 0.0625,
+              "U6": 0.0625,
+              "U7": 0.0625,
+              "none": 0.0625
+            },
+            "confidence": 0.75
+          },
+          {
+            "call": "preexisting.v0",
+            "question": "already_implemented",
+            "type": "noul",
+            "value": 0.2
+          }
+        ],
+        "reasons": [
+          {
+            "template": "req.missing",
+            "text": "No change implements this (`0.90`)."
+          }
+        ]
+      },
+      {
+        "requirementId": "R2",
+        "status": "missing",
+        "confidence": 0.8999999999999999,
+        "calibrated": false,
+        "tested": "untested",
+        "evidence": [],
+        "testEvidence": [],
+        "answers": [
+          {
+            "call": "issue.v0",
+            "question": "ambiguous",
+            "type": "noul",
+            "value": 0.3
+          },
+          {
+            "call": "issue.v0",
+            "question": "checkable_in_code",
+            "type": "noul",
+            "value": 0.85
+          },
+          {
+            "call": "forward.v0",
+            "question": "coverage",
+            "type": "score",
+            "value": 0.43000000000000005,
+            "probabilities": {
+              "0": 0.72,
+              "1": 0.18,
+              "2": 0.05,
+              "3": 0.05
+            },
+            "confidence": 0.72
+          },
+          {
+            "call": "forward.v0",
+            "question": "conflict",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "forward.v0",
+            "question": "evidence",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "U3": 0.04999999999999999,
+              "U1": 0.04999999999999999,
+              "U2": 0.04999999999999999,
+              "U4": 0.04999999999999999,
+              "none": 0.8
+            },
+            "confidence": 0.8
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_as_stated",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_differently",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "tests.v0",
+            "question": "test_evidence",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "U6": 0.0625,
+              "U5": 0.0625,
+              "U7": 0.0625,
+              "U8": 0.0625,
+              "none": 0.75
+            },
+            "confidence": 0.75
+          },
+          {
+            "call": "preexisting.v0",
+            "question": "already_implemented",
+            "type": "noul",
+            "value": 0.2
+          }
+        ],
+        "reasons": [
+          {
+            "template": "req.missing",
+            "text": "No change implements this (`0.90`)."
+          }
+        ]
+      },
+      {
+        "requirementId": "R3",
+        "status": "missing",
+        "confidence": 0.8999999999999999,
+        "calibrated": false,
+        "tested": "as_stated",
+        "evidence": [],
+        "testEvidence": [
+          {
+            "unitId": "U7",
+            "file": "src/parser.rs",
+            "lines": [
+              [
+                124,
+                130
+              ]
+            ],
+            "probability": 0.75
+          }
+        ],
+        "answers": [
+          {
+            "call": "issue.v0",
+            "question": "ambiguous",
+            "type": "noul",
+            "value": 0.3
+          },
+          {
+            "call": "issue.v0",
+            "question": "checkable_in_code",
+            "type": "noul",
+            "value": 0.85
+          },
+          {
+            "call": "forward.v0",
+            "question": "coverage",
+            "type": "score",
+            "value": 0.43000000000000005,
+            "probabilities": {
+              "0": 0.72,
+              "1": 0.18,
+              "2": 0.05,
+              "3": 0.05
+            },
+            "confidence": 0.72
+          },
+          {
+            "call": "forward.v0",
+            "question": "conflict",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "forward.v0",
+            "question": "evidence",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "U3": 0.04999999999999999,
+              "U4": 0.04999999999999999,
+              "U1": 0.04999999999999999,
+              "U2": 0.04999999999999999,
+              "none": 0.8
+            },
+            "confidence": 0.8
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_as_stated",
+            "type": "noul",
+            "value": 0.7
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_differently",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "tests.v0",
+            "question": "test_evidence",
+            "type": "choice",
+            "value": "U7",
+            "probabilities": {
+              "U7": 0.75,
+              "U5": 0.0625,
+              "U6": 0.0625,
+              "U8": 0.0625,
+              "none": 0.0625
+            },
+            "confidence": 0.75
+          },
+          {
+            "call": "preexisting.v0",
+            "question": "already_implemented",
+            "type": "noul",
+            "value": 0.2
+          }
+        ],
+        "reasons": [
+          {
+            "template": "req.missing",
+            "text": "No change implements this (`0.90`)."
+          }
+        ]
+      },
+      {
+        "requirementId": "R4",
+        "status": "done",
+        "confidence": 0.7,
+        "calibrated": false,
+        "tested": "as_stated",
+        "evidence": [
+          {
+            "unitId": "U2",
+            "file": "src/parser.rs",
+            "lines": [
+              [
+                31,
+                42
+              ]
+            ],
+            "probability": 0.8
+          }
+        ],
+        "testEvidence": [
+          {
+            "unitId": "U8",
+            "file": "src/parser.rs",
+            "lines": [
+              [
+                131,
+                141
+              ]
+            ],
+            "probability": 0.75
+          }
+        ],
+        "answers": [
+          {
+            "call": "issue.v0",
+            "question": "ambiguous",
+            "type": "noul",
+            "value": 0.3
+          },
+          {
+            "call": "issue.v0",
+            "question": "checkable_in_code",
+            "type": "noul",
+            "value": 0.85
+          },
+          {
+            "call": "forward.v0",
+            "question": "coverage",
+            "type": "score",
+            "value": 2.55,
+            "probabilities": {
+              "0": 0.05,
+              "1": 0.05,
+              "2": 0.2,
+              "3": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "forward.v0",
+            "question": "conflict",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "forward.v0",
+            "question": "evidence",
+            "type": "choice",
+            "value": "U2",
+            "probabilities": {
+              "U2": 0.8,
+              "U3": 0.04999999999999999,
+              "U1": 0.04999999999999999,
+              "U4": 0.04999999999999999,
+              "none": 0.04999999999999999
+            },
+            "confidence": 0.8
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_as_stated",
+            "type": "noul",
+            "value": 0.7
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_differently",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "tests.v0",
+            "question": "test_evidence",
+            "type": "choice",
+            "value": "U8",
+            "probabilities": {
+              "U8": 0.75,
+              "U7": 0.0625,
+              "U5": 0.0625,
+              "U6": 0.0625,
+              "none": 0.0625
+            },
+            "confidence": 0.75
+          }
+        ],
+        "reasons": [
+          {
+            "template": "req.done",
+            "text": "Implemented (`0.70`)."
+          }
+        ]
+      }
+    ],
+    "unitVerdicts": [
+      {
+        "unitId": "U1",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      },
+      {
+        "unitId": "U2",
+        "role": "implements",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "R4",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.7,
+              "none": 0.07500000000000001
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.implements",
+            "text": "Implements R4."
+          }
+        ],
+        "servesRequirementId": "R4"
+      },
+      {
+        "unitId": "U3",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      },
+      {
+        "unitId": "U4",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      },
+      {
+        "unitId": "U5",
+        "role": "implements",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "R1",
+            "probabilities": {
+              "R1": 0.7,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.07500000000000001
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.implements",
+            "text": "Implements R1."
+          }
+        ],
+        "servesRequirementId": "R1"
+      },
+      {
+        "unitId": "U6",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      },
+      {
+        "unitId": "U7",
+        "role": "implements",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "R3",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.7,
+              "R4": 0.07500000000000001,
+              "none": 0.07500000000000001
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.implements",
+            "text": "Implements R3."
+          }
+        ],
+        "servesRequirementId": "R3"
+      },
+      {
+        "unitId": "U8",
+        "role": "implements",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "R4",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.7,
+              "none": 0.07500000000000001
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.implements",
+            "text": "Implements R4."
+          }
+        ],
+        "servesRequirementId": "R4"
+      }
+    ],
+    "claims": [
+      {
+        "sentence": "Parse quoted values, semicolon comments, mixed-case keys and boolean words",
+        "claimsDone": 0.2,
+        "claimsDeferred": 0.1
+      },
+      {
+        "sentence": "Adds unquote and applies it to every value in parse_config, so name = \"my app\" reads as my app.",
+        "claimsDone": 0.8,
+        "claimsDeferred": 0.1
+      },
+      {
+        "sentence": "Lines starting with ; are now skipped like # comments.",
+        "requirementId": "R2",
+        "claimsDone": 0.2,
+        "claimsDeferred": 0.1
+      },
+      {
+        "sentence": "Keys are stored lowercased and Config::get lowercases its argument, so lookups ignore case.",
+        "claimsDone": 0.2,
+        "claimsDeferred": 0.1
+      },
+      {
+        "sentence": "New Config::get_bool maps true/false, yes/no and on/off to booleans and returns None otherwise.",
+        "requirementId": "R4",
+        "claimsDone": 0.2,
+        "claimsDeferred": 0.1
+      },
+      {
+        "sentence": "Each change has a unit test in src/parser.rs.",
+        "claimsDone": 0.2,
+        "claimsDeferred": 0.1
+      }
+    ],
+    "findings": [
+      {
+        "id": "F-R1",
+        "type": "requirement",
+        "targetId": "R1",
+        "priority": "P0",
+        "route": "send_back",
+        "confidence": 0.8999999999999999,
+        "locations": [],
+        "reasons": [
+          {
+            "template": "req.missing",
+            "text": "No change implements this (`0.90`)."
+          }
+        ],
+        "contentKey": "req:617a6aae08d7da7ddb9ddf7ecbfe4cab"
+      },
+      {
+        "id": "F-R2",
+        "type": "requirement",
+        "targetId": "R2",
+        "priority": "P0",
+        "route": "send_back",
+        "confidence": 0.8999999999999999,
+        "locations": [],
+        "reasons": [
+          {
+            "template": "req.missing",
+            "text": "No change implements this (`0.90`)."
+          }
+        ],
+        "contentKey": "req:9a908ba9e2a03726dc43221e4d55c967"
+      },
+      {
+        "id": "F-R3",
+        "type": "requirement",
+        "targetId": "R3",
+        "priority": "P0",
+        "route": "send_back",
+        "confidence": 0.8999999999999999,
+        "locations": [],
+        "reasons": [
+          {
+            "template": "req.missing",
+            "text": "No change implements this (`0.90`)."
+          }
+        ],
+        "contentKey": "req:6c997918902df733db1db04e7358f9cb"
+      },
+      {
+        "id": "F-U1",
+        "type": "unit",
+        "targetId": "U1",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.65,
+        "locations": [
+          {
+            "file": "src/parser.rs",
+            "lines": [
+              28,
+              28
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ],
+        "contentKey": "unit:e7891c7fe9684ffa61f4a450993aeb3b"
+      },
+      {
+        "id": "F-U3",
+        "type": "unit",
+        "targetId": "U3",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.65,
+        "locations": [
+          {
+            "file": "src/parser.rs",
+            "lines": [
+              53,
+              60
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ],
+        "contentKey": "unit:00df13cf2700c13199f54ed4c41712e8"
+      },
+      {
+        "id": "F-U4",
+        "type": "unit",
+        "targetId": "U4",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.65,
+        "locations": [
+          {
+            "file": "src/parser.rs",
+            "lines": [
+              69,
+              69
+            ]
+          },
+          {
+            "file": "src/parser.rs",
+            "lines": [
+              73,
+              73
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ],
+        "contentKey": "unit:ccfe49220bea613a7fdbb01b6927a58a"
+      },
+      {
+        "id": "F-U6",
+        "type": "unit",
+        "targetId": "U6",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.65,
+        "locations": [
+          {
+            "file": "src/parser.rs",
+            "lines": [
+              117,
+              123
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ],
+        "contentKey": "unit:88cbfe8ebbd0bbe9111ab85a62bdbe0a"
+      }
+    ],
+    "summary": {
+      "counts": {
+        "missing": 3,
+        "done": 1,
+        "unexplained_behavioral": 4,
+        "implements": 4,
+        "P0": 3,
+        "P1": 4
+      },
+      "mode": "comment_only"
+    },
+    "warnings": [],
+    "usage": {
+      "jevInputTokens": 0,
+      "llmInputTokens": 0,
+      "llmOutputTokens": 0,
+      "costUsd": 0,
+      "latencyMs": 0,
+      "calls": 0
+    }
+  }
+}

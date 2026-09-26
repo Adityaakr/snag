@@ -4,11 +4,12 @@
  * else on the simulated Jev and are marked "not a real measurement". The test split runs only with --gate.
  */
 import { execFileSync } from 'node:child_process';
-import { appendFileSync, existsSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { parseArgs } from 'node:util';
 import { BRAND } from '@remit/core';
 import {
+  appendEvalRun,
   baselineMetrics,
   baselineNote,
   computeMetrics,
@@ -17,6 +18,7 @@ import {
   type ProviderMode,
   type RunInfo,
   runItems,
+  measureStability,
   runSinglePass,
   summaryLine,
   writeReport,
@@ -69,6 +71,11 @@ export async function evalCommand(argv: string[], io: Io, loadItems?: ItemLoader
       'The test split runs only with --gate (BUILD_PROMPT 11.2).',
       `Run \`pnpm eval:test --gate\`, and log the run in .agent/EXPERIMENTS.md.`,
     );
+  if (values.gate && values['no-log'])
+    throw new CliError(
+      '--no-log cannot be used with --gate: every test-split run is logged (BUILD_PROMPT 11.2).',
+      'Drop --no-log.',
+    );
   const limit = values.limit ? Number(values.limit) : undefined;
   if (limit !== undefined && !(Number.isInteger(limit) && limit > 0))
     throw new CliError(`--limit ${values.limit} is not a positive integer.`, 'Pass --limit 20.');
@@ -119,6 +126,14 @@ export async function evalCommand(argv: string[], io: Io, loadItems?: ItemLoader
     maxUsd,
   });
   const metrics = computeMetrics(outcomes);
+  // Stability (11.4): the second extraction must not come from the cassette the first one wrote.
+  const uncached =
+    mode === 'live' ? buildProviders(config, { ...io.env, REMIT_CACHE_MODE: 'live' }).llm : undefined;
+  metrics.stability = await measureStability(
+    outcomes.map((o) => o.item),
+    p?.llm,
+    uncached ?? p?.llm,
+  );
   const baselines: NonNullable<RunInfo['baselines']> = {};
   if (values.baseline) {
     const note = await baselineNote(values.baseline, io.env);
@@ -148,7 +163,7 @@ export async function evalCommand(argv: string[], io: Io, loadItems?: ItemLoader
   const dir = writeReport(join(io.cwd, 'eval', 'reports'), info, metrics, outcomes);
   const line = summaryLine(info, metrics, dir.replace(`${io.cwd}/`, ''));
   const experiments = join(io.cwd, '.agent', 'EXPERIMENTS.md');
-  if (!values['no-log'] && existsSync(experiments)) appendFileSync(experiments, `${line}\n`);
+  if (!values['no-log'] && existsSync(experiments)) appendEvalRun(experiments, line);
   io.out(`${line}\n`);
   if (corpus === 'golden') {
     const failed = outcomes.filter((o) => !o.comparison.passed);

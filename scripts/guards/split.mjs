@@ -1,11 +1,28 @@
 // guard:split (BUILD_PROMPT 11.2): after the M6 freeze, eval test-split files must match eval/corpora/test.sha256.
 // A frozen file that changes or disappears fails; a new test file fails until it is appended with
 // `pnpm eval:freeze --append` (M8 shadow items), which never rewrites an existing entry.
+import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { parseManifest, sha256 } from './protected.mjs';
 
 export const MANIFEST = 'eval/corpora/test.sha256';
+export const FREEZE_TAG = 'm6-done';
+
+/** The manifest as committed at the freeze tag, or null before the tag exists. */
+export function taggedManifest(root, tag = FREEZE_TAG) {
+  try {
+    const text = execFileSync('git', ['show', `${tag}:${MANIFEST}`], {
+      cwd: root,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    });
+    return parseManifest(text);
+  } catch {
+    // No tag (or no manifest at the tag) yet: the freeze is still being set up.
+    return null;
+  }
+}
 
 /** Every file under eval/corpora/<corpus>/test/, as repo-relative paths. */
 export function testFiles(root) {
@@ -26,9 +43,21 @@ export function testFiles(root) {
   return out;
 }
 
-export function checkSplit(root) {
+export function checkSplit(root, tag = FREEZE_TAG) {
   const files = testFiles(root);
   const manifestPath = join(root, MANIFEST);
+  // After the freeze tag the manifest is append-only: deleting it, re-freezing or editing a hash cannot hide a change.
+  const frozen = taggedManifest(root, tag);
+  const tagged = [];
+  if (frozen) {
+    const current = existsSync(manifestPath) ? parseManifest(readFileSync(manifestPath, 'utf8')) : new Map();
+    for (const [file, hash] of frozen)
+      if (current.get(file) !== hash) tagged.push(`${file}: ${MANIFEST} differs from the ${tag} freeze`);
+  }
+  return [...tagged, ...checkManifest(root, files, manifestPath)];
+}
+
+function checkManifest(root, files, manifestPath) {
   if (!existsSync(manifestPath))
     return files.length
       ? [`${MANIFEST} is missing but ${files.length} test-split files exist; run pnpm eval:freeze`]

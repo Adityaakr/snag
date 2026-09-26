@@ -86,17 +86,13 @@ export function targetRows(info: RunInfo, m: Metrics): TargetRow[] {
     add('Recall: flip_condition', '`>= 0.60`', op('flip_condition'), (v) => v >= 0.6);
     add('Recall: weaken_assertion', '`>= 0.90`', op('weaken_assertion'), (v) => v >= 0.9);
     add('Recall: inject_config', '`>= 0.70`', op('inject_config'), (v) => v >= 0.7);
-    add(
-      'False alarms on clean seeds',
-      '`<= 0.15`',
-      m.pr.cleanItems ? m.pr.falseAlarmRate : null,
-      (v) => v <= 0.15,
-    );
+    add('False alarms on clean seeds', '`<= 0.15`', m.pr.cleanSeedFalseAlarmRate, (v) => v <= 0.15);
   }
   if (info.corpus !== 'golden')
     add('P0 precision', '`>= 0.80`', m.p0Precision.p0 ? m.p0Precision.value : null, (v) => v >= 0.8);
+  // 11.8 targets ECE after calibration: the out-of-sample (5-fold isotonic) estimate, never the raw ECE.
   for (const [k, c] of Object.entries(m.calibration))
-    if (c.n >= 100) add(`ECE (raw) ${k}`, '`<= 0.10` after calibration', c.ece, (v) => v <= 0.1);
+    if (c.n >= 100) add(`ECE after calibration (5-fold) ${k}`, '`<= 0.10`', c.eceCalibrated, (v) => v <= 0.1);
   if (info.mode === 'live') {
     add(
       'Latency p50',
@@ -173,6 +169,17 @@ export function renderReportMarkdown(info: RunInfo, m: Metrics, outcomes: readon
       '',
     );
   }
+  if (m.stability) {
+    const st = m.stability;
+    lines.push(
+      '## Extraction stability',
+      '',
+      st.meanJaccard === null
+        ? `Not measured: \`${st.sampled}\` sampled issues, \`${st.skipped}\` could not be extracted.`
+        : `Mean Jaccard over quotes \`${f2(st.meanJaccard)}\` on \`${st.measured}\` of \`${st.sampled}\` sampled issues${st.deterministic ? ' (task-list extraction, deterministic by construction)' : ''}.`,
+      '',
+    );
+  }
   if (Object.keys(m.slices).length) {
     lines.push(
       '## Label slices',
@@ -206,9 +213,16 @@ export function renderReportMarkdown(info: RunInfo, m: Metrics, outcomes: readon
     lines.push('');
   }
   if (Object.keys(m.calibration).length) {
-    lines.push('## Calibration (raw)', '', '| Question key | Samples | ECE | Brier |', '|---|---|---|---|');
+    lines.push(
+      '## Calibration',
+      '',
+      '| Question key | Samples | ECE raw | ECE after isotonic (5-fold) | Brier raw |',
+      '|---|---|---|---|---|',
+    );
     for (const [k, v] of Object.entries(m.calibration).sort())
-      lines.push(`| ${k} | \`${v.n}\` | \`${f2(v.ece)}\` | \`${f2(v.brier)}\` |`);
+      lines.push(
+        `| ${k} | \`${v.n}\` | \`${f2(v.ece)}\` | ${v.eceCalibrated === null ? 'n/a (under 50)' : `\`${f2(v.eceCalibrated)}\``} | \`${f2(v.brier)}\` |`,
+      );
     lines.push('');
   }
   if (info.baselines && Object.keys(info.baselines).length) {
@@ -385,4 +399,19 @@ export function rerenderReport(dir: string): { md: string; html: string } {
   writeFileSync(md, renderReportMarkdown(info, metrics, outcomes));
   writeFileSync(html, renderReportHtml(info, metrics, outcomes));
   return { md, html };
+}
+
+/** Appends a run summary under the "## Eval runs" heading of EXPERIMENTS.md, creating the heading if needed. */
+export function appendEvalRun(path: string, line: string): void {
+  const text = readFileSync(path, 'utf8');
+  const heading = '## Eval runs';
+  const at = text.indexOf(`\n${heading}\n`);
+  if (at === -1) {
+    writeFileSync(path, `${text.trimEnd()}\n\n${heading}\n\n${line}\n`);
+    return;
+  }
+  const next = text.indexOf('\n## ', at + heading.length + 1);
+  const end = next === -1 ? text.length : next;
+  const section = text.slice(0, end).trimEnd();
+  writeFileSync(path, `${section}\n${line}\n${next === -1 ? '' : `\n${text.slice(next + 1)}`}`);
 }

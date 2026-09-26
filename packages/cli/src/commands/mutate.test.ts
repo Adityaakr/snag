@@ -33,3 +33,19 @@ describe('remit mutate', () => {
     await expect(mutateCommand(['--seed', 'nowhere'], memoryIo(dir).sink)).rejects.toThrow(/Seed .* failed/);
   });
 });
+
+describe('remit mutate on a frozen test split', () => {
+  it('leaves frozen test seeds alone', async () => {
+    const { writeFileSync, mkdirSync, readFileSync } = await import('node:fs');
+    const dir = mkdtempSync(join(tmpdir(), 'remit-mutate-'));
+    const seedDir = join(dir, 'seeds', 'ts-job-intervals');
+    cpSync(join(SEEDS_ROOT, 'ts-job-intervals'), seedDir, { recursive: true });
+    const json = JSON.parse(readFileSync(join(seedDir, 'seed.json'), 'utf8'));
+    writeFileSync(join(seedDir, 'seed.json'), JSON.stringify({ ...json, split: 'test' }));
+    mkdirSync(join(dir, 'corpora'), { recursive: true });
+    writeFileSync(join(dir, 'corpora', 'test.sha256'), '');
+    const io = memoryIo(dir);
+    await mutateCommand(['--seed', 'seeds/ts-job-intervals', '--out', 'corpora'], io.sink);
+    expect(io.out).toBe('ts-job-intervals: test split is frozen; left unchanged\n');
+  });
+});

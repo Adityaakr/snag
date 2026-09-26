@@ -68,6 +68,9 @@
         "file": "src/schedule.ts",
         "symbol": "scheduleJob",
         "callee": "parseDuration"
+      },
+      "dropLabels": {
+        "R2": "missing"
       }
     },
     {
@@ -77,6 +80,20 @@
         {
           "file": "src/schedule.ts",
           "symbol": "DurationError"
+        },
+        {
+          "file": "src/schedule.ts",
+          "symbol": "parseDuration",
+          "replace": [
+            {
+              "from": "new DurationError(text)",
+              "to": "new Error('invalid duration')"
+            },
+            {
+              "from": "new DurationError(text)",
+              "to": "new Error('invalid duration')"
+            }
+          ]
         }
       ],
       "tests": [

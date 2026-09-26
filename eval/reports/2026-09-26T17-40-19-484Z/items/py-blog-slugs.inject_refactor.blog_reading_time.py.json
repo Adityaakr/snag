@@ -1,0 +1,1790 @@
+{
+  "id": "py-blog-slugs.inject_refactor.blog_reading_time.py",
+  "labels": {
+    "requirements": {
+      "R1": "done",
+      "R2": "done",
+      "R3": "done",
+      "R4": "done"
+    },
+    "requirementsAccept": {},
+    "units": [
+      {
+        "file": "blog/reading_time.py",
+        "symbol": "reading_minutes",
+        "role": "unexplained_benign",
+        "accept": [
+          "ignored",
+          "supporting"
+        ]
+      }
+    ],
+    "facts": [],
+    "testIntegrity": [],
+    "claimMismatch": [],
+    "pr": "clean"
+  },
+  "comparison": {
+    "requirements": [
+      {
+        "id": "R1",
+        "expected": "done",
+        "actual": "missing",
+        "ok": false
+      },
+      {
+        "id": "R2",
+        "expected": "done",
+        "actual": "missing",
+        "ok": false
+      },
+      {
+        "id": "R3",
+        "expected": "done",
+        "actual": "missing",
+        "ok": false
+      },
+      {
+        "id": "R4",
+        "expected": "done",
+        "actual": "partial",
+        "ok": false
+      }
+    ],
+    "units": [
+      {
+        "file": "blog/reading_time.py",
+        "symbol": "reading_minutes",
+        "expected": "unexplained_benign",
+        "actual": "unexplained_behavioral",
+        "ok": false
+      }
+    ],
+    "facts": [],
+    "testIntegrity": [],
+    "claimMismatch": [],
+    "pr": {
+      "expected": "clean",
+      "predictedProblem": true
+    },
+    "p0p1": 11,
+    "passed": false
+  },
+  "result": {
+    "schemaVersion": "1.0.0",
+    "product": {
+      "name": "Remit",
+      "version": "0.1.0"
+    },
+    "input": {
+      "mode": "local",
+      "baseSha": "base",
+      "headSha": "head-inject_refactor-blog/reading_time.py",
+      "issues": [
+        {
+          "owner": "inkwell",
+          "repo": "blog",
+          "number": 203
+        }
+      ],
+      "linkStrength": "closing"
+    },
+    "versions": {
+      "questionSet": "qs-0.1.0",
+      "extractionPrompt": "xp-0.1.0",
+      "jevModel": "simulated-jev"
+    },
+    "requirements": [
+      {
+        "id": "R1",
+        "issue": {
+          "owner": "inkwell",
+          "repo": "blog",
+          "number": 203
+        },
+        "text": "Accented letters become plain ASCII (an e with an acute accent becomes `e`), and sharp s, the ae ligature and o with a stroke become `ss`, `ae` and `o`",
+        "quote": "Accented letters become plain ASCII (an e with an acute accent becomes `e`), and sharp s, the ae ligature and o with a stroke become `ss`, `ae` and `o`",
+        "source": {
+          "kind": "tasklist"
+        },
+        "kind": "behavior",
+        "explicitness": "explicit",
+        "priority": "must",
+        "examples": [],
+        "checkableInCode": true,
+        "signals": {
+          "ambiguous": 0.3,
+          "checkable": 0.85
+        }
+      },
+      {
+        "id": "R2",
+        "issue": {
+          "owner": "inkwell",
+          "repo": "blog",
+          "number": 203
+        },
+        "text": "Runs of spaces, underscores and punctuation collapse into one hyphen, with no leading or trailing hyphen (`  Hello,  World! ` becomes `hello-world`)",
+        "quote": "Runs of spaces, underscores and punctuation collapse into one hyphen, with no leading or trailing hyphen (`  Hello,  World! ` becomes `hello-world`)",
+        "source": {
+          "kind": "tasklist"
+        },
+        "kind": "behavior",
+        "explicitness": "explicit",
+        "priority": "must",
+        "examples": [],
+        "checkableInCode": true,
+        "signals": {
+          "ambiguous": 0.3,
+          "checkable": 0.85
+        }
+      },
+      {
+        "id": "R3",
+        "issue": {
+          "owner": "inkwell",
+          "repo": "blog",
+          "number": 203
+        },
+        "text": "Slugs longer than 60 characters are cut at the last word boundary within 60 characters, never mid-word (only a single word longer than 60 is cut at 60)",
+        "quote": "Slugs longer than 60 characters are cut at the last word boundary within 60 characters, never mid-word (only a single word longer than 60 is cut at 60)",
+        "source": {
+          "kind": "tasklist"
+        },
+        "kind": "behavior",
+        "explicitness": "explicit",
+        "priority": "must",
+        "examples": [],
+        "checkableInCode": true,
+        "signals": {
+          "ambiguous": 0.3,
+          "checkable": 0.85
+        }
+      },
+      {
+        "id": "R4",
+        "issue": {
+          "owner": "inkwell",
+          "repo": "blog",
+          "number": 203
+        },
+        "text": "`unique_slug` appends `-2`, `-3` and so on when the slug is already taken (`hello` taken gives `hello-2`)",
+        "quote": "`unique_slug` appends `-2`, `-3` and so on when the slug is already taken (`hello` taken gives `hello-2`)",
+        "source": {
+          "kind": "tasklist"
+        },
+        "kind": "behavior",
+        "explicitness": "explicit",
+        "priority": "must",
+        "examples": [],
+        "checkableInCode": true,
+        "signals": {
+          "ambiguous": 0.3,
+          "checkable": 0.85
+        }
+      }
+    ],
+    "units": [
+      {
+        "id": "U1",
+        "file": "blog/reading_time.py",
+        "language": "py",
+        "kind": "source",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              7,
+              8
+            ]
+          ],
+          "old": [
+            [
+              7,
+              8
+            ]
+          ]
+        },
+        "patch": "--- a/blog/reading_time.py\n+++ b/blog/reading_time.py\n@@ -4,6 +4,6 @@\n \n \n def reading_minutes(text):\n-    words = len(text.split())\n-    minutes = round(words / site_settings()[\"words_per_minute\"])\n+    count = len(text.split())\n+    minutes = round(count / site_settings()[\"words_per_minute\"])\n     return max(1, minutes)\n",
+        "judgeView": "--- a/blog/reading_time.py\n+++ b/blog/reading_time.py\n@@ -4,6 +4,6 @@\n \n \n def reading_minutes(text):\n-    words = len(text.split())\n-    minutes = round(words / site_settings()[\"words_per_minute\"])\n+    count = len(text.split())\n+    minutes = round(count / site_settings()[\"words_per_minute\"])\n     return max(1, minutes)\n",
+        "contentHash": "c5ae0bb4e4e06f7a81a72f34b6fa393b75ab45f769512c93459140100a5883df",
+        "tokenEstimate": 108,
+        "facts": [],
+        "symbol": {
+          "name": "reading_minutes",
+          "kind": "function",
+          "startLine": 6,
+          "endLine": 9
+        },
+        "before": "def reading_minutes(text):\n    words = len(text.split())\n    minutes = round(words / site_settings()[\"words_per_minute\"])\n    return max(1, minutes)",
+        "after": "def reading_minutes(text):\n    count = len(text.split())\n    minutes = round(count / site_settings()[\"words_per_minute\"])\n    return max(1, minutes)"
+      },
+      {
+        "id": "U2",
+        "file": "blog/slugs.py",
+        "language": "py",
+        "kind": "source",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              3,
+              4
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/blog/slugs.py\n+++ b/blog/slugs.py\n@@ -1,3 +1,5 @@\n \"\"\"URL slugs for blog posts.\"\"\"\n \n+import re\n+import unicodedata\n \n",
+        "judgeView": "--- a/blog/slugs.py\n+++ b/blog/slugs.py\n@@ -1,3 +1,5 @@\n \n \n+import re\n+import unicodedata\n \n",
+        "contentHash": "007f0fecd4ba5106fe94c8e1003d280c15bc94eb33eea47a83fffbd786fca6f6",
+        "tokenEstimate": 42,
+        "facts": []
+      },
+      {
+        "id": "U3",
+        "file": "blog/slugs.py",
+        "language": "py",
+        "kind": "source",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              6,
+              18
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/blog/slugs.py\n+++ b/blog/slugs.py\n@@ -3,1 +5,14 @@\n \n+\n+def to_ascii(text):\n+    special = {\n+        \"\\u00df\": \"ss\",\n+        \"\\u00e6\": \"ae\",\n+        \"\\u00f8\": \"o\",\n+    }\n+    for letter, plain in special.items():\n+        text = text.replace(letter, plain)\n+    decomposed = unicodedata.normalize(\"NFKD\", text)\n+    return decomposed.encode(\"ascii\", \"ignore\").decode(\"ascii\")\n+\n+\n",
+        "judgeView": "--- a/blog/slugs.py\n+++ b/blog/slugs.py\n@@ -3,1 +5,14 @@\n \n+\n+def to_ascii(text):\n+    special = {\n+        \"\\u00df\": \"ss\",\n+        \"\\u00e6\": \"ae\",\n+        \"\\u00f8\": \"o\",\n+    }\n+    for letter, plain in special.items():\n+        text = text.replace(letter, plain)\n+    decomposed = unicodedata.normalize(\"NFKD\", text)\n+    return decomposed.encode(\"ascii\", \"ignore\").decode(\"ascii\")\n+\n+\n",
+        "contentHash": "342384781453c7df64513f7e89a7e0f6b35a3313d0469616627a7b5183a55add",
+        "tokenEstimate": 130,
+        "facts": [],
+        "symbol": {
+          "name": "to_ascii",
+          "kind": "function",
+          "startLine": 7,
+          "endLine": 16
+        },
+        "after": "def to_ascii(text):\n    special = {\n        \"\\u00df\": \"ss\",\n        \"\\u00e6\": \"ae\",\n        \"\\u00f8\": \"o\",\n    }\n    for letter, plain in special.items():\n        text = text.replace(letter, plain)\n    decomposed = unicodedata.normalize(\"NFKD\", text)\n    return decomposed.encode(\"ascii\", \"ignore\").decode(\"ascii\")"
+      },
+      {
+        "id": "U4",
+        "file": "blog/slugs.py",
+        "language": "py",
+        "kind": "source",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              19,
+              27
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/blog/slugs.py\n+++ b/blog/slugs.py\n@@ -4,1 +19,10 @@\n+def truncate(slug, limit):\n+    if len(slug) <= limit:\n+        return slug\n+    head = slug[: limit + 1]\n+    if \"-\" not in head:\n+        return slug[:limit]\n+    return head.rsplit(\"-\", 1)[0]\n+\n+\n def slugify(title):\n",
+        "judgeView": "--- a/blog/slugs.py\n+++ b/blog/slugs.py\n@@ -4,1 +19,10 @@\n+def truncate(slug, limit):\n+    if len(slug) <= limit:\n+        return slug\n+    head = slug[: limit + 1]\n+    if \"-\" not in head:\n+        return slug[:limit]\n+    return head.rsplit(\"-\", 1)[0]\n+\n+\n def slugify(title):\n",
+        "contentHash": "e96eec865a7fb4625a9d20bee1c6bd2e41d6fe4204d87a19f977dd554fadad30",
+        "tokenEstimate": 93,
+        "facts": [],
+        "symbol": {
+          "name": "truncate",
+          "kind": "function",
+          "startLine": 19,
+          "endLine": 25
+        },
+        "after": "def truncate(slug, limit):\n    if len(slug) <= limit:\n        return slug\n    head = slug[: limit + 1]\n    if \"-\" not in head:\n        return slug[:limit]\n    return head.rsplit(\"-\", 1)[0]"
+      },
+      {
+        "id": "U5",
+        "file": "blog/slugs.py",
+        "language": "py",
+        "kind": "source",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              29,
+              33
+            ]
+          ],
+          "old": [
+            [
+              5,
+              5
+            ]
+          ]
+        },
+        "patch": "--- a/blog/slugs.py\n+++ b/blog/slugs.py\n@@ -4,2 +28,6 @@\n def slugify(title):\n-    return title.strip().lower().replace(\" \", \"-\")\n+    text = to_ascii(title).lower()\n+    text = re.sub(r\"[^a-z0-9]+\", \"-\", text).strip(\"-\")\n+    return truncate(text, 60)\n+\n+\n",
+        "judgeView": "--- a/blog/slugs.py\n+++ b/blog/slugs.py\n@@ -4,2 +28,6 @@\n def slugify(title):\n-    return title.strip().lower().replace(\" \", \"-\")\n+    text = to_ascii(title).lower()\n+    text = re.sub(r\"[^a-z0-9]+\", \"-\", text).strip(\"-\")\n+    return truncate(text, 60)\n+\n+\n",
+        "contentHash": "bf53aafcc7444d7a5f4945376d9277a16162649e0dd14f095d388cfcab3e2b6c",
+        "tokenEstimate": 86,
+        "facts": [],
+        "symbol": {
+          "name": "slugify",
+          "kind": "function",
+          "startLine": 28,
+          "endLine": 31
+        },
+        "before": "def slugify(title):\n    return title.strip().lower().replace(\" \", \"-\")",
+        "after": "def slugify(title):\n    text = to_ascii(title).lower()\n    text = re.sub(r\"[^a-z0-9]+\", \"-\", text).strip(\"-\")\n    return truncate(text, 60)"
+      },
+      {
+        "id": "U6",
+        "file": "blog/slugs.py",
+        "language": "py",
+        "kind": "source",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              34,
+              41
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/blog/slugs.py\n+++ b/blog/slugs.py\n@@ -5,0 +34,8 @@\n+def unique_slug(title, taken):\n+    base = slugify(title)\n+    slug = base\n+    counter = 2\n+    while slug in taken:\n+        slug = f\"{base}-{counter}\"\n+        counter += 1\n+    return slug\n",
+        "judgeView": "--- a/blog/slugs.py\n+++ b/blog/slugs.py\n@@ -5,0 +34,8 @@\n+def unique_slug(title, taken):\n+    base = slugify(title)\n+    slug = base\n+    counter = 2\n+    while slug in taken:\n+        slug = f\"{base}-{counter}\"\n+        counter += 1\n+    return slug\n",
+        "contentHash": "b7293ffe1489bd0ad801a3f9b72266b5c19bd77ddb988f2f3947ee1e2f421e9d",
+        "tokenEstimate": 84,
+        "facts": [
+          {
+            "id": "X1",
+            "kind": "new_symbol_unreferenced",
+            "severity": "warn",
+            "unitId": "U6",
+            "line": 34,
+            "detail": "new function `unique_slug` is not referenced anywhere outside tests"
+          }
+        ],
+        "symbol": {
+          "name": "unique_slug",
+          "kind": "function",
+          "startLine": 34,
+          "endLine": 41
+        },
+        "after": "def unique_slug(title, taken):\n    base = slugify(title)\n    slug = base\n    counter = 2\n    while slug in taken:\n        slug = f\"{base}-{counter}\"\n        counter += 1\n    return slug"
+      },
+      {
+        "id": "U7",
+        "file": "tests/test_slugs.py",
+        "language": "py",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              8,
+              16
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/tests/test_slugs.py\n+++ b/tests/test_slugs.py\n@@ -5,3 +5,12 @@\n \n def test_lowercases_and_hyphenates():\n     assert slugs.slugify(\"Hello World\") == \"hello-world\"\n+\n+\n+def test_transliterates_accents():\n+    assert slugs.slugify(\"Caf\\u00e9 Cr\\u00e8me\") == \"cafe-creme\"\n+    assert slugs.to_ascii(\"Stra\\u00dfe\") == \"Strasse\"\n+    assert slugs.to_ascii(\"\\u00e6ble\") == \"aeble\"\n+    assert slugs.to_ascii(\"\\u00f8l\") == \"ol\"\n+\n+\n",
+        "judgeView": "--- a/tests/test_slugs.py\n+++ b/tests/test_slugs.py\n@@ -5,3 +5,12 @@\n \n def test_lowercases_and_hyphenates():\n     assert slugs.slugify(\"Hello World\") == \"hello-world\"\n+\n+\n+def test_transliterates_accents():\n+    assert slugs.slugify(\"Caf\\u00e9 Cr\\u00e8me\") == \"cafe-creme\"\n+    assert slugs.to_ascii(\"Stra\\u00dfe\") == \"Strasse\"\n+    assert slugs.to_ascii(\"\\u00e6ble\") == \"aeble\"\n+    assert slugs.to_ascii(\"\\u00f8l\") == \"ol\"\n+\n+\n",
+        "contentHash": "762db3e6b7f14e7fd486f11bcc17d622df2d4dde8ee9297ea1ae0ebe14d5bf10",
+        "tokenEstimate": 144,
+        "facts": [],
+        "symbol": {
+          "name": "test_transliterates_accents",
+          "kind": "test",
+          "startLine": 10,
+          "endLine": 14
+        },
+        "after": "def test_transliterates_accents():\n    assert slugs.slugify(\"Caf\\u00e9 Cr\\u00e8me\") == \"cafe-creme\"\n    assert slugs.to_ascii(\"Stra\\u00dfe\") == \"Strasse\"\n    assert slugs.to_ascii(\"\\u00e6ble\") == \"aeble\"\n    assert slugs.to_ascii(\"\\u00f8l\") == \"ol\"",
+        "testTitles": [
+          "test_transliterates_accents"
+        ]
+      },
+      {
+        "id": "U8",
+        "file": "tests/test_slugs.py",
+        "language": "py",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              17,
+              22
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/tests/test_slugs.py\n+++ b/tests/test_slugs.py\n@@ -7,0 +17,6 @@\n+def test_collapses_separators():\n+    assert slugs.slugify(\"  Hello,  World! \") == \"hello-world\"\n+    assert slugs.slugify(\"snake_case__title\") == \"snake-case-title\"\n+    assert slugs.slugify(\"--draft--\") == \"draft\"\n+\n+\n",
+        "judgeView": "--- a/tests/test_slugs.py\n+++ b/tests/test_slugs.py\n@@ -7,0 +17,6 @@\n+def test_collapses_separators():\n+    assert slugs.slugify(\"  Hello,  World! \") == \"hello-world\"\n+    assert slugs.slugify(\"snake_case__title\") == \"snake-case-title\"\n+    assert slugs.slugify(\"--draft--\") == \"draft\"\n+\n+\n",
+        "contentHash": "7af8f6bc65ebe639d43a55ea9cdbc133349234188fc1ac0580fbefc69dfd9fb6",
+        "tokenEstimate": 97,
+        "facts": [],
+        "symbol": {
+          "name": "test_collapses_separators",
+          "kind": "test",
+          "startLine": 17,
+          "endLine": 20
+        },
+        "after": "def test_collapses_separators():\n    assert slugs.slugify(\"  Hello,  World! \") == \"hello-world\"\n    assert slugs.slugify(\"snake_case__title\") == \"snake-case-title\"\n    assert slugs.slugify(\"--draft--\") == \"draft\"",
+        "testTitles": [
+          "test_collapses_separators"
+        ]
+      },
+      {
+        "id": "U9",
+        "file": "tests/test_slugs.py",
+        "language": "py",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              23,
+              26
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/tests/test_slugs.py\n+++ b/tests/test_slugs.py\n@@ -7,0 +23,4 @@\n+def test_truncates_on_word_boundary():\n+    assert slugs.slugify(\"word \" * 30) == \"-\".join([\"word\"] * 12)\n+\n+\n",
+        "judgeView": "--- a/tests/test_slugs.py\n+++ b/tests/test_slugs.py\n@@ -7,0 +23,4 @@\n+def test_truncates_on_word_boundary():\n+    assert slugs.slugify(\"word \" * 30) == \"-\".join([\"word\"] * 12)\n+\n+\n",
+        "contentHash": "636a35ac45cead5fd3ccfb69a245b9b1d1b437a38cc3421cabae3f930c203968",
+        "tokenEstimate": 60,
+        "facts": [],
+        "symbol": {
+          "name": "test_truncates_on_word_boundary",
+          "kind": "test",
+          "startLine": 23,
+          "endLine": 24
+        },
+        "after": "def test_truncates_on_word_boundary():\n    assert slugs.slugify(\"word \" * 30) == \"-\".join([\"word\"] * 12)",
+        "testTitles": [
+          "test_truncates_on_word_boundary"
+        ]
+      },
+      {
+        "id": "U10",
+        "file": "tests/test_slugs.py",
+        "language": "py",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              27,
+              30
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/tests/test_slugs.py\n+++ b/tests/test_slugs.py\n@@ -7,0 +27,4 @@\n+def test_short_slugs_are_not_truncated():\n+    assert slugs.slugify(\"word \" * 5) == \"word-word-word-word-word\"\n+\n+\n",
+        "judgeView": "--- a/tests/test_slugs.py\n+++ b/tests/test_slugs.py\n@@ -7,0 +27,4 @@\n+def test_short_slugs_are_not_truncated():\n+    assert slugs.slugify(\"word \" * 5) == \"word-word-word-word-word\"\n+\n+\n",
+        "contentHash": "17f29c4f814ccc8a0ed751f5c09c40881d7c2516562983581c51e5f14315c061",
+        "tokenEstimate": 62,
+        "facts": [],
+        "symbol": {
+          "name": "test_short_slugs_are_not_truncated",
+          "kind": "test",
+          "startLine": 27,
+          "endLine": 28
+        },
+        "after": "def test_short_slugs_are_not_truncated():\n    assert slugs.slugify(\"word \" * 5) == \"word-word-word-word-word\"",
+        "testTitles": [
+          "test_short_slugs_are_not_truncated"
+        ]
+      },
+      {
+        "id": "U11",
+        "file": "tests/test_slugs.py",
+        "language": "py",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              31,
+              34
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/tests/test_slugs.py\n+++ b/tests/test_slugs.py\n@@ -7,0 +31,4 @@\n+def test_unique_slug_keeps_free_slug():\n+    assert slugs.unique_slug(\"Hello\", set()) == \"hello\"\n+\n+\n",
+        "judgeView": "--- a/tests/test_slugs.py\n+++ b/tests/test_slugs.py\n@@ -7,0 +31,4 @@\n+def test_unique_slug_keeps_free_slug():\n+    assert slugs.unique_slug(\"Hello\", set()) == \"hello\"\n+\n+\n",
+        "contentHash": "7f1da0dfc19740550f0cdb2580bf83d15e5120d4a284f7ff9add39e01c45c195",
+        "tokenEstimate": 57,
+        "facts": [],
+        "symbol": {
+          "name": "test_unique_slug_keeps_free_slug",
+          "kind": "test",
+          "startLine": 31,
+          "endLine": 32
+        },
+        "after": "def test_unique_slug_keeps_free_slug():\n    assert slugs.unique_slug(\"Hello\", set()) == \"hello\"",
+        "testTitles": [
+          "test_unique_slug_keeps_free_slug"
+        ]
+      },
+      {
+        "id": "U12",
+        "file": "tests/test_slugs.py",
+        "language": "py",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              35,
+              37
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/tests/test_slugs.py\n+++ b/tests/test_slugs.py\n@@ -7,0 +35,3 @@\n+def test_unique_slug_appends_counter():\n+    assert slugs.unique_slug(\"Hello\", {\"hello\"}) == \"hello-2\"\n+    assert slugs.unique_slug(\"Hello\", {\"hello\", \"hello-2\", \"hello-3\"}) == \"hello-4\"\n",
+        "judgeView": "--- a/tests/test_slugs.py\n+++ b/tests/test_slugs.py\n@@ -7,0 +35,3 @@\n+def test_unique_slug_appends_counter():\n+    assert slugs.unique_slug(\"Hello\", {\"hello\"}) == \"hello-2\"\n+    assert slugs.unique_slug(\"Hello\", {\"hello\", \"hello-2\", \"hello-3\"}) == \"hello-4\"\n",
+        "contentHash": "90df283984e87fb994174b33222924cb5f6404d64a6402dec5df0f3597a253ad",
+        "tokenEstimate": 86,
+        "facts": [],
+        "symbol": {
+          "name": "test_unique_slug_appends_counter",
+          "kind": "test",
+          "startLine": 35,
+          "endLine": 37
+        },
+        "after": "def test_unique_slug_appends_counter():\n    assert slugs.unique_slug(\"Hello\", {\"hello\"}) == \"hello-2\"\n    assert slugs.unique_slug(\"Hello\", {\"hello\", \"hello-2\", \"hello-3\"}) == \"hello-4\"",
+        "testTitles": [
+          "test_unique_slug_appends_counter"
+        ]
+      }
+    ],
+    "requirementVerdicts": [
+      {
+        "requirementId": "R1",
+        "status": "missing",
+        "confidence": 0.8999999999999999,
+        "calibrated": false,
+        "tested": "untested",
+        "evidence": [],
+        "testEvidence": [],
+        "answers": [
+          {
+            "call": "issue.v0",
+            "question": "ambiguous",
+            "type": "noul",
+            "value": 0.3
+          },
+          {
+            "call": "issue.v0",
+            "question": "checkable_in_code",
+            "type": "noul",
+            "value": 0.85
+          },
+          {
+            "call": "forward.v0",
+            "question": "coverage",
+            "type": "score",
+            "value": 0.43000000000000005,
+            "probabilities": {
+              "0": 0.72,
+              "1": 0.18,
+              "2": 0.05,
+              "3": 0.05
+            },
+            "confidence": 0.72
+          },
+          {
+            "call": "forward.v0",
+            "question": "conflict",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "forward.v0",
+            "question": "evidence",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "U3": 0.033333333333333326,
+              "U5": 0.033333333333333326,
+              "U1": 0.033333333333333326,
+              "U2": 0.033333333333333326,
+              "U4": 0.033333333333333326,
+              "U6": 0.033333333333333326,
+              "none": 0.8
+            },
+            "confidence": 0.8
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_as_stated",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_differently",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "tests.v0",
+            "question": "test_evidence",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "U7": 0.041666666666666664,
+              "U8": 0.041666666666666664,
+              "U9": 0.041666666666666664,
+              "U10": 0.041666666666666664,
+              "U11": 0.041666666666666664,
+              "U12": 0.041666666666666664,
+              "none": 0.75
+            },
+            "confidence": 0.75
+          },
+          {
+            "call": "preexisting.v0",
+            "question": "already_implemented",
+            "type": "noul",
+            "value": 0.2
+          }
+        ],
+        "reasons": [
+          {
+            "template": "req.missing",
+            "text": "No change implements this (`0.90`)."
+          }
+        ]
+      },
+      {
+        "requirementId": "R2",
+        "status": "missing",
+        "confidence": 0.8999999999999999,
+        "calibrated": false,
+        "tested": "untested",
+        "evidence": [],
+        "testEvidence": [],
+        "answers": [
+          {
+            "call": "issue.v0",
+            "question": "ambiguous",
+            "type": "noul",
+            "value": 0.3
+          },
+          {
+            "call": "issue.v0",
+            "question": "checkable_in_code",
+            "type": "noul",
+            "value": 0.85
+          },
+          {
+            "call": "forward.v0",
+            "question": "coverage",
+            "type": "score",
+            "value": 0.43000000000000005,
+            "probabilities": {
+              "0": 0.72,
+              "1": 0.18,
+              "2": 0.05,
+              "3": 0.05
+            },
+            "confidence": 0.72
+          },
+          {
+            "call": "forward.v0",
+            "question": "conflict",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "forward.v0",
+            "question": "evidence",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "U1": 0.033333333333333326,
+              "U2": 0.033333333333333326,
+              "U3": 0.033333333333333326,
+              "U4": 0.033333333333333326,
+              "U5": 0.033333333333333326,
+              "U6": 0.033333333333333326,
+              "none": 0.8
+            },
+            "confidence": 0.8
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_as_stated",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_differently",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "tests.v0",
+            "question": "test_evidence",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "U8": 0.041666666666666664,
+              "U7": 0.041666666666666664,
+              "U12": 0.041666666666666664,
+              "U11": 0.041666666666666664,
+              "U9": 0.041666666666666664,
+              "U10": 0.041666666666666664,
+              "none": 0.75
+            },
+            "confidence": 0.75
+          },
+          {
+            "call": "preexisting.v0",
+            "question": "already_implemented",
+            "type": "noul",
+            "value": 0.2
+          }
+        ],
+        "reasons": [
+          {
+            "template": "req.missing",
+            "text": "No change implements this (`0.90`)."
+          }
+        ]
+      },
+      {
+        "requirementId": "R3",
+        "status": "missing",
+        "confidence": 0.8999999999999999,
+        "calibrated": false,
+        "tested": "untested",
+        "evidence": [],
+        "testEvidence": [],
+        "answers": [
+          {
+            "call": "issue.v0",
+            "question": "ambiguous",
+            "type": "noul",
+            "value": 0.3
+          },
+          {
+            "call": "issue.v0",
+            "question": "checkable_in_code",
+            "type": "noul",
+            "value": 0.85
+          },
+          {
+            "call": "forward.v0",
+            "question": "coverage",
+            "type": "score",
+            "value": 0.43000000000000005,
+            "probabilities": {
+              "0": 0.72,
+              "1": 0.18,
+              "2": 0.05,
+              "3": 0.05
+            },
+            "confidence": 0.72
+          },
+          {
+            "call": "forward.v0",
+            "question": "conflict",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "forward.v0",
+            "question": "evidence",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "U5": 0.033333333333333326,
+              "U2": 0.033333333333333326,
+              "U4": 0.033333333333333326,
+              "U6": 0.033333333333333326,
+              "U3": 0.033333333333333326,
+              "U1": 0.033333333333333326,
+              "none": 0.8
+            },
+            "confidence": 0.8
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_as_stated",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_differently",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "tests.v0",
+            "question": "test_evidence",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "U9": 0.041666666666666664,
+              "U10": 0.041666666666666664,
+              "U7": 0.041666666666666664,
+              "U8": 0.041666666666666664,
+              "U12": 0.041666666666666664,
+              "U11": 0.041666666666666664,
+              "none": 0.75
+            },
+            "confidence": 0.75
+          },
+          {
+            "call": "preexisting.v0",
+            "question": "already_implemented",
+            "type": "noul",
+            "value": 0.2
+          }
+        ],
+        "reasons": [
+          {
+            "template": "req.missing",
+            "text": "No change implements this (`0.90`)."
+          }
+        ]
+      },
+      {
+        "requirementId": "R4",
+        "status": "partial",
+        "confidence": 0.5,
+        "calibrated": false,
+        "tested": "as_stated",
+        "evidence": [
+          {
+            "unitId": "U6",
+            "file": "blog/slugs.py",
+            "lines": [
+              [
+                34,
+                41
+              ]
+            ],
+            "probability": 0.8
+          }
+        ],
+        "testEvidence": [
+          {
+            "unitId": "U12",
+            "file": "tests/test_slugs.py",
+            "lines": [
+              [
+                35,
+                37
+              ]
+            ],
+            "probability": 0.75
+          }
+        ],
+        "answers": [
+          {
+            "call": "issue.v0",
+            "question": "ambiguous",
+            "type": "noul",
+            "value": 0.3
+          },
+          {
+            "call": "issue.v0",
+            "question": "checkable_in_code",
+            "type": "noul",
+            "value": 0.85
+          },
+          {
+            "call": "forward.v0",
+            "question": "coverage",
+            "type": "score",
+            "value": 1.8,
+            "probabilities": {
+              "0": 0.1,
+              "1": 0.2,
+              "2": 0.5,
+              "3": 0.2
+            },
+            "confidence": 0.5
+          },
+          {
+            "call": "forward.v0",
+            "question": "conflict",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "forward.v0",
+            "question": "evidence",
+            "type": "choice",
+            "value": "U6",
+            "probabilities": {
+              "U6": 0.8,
+              "U4": 0.033333333333333326,
+              "U1": 0.033333333333333326,
+              "U2": 0.033333333333333326,
+              "U3": 0.033333333333333326,
+              "U5": 0.033333333333333326,
+              "none": 0.033333333333333326
+            },
+            "confidence": 0.8
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_as_stated",
+            "type": "noul",
+            "value": 0.7
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_differently",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "tests.v0",
+            "question": "test_evidence",
+            "type": "choice",
+            "value": "U12",
+            "probabilities": {
+              "U12": 0.75,
+              "U11": 0.041666666666666664,
+              "U8": 0.041666666666666664,
+              "U7": 0.041666666666666664,
+              "U9": 0.041666666666666664,
+              "U10": 0.041666666666666664,
+              "none": 0.041666666666666664
+            },
+            "confidence": 0.75
+          }
+        ],
+        "reasons": [
+          {
+            "template": "req.partial",
+            "text": "Mostly implemented, but at least one stated case, value or condition is not (`0.50`)."
+          },
+          {
+            "template": "req.claim_mismatch",
+            "text": "The PR description says this is done: \"Adds unique_slug, which appends a counter starting at 2 until the slug is free\"."
+          }
+        ],
+        "claimMismatch": {
+          "sentence": "Adds unique_slug, which appends a counter starting at 2 until the slug is free."
+        }
+      }
+    ],
+    "unitVerdicts": [
+      {
+        "unitId": "U1",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      },
+      {
+        "unitId": "U2",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      },
+      {
+        "unitId": "U3",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      },
+      {
+        "unitId": "U4",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      },
+      {
+        "unitId": "U5",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      },
+      {
+        "unitId": "U6",
+        "role": "implements",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "R4",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.7,
+              "none": 0.07500000000000001
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.implements",
+            "text": "Implements R4."
+          }
+        ],
+        "servesRequirementId": "R4"
+      },
+      {
+        "unitId": "U7",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      },
+      {
+        "unitId": "U8",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      },
+      {
+        "unitId": "U9",
+        "role": "implements",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "R3",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.7,
+              "R4": 0.07500000000000001,
+              "none": 0.07500000000000001
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.implements",
+            "text": "Implements R3."
+          }
+        ],
+        "servesRequirementId": "R3"
+      },
+      {
+        "unitId": "U10",
+        "role": "implements",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "R3",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.7,
+              "R4": 0.07500000000000001,
+              "none": 0.07500000000000001
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.implements",
+            "text": "Implements R3."
+          }
+        ],
+        "servesRequirementId": "R3"
+      },
+      {
+        "unitId": "U11",
+        "role": "implements",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "R4",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.7,
+              "none": 0.07500000000000001
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.implements",
+            "text": "Implements R4."
+          }
+        ],
+        "servesRequirementId": "R4"
+      },
+      {
+        "unitId": "U12",
+        "role": "implements",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "R4",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.7,
+              "none": 0.07500000000000001
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.implements",
+            "text": "Implements R4."
+          }
+        ],
+        "servesRequirementId": "R4"
+      }
+    ],
+    "claims": [
+      {
+        "sentence": "Transliterate, collapse and truncate post slugs",
+        "claimsDone": 0.2,
+        "claimsDeferred": 0.1
+      },
+      {
+        "sentence": "slugify now transliterates accented letters to ASCII (with explicit mappings for sharp s, ae and o with a stroke), collapses any run of non-alphanumeric characters into a single hyphen, trims hyphens at both ends, and cuts slugs over 60 characters at a word boundary.",
+        "claimsDone": 0.2,
+        "claimsDeferred": 0.1
+      },
+      {
+        "sentence": "Adds unique_slug, which appends a counter starting at 2 until the slug is free.",
+        "requirementId": "R4",
+        "claimsDone": 0.8,
+        "claimsDeferred": 0.1
+      },
+      {
+        "sentence": "Tests cover each case.",
+        "claimsDone": 0.2,
+        "claimsDeferred": 0.1
+      }
+    ],
+    "findings": [
+      {
+        "id": "F-R1",
+        "type": "requirement",
+        "targetId": "R1",
+        "priority": "P0",
+        "route": "send_back",
+        "confidence": 0.8999999999999999,
+        "locations": [],
+        "reasons": [
+          {
+            "template": "req.missing",
+            "text": "No change implements this (`0.90`)."
+          }
+        ],
+        "contentKey": "req:58b1dda60b8048ac394f01d03b9e7f00"
+      },
+      {
+        "id": "F-R2",
+        "type": "requirement",
+        "targetId": "R2",
+        "priority": "P0",
+        "route": "send_back",
+        "confidence": 0.8999999999999999,
+        "locations": [],
+        "reasons": [
+          {
+            "template": "req.missing",
+            "text": "No change implements this (`0.90`)."
+          }
+        ],
+        "contentKey": "req:9bd736d07a37b19eed2c6ac435eeb3f5"
+      },
+      {
+        "id": "F-R3",
+        "type": "requirement",
+        "targetId": "R3",
+        "priority": "P0",
+        "route": "send_back",
+        "confidence": 0.8999999999999999,
+        "locations": [],
+        "reasons": [
+          {
+            "template": "req.missing",
+            "text": "No change implements this (`0.90`)."
+          }
+        ],
+        "contentKey": "req:57d9ec59ab99f1764d839277ed52a3e3"
+      },
+      {
+        "id": "F-R4",
+        "type": "requirement",
+        "targetId": "R4",
+        "priority": "P0",
+        "route": "send_back",
+        "confidence": 0.5,
+        "locations": [
+          {
+            "file": "blog/slugs.py",
+            "lines": [
+              34,
+              41
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "req.partial",
+            "text": "Mostly implemented, but at least one stated case, value or condition is not (`0.50`)."
+          },
+          {
+            "template": "req.claim_mismatch",
+            "text": "The PR description says this is done: \"Adds unique_slug, which appends a counter starting at 2 until the slug is free\"."
+          }
+        ],
+        "contentKey": "req:715e95ca0c43e731abc7ab64738a557b"
+      },
+      {
+        "id": "F-U1",
+        "type": "unit",
+        "targetId": "U1",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.65,
+        "locations": [
+          {
+            "file": "blog/reading_time.py",
+            "lines": [
+              7,
+              8
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ],
+        "contentKey": "unit:c5ae0bb4e4e06f7a81a72f34b6fa393b"
+      },
+      {
+        "id": "F-U2",
+        "type": "unit",
+        "targetId": "U2",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.65,
+        "locations": [
+          {
+            "file": "blog/slugs.py",
+            "lines": [
+              3,
+              4
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ],
+        "contentKey": "unit:007f0fecd4ba5106fe94c8e1003d280c"
+      },
+      {
+        "id": "F-U3",
+        "type": "unit",
+        "targetId": "U3",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.65,
+        "locations": [
+          {
+            "file": "blog/slugs.py",
+            "lines": [
+              6,
+              18
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ],
+        "contentKey": "unit:342384781453c7df64513f7e89a7e0f6"
+      },
+      {
+        "id": "F-U4",
+        "type": "unit",
+        "targetId": "U4",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.65,
+        "locations": [
+          {
+            "file": "blog/slugs.py",
+            "lines": [
+              19,
+              27
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ],
+        "contentKey": "unit:e96eec865a7fb4625a9d20bee1c6bd2e"
+      },
+      {
+        "id": "F-U5",
+        "type": "unit",
+        "targetId": "U5",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.65,
+        "locations": [
+          {
+            "file": "blog/slugs.py",
+            "lines": [
+              29,
+              33
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ],
+        "contentKey": "unit:bf53aafcc7444d7a5f4945376d9277a1"
+      },
+      {
+        "id": "F-U7",
+        "type": "unit",
+        "targetId": "U7",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.65,
+        "locations": [
+          {
+            "file": "tests/test_slugs.py",
+            "lines": [
+              8,
+              16
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ],
+        "contentKey": "unit:762db3e6b7f14e7fd486f11bcc17d622"
+      },
+      {
+        "id": "F-U8",
+        "type": "unit",
+        "targetId": "U8",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.65,
+        "locations": [
+          {
+            "file": "tests/test_slugs.py",
+            "lines": [
+              17,
+              22
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ],
+        "contentKey": "unit:7af8f6bc65ebe639d43a55ea9cdbc133"
+      },
+      {
+        "id": "F-X1",
+        "type": "fact",
+        "targetId": "X1",
+        "priority": "P2",
+        "route": "reviewer_attention",
+        "confidence": 1,
+        "locations": [
+          {
+            "file": "blog/slugs.py",
+            "lines": [
+              34,
+              34
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "fact",
+            "text": "new function `unique_slug` is not referenced anywhere outside tests"
+          }
+        ],
+        "contentKey": "unit:b7293ffe1489bd0ad801a3f9b72266b5:new_symbol_unreferenced:b3b2bd260faf286c8230e395051fae37"
+      }
+    ],
+    "summary": {
+      "counts": {
+        "missing": 3,
+        "partial": 1,
+        "unexplained_behavioral": 7,
+        "implements": 5,
+        "P0": 4,
+        "P1": 7,
+        "P2": 1
+      },
+      "mode": "comment_only"
+    },
+    "warnings": [],
+    "usage": {
+      "jevInputTokens": 0,
+      "llmInputTokens": 0,
+      "llmOutputTokens": 0,
+      "costUsd": 0,
+      "latencyMs": 0,
+      "calls": 0
+    }
+  }
+}
