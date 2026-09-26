@@ -19,7 +19,7 @@ Status: DONE
 
 ## M1 Contracts and diff analysis (offline)
 Status: IN_PROGRESS
-- [ ] zod contracts for section 5, with JSON Schema export to `schemas/` and round-trip tests.
+- [x] zod contracts for section 5, with JSON Schema export to `schemas/` and round-trip tests. (evidence: packages/core/src/contracts/contracts.test.ts, `pnpm schemas`, 5aaf30c)
 - [ ] A unified diff parser covering every edge case in 6.3 step 1, with fast-check property tests (parse, render, parse again).
 - [ ] Local git ingest: `base.head` and `base..head` diffs, and file contents at both SHAs.
 - [ ] tree-sitter WASM loading for TS, TSX, JS, Python and Rust, plus symbol mapping, unit grouping, the size cap and stable IDs.
