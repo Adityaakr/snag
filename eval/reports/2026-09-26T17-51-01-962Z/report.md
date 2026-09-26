@@ -2,7 +2,7 @@
 
 > Not a real measurement. Answers came from the simulated Jev stand-in (no keys), so these numbers check the plumbing, not model quality.
 
-Run `2026-09-26T17:40:19.484Z`, git `f3c635e72750`, provider mode `simulated`, Jev `simulated-jev`, questions `qs-0.1.0`, extraction `xp-0.1.0`.
+Run `2026-09-26T17:51:01.962Z`, git `0b52ee44d7d6`, provider mode `simulated`, Jev `simulated-jev`, questions `qs-0.1.0`, extraction `xp-0.1.0`.
 
 ## Summary
 
@@ -17,7 +17,7 @@ Run `2026-09-26T17:40:19.484Z`, git `f3c635e72750`, provider mode `simulated`, J
 | False alarms (P0 or P1 per clean PR) | `9.94` over `18` clean items |
 | P0 precision | `0.20` (`59` of `299`) |
 | AUROC, problem vs clean (strongest P0/P1 finding) | `0.54` |
-| Latency p50 / p95 | `17 ms` / `25 ms` |
+| Latency p50 / p95 | `16 ms` / `21 ms` |
 | Cost total / p50 per review | `$0.0000` / `$0.0000` |
 | Tokens: Jev in / LLM in / LLM out | `0` / `0` / `0` |
 | Truncation rate | `0.0%` |
@@ -56,7 +56,7 @@ Run `2026-09-26T17:40:19.484Z`, git `f3c635e72750`, provider mode `simulated`, J
 
 ## Extraction stability
 
-Mean Jaccard over quotes `1.00` on `7` of `7` sampled issues (task-list extraction, deterministic by construction).
+Mean Jaccard over quotes `1.00` on `1` of `1` sampled issues (task-list extraction, deterministic by construction).
 
 ## Requirement confusion matrix
 

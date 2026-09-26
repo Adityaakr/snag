@@ -39,6 +39,7 @@ No keys: task-list extraction (9 requirements, one per M6 item; item 2 quotes on
 
 ## Eval runs
 
-- 2026-09-26T17:22:28.991Z mutations/dev simulated (not a real measurement): 0/128 items correct, requirement F1 0.30, PR recall 0.85, false alarms 9.94, P0 precision 0.19, cost $0.0000. Report: eval/reports/2026-09-26T17-22-28-991Z (local only, superseded by 2026-09-26T17-40-19-484Z)
-- 2026-09-26T17:40:19.484Z mutations/dev simulated (not a real measurement): 0/128 items correct, requirement F1 0.30, PR recall 0.85, false alarms 9.94, P0 precision 0.20, cost $0.0000. Report: eval/reports/2026-09-26T17-40-19-484Z
-- 2026-09-26T17:50:10.881Z mutations/dev simulated (not a real measurement): 0/128 items correct, requirement F1 0.30, PR recall 0.85, false alarms 9.94, P0 precision 0.20, cost $0.0000. Report: eval/reports/2026-09-26T17-50-10-881Z
+- 2026-09-26T17:22:28.991Z mutations/dev simulated (not a real measurement): 0/128 items correct, requirement F1 0.30, PR recall 0.85, false alarms 9.94, P0 precision 0.19, cost $0.0000. Report: eval/reports/2026-09-26T17-22-28-991Z (local only, superseded)
+- 2026-09-26T17:40:19.484Z mutations/dev simulated (not a real measurement): 0/128 items correct, requirement F1 0.30, PR recall 0.85, false alarms 9.94, P0 precision 0.20, cost $0.0000. Report: eval/reports/2026-09-26T17-40-19-484Z (superseded by 2026-09-26T17-51-01-962Z)
+- 2026-09-26T17:50:10.881Z mutations/dev simulated (not a real measurement): 0/128 items correct, requirement F1 0.30, PR recall 0.85, false alarms 9.94, P0 precision 0.20, cost $0.0000. Report: eval/reports/2026-09-26T17-50-10-881Z (local only, superseded)
+- 2026-09-26T17:51:01.962Z mutations/dev simulated (not a real measurement): 0/128 items correct, requirement F1 0.30, PR recall 0.85, false alarms 9.94, P0 precision 0.20, cost $0.0000. Report: eval/reports/2026-09-26T17-51-01-962Z
