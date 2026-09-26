@@ -87,7 +87,7 @@ export async function calibrateCommand(argv: string[], io: Io, loadDev?: DevLoad
   io.out(
     `${mode === 'simulated' ? 'Simulated (not a real measurement). ' : ''}Calibrated on ${items.length} dev items: ${keys}.\n` +
       `Tuning cost ${result.tuning.before.cost} -> ${result.tuning.after.cost} over ${result.tuning.evaluations} runs; thresholds ${JSON.stringify(result.tuning.thresholds)}.\n` +
-      `P0 precision ${result.p0PrecisionBefore.toFixed(2)} -> ${result.calibration.p0Precision.toFixed(2)}. Wrote ${path}\n`,
+      `P0 precision ${result.p0Before.p0 ? `${result.p0Before.value.toFixed(2)} (${result.p0Before.correct}/${result.p0Before.p0})` : 'n/a (no P0)'} -> ${result.calibration.labeledFindings ? `${result.calibration.p0Precision.toFixed(2)} (${result.calibration.labeledFindings} P0)` : 'n/a (no P0)'}. ECE after is 5-fold cross-validated. Wrote ${path}\n`,
   );
   return EXIT.ok;
 }

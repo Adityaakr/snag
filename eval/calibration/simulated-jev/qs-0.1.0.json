@@ -1,0 +1,165 @@
+{
+  "id": "cal-2026-09-26-f51bf4125bf8",
+  "jevModel": "simulated-jev",
+  "questionSet": "qs-0.1.0",
+  "labeledFindings": 0,
+  "p0Precision": 0,
+  "maps": {
+    "forward.coverage.level3": [
+      {
+        "x": 0.05,
+        "y": 0.8007246376811594
+      },
+      {
+        "x": 0.2,
+        "y": 0.8693181818181818
+      },
+      {
+        "x": 0.7,
+        "y": 0.9166666666666666
+      }
+    ],
+    "forward.coverage.level2": [
+      {
+        "x": 0.05,
+        "y": 0.030952380952380953
+      },
+      {
+        "x": 0.5,
+        "y": 0.030952380952380953
+      },
+      {
+        "x": 0.5,
+        "y": 0.05434782608695652
+      }
+    ],
+    "forward.coverage.missing": [
+      {
+        "x": 0.1,
+        "y": 0
+      },
+      {
+        "x": 0.30000000000000004,
+        "y": 0.045454545454545456
+      },
+      {
+        "x": 0.8999999999999999,
+        "y": 0.13405797101449277
+      }
+    ],
+    "forward.conflict": [
+      {
+        "x": 0.1,
+        "y": 0.0390625
+      }
+    ],
+    "tests.asserts_differently": [
+      {
+        "x": 0.1,
+        "y": 0.0390625
+      }
+    ],
+    "reverse.loosens_test": [
+      {
+        "x": 0.1,
+        "y": 0.00697350069735007
+      },
+      {
+        "x": 0.8,
+        "y": 0.00697350069735007
+      },
+      {
+        "x": 0.8,
+        "y": 0.5714285714285714
+      }
+    ],
+    "reverse.behavior_change": [
+      {
+        "x": 0.65,
+        "y": 0.0891089108910891
+      }
+    ]
+  },
+  "thresholds": {
+    "full": 0.9
+  },
+  "fits": {
+    "forward.coverage.level3": {
+      "n": 512,
+      "identity": false,
+      "eceBefore": 0.66015625,
+      "eceAfter": 0.084013555223047,
+      "brierBefore": 0.5973242187499972,
+      "brierAfter": 0.14222396987969543
+    },
+    "forward.coverage.level2": {
+      "n": 512,
+      "identity": false,
+      "eceBefore": 0.1871093750000001,
+      "eceAfter": 0.011442445242788122,
+      "brierBefore": 0.11189453124999917,
+      "brierAfter": 0.03406021584551101
+    },
+    "forward.coverage.missing": {
+      "n": 512,
+      "identity": false,
+      "eceBefore": 0.5121093750000018,
+      "eceAfter": 0.07087137612951812,
+      "brierBefore": 0.41718750000000143,
+      "brierAfter": 0.0848438641142129
+    },
+    "forward.conflict": {
+      "n": 512,
+      "identity": false,
+      "eceBefore": 0.060937500000000894,
+      "eceAfter": 2.795336633762413e-7,
+      "brierBefore": 0.04125000000000018,
+      "brierAfter": 0.03753664075382633
+    },
+    "tests.asserts_differently": {
+      "n": 512,
+      "identity": false,
+      "eceBefore": 0.060937500000000894,
+      "eceAfter": 2.795336633762413e-7,
+      "brierBefore": 0.04125000000000018,
+      "brierAfter": 0.03753664075382633
+    },
+    "reverse.loosens_test": {
+      "n": 724,
+      "identity": false,
+      "eceBefore": 0.10013812154696165,
+      "eceAfter": 0.005486494782074781,
+      "brierBefore": 0.023522099447513715,
+      "brierAfter": 0.012306512601459511
+    },
+    "reverse.behavior_change": {
+      "n": 101,
+      "identity": false,
+      "eceBefore": 0.5608910891089102,
+      "eceAfter": 0.00001986309742074699,
+      "brierBefore": 0.3957673267326729,
+      "brierAfter": 0.08138027706663
+    }
+  },
+  "tuning": {
+    "before": {
+      "cost": 237,
+      "falseP0": 13,
+      "missed": 99,
+      "falseP1": 0
+    },
+    "after": {
+      "cost": 220,
+      "falseP0": 0,
+      "missed": 110,
+      "falseP1": 0
+    },
+    "steps": [
+      {
+        "key": "full",
+        "value": 0.9,
+        "cost": 220
+      }
+    ]
+  }
+}

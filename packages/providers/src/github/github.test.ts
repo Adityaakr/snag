@@ -2,6 +2,8 @@ import { parseDiff } from '@remit/analysis';
 import { HttpResponse, http } from 'msw';
 import { setupServer } from 'msw/node';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { MemoryStore } from '../cache/store.js';
+import { CachedGitHub } from './cached.js';
 import { pullDiff } from './diff.js';
 import { FakeGitHub } from './fake.js';
 import { closingKeywordRefs, linkIssues, plainRefs } from './links.js';
@@ -342,5 +344,91 @@ describe('LiveGitHub (msw)', () => {
     expect(classifyGitHubError({ status: 404 })).toMatchObject({ kind: 'bad_request' });
     expect(classifyGitHubError({ status: 502 })).toMatchObject({ kind: 'server', retryable: true });
     expect(classifyGitHubError(new Error('ECONNRESET'))).toMatchObject({ kind: 'connection' });
+  });
+});
+
+describe('LiveGitHub mining (msw)', () => {
+  it('searches merged pulls in a date range and reads the license', async () => {
+    let q = '';
+    server.use(
+      http.get(`${API}/search/issues`, ({ request }) => {
+        q = new URL(request.url).searchParams.get('q') ?? '';
+        return HttpResponse.json({
+          total_count: 2,
+          items: [
+            { number: 9, title: 'Add export', pull_request: { merged_at: '2025-02-01T00:00:00Z' } },
+            { number: 8, title: 'Closed unmerged', pull_request: { merged_at: null } },
+          ],
+        });
+      }),
+      http.get(`${API}/repos/acme/app/license`, () => HttpResponse.json({ license: { spdx_id: 'MIT' } })),
+      http.get(`${API}/repos/acme/none/license`, () => new HttpResponse(null, { status: 404 })),
+    );
+    const pulls = await gh().searchMergedPulls('acme', 'app', { from: '2024-01-01', to: '2026-12-31' }, 5);
+    expect(q).toBe('repo:acme/app is:pr is:merged merged:2024-01-01..2026-12-31');
+    expect(pulls).toEqual([
+      {
+        ref: { owner: 'acme', repo: 'app', number: 9 },
+        title: 'Add export',
+        mergedAt: '2025-02-01T00:00:00Z',
+      },
+    ]);
+    expect(await gh().getLicense('acme', 'app')).toBe('MIT');
+    expect(await gh().getLicense('acme', 'none')).toBeNull();
+  });
+});
+
+describe('CachedGitHub', () => {
+  it('records every read, replays offline, and fails clearly on a replay miss', async () => {
+    const fake = new FakeGitHub()
+      .addPull(
+        { owner: 'a', repo: 'r', number: 1 },
+        {
+          title: 'T',
+          body: 'Fixes #2',
+          author: 'dev',
+          draft: false,
+          baseSha: 'b',
+          headSha: 'h',
+          files: [
+            {
+              filename: 'x.ts',
+              status: 'modified',
+              additions: 1,
+              deletions: 0,
+              patch: '@@ -1 +1 @@\n-a\n+b',
+            },
+          ],
+          closing: [{ owner: 'a', repo: 'r', number: 2 }],
+        },
+      )
+      .addIssue({ owner: 'a', repo: 'r', number: 2 }, { title: 'I', body: 'body', author: 'dev' })
+      .addContent('a', 'r', 'h', 'x.ts', 'b\n')
+      .setMerged({ owner: 'a', repo: 'r', number: 1 }, '2025-01-01T00:00:00Z');
+    fake.licenses.set('a/r', 'Apache-2.0');
+    const store = new MemoryStore();
+    const rec = new CachedGitHub(fake, store, 'record');
+    const ref = { owner: 'a', repo: 'r', number: 1 };
+    const all = async (g: CachedGitHub) => [
+      await g.getPull(ref),
+      await g.listPullFiles(ref),
+      await g.getContent('a', 'r', 'x.ts', 'h'),
+      await g.getIssue({ owner: 'a', repo: 'r', number: 2 }),
+      await g.closingIssues(ref),
+      await g.searchMergedPulls('a', 'r', { from: '2024-01-01', to: '2026-12-31' }, 10),
+      await g.getLicense('a', 'r'),
+    ];
+    const recorded = await all(rec);
+    const replay = new CachedGitHub(null, store, 'replay');
+    expect(await all(replay)).toEqual(recorded);
+    expect(replay.hits).toBe(7);
+    await expect(replay.getLicense('a', 'other')).rejects.toMatchObject({ kind: 'cache_miss' });
+    const either = new CachedGitHub(fake, store, 'replay_or_live');
+    expect(await either.getLicense('a', 'other')).toBeNull();
+    expect(either.misses).toBe(1);
+    await expect(new CachedGitHub(null, store, 'live').getLicense('a', 'r')).rejects.toMatchObject({
+      kind: 'config',
+    });
+    expect(await fake.searchMergedPulls('a', 'r', { from: '2026-01-01', to: '2026-12-31' }, 10)).toEqual([]);
   });
 });

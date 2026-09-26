@@ -148,6 +148,7 @@ export function brier(pairs: readonly Pair[]): number {
 export interface KeyFit {
   n: number;
   identity: boolean;
+  /** eceAfter and brierAfter are out of sample (5-fold cross-validation). */
   eceBefore: number;
   eceAfter: number;
   brierBefore: number;
@@ -165,7 +166,8 @@ export function fitCalibration(
   for (const [key, ps] of Object.entries(pairs)) {
     const identity = ps.length < MIN_SAMPLES;
     const points = identity ? [] : isotonic(ps);
-    const mapped = identity ? ps : ps.map(({ p, y }) => ({ p: applyPoints(points, p), y }));
+    // "After" is measured out of sample: 5-fold cross-validation, each fold mapped by a fit on the other four.
+    const mapped = identity ? ps : crossValidated(ps, 5);
     if (!identity) maps[key] = points;
     fits[key] = {
       n: ps.length,
@@ -178,6 +180,21 @@ export function fitCalibration(
     };
   }
   return { calibration: { ...meta, maps }, fits };
+}
+
+/** Every pair mapped by an isotonic fit on the other folds (fold = index mod k, after sorting by p then y). */
+export function crossValidated(pairs: readonly Pair[], k: number): Pair[] {
+  const sorted = [...pairs].sort((a, b) => a.p - b.p || a.y - b.y);
+  const out: Pair[] = [];
+  for (let fold = 0; fold < k; fold++) {
+    const train = sorted.filter((_, i) => i % k !== fold);
+    const points = isotonic(train);
+    for (let i = fold; i < sorted.length; i += k) {
+      const pair = sorted[i] as Pair;
+      out.push({ p: applyPoints(points, pair.p), y: pair.y });
+    }
+  }
+  return out;
 }
 
 function applyPoints(points: readonly CalibrationPoint[], p: number): number {

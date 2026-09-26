@@ -1,0 +1,697 @@
+{
+  "info": {
+    "corpus": "mutations",
+    "split": "dev",
+    "mode": "simulated",
+    "gitSha": "f51bf4125bf849d921690080b1727ec75f496132",
+    "startedAt": "2026-09-26T17:22:28.991Z",
+    "jevModel": "simulated-jev",
+    "stoppedForBudget": false,
+    "baselines": {}
+  },
+  "metrics": {
+    "items": 128,
+    "passed": 0,
+    "requirement": {
+      "tp": 79,
+      "fp": 373,
+      "fn": 4,
+      "precision": 0.1747787610619469,
+      "recall": 0.9518072289156626,
+      "f1": 0.29532710280373825,
+      "abstentionRate": 0,
+      "confusion": {
+        "missing": {
+          "missing": 37,
+          "partial": 8
+        },
+        "done": {
+          "missing": 220,
+          "partial": 153,
+          "done": 55,
+          "deferred": 1
+        },
+        "contradicted": {
+          "missing": 8,
+          "partial": 9,
+          "done": 3
+        },
+        "partial": {
+          "missing": 10,
+          "partial": 7,
+          "done": 1
+        }
+      },
+      "labeled": 512
+    },
+    "unitBehavioral": {
+      "tp": 8,
+      "fp": 749,
+      "fn": 1,
+      "precision": 0.010568031704095112,
+      "recall": 0.8888888888888888,
+      "f1": 0.020887728459530026
+    },
+    "testIntegrity": {
+      "tp": 9,
+      "fp": 9,
+      "fn": 0,
+      "precision": 0.5,
+      "recall": 1,
+      "f1": 0.6666666666666666
+    },
+    "pr": {
+      "tp": 94,
+      "fp": 14,
+      "fn": 16,
+      "precision": 0.8703703703703703,
+      "recall": 0.8545454545454545,
+      "f1": 0.8623853211009175,
+      "falseAlarmRate": 9.944444444444445,
+      "cleanItems": 18,
+      "problemItems": 110,
+      "auroc": 0.5388888888888889
+    },
+    "p0Precision": {
+      "value": 0.19063545150501673,
+      "p0": 299,
+      "correct": 57
+    },
+    "operators": {
+      "claim_all_done": {
+        "items": 9,
+        "passed": 0,
+        "detected": 9,
+        "recall": 1
+      },
+      "drop_requirement": {
+        "items": 36,
+        "passed": 0,
+        "detected": 36,
+        "recall": 1
+      },
+      "flip_condition": {
+        "items": 20,
+        "passed": 0,
+        "detected": 17,
+        "recall": 0.85
+      },
+      "inject_config": {
+        "items": 9,
+        "passed": 0,
+        "detected": 8,
+        "recall": 0.8888888888888888
+      },
+      "inject_refactor": {
+        "items": 9,
+        "passed": 0,
+        "detected": 0,
+        "recall": 0
+      },
+      "partial_requirement": {
+        "items": 9,
+        "passed": 0,
+        "detected": 8,
+        "recall": 0.8888888888888888
+      },
+      "skip_test": {
+        "items": 9,
+        "passed": 0,
+        "detected": 9,
+        "recall": 1
+      },
+      "unwire": {
+        "items": 9,
+        "passed": 0,
+        "detected": 9,
+        "recall": 1
+      },
+      "weaken_assertion": {
+        "items": 9,
+        "passed": 0,
+        "detected": 9,
+        "recall": 1
+      }
+    },
+    "feedback": {
+      "agree": 0,
+      "disagree": 0,
+      "weakAgree": 0,
+      "weakDisagree": 0,
+      "agreement": null
+    },
+    "slices": {},
+    "calibration": {
+      "forward.coverage.level3": {
+        "n": 512,
+        "ece": 0.66015625,
+        "brier": 0.5973242187499972,
+        "bins": [
+          {
+            "lo": 0,
+            "hi": 0.1,
+            "n": 276,
+            "meanP": 0.050000000000000225,
+            "accuracy": 0.8007246376811594
+          },
+          {
+            "lo": 0.1,
+            "hi": 0.2,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          },
+          {
+            "lo": 0.2,
+            "hi": 0.3,
+            "n": 176,
+            "meanP": 0.19999999999999976,
+            "accuracy": 0.8693181818181818
+          },
+          {
+            "lo": 0.3,
+            "hi": 0.4,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          },
+          {
+            "lo": 0.4,
+            "hi": 0.5,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          },
+          {
+            "lo": 0.5,
+            "hi": 0.6,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          },
+          {
+            "lo": 0.6,
+            "hi": 0.7,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          },
+          {
+            "lo": 0.7,
+            "hi": 0.8,
+            "n": 60,
+            "meanP": 0.7000000000000004,
+            "accuracy": 0.9166666666666666
+          },
+          {
+            "lo": 0.8,
+            "hi": 0.9,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          },
+          {
+            "lo": 0.9,
+            "hi": 1,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          }
+        ]
+      },
+      "forward.coverage.level2": {
+        "n": 512,
+        "ece": 0.1871093750000001,
+        "brier": 0.11189453124999917,
+        "bins": [
+          {
+            "lo": 0,
+            "hi": 0.1,
+            "n": 276,
+            "meanP": 0.050000000000000225,
+            "accuracy": 0.036231884057971016
+          },
+          {
+            "lo": 0.1,
+            "hi": 0.2,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          },
+          {
+            "lo": 0.2,
+            "hi": 0.3,
+            "n": 60,
+            "meanP": 0.19999999999999982,
+            "accuracy": 0.03333333333333333
+          },
+          {
+            "lo": 0.3,
+            "hi": 0.4,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          },
+          {
+            "lo": 0.4,
+            "hi": 0.5,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          },
+          {
+            "lo": 0.5,
+            "hi": 0.6,
+            "n": 176,
+            "meanP": 0.5,
+            "accuracy": 0.03409090909090909
+          },
+          {
+            "lo": 0.6,
+            "hi": 0.7,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          },
+          {
+            "lo": 0.7,
+            "hi": 0.8,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          },
+          {
+            "lo": 0.8,
+            "hi": 0.9,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          },
+          {
+            "lo": 0.9,
+            "hi": 1,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          }
+        ]
+      },
+      "forward.coverage.missing": {
+        "n": 512,
+        "ece": 0.5121093750000018,
+        "brier": 0.41718750000000143,
+        "bins": [
+          {
+            "lo": 0,
+            "hi": 0.1,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          },
+          {
+            "lo": 0.1,
+            "hi": 0.2,
+            "n": 60,
+            "meanP": 0.09999999999999991,
+            "accuracy": 0
+          },
+          {
+            "lo": 0.2,
+            "hi": 0.3,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          },
+          {
+            "lo": 0.3,
+            "hi": 0.4,
+            "n": 176,
+            "meanP": 0.29999999999999916,
+            "accuracy": 0.045454545454545456
+          },
+          {
+            "lo": 0.4,
+            "hi": 0.5,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          },
+          {
+            "lo": 0.5,
+            "hi": 0.6,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          },
+          {
+            "lo": 0.6,
+            "hi": 0.7,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          },
+          {
+            "lo": 0.7,
+            "hi": 0.8,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          },
+          {
+            "lo": 0.8,
+            "hi": 0.9,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          },
+          {
+            "lo": 0.9,
+            "hi": 1,
+            "n": 276,
+            "meanP": 0.9000000000000039,
+            "accuracy": 0.13405797101449277
+          }
+        ]
+      },
+      "forward.conflict": {
+        "n": 512,
+        "ece": 0.060937500000000894,
+        "brier": 0.04125000000000018,
+        "bins": [
+          {
+            "lo": 0,
+            "hi": 0.1,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          },
+          {
+            "lo": 0.1,
+            "hi": 0.2,
+            "n": 512,
+            "meanP": 0.1000000000000009,
+            "accuracy": 0.0390625
+          },
+          {
+            "lo": 0.2,
+            "hi": 0.3,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          },
+          {
+            "lo": 0.3,
+            "hi": 0.4,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          },
+          {
+            "lo": 0.4,
+            "hi": 0.5,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          },
+          {
+            "lo": 0.5,
+            "hi": 0.6,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          },
+          {
+            "lo": 0.6,
+            "hi": 0.7,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          },
+          {
+            "lo": 0.7,
+            "hi": 0.8,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          },
+          {
+            "lo": 0.8,
+            "hi": 0.9,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          },
+          {
+            "lo": 0.9,
+            "hi": 1,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          }
+        ]
+      },
+      "tests.asserts_differently": {
+        "n": 512,
+        "ece": 0.060937500000000894,
+        "brier": 0.04125000000000018,
+        "bins": [
+          {
+            "lo": 0,
+            "hi": 0.1,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          },
+          {
+            "lo": 0.1,
+            "hi": 0.2,
+            "n": 512,
+            "meanP": 0.1000000000000009,
+            "accuracy": 0.0390625
+          },
+          {
+            "lo": 0.2,
+            "hi": 0.3,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          },
+          {
+            "lo": 0.3,
+            "hi": 0.4,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          },
+          {
+            "lo": 0.4,
+            "hi": 0.5,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          },
+          {
+            "lo": 0.5,
+            "hi": 0.6,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          },
+          {
+            "lo": 0.6,
+            "hi": 0.7,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          },
+          {
+            "lo": 0.7,
+            "hi": 0.8,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          },
+          {
+            "lo": 0.8,
+            "hi": 0.9,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          },
+          {
+            "lo": 0.9,
+            "hi": 1,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          }
+        ]
+      },
+      "reverse.loosens_test": {
+        "n": 724,
+        "ece": 0.10013812154696165,
+        "brier": 0.023522099447513715,
+        "bins": [
+          {
+            "lo": 0,
+            "hi": 0.1,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          },
+          {
+            "lo": 0.1,
+            "hi": 0.2,
+            "n": 711,
+            "meanP": 0.10000000000000034,
+            "accuracy": 0.007032348804500703
+          },
+          {
+            "lo": 0.2,
+            "hi": 0.3,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          },
+          {
+            "lo": 0.3,
+            "hi": 0.4,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          },
+          {
+            "lo": 0.4,
+            "hi": 0.5,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          },
+          {
+            "lo": 0.5,
+            "hi": 0.6,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          },
+          {
+            "lo": 0.6,
+            "hi": 0.7,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          },
+          {
+            "lo": 0.7,
+            "hi": 0.8,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          },
+          {
+            "lo": 0.8,
+            "hi": 0.9,
+            "n": 13,
+            "meanP": 0.8,
+            "accuracy": 0.3076923076923077
+          },
+          {
+            "lo": 0.9,
+            "hi": 1,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          }
+        ]
+      },
+      "reverse.behavior_change": {
+        "n": 101,
+        "ece": 0.5608910891089102,
+        "brier": 0.3957673267326729,
+        "bins": [
+          {
+            "lo": 0,
+            "hi": 0.1,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          },
+          {
+            "lo": 0.1,
+            "hi": 0.2,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          },
+          {
+            "lo": 0.2,
+            "hi": 0.3,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          },
+          {
+            "lo": 0.3,
+            "hi": 0.4,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          },
+          {
+            "lo": 0.4,
+            "hi": 0.5,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          },
+          {
+            "lo": 0.5,
+            "hi": 0.6,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          },
+          {
+            "lo": 0.6,
+            "hi": 0.7,
+            "n": 101,
+            "meanP": 0.6499999999999992,
+            "accuracy": 0.0891089108910891
+          },
+          {
+            "lo": 0.7,
+            "hi": 0.8,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          },
+          {
+            "lo": 0.8,
+            "hi": 0.9,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          },
+          {
+            "lo": 0.9,
+            "hi": 1,
+            "n": 0,
+            "meanP": 0,
+            "accuracy": 0
+          }
+        ]
+      }
+    },
+    "ops": {
+      "latencyP50": 16,
+      "latencyP95": 20,
+      "costP50": 0,
+      "costTotal": 0,
+      "jevInputTokens": 0,
+      "llmInputTokens": 0,
+      "llmOutputTokens": 0,
+      "truncationRate": 0
+    }
+  },
+  "realMeasurement": false
+}

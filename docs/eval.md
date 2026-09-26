@@ -30,7 +30,9 @@ Every item has the same shape (`packages/eval/src/item.ts`): the review input, o
 | `unwire(Rk)` | replace the call of Rk's new function with its first argument | Rk `partial` (or `missing`); `new_symbol_unreferenced`; PR `problem` |
 | `claim_all_done` | `drop_requirement(R1)` plus a PR body claiming every requirement is done | R1 `missing` with a P0 claim mismatch |
 
-Regenerate items with `pnpm remit mutate --seed <path>` (one seed) or `pnpm remit mutate --all`.
+Regenerate items with `pnpm remit mutate --seed <path>` (one seed) or `pnpm remit mutate --all`. Test-split items are frozen, so regenerating them must produce identical bytes.
+
+**Real seeds** (G.2) need `GITHUB_TOKEN`. `pnpm eval:mine-seeds` scans the repositories in `MINING_REPOS` (license re-checked: MIT, Apache-2.0, BSD, ISC, 0BSD or Unlicense only). It keeps merged PRs (2024 to 2026) that close exactly one issue stating at least 2 explicit requirements and change 20 to 800 lines, not dominated by generated files or lockfiles. Candidates land in `eval/corpora/mutations/real/<id>/` with the issue, PR text, changed file versions, license and SHAs; every GitHub response is cached in `eval/cassettes/github/`. A candidate becomes a seed once someone writes its `seed.json`.
 
 ## Corpus A: SWE-bench Verified and PatchDiff
 
