@@ -24,8 +24,10 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.14",
+    "@remit/analysis": "workspace:*",
     "@types/node": "22.20.4",
     "@vitest/coverage-v8": "5.0.2",
+    "diff": "9.0.0",
     "fast-check": "4.10.2",
     "tsx": "4.23.15",
     "typescript": "5.9.3",
