@@ -15,6 +15,8 @@
     "test": "vitest run --root ../.. --project providers"
   },
   "dependencies": {
-    "@remit/core": "workspace:*"
+    "@remit/core": "workspace:*",
+    "@typesafe-ai/sdk": "0.6.0",
+    "zod": "4.6.5"
   }
 }
