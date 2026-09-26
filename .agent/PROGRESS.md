@@ -66,7 +66,7 @@ Status: IN_PROGRESS
 - [x] Renderers, with snapshot tests: terminal; sticky comment (Appendix E.1); check-run summary and annotations model; rework comment (E.2); issue checklist (E.3); JSON; SARIF 2.1.0. (evidence: core/src/render/render.test.ts + pipeline/src/golden/render.test.ts (fixtures/snapshots/*), b7269f2)
 - [x] Sanitization tests for mentions, links, HTML, images, bidi characters and very long quotes. (evidence: core/src/render/render.test.ts sanitize block (mentions, links, HTML, images, bidi, long quotes), b7269f2)
 - [x] The exit codes in 10.1, each tested. (evidence: review.test.ts "exit codes (10.1)" block: 0, 1, 2, 3, 4, b210f7e)
-- [ ] A README quickstart that goes from a fresh clone to `remit demo` in 5 minutes, then to a real PR review with keys. Verify it in a clean clone.
+- [x] A README quickstart that goes from a fresh clone to `remit demo` in 5 minutes, then to a real PR review with keys. Verify it in a clean clone. (evidence: clean clone in scratchpad: `pnpm install --frozen-lockfile` + `pnpm demo` exit 0 in 3 s (warm store), 5ee0540)
 - [ ] The first dogfood run is recorded (3.5).
 
 ## M6 Evaluation system
