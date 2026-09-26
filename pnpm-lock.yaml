@@ -11,12 +11,18 @@ importers:
       '@biomejs/biome':
         specifier: 2.5.14
         version: 2.5.14
+      '@remit/analysis':
+        specifier: workspace:*
+        version: link:packages/analysis
       '@types/node':
         specifier: 22.20.4
         version: 22.20.4
       '@vitest/coverage-v8':
         specifier: 5.0.2
         version: 5.0.2(vitest@5.0.2)
+      diff:
+        specifier: 9.0.0
+        version: 9.0.0
       fast-check:
         specifier: 4.10.2
         version: 4.10.2
