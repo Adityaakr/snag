@@ -23,7 +23,7 @@ import {
   type LlmProvider,
   type PullRef,
 } from '@remit/providers';
-import { upsertSticky, withMarker } from './comments.js';
+import { upsertSticky, withMarker } from '@remit/providers';
 import type { Metrics } from './metrics.js';
 import { CONFIG_PATH, loadRepoConfig } from './repo-config.js';
 import type { ReviewRecord, Store } from './store.js';

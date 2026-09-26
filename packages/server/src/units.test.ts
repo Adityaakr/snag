@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { FakeGitHub } from '@remit/providers';
 import { describe, expect, it } from 'vitest';
-import { markerOf, upsertSticky, withMarker } from './comments.js';
+import { markerOf, upsertSticky, withMarker } from '@remit/providers';
 import { MemoryDeliveryStore } from './deliveries.js';
 import { fakeRepo } from './fake-harness.js';
 import { MemoryQueue } from './queue.js';

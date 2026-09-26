@@ -6,7 +6,7 @@
 import { type IssueRef, renderChecklist } from '@remit/core';
 import { extractRequirements } from '@remit/pipeline';
 import type { GitHubWriter } from '@remit/providers';
-import { upsertSticky, withMarker } from './comments.js';
+import { upsertSticky, withMarker } from '@remit/providers';
 import type { JobDeps } from './review-job.js';
 import { loadRepoConfig } from './repo-config.js';
 
