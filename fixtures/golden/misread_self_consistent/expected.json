@@ -2,11 +2,15 @@
   "requirements": {
     "R1": "contradicted"
   },
+  "tested": {
+    "R1": "differently"
+  },
   "findings": [
     {
       "id": "F-R1",
       "priority": "P0",
-      "route": "send_back"
+      "route": "send_back",
+      "reason": "do something different"
     }
   ],
   "claimMismatch": [

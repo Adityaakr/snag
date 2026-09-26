@@ -89,10 +89,29 @@ describe('golden scenarios (Appendix D)', () => {
         result.requirementVerdicts.find((v) => v.requirementId === id)?.reasons.map((r) => r.text),
       ).toContain(text);
     for (const w of e.warnings ?? []) expect(result.warnings.join('\n')).toContain(w);
+    for (const [id, tested] of Object.entries(e.tested ?? {}))
+      expect(result.requirementVerdicts.find((v) => v.requirementId === id)?.tested).toBe(tested);
+    for (const f of e.filtered ?? [])
+      expect(unitFor(result, f).filtered, `${f.file} filtered`).toBe(f.reason);
 
     // Blindness: the PR description never reaches extraction.
     const prText = s.input.pr.body.trim();
-    if (prText) expect(JSON.stringify((llm as FakeLlm).calls)).not.toContain(prText.slice(0, 40));
+    if (prText) {
+      expect(JSON.stringify((llm as FakeLlm).calls)).not.toContain(prText.slice(0, 40));
+      // FakeJev records every state (7.3): only claims.v0 may see PR sentences.
+      const nonClaims = (jev as FakeJev).calls
+        .filter((c) => c.meta.kind !== 'claims')
+        .map((c) => JSON.stringify(c.state));
+      for (const sentence of prText
+        .split(/\n+/)
+        .map((x) => x.trim())
+        .filter((x) => x.length >= 20)) {
+        expect(
+          nonClaims.some((st) => st.includes(sentence.slice(0, 30))),
+          sentence,
+        ).toBe(false);
+      }
+    }
 
     // Comment stripping: injected comments never reach Jev.
     for (const text of e.mustNotAppearInJudgeViews ?? []) {

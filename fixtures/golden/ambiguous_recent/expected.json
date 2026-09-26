@@ -8,7 +8,7 @@
       "type": "ambiguity",
       "priority": "P2",
       "route": "ask_author",
-      "reason": "orders from the last 7 days"
+      "reason": "\"orders from the last 7 days\" or \"orders from the last 30 days\""
     }
   ],
   "noFindingsOfPriority": [

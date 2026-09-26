@@ -180,7 +180,8 @@ const csvExpected: Expected = {
   requirements: { R1: 'done', R2: 'done', R3: 'missing' },
   findings: [{ id: 'F-R3', type: 'requirement', priority: 'P0', route: 'send_back' }],
   claimMismatch: ['R3'],
-  noFindingsOfPriority: [],
+  // Appendix D: no unexplained findings; F-R3 is the only finding.
+  noFindingsOfPriority: ['P1', 'P2'],
   units: [
     { file: 'src/reports/export.ts', symbol: 'downloadCsv', role: 'implements' },
     { file: 'src/reports/export.ts', symbol: 'buildCsv', role: 'implements' },
@@ -270,7 +271,8 @@ const specs: Spec[] = [
     },
     expected: {
       requirements: { R1: 'contradicted' },
-      findings: [{ id: 'F-R1', priority: 'P0', route: 'send_back' }],
+      tested: { R1: 'differently' },
+      findings: [{ id: 'F-R1', priority: 'P0', route: 'send_back', reason: 'do something different' }],
       claimMismatch: ['R1'],
     },
   },
@@ -319,7 +321,7 @@ const specs: Spec[] = [
           type: 'ambiguity',
           priority: 'P2',
           route: 'ask_author',
-          reason: 'orders from the last 7 days',
+          reason: '"orders from the last 7 days" or "orders from the last 30 days"',
         },
       ],
       noFindingsOfPriority: ['P0', 'P1'],
@@ -417,6 +419,21 @@ const specs: Spec[] = [
       units: [
         { file: 'src/utils/format.ts', symbol: 'upper', role: 'unexplained_benign' },
         { file: 'src/utils/math.ts', role: 'ignored' },
+      ],
+      filtered: [{ file: 'src/utils/math.ts', reason: 'formatting_only' }],
+      findings: [
+        {
+          unit: { file: 'src/utils/format.ts', symbol: 'upper' },
+          type: 'unit',
+          priority: 'P2',
+          route: 'reviewer_attention',
+        },
+        {
+          unit: { file: 'src/utils/format.ts', symbol: 'padLeft' },
+          type: 'unit',
+          priority: 'P2',
+          route: 'reviewer_attention',
+        },
       ],
       noFindingsOfPriority: ['P0', 'P1'],
     },

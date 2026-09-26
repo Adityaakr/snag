@@ -15,7 +15,10 @@
   "claimMismatch": [
     "R3"
   ],
-  "noFindingsOfPriority": [],
+  "noFindingsOfPriority": [
+    "P1",
+    "P2"
+  ],
   "units": [
     {
       "file": "src/reports/export.ts",
