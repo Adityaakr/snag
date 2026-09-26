@@ -32,15 +32,17 @@ export async function measureStability(
   second: LlmProvider | undefined = first,
   fraction = 0.1,
 ): Promise<Stability> {
-  // One sample per distinct issue text.
-  const seen = new Set<string>();
-  const sample = items.filter((i) => {
-    // Sample by issue content, so the fraction is of issues, not of items.
+  // One item per distinct issue text; the round(fraction) issues with the lowest content hash, at least one.
+  const byIssue = new Map<string, EvalItem>();
+  for (const i of items) {
     const key = i.input.issues.map((x) => x.contentHash).join('|');
-    if (seen.has(key) || hashFraction(key) >= fraction) return false;
-    seen.add(key);
-    return true;
-  });
+    if (!byIssue.has(key)) byIssue.set(key, i);
+  }
+  const count = fraction > 0 ? Math.max(1, Math.round(byIssue.size * fraction)) : 0;
+  const sample = [...byIssue.entries()]
+    .sort(([a], [b]) => hashFraction(a) - hashFraction(b))
+    .slice(0, count)
+    .map(([, i]) => i);
   const scores: number[] = [];
   let skipped = 0;
   let deterministic = true;

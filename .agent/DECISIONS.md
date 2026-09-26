@@ -194,5 +194,5 @@ Append-only. Each entry: date, decision, alternatives, why. Deviations from BUIL
 ## 2026-09-26 D29 M6 closing notes (milestone-verifier PASS, second run)
 - M6 closes as BLOCKED-HUMAN (B5) but still gets the `m6-done` tag. The tag anchors `guard:split`'s append-only check on the frozen manifest, which rule 3 needs from the freeze onward. This departs from the M2 precedent (BLOCKED-HUMAN without a tag). The tag marks "every item that can be done without keys is done and audited", not DONE.
 - `ts-job-intervals` drop R1 keeps R3 `done`: with R1 gone, intervals are milliseconds again and `scheduleJob` still rejects values under `1000`. The kept R3 test passes a unit string (`'0s'`, which becomes NaN), so it would fail on that head. That is a test the PR left stale, not an R3 regression, and it is realistic for a partial revert.
-- Stability samples by a hash of the issue content (10% of issues), not the item id.
+- Stability samples round(10%) of distinct issues, at least one, by the lowest hash of the issue content (a 10% hash cut picked none of the 9 dev issues).
 - The simulated calibration and the M6 dev report were regenerated after the label fix, from a committed tree.

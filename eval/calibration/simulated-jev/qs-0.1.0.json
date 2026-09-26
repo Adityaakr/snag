@@ -1,5 +1,5 @@
 {
-  "id": "cal-2026-09-26-f51bf4125bf8",
+  "id": "cal-2026-09-26-56f4ffa0254a",
   "jevModel": "simulated-jev",
   "questionSet": "qs-0.1.0",
   "labeledFindings": 0,
@@ -8,7 +8,7 @@
     "forward.coverage.level3": [
       {
         "x": 0.05,
-        "y": 0.8007246376811594
+        "y": 0.7934782608695652
       },
       {
         "x": 0.2,
@@ -44,7 +44,7 @@
       },
       {
         "x": 0.8999999999999999,
-        "y": 0.13405797101449277
+        "y": 0.14130434782608695
       }
     ],
     "forward.conflict": [
@@ -62,11 +62,11 @@
     "reverse.loosens_test": [
       {
         "x": 0.1,
-        "y": 0.00697350069735007
+        "y": 0.0070028011204481795
       },
       {
         "x": 0.8,
-        "y": 0.00697350069735007
+        "y": 0.0070028011204481795
       },
       {
         "x": 0.8,
@@ -87,10 +87,10 @@
     "forward.coverage.level3": {
       "n": 512,
       "identity": false,
-      "eceBefore": 0.66015625,
-      "eceAfter": 0.084013555223047,
-      "brierBefore": 0.5973242187499972,
-      "brierAfter": 0.14222396987969543
+      "eceBefore": 0.65625,
+      "eceAfter": 0.08600141152534682,
+      "brierBefore": 0.5938085937499974,
+      "brierAfter": 0.14512988143969582
     },
     "forward.coverage.level2": {
       "n": 512,
@@ -103,10 +103,10 @@
     "forward.coverage.missing": {
       "n": 512,
       "identity": false,
-      "eceBefore": 0.5121093750000018,
-      "eceAfter": 0.07087137612951812,
-      "brierBefore": 0.41718750000000143,
-      "brierAfter": 0.0848438641142129
+      "eceBefore": 0.5082031250000019,
+      "eceAfter": 0.07469379048223938,
+      "brierBefore": 0.4140625000000014,
+      "brierAfter": 0.08859520596574796
     },
     "forward.conflict": {
       "n": 512,
@@ -125,12 +125,12 @@
       "brierAfter": 0.03753664075382633
     },
     "reverse.loosens_test": {
-      "n": 724,
+      "n": 721,
       "identity": false,
-      "eceBefore": 0.10013812154696165,
-      "eceAfter": 0.005486494782074781,
-      "brierBefore": 0.023522099447513715,
-      "brierAfter": 0.012306512601459511
+      "eceBefore": 0.10013869625520146,
+      "eceAfter": 0.005509147061507197,
+      "brierBefore": 0.023578363384188523,
+      "brierAfter": 0.012357217324207158
     },
     "reverse.behavior_change": {
       "n": 101,

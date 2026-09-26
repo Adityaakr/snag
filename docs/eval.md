@@ -94,7 +94,7 @@ Counts from the fetch on `2026-09-26`: `500` gold; `277` problem; `926` clean (`
 - **The 11.8 targets table** reports every applicable target as met, not met or n/a:
   - The clean-seed false-alarm target counts clean seeds only (items with no operator).
   - The ECE target uses the out-of-sample ECE after isotonic calibration (5-fold cross-validation), never the raw ECE.
-- **Stability:** extraction runs twice on about 10% of issues (by a hash of the issue content). The report gives mean Jaccard over normalized quotes. Live runs use an uncached provider for the second extraction. Task-list extraction is deterministic, and the report says so.
+- **Stability:** extraction runs twice on 10% of issues (at least one; the lowest hashes of the issue content). The report gives mean Jaccard over normalized quotes. Live runs use an uncached provider for the second extraction. Task-list extraction is deterministic, and the report says so.
 - **Calibration** (`remit calibrate`):
   - One isotonic map per question key, fitted on dev labels (identity below `50` samples). Corpus C pairs join from M8, and dogfood pairs join once runs have live probabilities.
   - Thresholds are tuned on dev with that map applied (cost weights `3` / `2` / `1` from config `eval`).
