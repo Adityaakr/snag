@@ -4,6 +4,7 @@ Milestone: M9 Production hardening
 Task: the M9 gate.
 
 Next action:
-1. Wait for the `security-reviewer` (started on 8d957ba); fix every high or medium finding and re-run until VERDICT: PASS; then check the last M9 item.
-2. Run the `milestone-verifier` on `.agent/milestones/M9.md`. The Dockerfile item stays unchecked until `docker compose up` runs (B7: no container runtime here; `pnpm stack:smoke` covers the same topology), so M9 closes BLOCKED-HUMAN on B7 unless Docker becomes available.
-3. Then M10 (BLOCKED-HUMAN without TYPESAFE_API_KEY and ANTHROPIC_API_KEY: record exact unblock steps) and docs/HANDOFF.md.
+1. The fourth `security-reviewer` run is on 376f181. Fix every high or medium finding and re-run until VERDICT: PASS. Then check the last M9 item.
+2. Run the `milestone-verifier` on `.agent/milestones/M9.md`. The Dockerfile item stays unchecked (B7), so M9 closes BLOCKED-HUMAN. Tag `m9-done` only if it is DONE.
+3. M10 is BLOCKED-HUMAN on B8 and docs/HANDOFF.md exists. Finish with one turn that shows `pnpm verify` exit 0 and `pnpm progress --check` printing ALL REQUIRED MILESTONES TERMINAL.
+4. Once keys exist, follow B8 in `.agent/BLOCKERS.md` in order.
