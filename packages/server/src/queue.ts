@@ -3,11 +3,29 @@
  * events within the window collapses into one review of the latest head, and a newer job cancels a running one
  * through its AbortSignal. In-memory for M7; pg-boss replaces it in M8 behind the same interface.
  */
-export type Job = (signal: AbortSignal) => Promise<void>;
+/** A job as data, so a durable queue (pg-boss) can store it. Slash events are kept as their parsed payload. */
+export type JobSpec =
+  | { kind: 'review'; installationId: number; owner: string; repo: string; pr: number }
+  | { kind: 'slash'; event: unknown }
+  | {
+      kind: 'issue';
+      installationId: number;
+      owner: string;
+      repo: string;
+      number: number;
+      action: string;
+      label?: string;
+    }
+  | { kind: 'cleanup' }
+  | { kind: 'recalibrate' };
+
+export type JobHandler = (job: JobSpec, signal: AbortSignal) => Promise<void>;
 
 export interface JobQueue {
-  enqueue(key: string, job: Job, opts?: { debounceMs?: number }): void;
-  /** Resolves when nothing is pending or running. */
+  enqueue(key: string, job: JobSpec, opts?: { debounceMs?: number }): void | Promise<void>;
+  /** The function that runs jobs; createApp sets it. */
+  setHandler(handler: JobHandler): void;
+  /** Resolves when nothing is pending or running (in-memory queues; durable queues resolve at once). */
   idle(): Promise<void>;
 }
 
@@ -20,15 +38,20 @@ export interface QueueHooks {
 
 interface Slot {
   timer?: unknown;
-  pending?: Job | undefined;
+  pending?: JobSpec | undefined;
   running?: { controller: AbortController; done: Promise<void> } | undefined;
 }
 
 export class MemoryQueue implements JobQueue {
   private readonly slots = new Map<string, Slot>();
   private readonly waiters: (() => void)[] = [];
+  private handler: JobHandler | undefined;
 
   constructor(private readonly hooks: QueueHooks = {}) {}
+
+  setHandler(handler: JobHandler): void {
+    this.handler = handler;
+  }
 
   private get setTimer() {
     return this.hooks.setTimer ?? ((fn: () => void, ms: number) => setTimeout(fn, ms));
@@ -37,7 +60,7 @@ export class MemoryQueue implements JobQueue {
     return this.hooks.clearTimer ?? ((h: unknown) => clearTimeout(h as ReturnType<typeof setTimeout>));
   }
 
-  enqueue(key: string, job: Job, opts: { debounceMs?: number } = {}): void {
+  enqueue(key: string, job: JobSpec, opts: { debounceMs?: number } = {}): void {
     const slot = this.slots.get(key) ?? {};
     this.slots.set(key, slot);
     slot.pending = job;
@@ -60,7 +83,10 @@ export class MemoryQueue implements JobQueue {
     const controller = new AbortController();
     const previous = slot.running?.done ?? Promise.resolve();
     const done = previous
-      .then(() => job(controller.signal))
+      .then(() => {
+        if (!this.handler) throw new Error('the queue has no job handler');
+        return this.handler(job, controller.signal);
+      })
       .catch((e) => {
         if (!controller.signal.aborted) this.hooks.onError?.(key, e);
       })

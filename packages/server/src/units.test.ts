@@ -51,7 +51,17 @@ describe('job queue', () => {
       },
     });
     const ran: number[] = [];
-    for (const n of [1, 2, 3]) q.enqueue('pr#1', async () => void ran.push(n), { debounceMs: 30_000 });
+    q.setHandler(async (job) => {
+      if (job.kind === 'review') ran.push(job.pr);
+    });
+    const review = (pr: number) => ({
+      kind: 'review' as const,
+      installationId: 1,
+      owner: 'a',
+      repo: 'r',
+      pr,
+    });
+    for (const n of [1, 2, 3]) q.enqueue('pr#1', review(n), { debounceMs: 30_000 });
     expect(timers.map((t) => [t.ms, t.cleared])).toEqual([
       [30_000, true],
       [30_000, true],
@@ -68,16 +78,16 @@ describe('job queue', () => {
     const q = new MemoryQueue({ onCancel: (k) => cancelled.push(k), onError: (_k, e) => errors.push(e) });
     let firstSignal: AbortSignal | undefined;
     let release: () => void = () => {};
-    q.enqueue('pr#1', (signal) => {
+    q.setHandler((job, signal) => {
+      if (job.kind === 'cleanup') throw new Error('boom');
       firstSignal = signal;
       return new Promise<void>((r) => {
         release = r;
       });
     });
+    q.enqueue('pr#1', { kind: 'review', installationId: 1, owner: 'a', repo: 'r', pr: 1 });
     await new Promise((r) => setTimeout(r, 5));
-    q.enqueue('pr#1', async () => {
-      throw new Error('boom');
-    });
+    q.enqueue('pr#1', { kind: 'cleanup' });
     await new Promise((r) => setTimeout(r, 5));
     expect(firstSignal?.aborted).toBe(true);
     expect(cancelled).toEqual(['pr#1']);
@@ -85,6 +95,10 @@ describe('job queue', () => {
     await q.idle();
     expect(errors.map((e) => (e as Error).message)).toEqual(['boom']);
     await q.idle();
+    const bare = new MemoryQueue({ onError: (_k, e) => errors.push(e) });
+    bare.enqueue('x', { kind: 'cleanup' });
+    await bare.idle();
+    expect((errors.at(-1) as Error).message).toMatch(/no job handler/);
   });
 
   it('marks a superseded review cancelled at the next step', async () => {
@@ -307,5 +321,24 @@ describe('publishing details', () => {
     expect(run?.annotations.length).toBeGreaterThan(50);
     expect(run?.updates).toBe(Math.ceil((run?.annotations.length ?? 0) / 50));
     expect(run).toMatchObject({ status: 'completed' });
+  });
+});
+
+describe('cross-process supersession', () => {
+  it('cancels a review whose PR head moved while it ran', async () => {
+    const repo = fakeRepo('three_reqs_one_missing');
+    const pull = repo.gh.pulls.get('acme/reports#77');
+    const original = repo.gh.listPullFiles.bind(repo.gh);
+    repo.gh.listPullFiles = async (ref) => {
+      const files = await original(ref);
+      if (pull) pull.headSha = 'newer0000';
+      return files;
+    };
+    const out = await reviewPullRequest(repo.gh, 1, repo.pr, {
+      providers: repo.providers,
+      store: new MemoryStore(),
+    });
+    expect(out).toEqual({ status: 'cancelled' });
+    expect(repo.gh.posted.get('acme/reports#77')).toBeUndefined();
   });
 });

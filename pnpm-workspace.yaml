@@ -11,3 +11,6 @@ allowBuilds:
   tree-sitter-rust: false
   tree-sitter: false
   msw: false
+
+minimumReleaseAgeExclude:
+  - pg-boss@12.35.0
