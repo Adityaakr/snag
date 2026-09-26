@@ -1,9 +1,10 @@
 # Next
 
-Milestone: M9 Production hardening
-Task: the M9 gate.
+Milestone: none open without a human. Every required milestone is DONE or BLOCKED-HUMAN.
+Task: wait for the human's unblock steps, then resume.
 
 Next action:
-1. The `security-reviewer` returned VERDICT: PASS (round 6, c561fd9); the item is checked. The first milestone-verifier run found four gaps (tsbuildinfo, /shared ownership, weak static test, no DECISIONS entry), fixed in c5a19fe (D33); M9 is set to BLOCKED-HUMAN on B7. The re-audit is running at c5a19fe; fix any gaps it reports.
-2. M10 is BLOCKED-HUMAN on B8 and docs/HANDOFF.md exists. Finish with one turn that shows `pnpm verify` exit 0 and `pnpm progress --check` printing ALL REQUIRED MILESTONES TERMINAL.
-3. Once keys exist, follow B8 in `.agent/BLOCKERS.md` in order.
+1. When TYPESAFE_API_KEY and ANTHROPIC_API_KEY exist in `.env`, follow B8 in `.agent/BLOCKERS.md` in order (it also closes B2, B3 and B5). That completes M10 and replaces the "Eval results" section of docs/HANDOFF.md with the live numbers in docs/eval-results.md.
+2. When Docker is available, or a remote exists and the human asks for a push, follow B7. Then check the M9 Dockerfile item, set M9 DONE, and tag `m9-done`.
+3. M2 (B1 to B3), M6 (B4 to B6) close the same way. M11 is optional.
+4. The human-facing order of steps is in docs/HANDOFF.md "What only you can do".
