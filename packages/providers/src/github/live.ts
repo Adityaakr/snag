@@ -9,7 +9,18 @@ import { ProviderError } from '../common/errors.js';
 import { type Logger, silentLogger } from '../common/limits.js';
 import { type RetryOptions, withRetry } from '../common/retry.js';
 import { commentRole, isBotComment } from './roles.js';
-import type { ContentResult, GitHubMining, MergedPull, PullFile, PullRef, PullSnapshot } from './types.js';
+import type {
+  CheckRunInput,
+  ContentResult,
+  GitHubMining,
+  GitHubWriter,
+  IssueComment,
+  MergedPull,
+  PullFile,
+  PullRef,
+  PullSnapshot,
+  RepoPermission,
+} from './types.js';
 
 export const MAX_CONTENT_BYTES = 1024 * 1024;
 export const MAX_PR_FILES = 3000;
@@ -90,7 +101,7 @@ export function classifyGitHubError(e: unknown, now: () => number = Date.now): P
   );
 }
 
-export class LiveGitHub implements GitHubMining {
+export class LiveGitHub implements GitHubMining, GitHubWriter {
   private readonly octokit: Octokit;
   private readonly gql: typeof baseGraphql;
   private readonly logger: Logger;
@@ -316,5 +327,112 @@ export class LiveGitHub implements GitHubMining {
       if (e instanceof ProviderError && e.kind === 'bad_request') return null;
       throw e;
     }
+  }
+
+  async createCheckRun(owner: string, repo: string, input: CheckRunInput): Promise<{ id: number }> {
+    const { data } = await this.call('createCheckRun', () =>
+      this.octokit.checks.create({
+        owner,
+        repo,
+        name: input.name,
+        head_sha: input.headSha,
+        status: input.status,
+        ...(input.conclusion ? { conclusion: input.conclusion } : {}),
+        ...(input.output ? { output: input.output } : {}),
+        ...(input.externalId ? { external_id: input.externalId } : {}),
+      }),
+    );
+    return { id: data.id };
+  }
+
+  async updateCheckRun(
+    owner: string,
+    repo: string,
+    id: number,
+    input: Partial<Omit<CheckRunInput, 'name' | 'headSha'>>,
+  ): Promise<void> {
+    await this.call('updateCheckRun', () =>
+      this.octokit.checks.update({
+        owner,
+        repo,
+        check_run_id: id,
+        ...(input.status ? { status: input.status } : {}),
+        ...(input.conclusion ? { conclusion: input.conclusion } : {}),
+        ...(input.output ? { output: input.output } : {}),
+      }),
+    );
+  }
+
+  async listIssueComments(ref: IssueRef): Promise<IssueComment[]> {
+    const rows = await this.call('listIssueComments', () =>
+      this.octokit.paginate(this.octokit.issues.listComments, {
+        owner: ref.owner,
+        repo: ref.repo,
+        issue_number: ref.number,
+        per_page: 100,
+      }),
+    );
+    return rows.map((c) => ({
+      id: c.id,
+      body: c.body ?? '',
+      author: c.user?.login ?? 'ghost',
+      authorIsBot: c.user?.type === 'Bot',
+    }));
+  }
+
+  async createIssueComment(ref: IssueRef, body: string): Promise<{ id: number }> {
+    const { data } = await this.call('createIssueComment', () =>
+      this.octokit.issues.createComment({ owner: ref.owner, repo: ref.repo, issue_number: ref.number, body }),
+    );
+    return { id: data.id };
+  }
+
+  async updateIssueComment(owner: string, repo: string, id: number, body: string): Promise<void> {
+    await this.call('updateIssueComment', () =>
+      this.octokit.issues.updateComment({ owner, repo, comment_id: id, body }),
+    );
+  }
+
+  async addLabels(ref: IssueRef, labels: string[]): Promise<void> {
+    if (!labels.length) return;
+    await this.call('addLabels', () =>
+      this.octokit.issues.addLabels({ owner: ref.owner, repo: ref.repo, issue_number: ref.number, labels }),
+    );
+  }
+
+  async createReviewComments(
+    ref: PullRef,
+    headSha: string,
+    comments: { path: string; line: number; body: string }[],
+  ): Promise<void> {
+    if (!comments.length) return;
+    await this.call('createReview', () =>
+      this.octokit.pulls.createReview({
+        owner: ref.owner,
+        repo: ref.repo,
+        pull_number: ref.number,
+        commit_id: headSha,
+        event: 'COMMENT',
+        comments: comments.map((c) => ({ path: c.path, line: c.line, side: 'RIGHT' as const, body: c.body })),
+      }),
+    );
+  }
+
+  async getPermission(owner: string, repo: string, user: string): Promise<RepoPermission> {
+    try {
+      const { data } = await this.call('getPermission', () =>
+        this.octokit.repos.getCollaboratorPermissionLevel({ owner, repo, username: user }),
+      );
+      const role = (data as { role_name?: string }).role_name ?? data.permission;
+      return (['admin', 'maintain', 'write', 'triage', 'read'] as const).find((r) => r === role) ?? 'none';
+    } catch (e) {
+      if (e instanceof ProviderError && e.kind === 'bad_request') return 'none';
+      throw e;
+    }
+  }
+
+  async getDefaultBranch(owner: string, repo: string): Promise<string> {
+    const { data } = await this.call('getRepo', () => this.octokit.repos.get({ owner, repo }));
+    return data.default_branch;
   }
 }
