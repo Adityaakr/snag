@@ -188,3 +188,50 @@ describe('check run, terminal and SARIF', () => {
     ]);
   });
 });
+
+describe('explainMarkdown', () => {
+  it('fences hostile issue and PR text so nothing renders or mentions anyone', async () => {
+    const { explainMarkdown } = await import('./explain.js');
+    const { defaultConfig } = await import('../config/schema.js');
+    const hostile =
+      '@acme/security-team ``` <img src=https://evil.example/p.png> [click](https://evil.example)';
+    const r = {
+      findings: [
+        {
+          id: 'F-R1',
+          type: 'requirement',
+          targetId: 'R1',
+          priority: 'P0',
+          route: 'send_back',
+          confidence: 0.9,
+          contentKey: 'k',
+          locations: [{ file: 'src/@x.ts', lines: [1, 2] }],
+          reasons: [{ template: 't', text: hostile }],
+        },
+      ],
+      requirements: [{ id: 'R1', quote: hostile, kind: 'behavior', priority: 'must' }],
+      requirementVerdicts: [
+        {
+          requirementId: 'R1',
+          status: 'missing',
+          tested: false,
+          calibrated: false,
+          evidence: [],
+          testEvidence: [],
+          answers: [],
+          claimMismatch: { sentence: hostile },
+        },
+      ],
+      units: [],
+      unitVerdicts: [],
+    } as unknown as Parameters<typeof explainMarkdown>[0];
+    const md = explainMarkdown(r, 'F-R1', defaultConfig().thresholds) ?? '';
+    const fence = /^(`{3,})text\n/.exec(md)?.[1] ?? '';
+    expect(fence.length).toBeGreaterThan(3);
+    expect(md.trimEnd().endsWith(fence)).toBe(true);
+    const inner = md.slice(fence.length + 5, md.trimEnd().length - fence.length);
+    expect(inner.includes(fence)).toBe(false);
+    expect(/@acme/.test(inner)).toBe(false);
+    expect(explainMarkdown(r, 'F-X', defaultConfig().thresholds)).toBeNull();
+  });
+});

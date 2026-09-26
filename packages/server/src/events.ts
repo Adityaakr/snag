@@ -9,11 +9,11 @@ import { confirmChecklist, invalidateChecklist, postChecklist } from './checklis
 import type { JobQueue } from './queue.js';
 import { loadRepoConfig } from './repo-config.js';
 import { type JobDeps, reviewPullRequest } from './review-job.js';
-import { explainFinding, HELP, isBotLogin, parseSlash, WRITE_ROLES } from './slash.js';
+import { explainMarkdown, HELP, isBotLogin, parseSlash, WRITE_ROLES } from './slash.js';
 
 export interface AppDeps extends JobDeps {
-  /** A client authenticated as the installation, with a fresh token per job. */
-  github: (installationId: number) => Promise<GitHubWriter>;
+  /** A client authenticated as the installation, with a fresh token per job, narrowed to `repo` when given. */
+  github: (installationId: number, repo?: string) => Promise<GitHubWriter>;
   queue: JobQueue;
   /** Burst window for `synchronize` events (default 30 s). */
   debounceMs?: number;
@@ -28,6 +28,7 @@ const PullEvent = z.object({
   installation: Installation,
   repository: Repo,
   pull_request: z.object({ number: z.number().int() }),
+  changes: z.record(z.string(), z.unknown()).optional(),
 });
 const CheckRunEvent = z.object({
   action: z.string(),
@@ -76,7 +77,7 @@ function enqueueReview(
   deps.queue.enqueue(
     `review:${owner}/${repo}#${pr}`,
     async (signal) => {
-      const gh = await deps.github(installationId);
+      const gh = await deps.github(installationId, repo);
       await reviewPullRequest(gh, installationId, { owner, repo, number: pr }, deps, signal);
     },
     { debounceMs },
@@ -88,7 +89,10 @@ export async function handleEvent(name: string, payload: unknown, deps: AppDeps)
     case 'pull_request': {
       const e = PullEvent.parse(payload);
       if (!PULL_ACTIONS.has(e.action)) return { ignored: `pull_request.${e.action}` };
-      const debounce = e.action === 'synchronize' ? (deps.debounceMs ?? 30_000) : 0;
+      // Edits matter only when the title or body changed (links may move); bursts are debounced like pushes.
+      if (e.action === 'edited' && !e.changes?.title && !e.changes?.body)
+        return { ignored: 'pull_request.edited (no title or body change)' };
+      const debounce = e.action === 'synchronize' || e.action === 'edited' ? (deps.debounceMs ?? 30_000) : 0;
       enqueueReview(
         deps,
         e.installation.id,
@@ -124,7 +128,7 @@ export async function handleEvent(name: string, payload: unknown, deps: AppDeps)
       if (!['labeled', 'assigned', 'edited'].includes(e.action)) return { ignored: `issues.${e.action}` };
       const ref = { owner: e.repository.owner.login, repo: e.repository.name, number: e.issue.number };
       deps.queue.enqueue(`issue:${ref.owner}/${ref.repo}#${ref.number}`, async () => {
-        const gh = await deps.github(e.installation.id);
+        const gh = await deps.github(e.installation.id, e.repository.name);
         if (e.action === 'edited') {
           await invalidateChecklist(gh, ref, deps);
           return;
@@ -176,7 +180,7 @@ async function runSlash(
   const repo = e.repository.name;
   const ref = { owner, repo, number: e.issue.number };
   const login = e.comment.user.login;
-  const gh = await deps.github(e.installation.id);
+  const gh = await deps.github(e.installation.id, e.repository.name);
   const role = await gh.getPermission(owner, repo, login);
   const isIssueAuthor = e.issue.user.login === login;
   const allowed = WRITE_ROLES.has(role) || (cmd.name === 'confirm' && isIssueAuthor && !e.issue.pull_request);
@@ -216,7 +220,7 @@ async function runSlash(
       }
       if (cmd.name === 'explain') {
         const { config } = await loadRepoConfig(gh, owner, repo);
-        const text = explainFinding(latest.result, cmd.id, config.thresholds);
+        const text = explainMarkdown(latest.result, cmd.id, config.thresholds);
         await reply(text ?? `There is no finding ${cmd.id} in the latest review.`);
         return;
       }

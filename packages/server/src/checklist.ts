@@ -36,6 +36,7 @@ export async function postChecklist(
     ref,
     'checklist',
     withMarker('checklist', body, `hash=${issue.contentHash.slice(0, 12)}`),
+    deps.botLogin,
   );
   return { requirements: ex.requirements.filter((r) => !r.supersededBy).length };
 }

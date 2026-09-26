@@ -2,6 +2,8 @@
 export interface DeliveryStore {
   /** Records the id; false when it was already seen. */
   claim(id: string): Promise<boolean>;
+  /** Forgets a claim so GitHub's redelivery is processed (when handling failed before a job was queued). */
+  release?(id: string): Promise<void>;
 }
 
 /** In-memory store with a bounded size (the Postgres `deliveries` table replaces it in M8). */
@@ -17,5 +19,9 @@ export class MemoryDeliveryStore implements DeliveryStore {
       if (oldest !== undefined) this.seen.delete(oldest);
     }
     return true;
+  }
+
+  async release(id: string): Promise<void> {
+    this.seen.delete(id);
   }
 }

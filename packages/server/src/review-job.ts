@@ -35,6 +35,8 @@ export interface JobDeps {
   calibration?: (jevModel: string) => Calibration | undefined;
   metrics?: Metrics;
   newId?: () => string;
+  /** The login the App posts as (`<slug>[bot]`), so sticky comments by other bots are never edited. */
+  botLogin?: string;
 }
 
 export type ReviewOutcome =
@@ -75,6 +77,17 @@ export async function reviewPullRequest(
     const ingest = await ingestPullRequest(gh, ref);
     check(signal);
     const notes = [...errors, ...ingest.warnings];
+    // Linked issues are read only inside the PR's own account (9.7): an issue elsewhere could be attacker-controlled.
+    const foreign = ingest.input.issues.filter((i) => i.ref.owner.toLowerCase() !== ref.owner.toLowerCase());
+    if (foreign.length) {
+      ingest.input.issues = ingest.input.issues.filter((i) => !foreign.includes(i));
+      ingest.input.issueRefs = ingest.input.issues.map((i) => i.ref);
+      if (!ingest.input.issues.length) ingest.input.linkStrength = 'none';
+      for (const i of foreign)
+        notes.push(
+          `Issue ${i.ref.owner}/${i.ref.repo}#${i.ref.number} is outside this account, so it was not used.`,
+        );
+    }
     if (
       ingest.input.diffText
         .split('\n')
@@ -101,7 +114,7 @@ export async function reviewPullRequest(
     });
     result.warnings.unshift(...notes);
     check(signal);
-    await publish(gh, ref, result, config, reviewId, run?.id);
+    await publish(gh, ref, result, config, reviewId, run?.id, deps.botLogin);
     const record: ReviewRecord = {
       id: reviewId,
       installationId,
@@ -155,13 +168,14 @@ async function publish(
   config: RemitConfig,
   reviewId: string,
   checkRunId: number | undefined,
+  botLogin?: string,
 ): Promise<void> {
   const issueRef = { owner: ref.owner, repo: ref.repo, number: ref.number };
   if (config.surfaces.sticky_comment)
-    await upsertSticky(gh, issueRef, 'summary', renderComment(result, { reviewId }));
+    await upsertSticky(gh, issueRef, 'summary', renderComment(result, { reviewId }), botLogin);
   if (config.mode === 'rework') {
     const rework = renderRework(result, { mention: config.rework.mention });
-    if (rework) await upsertSticky(gh, issueRef, 'rework', withMarker('rework', rework));
+    if (rework) await upsertSticky(gh, issueRef, 'rework', withMarker('rework', rework), botLogin);
   }
   if (checkRunId !== undefined) {
     const model = checkRun(result, reviewId);

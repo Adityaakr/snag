@@ -74007,9 +74007,11 @@ function withMarker(kind, body2, extra = "") {
   return `${markerOf(kind)}${extra ? ` ${extra}` : ""} -->
 ${body2}`;
 }
-async function upsertSticky(gh, ref, kind, body2) {
+async function upsertSticky(gh, ref, kind, body2, botLogin) {
   const marker = markerOf(kind);
-  const existing = (await gh.listIssueComments(ref)).find((c) => c.authorIsBot && c.body.includes(marker));
+  const existing = (await gh.listIssueComments(ref)).find(
+    (c) => c.authorIsBot && c.body.includes(marker) && (!botLogin || c.author === botLogin)
+  );
   if (existing) {
     if (existing.body !== body2) await gh.updateIssueComment(ref.owner, ref.repo, existing.id, body2);
     return { id: existing.id, created: false };
@@ -80356,7 +80358,7 @@ function entropy(s) {
   return h;
 }
 var CANDIDATE = /["'`]([A-Za-z0-9+/=_-]{32,})["'`]/g;
-var HASH_CONTEXT = /\b(sha\d*|hash|integrity|checksum|digest|nonce|uuid|commit|etag|fixture|example)\b/i;
+var HASH_CONTEXT = /\b(sha\d*|hash|integrity|checksum|digest|nonce|uuid|commit|etag|fixture|example|node_id)\b/i;
 function secretKind(content2) {
   for (const p of SECRET_PATTERNS) if (p.re.test(content2)) return p.name;
   if (HASH_CONTEXT.test(content2)) return null;
@@ -81114,7 +81116,11 @@ var Event = external_exports.object({
     head: external_exports.object({ repo: external_exports.object({ full_name: external_exports.string() }).nullable() }),
     base: external_exports.object({ repo: external_exports.object({ full_name: external_exports.string() }) })
   }).optional(),
-  repository: external_exports.object({ name: external_exports.string(), owner: external_exports.object({ login: external_exports.string() }), default_branch: external_exports.string().optional() })
+  repository: external_exports.object({
+    name: external_exports.string(),
+    owner: external_exports.object({ login: external_exports.string() }),
+    default_branch: external_exports.string().optional()
+  })
 });
 function escapeData(s) {
   return s.replace(/%/g, "%25").replace(/\r/g, "%0D").replace(/\n/g, "%0A");
@@ -81160,7 +81166,9 @@ async function runAction(io) {
     OPENAI_COMPATIBLE_BASE_URL: input2(env, "openai-compatible-base-url")
   };
   if (eventName === "pull_request" && fork && !keys.TYPESAFE_API_KEY) {
-    notice("This PR comes from a fork, and GitHub does not pass secrets to fork PRs on pull_request, so the review is skipped. See docs/github-action.md for the pull_request_target setup.");
+    notice(
+      "This PR comes from a fork, and GitHub does not pass secrets to fork PRs on pull_request, so the review is skipped. See docs/github-action.md for the pull_request_target setup."
+    );
     return 0;
   }
   const token = input2(env, "github-token") || env.GITHUB_TOKEN || "";
@@ -81169,7 +81177,8 @@ async function runAction(io) {
   const config2 = { ...loaded.config };
   const mode = input2(env, "mode");
   if (mode) {
-    if (!["comment_only", "rework", "gate"].includes(mode)) throw new Error(`mode "${mode}" is not comment_only, rework or gate.`);
+    if (!["comment_only", "rework", "gate"].includes(mode))
+      throw new Error(`mode "${mode}" is not comment_only, rework or gate.`);
     config2.mode = mode;
   }
   const budget = input2(env, "budget-usd");

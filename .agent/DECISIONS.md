@@ -196,3 +196,23 @@ Append-only. Each entry: date, decision, alternatives, why. Deviations from BUIL
 - `ts-job-intervals` drop R1 keeps R3 `done`: with R1 gone, intervals are milliseconds again and `scheduleJob` still rejects values under `1000`. The kept R3 test passes a unit string (`'0s'`, which becomes NaN), so it would fail on that head. That is a test the PR left stale, not an R3 regression, and it is realistic for a partial revert.
 - Stability samples round(10%) of distinct issues, at least one, by the lowest hash of the issue content (a 10% hash cut picked none of the 9 dev issues).
 - The simulated calibration and the M6 dev report were regenerated after the label fix, from a committed tree.
+
+## 2026-09-26 D30 M7 security review follow-ups
+- Fixed after the first security-reviewer FAIL:
+  - `/remit explain` replies use `explainMarkdown`: a fenced block longer than any backtick run, with mentions neutralized.
+  - Setup needs a one-time token and answers 404 once credentials exist. Stored credentials are never overwritten.
+  - The webhook body cap uses `hono/body-limit`, so chunked bodies are capped too.
+  - Setup pages send no-store, no-referrer and CSP headers.
+  - The encryption key must be at least 32 characters, is stretched with scrypt and a salt, and the ciphertext carries AAD.
+  - Failed deliveries are released for redelivery.
+  - Sticky comments match `<slug>[bot]`.
+  - Installation tokens are narrowed to the job's repository.
+  - Linked issues outside the PR's account are dropped with a warning.
+  - `edited` events are debounced and skipped without a title or body change.
+  - `/metrics` accepts an optional bearer token.
+- Deferred to later milestone items (low severity):
+  - persistent delivery dedupe (the M8 `deliveries` table);
+  - passing the AbortSignal into `runReview` and the providers, and the per-installation daily budget (M9 hardening);
+  - pino with redact paths in the server (M9, next to the CLI's existing pino logger);
+  - Renovate and a CI `pnpm audit` step (M9 supply chain);
+  - `docs/security.md` (M9 threat model).
