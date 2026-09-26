@@ -66,6 +66,16 @@ describe('guard:tests', () => {
     expect(kinds.sort()).toEqual(['test_focused:', 'test_skipped:']);
   });
 
+  it('ignores fixture trees and eval corpora, which are review inputs', async () => {
+    const { dir } = repo();
+    mkdirSync(join(dir, 'fixtures', 'golden', 'x', 'head'), { recursive: true });
+    mkdirSync(join(dir, 'eval', 'corpora', 'mutations'), { recursive: true });
+    writeFileSync(join(dir, 'fixtures', 'golden', 'x', 'head', 'a.test.ts'), "it.skip('x', () => {});\n");
+    writeFileSync(join(dir, 'eval', 'corpora', 'mutations', 'b.test.ts'), "it.only('y', () => {});\n");
+    writeFileSync(join(dir, 'real.test.ts'), "it.only('z', () => {});\n");
+    expect((await checkTests(dir)).problems.map((p) => p.split(':')[0])).toEqual(['real.test.ts']);
+  });
+
   it('ignores warn-level facts and non-test files', async () => {
     const { dir } = repo();
     writeFileSync(join(dir, 'totals.test.ts'), "it('totals', () => {\n  expect(total).toEqual(43);\n});\n");

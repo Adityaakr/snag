@@ -1,0 +1,22 @@
+{
+  "extract:acme/stats#5": [
+    {
+      "requirements": [
+        {
+          "id": "R1",
+          "text": "mean returns 0.0 for an empty list.",
+          "quote": "mean must return 0.0 for an empty list",
+          "source": {
+            "kind": "body"
+          },
+          "kind": "behavior",
+          "explicitness": "explicit",
+          "priority": "must",
+          "examples": [],
+          "checkableInCode": true
+        }
+      ],
+      "openQuestions": []
+    }
+  ]
+}

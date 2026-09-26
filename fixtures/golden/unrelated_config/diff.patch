@@ -1,0 +1,36 @@
+diff --git a/config/defaults.ts b/config/defaults.ts
+--- a/config/defaults.ts
++++ b/config/defaults.ts
+@@ -1,4 +1,4 @@
+ export const DEFAULTS = {
+-  requestTimeoutMs: 30000,
++  requestTimeoutMs: 5000,
+   pageSize: 50,
+ };
+diff --git a/src/upload.ts b/src/upload.ts
+--- a/src/upload.ts
++++ b/src/upload.ts
+@@ -1,3 +1,9 @@
+ export async function upload(send: () => Promise<void>) {
+-  await send();
++  for (let attempt = 1; ; attempt++) {
++    try {
++      return await send();
++    } catch (e) {
++      if (attempt >= 3) throw e;
++    }
++  }
+ }
+diff --git a/test/upload.test.ts b/test/upload.test.ts
+new file mode 100644
+--- /dev/null
++++ b/test/upload.test.ts
+@@ -0,0 +1,8 @@
++import { expect, it, vi } from 'vitest';
++import { upload } from '../src/upload';
++
++it('retries three times', async () => {
++  const send = vi.fn().mockRejectedValue(new Error('x'));
++  await expect(upload(send)).rejects.toThrow('x');
++  expect(send).toHaveBeenCalledTimes(3);
++});

@@ -1,0 +1,63 @@
+{
+  "issue": {
+    "R1": {
+      "ambiguous": 0.15,
+      "checkable_in_code": 0.92
+    }
+  },
+  "forward": {
+    "R1": {
+      "coverage": {
+        "levels": [
+          0.02,
+          0.03,
+          0.1,
+          0.85
+        ],
+        "confidence": 0.85
+      },
+      "conflict": 0.05,
+      "evidence": "U3"
+    }
+  },
+  "tests": {
+    "R1": {
+      "asserts_as_stated": 0.88,
+      "asserts_differently": 0.04,
+      "test_evidence": "U6"
+    }
+  },
+  "reverse": {
+    "U1": {
+      "serves": "none",
+      "plumbing": 0.85,
+      "behavior_change": 0.1
+    },
+    "U2": {
+      "serves": "R1",
+      "plumbing": 0.1,
+      "behavior_change": 0.8
+    },
+    "U3": {
+      "serves": "R1",
+      "plumbing": 0.1,
+      "behavior_change": 0.8
+    },
+    "U4": {
+      "serves": "none",
+      "plumbing": 0.85,
+      "behavior_change": 0.1
+    },
+    "U5": {
+      "serves": "none",
+      "plumbing": 0.85,
+      "behavior_change": 0.1
+    },
+    "U6": {
+      "serves": "R1",
+      "plumbing": 0.1,
+      "behavior_change": 0.8,
+      "loosens_test": 0.05
+    }
+  }
+}

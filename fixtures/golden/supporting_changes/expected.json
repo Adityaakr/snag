@@ -1,0 +1,16 @@
+{
+  "requirements": {
+    "R1": "done"
+  },
+  "units": [
+    {
+      "file": "src/types.ts",
+      "role": "supporting"
+    },
+    {
+      "file": "src/tax.ts",
+      "role": "supporting"
+    }
+  ],
+  "noFindings": true
+}

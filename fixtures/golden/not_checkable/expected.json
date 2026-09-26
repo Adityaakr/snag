@@ -1,0 +1,16 @@
+{
+  "requirements": {
+    "R1": "not_checkable"
+  },
+  "findings": [
+    {
+      "id": "F-R1",
+      "priority": "P2",
+      "route": "reviewer_attention",
+      "reason": "manual check"
+    }
+  ],
+  "noFindingsOfPriority": [
+    "P0"
+  ]
+}

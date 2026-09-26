@@ -1,0 +1,32 @@
+diff --git a/src/exporter.ts b/src/exporter.ts
+--- a/src/exporter.ts
++++ b/src/exporter.ts
+@@ -1,3 +1,7 @@
+ export function exportData(rows: string[][]): string {
+   return JSON.stringify(rows);
+ }
++
++export function exportCsv(rows: string[][]): string {
++  return rows.map((r) => r.join(',')).join('\n');
++}
+diff --git a/src/pages/export.ts b/src/pages/export.ts
+new file mode 100644
+--- /dev/null
++++ b/src/pages/export.ts
+@@ -0,0 +1,5 @@
++import { exportCsv } from '../exporter';
++
++export function onDownload(rows: string[][]): string {
++  return exportCsv(rows);
++}
+diff --git a/test/exporter.test.ts b/test/exporter.test.ts
+new file mode 100644
+--- /dev/null
++++ b/test/exporter.test.ts
+@@ -0,0 +1,6 @@
++import { expect, it } from 'vitest';
++import { exportCsv } from '../src/exporter';
++
++it('exports csv', () => {
++  expect(exportCsv([['a', 'b']])).toBe('a,b');
++});

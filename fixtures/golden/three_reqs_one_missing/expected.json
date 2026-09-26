@@ -1,0 +1,31 @@
+{
+  "requirements": {
+    "R1": "done",
+    "R2": "done",
+    "R3": "missing"
+  },
+  "findings": [
+    {
+      "id": "F-R3",
+      "type": "requirement",
+      "priority": "P0",
+      "route": "send_back"
+    }
+  ],
+  "claimMismatch": [
+    "R3"
+  ],
+  "noFindingsOfPriority": [],
+  "units": [
+    {
+      "file": "src/reports/export.ts",
+      "symbol": "downloadCsv",
+      "role": "implements"
+    },
+    {
+      "file": "src/reports/export.ts",
+      "symbol": "buildCsv",
+      "role": "implements"
+    }
+  ]
+}

@@ -11,3 +11,4 @@ export const PACKAGE = '@remit/pipeline';
 export function describePackage(): string {
   return `${BRAND.name} ${PACKAGE}`;
 }
+export * from './review.js';

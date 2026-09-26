@@ -1,0 +1,14 @@
+{
+  "requirements": {
+    "I1.R1": "done",
+    "I2.R1": "done"
+  },
+  "requirementIds": [
+    "I1.R1",
+    "I2.R1"
+  ],
+  "noFindingsOfPriority": [
+    "P0",
+    "P1"
+  ]
+}

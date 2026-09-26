@@ -1,0 +1,23 @@
+diff --git a/src/api/users.ts b/src/api/users.ts
+--- a/src/api/users.ts
++++ b/src/api/users.ts
+@@ -2,5 +2,8 @@
+ 
+ export function getUser(id: string) {
+   const user = users.get(id);
++  if (!user) {
++    return { status: 400, body: { error: 'unknown id' } };
++  }
+   return { status: 200, body: user };
+ }
+diff --git a/test/users.test.ts b/test/users.test.ts
+new file mode 100644
+--- /dev/null
++++ b/test/users.test.ts
+@@ -0,0 +1,6 @@
++import { expect, it } from 'vitest';
++import { getUser } from '../src/api/users';
++
++it('rejects unknown ids', () => {
++  expect(getUser('nope').status).toBe(400);
++});

@@ -15,7 +15,9 @@
       "!eval/cassettes",
       "!fixtures/cassettes",
       "!**/__tests__/fixtures",
-      "!.claude/settings.json"
+      "!.claude/settings.json",
+      "!fixtures/golden",
+      "!fixtures/extraction"
     ]
   },
   "formatter": {
@@ -45,5 +47,17 @@
   },
   "assist": {
     "enabled": true
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["scripts/fixtures/**"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noTemplateCurlyInString": "off"
+          }
+        }
+      }
+    }
+  ]
 }

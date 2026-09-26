@@ -1,0 +1,9 @@
+{
+  "requirements": {
+    "R1": "done",
+    "R2": "deferred"
+  },
+  "noFindingsOfPriority": [
+    "P0"
+  ]
+}

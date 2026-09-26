@@ -1,0 +1,22 @@
+{
+  "extract:acme/app#21": [
+    {
+      "requirements": [
+        {
+          "id": "R1",
+          "text": "Failed uploads are retried up to 3 times.",
+          "quote": "Failed uploads must be retried up to 3 times",
+          "source": {
+            "kind": "body"
+          },
+          "kind": "behavior",
+          "explicitness": "explicit",
+          "priority": "must",
+          "examples": [],
+          "checkableInCode": true
+        }
+      ],
+      "openQuestions": []
+    }
+  ]
+}

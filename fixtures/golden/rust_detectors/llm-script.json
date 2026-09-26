@@ -1,0 +1,22 @@
+{
+  "extract:acme/parser#4": [
+    {
+      "requirements": [
+        {
+          "id": "R1",
+          "text": "parse accepts hexadecimal input prefixed with 0x.",
+          "quote": "parse must accept hexadecimal input prefixed with 0x",
+          "source": {
+            "kind": "body"
+          },
+          "kind": "behavior",
+          "explicitness": "explicit",
+          "priority": "must",
+          "examples": [],
+          "checkableInCode": true
+        }
+      ],
+      "openQuestions": []
+    }
+  ]
+}

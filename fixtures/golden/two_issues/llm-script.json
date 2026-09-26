@@ -1,0 +1,42 @@
+{
+  "extract:acme/app#31": [
+    {
+      "requirements": [
+        {
+          "id": "R1",
+          "text": "The export button downloads a CSV.",
+          "quote": "The export button must download a CSV",
+          "source": {
+            "kind": "body"
+          },
+          "kind": "behavior",
+          "explicitness": "explicit",
+          "priority": "must",
+          "examples": [],
+          "checkableInCode": true
+        }
+      ],
+      "openQuestions": []
+    }
+  ],
+  "extract:acme/app#32": [
+    {
+      "requirements": [
+        {
+          "id": "R1",
+          "text": "An email is sent when the export finishes.",
+          "quote": "Send an email when the export finishes",
+          "source": {
+            "kind": "body"
+          },
+          "kind": "behavior",
+          "explicitness": "explicit",
+          "priority": "must",
+          "examples": [],
+          "checkableInCode": true
+        }
+      ],
+      "openQuestions": []
+    }
+  ]
+}

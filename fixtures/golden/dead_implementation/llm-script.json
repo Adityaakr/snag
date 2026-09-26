@@ -1,0 +1,22 @@
+{
+  "extract:acme/app#25": [
+    {
+      "requirements": [
+        {
+          "id": "R1",
+          "text": "Dates in the report header use the ISO format YYYY-MM-DD.",
+          "quote": "Dates in the report header must use the ISO format YYYY-MM-DD",
+          "source": {
+            "kind": "body"
+          },
+          "kind": "behavior",
+          "explicitness": "explicit",
+          "priority": "must",
+          "examples": [],
+          "checkableInCode": true
+        }
+      ],
+      "openQuestions": []
+    }
+  ]
+}
