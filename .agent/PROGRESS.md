@@ -60,7 +60,7 @@ Status: DONE
 - [x] Golden scenarios 1 to 18 (Appendix D) pass with scripted Jev answers, including the state assertions for blindness and comment stripping. (evidence: pipeline/src/golden/golden.test.ts (18 scenarios, blindness and comment-stripping state assertions), 2c15d50)
 
 ## M5 CLI end to end, renderers, demo
-Status: IN_PROGRESS
+Status: DONE
 - [x] `remit review` in GitHub and local modes, with every flag in 10.1. (evidence: cli/src/commands/review.test.ts (every 10.1 flag, local and GitHub via FakeGitHub) + pipeline/src/ingest.test.ts, b210f7e)
 - [x] `remit init`, `remit doctor` and `remit demo`. The demo runs offline on scenarios 1 and 2 in under `10 s`. (evidence: review.test.ts init and demo tests (demo under 10 s; `pnpm demo` 1.1 s) + doctor.test.ts, b210f7e)
 - [x] Renderers, with snapshot tests: terminal; sticky comment (Appendix E.1); check-run summary and annotations model; rework comment (E.2); issue checklist (E.3); JSON; SARIF 2.1.0. (evidence: core/src/render/render.test.ts + pipeline/src/golden/render.test.ts (fixtures/snapshots/*), b7269f2)
@@ -70,7 +70,7 @@ Status: IN_PROGRESS
 - [x] The first dogfood run is recorded (3.5). (evidence: .agent/EXPERIMENTS.md "Dogfood run 1: M5" (labels, X1 false positive fixed), 2014f6a)
 
 ## M6 Evaluation system
-Status: TODO
+Status: IN_PROGRESS
 - [ ] The corpus D runner: `pnpm eval:golden` at `100%`.
 - [ ] Corpus B: synthetic seeds, at least 4 each in TS, Python and Rust; when `GITHUB_TOKEN` exists, up to 30 mined real seeds (Appendix G.2); seed annotations; every mutation operator in G.1, with apply-and-reparse checks and expected labels.
 - [ ] The corpus A loader, built from the PatchDiff package and Zenodo results. The label mapping is documented in `docs/eval.md`.

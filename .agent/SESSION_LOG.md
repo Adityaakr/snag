@@ -16,3 +16,4 @@
 - M4 gate: FAIL (test strength: threshold edges, golden expectations weaker than Appendix D), fixed; re-audit FAIL (two edges), fixed with a full threshold sweep; final re-audit VERDICT: PASS. Tagged m4-done.
 - Correction: the dogfood-fix commit said "with a test" but a failed edit script had skipped the test; added it in the next commit (it fails without the detector change, passes with it).
 - M5: renderers (E.1 to E.4, check run, SARIF) with sanitization and snapshots, `remit review` (local and GitHub, all flags, exit codes 0 to 4), `remit init`, `remit demo` (1.1 s), README quickstart verified in a clean clone, first dogfood run logged (one false positive found and fixed). All items checked; gate next.
+- M5 gate: FAIL (untested flag wiring, missing JSON and check-run snapshots), fixed; re-audit VERDICT: PASS. Tagged m5-done.
