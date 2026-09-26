@@ -36,7 +36,7 @@ Status: IN_PROGRESS
 - [x] A GitHub adapter covering: PR metadata; paginated files and patches, with the local diff fallback; contents at a SHA, with a size guard; issues and comments with roles; linked issues per 6.1; rate-limit handling. It includes FakeGitHub for tests. (evidence: packages/providers/src/github/github.test.ts (msw: PR, paginated files, contents size guard, issues with roles, GraphQL closing refs, rate limits; FakeGitHub diff fallback), bf95446)
 - [x] Record and replay per 7.4, with all four modes. A test proves cassettes contain no auth headers. (evidence: packages/providers/src/cache/store.test.ts + jev.test.ts/llm.test.ts cassette tests ("never stores auth headers"), 9d63961)
 - [x] `remit doctor` per 10.1, including model ID verification through the Anthropic Models API. The results are recorded in `docs/providers.md`. (evidence: packages/cli/src/commands/doctor.test.ts; `pnpm remit doctor` (keyless run recorded in docs/providers.md; live model check is B2), 6710c8a)
-- [ ] `pnpm test:live` smoke tests run only when keys exist, and print `skipped: <KEY> not set` otherwise.
+- [x] `pnpm test:live` smoke tests run only when keys exist, and print `skipped: <KEY> not set` otherwise. (evidence: `pnpm test:live` prints "skipped: TYPESAFE_API_KEY not set" etc.; packages/providers/src/providers.live.test.ts, d09d9a2)
 - [ ] `guard:tests` (3.6) runs in `pnpm verify`.
 
 ## M3 Blind requirement extraction
