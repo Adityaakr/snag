@@ -1,0 +1,14 @@
+{
+  "action": "deleted",
+  "installation": {
+    "id": 4242,
+    "account": {
+      "login": "acme"
+    }
+  },
+  "sender": {
+    "login": "agent",
+    "id": 77,
+    "type": "User"
+  }
+}

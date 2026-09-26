@@ -1,0 +1,32 @@
+{
+  "action": "edited",
+  "issue": {
+    "number": 12,
+    "title": "CSV export"
+  },
+  "changes": {
+    "body": {
+      "from": "old"
+    }
+  },
+  "repository": {
+    "id": 1001,
+    "name": "reports",
+    "full_name": "acme/reports",
+    "private": true,
+    "owner": {
+      "login": "acme",
+      "id": 9,
+      "type": "Organization"
+    },
+    "default_branch": "main"
+  },
+  "installation": {
+    "id": 4242,
+    "node_id": "MDIzOkludGVncmF0aW9uSW5zdGFsbGF0aW9uNDI0Mg=="
+  },
+  "sender": {
+    "login": "maya",
+    "type": "User"
+  }
+}

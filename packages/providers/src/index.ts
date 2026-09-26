@@ -5,6 +5,7 @@ export * from './common/budget.js';
 export * from './common/errors.js';
 export * from './common/limits.js';
 export * from './common/retry.js';
+export * from './env.js';
 export {
   type AppCredentials,
   appJwt,

@@ -1,0 +1,19 @@
+{
+  "action": "created",
+  "installation": {
+    "id": 4242,
+    "account": {
+      "login": "acme"
+    }
+  },
+  "repositories": [
+    {
+      "full_name": "acme/reports"
+    }
+  ],
+  "sender": {
+    "login": "agent",
+    "id": 77,
+    "type": "User"
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "action": "rerequested",
+  "check_run": {
+    "id": 1,
+    "name": "Remit",
+    "head_sha": "head0000",
+    "pull_requests": [
+      {
+        "number": 77
+      }
+    ]
+  },
+  "repository": {
+    "id": 1001,
+    "name": "reports",
+    "full_name": "acme/reports",
+    "private": true,
+    "owner": {
+      "login": "acme",
+      "id": 9,
+      "type": "Organization"
+    },
+    "default_branch": "main"
+  },
+  "installation": {
+    "id": 4242,
+    "node_id": "MDIzOkludGVncmF0aW9uSW5zdGFsbGF0aW9uNDI0Mg=="
+  },
+  "sender": {
+    "login": "agent",
+    "id": 77,
+    "type": "User"
+  }
+}
