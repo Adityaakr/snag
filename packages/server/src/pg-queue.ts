@@ -125,11 +125,9 @@ export class PgBossQueue implements JobQueue {
   async idle(timeoutMs = 30_000): Promise<void> {
     const until = Date.now() + timeoutMs;
     while (Date.now() < until) {
+      // Queue stats are cached by pg-boss's monitor, so count waiting jobs directly; running ones are local.
       let busy = this.running.size;
-      for (const name of QUEUES) {
-        const [s] = await this.boss.getQueueStats(name);
-        busy += (s?.queuedCount ?? 0) + (s?.activeCount ?? 0) + (s?.deferredCount ?? 0);
-      }
+      for (const name of QUEUES) busy += (await this.boss.findJobs(name, { queued: true })).length;
       if (!busy) return;
       await new Promise((r) => setTimeout(r, 100));
     }
