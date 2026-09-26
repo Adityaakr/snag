@@ -7,3 +7,4 @@
 
 ## 2026-09-26 session 2 (resumed)
 - M1: code-fact detectors (17 kinds, table-driven), perf check (5,000-line diff in `228 ms`), `remit units`, coverage check. All M1 items checked.
+- M1 gate: milestone-verifier VERDICT: PASS with 5 non-blocking defects; all 5 fixed (EPIPE, GitGrepReferences tests, string-literal false positives, over-cap warning, PROGRESS text). Tagged m1-done.

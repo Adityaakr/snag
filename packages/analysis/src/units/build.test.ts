@@ -229,6 +229,16 @@ mod tests {
     expect(warnings[0]).toMatch(/split a change into \d+ units over 60 tokens/);
   });
 
+  it('warns when a single hunk is over the cap', async () => {
+    const body = Array.from({ length: 50 }, (_, i) => `+line ${i}`).join('\n');
+    const text = `--- a/big.cfg\n+++ b/big.cfg\n@@ -0,0 +1,50 @@\n${body}\n`;
+    const { units, warnings } = await buildUnits(parseDiff(text), { maxUnitTokens: 50 });
+    expect(units).toHaveLength(1);
+    expect(warnings).toEqual([
+      expect.stringMatching(/big\.cfg: one hunk is \d+ tokens, over the 50 token unit cap/),
+    ]);
+  });
+
   it('works from a bare diff file without contents', async () => {
     const text = `diff --git a/src/users.ts b/src/users.ts
 --- a/src/users.ts

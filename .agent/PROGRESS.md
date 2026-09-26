@@ -6,7 +6,7 @@ One section per milestone. A checked item ends with `(evidence: <test or command
 Status: DONE
 - [x] A git repository with a pnpm workspace, `.nvmrc` (22), strict TypeScript project references, Biome and Vitest. Every package in 4.2 is scaffolded with a passing smoke test. (evidence: `pnpm typecheck` + 9 package smoke tests (`pnpm test`), 4eaae58)
 - [x] `pnpm verify` runs the format check, lint, typecheck, tests and guards, and passes. (evidence: `pnpm verify` green in 2.2 s, 4eaae58)
-- [x] The `.agent/` memory files (3.1) exist. `.agent/milestones/M0.md` to `M11.md` are generated from this section as issue-style specs.; `.agent/PROGRESS.md` is seeded from them. (evidence: `node scripts/progress.mjs` lists M0..M11 from .agent/milestones, 4eaae58)
+- [x] The `.agent/` memory files (3.1) exist. `.agent/milestones/M0.md` to `M11.md` are generated from this section as issue-style specs.; `.agent/PROGRESS.md` is seeded from them.. (evidence: `node scripts/progress.mjs` lists M0..M11 from .agent/milestones, 4eaae58)
 - [x] `scripts/progress.mjs` is implemented per Appendix A.4, with tests on fixture PROGRESS files. `pnpm progress` and `pnpm progress --check` are wired. (evidence: scripts/__tests__/progress.test.ts (21 tests), 4eaae58)
 - [x] `.claude/settings.json`, `scripts/hooks/session-start.sh` and `scripts/hooks/stop-hygiene.sh` are created exactly as in Appendix A and marked executable. They are tested by piping sample JSON into them. (evidence: scripts/__tests__/settings.test.ts + hooks.test.ts, 9bd25fd)
 - [x] The subagents `milestone-verifier`, `eval-analyst` and `security-reviewer` are created as in Appendix F. (evidence: .claude/agents/*.md extracted verbatim from Appendix F, 4eaae58)
@@ -18,10 +18,10 @@ Status: DONE
 - [x] A README stub with a one-line pitch, the status and a quickstart placeholder. (evidence: README.md, 4eaae58)
 
 ## M1 Contracts and diff analysis (offline)
-Status: IN_PROGRESS
+Status: DONE
 - [x] zod contracts for section 5, with JSON Schema export to `schemas/` and round-trip tests. (evidence: packages/core/src/contracts/contracts.test.ts, `pnpm schemas`, 5aaf30c)
 - [x] A unified diff parser covering every edge case in 6.3 step 1, with fast-check property tests (parse, render, parse again). (evidence: packages/analysis/src/diff/parse.test.ts (edge cases + fast-check parse/render/parse, 300 runs), dd163d5)
-- [x] Local git ingest: `base.head` and `base..head` diffs, and file contents at both SHAs. (evidence: packages/analysis/src/git/local.test.ts, 432159f)
+- [x] Local git ingest: `base..head` and `base...head` diffs, and file contents at both SHAs. (evidence: packages/analysis/src/git/local.test.ts, 432159f)
 - [x] tree-sitter WASM loading for TS, TSX, JS, Python and Rust, plus symbol mapping, unit grouping, the size cap and stable IDs. (evidence: packages/analysis/src/syntax/treesitter.test.ts + units/build.test.ts, 4444511)
 - [x] The file classifier from 6.4.1, including `.gitattributes` `linguist-generated`. (evidence: packages/analysis/src/files/classify.test.ts, 281cca3)
 - [x] Formatting-only detection, and comment stripping that preserves line numbers (Python docstrings included), with tests. (evidence: packages/analysis/src/syntax/treesitter.test.ts (stripComments) + units/build.test.ts (formatting_only, docstrings), 4444511)
@@ -30,7 +30,7 @@ Status: IN_PROGRESS
 - [x] Line coverage of `analysis` is `≥ 90%`. (evidence: `pnpm test:cov` analysis lines 95.6% (threshold 90% enforced in vitest.config.ts), 761fda0)
 
 ## M2 Providers, budgets, record and replay
-Status: TODO
+Status: IN_PROGRESS
 - [ ] The Jev adapter from 7.3 (LiveJev, FakeJev, CachedJev), with tests for: packing; 400 shrink-and-retry; 429 and 529 backoff; validation; concurrency; cost accounting; model logging.
 - [ ] The LLM adapter from section 8 (Anthropic, OpenAI-compatible, FakeLlm, CachedLlm), with structured output, the repair retry and cost accounting.
 - [ ] A GitHub adapter covering: PR metadata; paginated files and patches, with the local diff fallback; contents at a SHA, with a size guard; issues and comments with roles; linked issues per 6.1; rate-limit handling. It includes FakeGitHub for tests.
@@ -41,7 +41,7 @@ Status: TODO
 
 ## M3 Blind requirement extraction
 Status: TODO
-- [ ] Extraction prompt v0 (Appendix B.1) is versioned `xp-0.1.0`. The extractor accepts only `IssueSnapshot`.; The architecture test and the pipeline blindness test from 6.2 pass.
+- [ ] Extraction prompt v0 (Appendix B.1) is versioned `xp-0.1.0`. The extractor accepts only `IssueSnapshot`.; The architecture test and the pipeline blindness test from 6.2 pass..
 - [ ] Quote validation with normalization and one repair call. Unanchored items are dropped with warnings.
 - [ ] The task-list fast path and all three `extraction.mode` values.
 - [ ] Amendments, non-goals, examples, open questions with readings, and `checkableInCode`.
@@ -105,7 +105,7 @@ Status: TODO
 
 ## M9 Production hardening
 Status: TODO
-- [ ] A multi-stage Dockerfile that runs as non-root. `docker-compose.yml` has the server, the worker and Postgres, with health checks.; `docker compose up` works locally with fakes.
+- [ ] A multi-stage Dockerfile that runs as non-root. `docker-compose.yml` has the server, the worker and Postgres, with health checks.; `docker compose up` works locally with fakes..
 - [ ] Deploy guides for Fly.io, Railway and Render in `docs/operations.md`.
 - [ ] Observability: structured logs with `reviewId`; Prometheus metrics for reviews, latency, provider calls, tokens, cost, findings and feedback; optional OpenTelemetry.
 - [ ] Budgets, rate limiters, circuit breakers and graceful partial results, all with tests.

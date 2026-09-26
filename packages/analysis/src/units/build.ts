@@ -468,7 +468,7 @@ function draftUnit(
   return unit;
 }
 
-/** Splits a group's hunks into chunks under the token cap, at hunk boundaries. */
+/** Splits a group's hunks into chunks under the token cap, at hunk boundaries. A single hunk is never split. */
 function capBySize(hunks: Hunk[], file: DiffFile, maxTokens: number): Hunk[][] {
   const chunks: Hunk[][] = [];
   let current: Hunk[] = [];
@@ -521,6 +521,12 @@ export async function buildUnits(diff: ParsedDiff, opts: BuildUnitsOptions = {})
           `${fa.path}: split a ${group.key ? `symbol "${group.key.slice(group.key.indexOf(':') + 1)}"` : 'change'} into ${chunks.length} units over ${maxUnitTokens} tokens`,
         );
       for (const chunk of chunks) {
+        const size = estimateTokens(renderUnitPatch(file, chunk));
+        if (size > maxUnitTokens) {
+          warnings.push(
+            `${fa.path}: one hunk is ${size} tokens, over the ${maxUnitTokens} token unit cap; it cannot be split at a hunk boundary`,
+          );
+        }
         const chunkBlocks = group.blocks.filter((b) =>
           chunk.some((h) => {
             const src = file.hunks[b.hunkIndex] as Hunk;
