@@ -160,7 +160,17 @@ export async function start(
       return new LiveGitHub({ token, ...(apiUrl ? { baseUrl: apiUrl } : {}) });
     },
     providers: (config) =>
-      providersFromEnv(config, { ...env, REMIT_CACHE_MODE: env.REMIT_CACHE_MODE ?? 'live' }),
+      providersFromEnv(
+        config,
+        { ...env, REMIT_CACHE_MODE: env.REMIT_CACHE_MODE ?? 'live' },
+        {
+          logger,
+          breakerOptions: {
+            onOpen: (provider) => logger.warn({ provider }, 'circuit opened: failing fast'),
+            onReject: (provider) => metrics.inc('remit_circuit_open_total', { provider }),
+          },
+        },
+      ),
     calibration: (jevModel) => loadCalibration(env.REMIT_CALIBRATION_DIR ?? CALIBRATION_ROOT, jevModel),
   };
 
