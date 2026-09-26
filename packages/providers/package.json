@@ -1,0 +1,20 @@
+{
+  "name": "@remit/providers",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Jev, LLM and GitHub adapters, fakes, record-and-replay cache, token estimation, budgets",
+  "type": "module",
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "test": "vitest run --root ../.. --project providers"
+  },
+  "dependencies": {
+    "@remit/core": "workspace:*"
+  }
+}

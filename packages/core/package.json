@@ -1,0 +1,17 @@
+{
+  "name": "@remit/core",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Contracts, brand, config, extraction prompt and validation, verdict engine, routing, renderers (pure, no I/O)",
+  "type": "module",
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "test": "vitest run --root ../.. --project core"
+  }
+}

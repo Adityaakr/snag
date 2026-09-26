@@ -1,0 +1,22 @@
+{
+  "name": "@remit/action",
+  "version": "0.0.0",
+  "private": true,
+  "description": "GitHub Action wrapper around the pipeline",
+  "type": "module",
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "test": "vitest run --root ../.. --project action"
+  },
+  "dependencies": {
+    "@remit/core": "workspace:*",
+    "@remit/providers": "workspace:*",
+    "@remit/pipeline": "workspace:*"
+  }
+}

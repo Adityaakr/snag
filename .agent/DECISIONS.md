@@ -1,0 +1,45 @@
+# Decisions
+
+Append-only. Each entry: date, decision, alternatives, why. Deviations from BUILD_PROMPT.md land here first.
+
+## 2026-09-26 D1 Kit files written from the human's paste
+- Decision: the human pasted START_HERE.md, BUILD_PROMPT.md, GOAL.txt and loop.sh into the first session; Claude wrote them verbatim into an empty folder, committed them unchanged (e50fc7b), and hashed them into `.agent/protected.sha256`.
+- Alternatives: ask the human to copy the files in by hand.
+- Why: the folder was empty and the paste was the only source. BUILD_PROMPT.md has 2,220 lines, matching the spec's "about 2,200".
+
+## 2026-09-26 D2 TypeScript 5.9.3, not the npm `latest` 7.x
+- Decision: pin `typescript@5.9.3`.
+- Alternatives: TypeScript 7 (the native port, current npm `latest`).
+- Why: spec 4.3 says TypeScript 5. Tool versions pinned exactly: biome 2.5.14, vitest 5.0.2, @vitest/coverage-v8 5.0.2, fast-check 4.10.2, @types/node 22.20.4.
+
+## 2026-09-26 D3 Workspace resolution
+- Decision: each package's `exports` has a `source` condition pointing at `src/index.ts`; tsconfig sets `customConditions: ["source"]` with project references (tsc -b redirects to the referenced project's d.ts); Vitest resolves `@remit/*` with aliases to `src/index.ts`.
+- Alternatives: build before typecheck; path aliases in tsconfig.
+- Why: no build step needed for tests or typecheck, and references stay strict.
+
+## 2026-09-26 D4 Network block in unit tests
+- Decision: `scripts/test-setup.ts` wraps `fetch` and `net.Socket.prototype.connect` to throw `NetworkBlockedError` for non-local hosts unless `REMIT_ALLOW_NETWORK=1` (set only by `pnpm test:live`).
+- Alternatives: rely on msw `onUnhandledRequest: 'error'` alone.
+- Why: covers SDKs that bypass fetch; msw still works because it intercepts above the socket.
+
+## 2026-09-26 D5 Jev facts that differ from spec 7.2 (docs win)
+- Source: docs/providers.md "Differences from spec", checked against docs.typesafe.ai and SDK v0.6.0.
+- Decisions:
+  - Token overflow: the docs do not document `max_tokens_exceeded`. Treat `400` (BadRequestError) and `422` (UnprocessableEntityError) whose body mentions tokens as overflow; the pre-flight estimate (`ceil(chars / 3)`) is the main guard.
+  - `529` arrives as `InternalServerError` with `status === 529`; classify by status, not class.
+  - Retries: pass `retry: { maxRetries: 0 }` to the SDK and keep Remit's own 5-attempt backoff so the process-wide token bucket sees every attempt.
+  - Always pass `model` explicitly and an explicit `logLevel` (never `debug`, which logs bodies unredacted).
+  - `remit doctor` verifies `jev-1.13.0` with a tiny `systemOne` call and checks `response.model`, since `/v1/models` lists aliases only.
+  - Score needs at least `2` levels; answers carry `type` and Score carries `legend` (extra fields tolerated by validation).
+- Alternatives: follow the spec text literally.
+- Why: spec 7.1 says current docs win.
+
+## 2026-09-26 D6 Branch and commit policy
+- Decision: build on the default branch of this fresh local repo and commit per task, as BUILD_PROMPT 3.4 requires. Experiments in M10 use `exp/<n>-<slug>` branches per 11.7.
+- Alternatives: a feature branch for all work.
+- Why: loop.sh and progress tags assume one mainline; there is no remote, nothing is pushed.
+
+## 2026-09-26 D7 `.claude/settings.json` needs explicit human approval
+- Decision: the file from Appendix A.1 is written only after the human approves it, because it grants Bash permissions and installs hooks. The hook scripts, their tests and the subagents exist regardless.
+- Alternatives: write it silently.
+- Why: a local safety hook (prism-guard) flagged it as a permissions change; the human decides.
