@@ -28,6 +28,7 @@ import {
 } from '@remit/providers';
 import { upsertSticky, withMarker } from '@remit/providers';
 import type { Metrics } from './metrics.js';
+import { reserveBudget } from './budget.js';
 import { type Logger, silent } from './logger.js';
 import { CONFIG_PATH, loadRepoConfig } from './repo-config.js';
 import type { ReviewRecord, Store } from './store.js';
@@ -99,34 +100,31 @@ async function runPullReview(
   const pull = await gh.getPull(ref);
   if (pull.draft && config.draft_prs === 'skip')
     return { status: 'skipped', reason: 'draft PR (draft_prs: skip)' };
-  // Budget (9.13): reserve this review's worst case in the spend ledger first, so concurrent jobs cannot all pass;
-  // the reservation is settled to the real spend however the review ends (done, cancelled or failed).
-  let reserved = false;
-  if (deps.dailyBudgetUsd !== undefined) {
-    // One review may use at most a quarter of the installation's daily budget, whatever the repository config says.
-    const perReview = Math.min(config.budgets.max_usd_per_review, deps.dailyBudgetUsd / 4);
-    config = { ...config, budgets: { ...config.budgets, max_usd_per_review: perReview } };
-    await deps.store.reserveSpend(installationId, reviewId, perReview);
-    const total = await deps.store.spendToday(installationId);
-    if (total > deps.dailyBudgetUsd) {
-      await deps.store.settleSpend(reviewId, 0);
-      log.warn({ total, limit: deps.dailyBudgetUsd }, 'daily budget reached; review skipped');
-      deps.metrics?.inc('remit_budget_skips_total');
-      if (config.surfaces.check_run)
-        await gh.createCheckRun(ref.owner, ref.repo, {
-          name: BRAND.checkName,
-          headSha: pull.headSha,
-          status: 'completed',
-          conclusion: 'neutral',
-          output: {
-            title: 'Daily budget reached',
-            summary: `This installation reached its daily ${BRAND.name} budget ($${deps.dailyBudgetUsd.toFixed(2)}). Reviews resume after midnight UTC; reply \`${BRAND.slashCommand} review\` then.`,
-          },
-        });
-      return { status: 'skipped', reason: 'daily budget reached' };
-    }
-    reserved = true;
+  // Budget (9.13): reserve this review's worst case first; the reservation is settled however the review ends.
+  const reservation = await reserveBudget(
+    deps.store,
+    deps.dailyBudgetUsd,
+    installationId,
+    reviewId,
+    config,
+    log,
+  );
+  if (reservation === 'over') {
+    deps.metrics?.inc('remit_budget_skips_total');
+    if (config.surfaces.check_run)
+      await gh.createCheckRun(ref.owner, ref.repo, {
+        name: BRAND.checkName,
+        headSha: pull.headSha,
+        status: 'completed',
+        conclusion: 'neutral',
+        output: {
+          title: 'Daily budget reached',
+          summary: `This installation reached its daily ${BRAND.name} budget ($${(deps.dailyBudgetUsd ?? 0).toFixed(2)}). Reviews resume after midnight UTC; reply \`${BRAND.slashCommand} review\` then.`,
+        },
+      });
+    return { status: 'skipped', reason: 'daily budget reached' };
   }
+  config = reservation.config;
   let reviewCosts: CostTracker | undefined;
   log.info({ head: pull.headSha }, 'review started');
   let run: { id: number } | null = null;
@@ -260,7 +258,7 @@ async function runPullReview(
     log.error({ error: (e as Error).message }, 'review failed');
     throw e;
   } finally {
-    if (reserved) await deps.store.settleSpend(reviewId, reviewCosts?.usage.costUsd ?? 0);
+    await reservation.settle(reviewCosts?.usage.costUsd ?? 0);
   }
 }
 

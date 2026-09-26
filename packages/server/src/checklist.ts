@@ -3,27 +3,52 @@
  * label (or an assignee), the checklist is posted as a sticky comment, `/remit confirm` stores it by issue content
  * hash, and editing the issue invalidates it and posts it again.
  */
+import { randomUUID } from 'node:crypto';
 import { type IssueRef, renderChecklist } from '@remit/core';
 import { extractRequirements } from '@remit/pipeline';
 import type { GitHubWriter } from '@remit/providers';
 import { upsertSticky, withMarker } from '@remit/providers';
 import type { JobDeps } from './review-job.js';
+import { reserveBudget } from './budget.js';
+import { silent } from './logger.js';
 import { loadRepoConfig } from './repo-config.js';
 
 export async function postChecklist(
   gh: GitHubWriter,
   ref: IssueRef,
   deps: JobDeps,
-): Promise<{ requirements: number }> {
-  const { config } = await loadRepoConfig(gh, ref.owner, ref.repo);
+  installationId: number,
+): Promise<{ requirements: number } | { skipped: 'daily budget reached' }> {
+  const loaded = await loadRepoConfig(gh, ref.owner, ref.repo);
   const issue = await gh.getIssue(ref);
-  const { jev, llm } = deps.providers(config);
-  const ex = await extractRequirements([issue], {
-    ...(jev ? { jev } : {}),
-    ...(llm ? { llm } : {}),
-    config,
-    reviewId: `checklist_${ref.owner}_${ref.repo}_${ref.number}`,
-  });
+  const runId = `checklist_${randomUUID()}`;
+  const log = (deps.logger ?? silent).child({ runId, repo: `${ref.owner}/${ref.repo}`, issue: ref.number });
+  // Extraction spends provider money, so it goes through the same daily budget as reviews (9.13).
+  const reservation = await reserveBudget(
+    deps.store,
+    deps.dailyBudgetUsd,
+    installationId,
+    runId,
+    loaded.config,
+    log,
+  );
+  if (reservation === 'over') {
+    deps.metrics?.inc('remit_budget_skips_total');
+    return { skipped: 'daily budget reached' };
+  }
+  const config = reservation.config;
+  const built = deps.providers(config);
+  let ex: Awaited<ReturnType<typeof extractRequirements>>;
+  try {
+    ex = await extractRequirements([issue], {
+      ...(built.jev ? { jev: built.jev } : {}),
+      ...(built.llm ? { llm: built.llm } : {}),
+      config,
+      reviewId: runId,
+    });
+  } finally {
+    await reservation.settle(built.costs?.usage.costUsd ?? 0);
+  }
   await deps.store.saveChecklist({
     repo: `${ref.owner}/${ref.repo}`,
     issue: ref.number,
@@ -47,13 +72,14 @@ export async function confirmChecklist(
   ref: IssueRef,
   login: string,
   deps: JobDeps,
+  installationId: number,
 ): Promise<'confirmed' | 'stale' | 'none'> {
   const repo = `${ref.owner}/${ref.repo}`;
   const current = await deps.store.getChecklist(repo, ref.number);
   if (!current) return 'none';
   const issue = await gh.getIssue(ref);
   if (issue.contentHash !== current.contentHash) {
-    await postChecklist(gh, ref, deps);
+    await postChecklist(gh, ref, deps, installationId);
     return 'stale';
   }
   await deps.store.saveChecklist({ ...current, confirmedBy: login, confirmedAt: new Date().toISOString() });
@@ -61,12 +87,17 @@ export async function confirmChecklist(
 }
 
 /** Issue edited: any stored checklist no longer applies, so it is dropped and posted again. */
-export async function invalidateChecklist(gh: GitHubWriter, ref: IssueRef, deps: JobDeps): Promise<boolean> {
+export async function invalidateChecklist(
+  gh: GitHubWriter,
+  ref: IssueRef,
+  deps: JobDeps,
+  installationId: number,
+): Promise<boolean> {
   const current = await deps.store.getChecklist(`${ref.owner}/${ref.repo}`, ref.number);
   if (!current) return false;
   const issue = await gh.getIssue(ref);
   if (issue.contentHash === current.contentHash) return false;
   await deps.store.deleteChecklist(`${ref.owner}/${ref.repo}`, ref.number);
-  await postChecklist(gh, ref, deps);
+  await postChecklist(gh, ref, deps, installationId);
   return true;
 }

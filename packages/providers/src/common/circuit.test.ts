@@ -79,3 +79,19 @@ describe('half-open trials', () => {
     expect(b.state).toBe('closed');
   });
 });
+
+describe('half-open concurrency', () => {
+  it('fails other calls fast while the trial is in flight, and only the trial decides', async () => {
+    let now = 0;
+    const b = new CircuitBreaker('jev', { failures: 1, cooldownMs: 100, now: () => now });
+    await expect(b.run(down)).rejects.toThrow();
+    now = 200;
+    let release: (v: string) => void = () => {};
+    const trial = b.run(() => new Promise<string>((r) => (release = r)));
+    await expect(b.run(async () => 'other')).rejects.toThrow(/circuit open/);
+    expect(b.state).toBe('half_open');
+    release('ok');
+    expect(await trial).toBe('ok');
+    expect(b.state).toBe('closed');
+  });
+});

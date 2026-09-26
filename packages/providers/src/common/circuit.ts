@@ -35,40 +35,51 @@ export class CircuitBreaker {
     return (this.opts.now ?? Date.now)();
   }
 
+  private reject(): never {
+    this.opts.onReject?.(this.name);
+    throw new ProviderError(
+      this.name,
+      'overloaded',
+      `circuit open after ${this.opts.failures ?? 5} consecutive failures; failing fast`,
+      'The provider is failing; results are partial until it recovers.',
+    );
+  }
+
   async run<T>(fn: () => Promise<T>): Promise<T> {
+    // While open, or while a half-open trial is in flight, every other call fails fast.
+    if (this.state === 'half_open' && this.trial) this.reject();
+    let isTrial = false;
     if (this.state === 'open') {
-      if (this.now - this.openedAt < (this.opts.cooldownMs ?? 30_000) || this.trial) {
-        this.opts.onReject?.(this.name);
-        throw new ProviderError(
-          this.name,
-          'overloaded',
-          `circuit open after ${this.opts.failures ?? 5} consecutive failures; failing fast`,
-          'The provider is failing; results are partial until it recovers.',
-        );
-      }
+      if (this.now - this.openedAt < (this.opts.cooldownMs ?? 30_000)) this.reject();
       this.state = 'half_open';
       this.trial = true;
+      isTrial = true;
     }
     try {
       const out = await fn();
-      this.consecutive = 0;
-      this.state = 'closed';
-      this.trial = false;
+      if (isTrial || this.state === 'closed') {
+        this.consecutive = 0;
+        this.state = 'closed';
+        this.trial = false;
+      }
       return out;
     } catch (e) {
       const counts = e instanceof ProviderError && e.retryable;
-      if (counts) this.consecutive++;
-      if (counts && (this.state === 'half_open' || this.consecutive >= (this.opts.failures ?? 5))) {
+      if (isTrial) {
+        // Only the trial decides a half-open circuit. Any failure, counted or not (a cancellation proves nothing),
+        // opens it again for another cooldown.
         this.state = 'open';
         this.openedAt = this.now;
-        this.opts.onOpen?.(this.name);
+        this.trial = false;
+        if (counts) this.opts.onOpen?.(this.name);
+      } else if (counts && this.state === 'closed') {
+        this.consecutive++;
+        if (this.consecutive >= (this.opts.failures ?? 5)) {
+          this.state = 'open';
+          this.openedAt = this.now;
+          this.opts.onOpen?.(this.name);
+        }
       }
-      // A trial that failed without counting (a cancellation, a bad request) proves nothing: stay open.
-      if (this.state === 'half_open') {
-        this.state = 'open';
-        this.openedAt = this.now;
-      }
-      this.trial = false;
       throw e;
     }
   }

@@ -92,6 +92,10 @@ describe('logs and metrics', () => {
     });
     expect(out).not.toContain(secret);
     expect(out).not.toContain('PEM');
+    out = '';
+    logger.info({ job: { env: { KEY: secret } }, ctx: { job: { env: { KEY: secret } } } }, 'nested');
+    expect(out).toContain('nested');
+    expect(out).not.toContain(secret);
   });
 
   it('renders a latency histogram and provider call metrics', () => {

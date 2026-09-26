@@ -125,7 +125,7 @@ export async function runJob(job: JobSpec, deps: AppDeps, signal: AbortSignal): 
       const ref = { owner: job.owner, repo: job.repo, number: job.number };
       const gh = await deps.github(job.installationId, job.repo);
       if (job.action === 'edited') {
-        await invalidateChecklist(gh, ref, deps);
+        await invalidateChecklist(gh, ref, deps, job.installationId);
         return;
       }
       const { config } = await loadRepoConfig(gh, ref.owner, ref.repo);
@@ -134,7 +134,7 @@ export async function runJob(job: JobSpec, deps: AppDeps, signal: AbortSignal): 
           config.issue_checklist === 'on_label' &&
           job.label === config.issue_checklist_label) ||
         (job.action === 'assigned' && config.issue_checklist === 'on_assign');
-      if (wanted) await postChecklist(gh, ref, deps);
+      if (wanted) await postChecklist(gh, ref, deps, job.installationId);
       return;
     }
     case 'cleanup':
@@ -194,13 +194,24 @@ export async function handleEvent(name: string, payload: unknown, deps: AppDeps)
       const e = IssueEvent.parse(payload);
       if (!['labeled', 'assigned', 'edited'].includes(e.action)) return { ignored: `issues.${e.action}` };
       const ref = { owner: e.repository.owner.login, repo: e.repository.name, number: e.issue.number };
-      await deps.queue.enqueue(`issue:${ref.owner}/${ref.repo}#${ref.number}`, {
-        kind: 'issue',
-        installationId: e.installation.id,
-        ...ref,
-        action: e.action,
-        ...(e.label ? { label: e.label.name } : {}),
-      });
+      // Checklist runs spend provider money: debounce edits like pushes and apply the installation's hourly rate.
+      await deps.queue.enqueue(
+        `issue:${ref.owner}/${ref.repo}#${ref.number}`,
+        {
+          kind: 'issue',
+          installationId: e.installation.id,
+          ...ref,
+          action: e.action,
+          ...(e.label ? { label: e.label.name } : {}),
+        },
+        {
+          debounceMs: rateDebounce(
+            deps,
+            e.installation.id,
+            e.action === 'edited' ? (deps.debounceMs ?? 30_000) : 0,
+          ),
+        },
+      );
       return { handled: `issues.${e.action}` };
     }
     case 'installation': {
@@ -260,7 +271,7 @@ async function runSlash(
         await reply(`\`${BRAND.slashCommand} confirm\` works on issues, not pull requests.`);
         return;
       }
-      const r = await confirmChecklist(gh, ref, login, deps);
+      const r = await confirmChecklist(gh, ref, login, deps, e.installation.id);
       await reply(
         r === 'confirmed'
           ? `Checklist confirmed by @${sanitize(login, 40)}. Reviews of PRs for this issue will use it.`
