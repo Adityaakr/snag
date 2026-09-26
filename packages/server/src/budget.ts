@@ -26,8 +26,12 @@ export async function reserveBudget(
   const perRun = Math.min(config.budgets.max_usd_per_review, dailyBudgetUsd / 4);
   const capped: RemitConfig = { ...config, budgets: { ...config.budgets, max_usd_per_review: perRun } };
   const settle = async (costUsd: number) => {
+    // A cost that is not a finite, non-negative number keeps the full reservation, so it can never poison the ledger.
+    const amount = Number.isFinite(costUsd) && costUsd >= 0 ? costUsd : perRun;
+    if (amount !== costUsd)
+      log.error({ runId }, 'run cost was not a finite number; the full reservation is kept');
     try {
-      await store.settleSpend(runId, costUsd);
+      await store.settleSpend(runId, amount);
     } catch (e) {
       log.error({ runId, error: (e as Error).message }, 'could not settle the spend reservation');
     }
@@ -40,7 +44,7 @@ export async function reserveBudget(
     await settle(0);
     throw e;
   }
-  if (total > dailyBudgetUsd) {
+  if (!Number.isFinite(total) || total > dailyBudgetUsd) {
     await settle(0);
     log.warn({ total, limit: dailyBudgetUsd }, 'daily budget reached; run skipped');
     return 'over';

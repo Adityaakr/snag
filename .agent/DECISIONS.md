@@ -300,3 +300,9 @@ Append-only. Each entry: date, decision, alternatives, why. Deviations from BUIL
   - the CLI and the Action keep repository prices, because the repository owner pays there;
   - a stale `/remit confirm` enqueues the debounced, rate-limited `issue:` job instead of extracting inline.
   - Regression tests: `providers/src/env.test.ts`, `app.test.ts` "a confirm on a changed issue".
+- Addendum (fifth M9 security review, 2026-09-27): a model id naming an object property (`constructor`, `__proto__`) resolved to an inherited operator "price", which produced NaN costs, disabled both budgets and poisoned the ledger. Fixed:
+  - the operator table has a null prototype, and prices are looked up with `Object.hasOwn` and must be finite and positive;
+  - `CostTracker` treats a non-finite or negative cost as unbounded and refuses a non-finite estimate;
+  - `reserveBudget` keeps the full reservation for a non-finite cost and counts a non-finite ledger total as over budget;
+  - fixed two lows: the pre-call estimate includes `maxTokens` of output, and an OpenAI-compatible reply without `usage` is charged the worst case.
+  - Regression tests: env.test.ts "object properties", budget.test.ts "non-finite costs fail closed", llm.test.ts "omits usage".

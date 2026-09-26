@@ -1,4 +1,5 @@
 import { defaultConfig } from '@remit/core';
+import { CostTracker } from '@remit/providers';
 import { describe, expect, it } from 'vitest';
 import { reserveBudget } from './budget.js';
 import { postChecklist } from './checklist.js';
@@ -33,6 +34,29 @@ describe('reserveBudget', () => {
       throw new Error('database down');
     };
     await expect(r.settle(0.1)).resolves.toBeUndefined();
+  });
+});
+
+describe('non-finite costs fail closed', () => {
+  it('a NaN cost keeps the full reservation, and a NaN ledger total counts as over budget', async () => {
+    const store = new MemoryStore();
+    const r = await reserveBudget(store, 1, 1, 'r1', defaultConfig(), silent);
+    if (r === 'over') throw new Error('over');
+    await r.settle(Number.NaN);
+    expect(await store.spendToday(1)).toBe(0.25);
+    store.spendToday = async () => Number.NaN;
+    expect(await reserveBudget(store, 1, 1, 'r2', defaultConfig(), silent)).toBe('over');
+  });
+
+  it('the cost tracker refuses further calls after a NaN or negative cost', () => {
+    const t = new CostTracker(1);
+    expect(() => t.ensure('x', Number.NaN)).toThrow();
+    t.addLlm(10, 10, Number.NaN);
+    expect(t.exceeded).toBe(true);
+    expect(() => t.ensure('x', 0)).toThrow();
+    const j = new CostTracker(1);
+    j.addJev(10, -5);
+    expect(j.exceeded).toBe(true);
   });
 });
 

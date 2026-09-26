@@ -42,7 +42,7 @@ The attacker gets Remit to post `@org/everyone`, links or images by putting them
 ### Cost exhaustion
 
 The attacker opens or pushes many PRs, or huge ones, to burn provider spend.
-- Per-review budget: the `CostTracker` refuses calls past `budgets.max_usd_per_review`, and the review finishes with partial results.
+- Per-review budget: the `CostTracker` refuses calls whose worst case (input plus maximum output) would pass `budgets.max_usd_per_review`, and the review finishes with partial results. Costs that are not finite numbers close the budget instead of disabling it.
 - Per-installation daily budget (`REMIT_DAILY_BUDGET_USD`). Each run reserves its per-review maximum (capped at a quarter of the daily budget) in the spend ledger before it starts and settles to its real spend however it ends, so cancelled, failed and retried runs all count. Concurrent runs cannot all pass the check. Past the budget, reviews are skipped with a neutral check run. Issue checklists (extraction on issue open and edit) reserve and settle through the same ledger and are skipped past the budget. Budgets use the operator's prices: a repository's `.remit.yml` can raise a price but not lower it, and a model the operator has not priced is never called, so a repository cannot make its spend invisible.
 - Per-installation hourly rate (`REMIT_REVIEWS_PER_HOUR`): extra events wait 5 minutes and collapse by PR or issue. Issue edits are debounced like pushes. This smooths bursts; the budget caps cost.
 - `/remit confirm` on a changed issue re-reads it through the same debounced, rate-limited issue queue.
