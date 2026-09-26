@@ -165,6 +165,17 @@ export function requirementVerdict(ctx: RequirementContext): RequirementOutcome 
     status = 'uncertain';
     confidence = 0;
     reasons.push(REASONS.noForward());
+  } else if (r.kind === 'non_goal') {
+    // A non-goal ("don't change the public API") has nothing to cover: it is broken by a conflict, else respected.
+    if (k >= t.contradicted) {
+      status = 'contradicted';
+      confidence = k;
+      reasons.push(REASONS.contradicted(k));
+    } else {
+      status = 'done';
+      confidence = 1 - k;
+      reasons.push(REASONS.nonGoalRespected());
+    }
   } else if (contra >= t.contradicted) {
     confidence = contra;
     if (amb >= t.ambiguous) {

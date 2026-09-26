@@ -130,3 +130,7 @@ Append-only. Each entry: date, decision, alternatives, why. Deviations from BUIL
 - An `examples_not_checked` note (golden 18) lists examples with `example_i_checked < 0.5` on partial or done requirements.
 - Finding types and routes: `done` and `deferred` requirements get no finding; `preexisting` is P2 route `none` (info); `unexplained_benign` and unit `uncertain` are P2 `reviewer_attention`; test integrity uses the first weakening fact's id (`F-X1`) or `F-U<n>-integrity`; other facts become `fact` findings: high P1, warn P2, info P2 route `none`; weakening facts on test units are covered by the integrity finding instead. A claim mismatch that raises a finding to P0 also routes it `send_back`.
 - Content keys: requirements hash the issue ref and normalized quote; units reuse `contentHash`; facts add kind and detail.
+
+## 2026-09-26 D20 Non-goals and claim sentences
+- Non-goal requirements (6.2 kind `non_goal`) have no coverage to measure. The verdict engine marks a non-goal `contradicted` when `forward.v0` `conflict >= t.contradicted`, otherwise `done` with the reason "No change goes against this exclusion." The spec does not say how to judge them; coverage-based rules would call every respected non-goal "missing".
+- Claim sentences: the title plus body sentences and bullet items; code blocks, HTML comments, headings, template checklist lines, section labels and bare `Fixes #n` lines are dropped; sentences are split at `.`, `!` or `?` followed by a capital, digit, quote or bracket; duplicates removed; at most 40.
