@@ -19,6 +19,11 @@ export interface RunOptions {
   concurrency?: number;
   /** Stops the run when total cost passes this (EVAL_MAX_USD, default $20). */
   maxUsd?: number;
+  /**
+   * Spend already charged outside the per-item trackers, such as the live providers' shared tracker. Live calls are
+   * charged there, not to the item's tracker, so without this the cap could never trip in live mode.
+   */
+  spentUsd?: () => number;
   calibration?: Calibration;
 }
 
@@ -167,7 +172,7 @@ export async function runItems(
   const max = opts.maxUsd ?? 20;
   const width = Math.max(1, opts.concurrency ?? 4);
   for (let i = 0; i < list.length; i += width) {
-    if (spent >= max) {
+    if (spent + (opts.spentUsd?.() ?? 0) >= max) {
       stoppedForBudget = true;
       break;
     }

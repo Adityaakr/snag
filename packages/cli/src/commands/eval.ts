@@ -125,16 +125,20 @@ export async function evalCommand(argv: string[], io: Io, loadItems?: ItemLoader
     ...(p?.llm ? { llm: p.llm } : {}),
     ...(limit ? { limit } : {}),
     maxUsd,
+    ...(p ? { spentUsd: () => p.costs.usage.costUsd } : {}),
   });
   const metrics = computeMetrics(outcomes);
   // Stability (11.4): the second extraction must not come from the cassette the first one wrote.
-  const uncached =
-    mode === 'live' ? buildProviders(config, { ...io.env, REMIT_CACHE_MODE: 'live' }).llm : undefined;
-  metrics.stability = await measureStability(
-    outcomes.map((o) => o.item),
-    p?.llm,
-    uncached ?? p?.llm,
-  );
+  const uncachedProviders =
+    mode === 'live' ? buildProviders(config, { ...io.env, REMIT_CACHE_MODE: 'live' }) : undefined;
+  const liveSpend = () => (p?.costs.usage.costUsd ?? 0) + (uncachedProviders?.costs.usage.costUsd ?? 0);
+  // The stability re-extraction spends too; it runs only while the cap has room.
+  if (liveSpend() < maxUsd)
+    metrics.stability = await measureStability(
+      outcomes.map((o) => o.item),
+      p?.llm,
+      uncachedProviders?.llm ?? p?.llm,
+    );
   const baselines: NonNullable<RunInfo['baselines']> = {};
   if (values.baseline) {
     const note = await baselineNote(values.baseline, io.env);
@@ -145,7 +149,10 @@ export async function evalCommand(argv: string[], io: Io, loadItems?: ItemLoader
       const variants = [];
       for (const variant of ['remit_requirements', 'own_requirements'] as const) {
         const outs = [];
-        for (const it of run) outs.push(await runSinglePass(it, llm, variant));
+        for (const it of run) {
+          if (liveSpend() >= maxUsd) break;
+          outs.push(await runSinglePass(it, llm, variant));
+        }
         variants.push(baselineMetrics(outs, variant));
       }
       baselines[values.baseline] = { note: `live (${llm.model})`, variants };
@@ -158,8 +165,9 @@ export async function evalCommand(argv: string[], io: Io, loadItems?: ItemLoader
     gitSha: gitSha(io.cwd),
     startedAt: new Date().toISOString(),
     jevModel: mode === 'simulated' ? 'simulated-jev' : config.jev.model,
-    stoppedForBudget,
+    stoppedForBudget: stoppedForBudget || liveSpend() >= maxUsd,
     baselines,
+    ...(mode === 'live' ? { liveSpendUsd: Number(liveSpend().toFixed(4)) } : {}),
   };
   const dir = writeReport(join(io.cwd, 'eval', 'reports'), info, metrics, outcomes);
   const line = summaryLine(info, metrics, dir.replace(`${io.cwd}/`, ''));
