@@ -7,6 +7,12 @@ export interface Reason {
   text: string;
 }
 
+/** A PR sentence quoted in a reason: trailing punctuation dropped, capped at the 200-character quote limit. */
+const quoteSentence = (s: string) => {
+  const t = s.replace(/[.!]+$/, '');
+  return t.length > 200 ? `${t.slice(0, 199)}…` : t;
+};
+
 const n = (x: number) => `\`${x.toFixed(2)}\``;
 
 export const REASONS = {
@@ -16,7 +22,7 @@ export const REASONS = {
   }),
   deferred: (sentence: string) => ({
     template: 'req.deferred',
-    text: `The PR description says this is left for later: "${sentence.replace(/[.!]+$/, '')}".`,
+    text: `The PR description says this is left for later: "${quoteSentence(sentence)}".`,
   }),
   contradicted: (p: number) => ({
     template: 'req.contradicted',
@@ -62,7 +68,7 @@ export const REASONS = {
   }),
   claimMismatch: (sentence: string) => ({
     template: 'req.claim_mismatch',
-    text: `The PR description says this is done: "${sentence.replace(/[.!]+$/, '')}".`,
+    text: `The PR description says this is done: "${quoteSentence(sentence)}".`,
   }),
   forwardReverseDisagree: () => ({
     template: 'check.disagree',

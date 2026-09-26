@@ -266,3 +266,57 @@ describe('remit init and remit demo', () => {
     expect(io.out).toMatch(/-- PR comment preview --/);
   });
 });
+
+describe('help and real provider wiring (M5 gate)', () => {
+  it.each([
+    ['review', /--dry-run\s+estimate calls, tokens and cost/],
+    ['units', /units --diff/],
+    ['extract', /extract <issue-url/],
+    ['init', /--force/],
+  ])('%s --help prints its options and exits 0', async (cmd, pattern) => {
+    const io = memoryIo(dir, {});
+    expect(await main([cmd, '--help'], io.sink)).toBe(0);
+    expect(io.out).toMatch(pattern);
+  });
+
+  it('shows the command help after an unknown option', async () => {
+    const io = memoryIo(dir, {});
+    expect(await main(['review', '--nope'], io.sink)).toBe(2);
+    expect(io.err).toMatch(/Unknown option '--nope'[\s\S]*--explain <id>/);
+  });
+
+  it('--offline replays only: with no cassettes every Jev call misses, and the review still completes', async () => {
+    const cache = mkdtempSync(join(tmpdir(), 'remit-cache-'));
+    try {
+      const io = memoryIo(dir, { REMIT_CACHE_DIR: cache });
+      expect(await main(['review', ...LOCAL, '--offline', '--json'], io.sink)).toBe(0);
+      const r = JSON.parse(io.out);
+      expect(r.warnings.join('\n')).toMatch(/no cassette/);
+      expect(r.usage.costUsd).toBe(0);
+    } finally {
+      rmSync(cache, { recursive: true, force: true });
+    }
+  });
+
+  it('--budget-usd overrides the per-review budget', async () => {
+    const io = memoryIo(dir, {});
+    expect(await main(['review', ...LOCAL, '--dry-run', '--budget-usd', '0.25'], io.sink)).toBe(0);
+    expect(io.out).toMatch(/budget \$0\.25/);
+  });
+
+  it('--verbose writes JSON logs with the review id to stderr', async () => {
+    const cache = mkdtempSync(join(tmpdir(), 'remit-cache-'));
+    try {
+      const io = memoryIo(dir, { REMIT_CACHE_DIR: cache });
+      expect(await main(['review', ...LOCAL, '--offline', '--verbose'], io.sink)).toBe(0);
+      const lines = io.err
+        .trim()
+        .split('\n')
+        .map((l) => JSON.parse(l) as { reviewId: string; msg: string });
+      expect(lines.map((l) => l.msg)).toEqual(expect.arrayContaining(['review started', 'review finished']));
+      expect(lines.every((l) => /^rv_/.test(l.reviewId))).toBe(true);
+    } finally {
+      rmSync(cache, { recursive: true, force: true });
+    }
+  });
+});

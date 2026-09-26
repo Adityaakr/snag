@@ -1,0 +1,420 @@
+{
+  "schemaVersion": "1.0.0",
+  "product": {
+    "name": "Remit",
+    "version": "0.1.0"
+  },
+  "input": {
+    "mode": "local",
+    "baseSha": "base",
+    "headSha": "head",
+    "issues": [
+      {
+        "owner": "acme",
+        "repo": "app",
+        "number": 21
+      }
+    ],
+    "linkStrength": "closing"
+  },
+  "versions": {
+    "questionSet": "qs-0.1.0",
+    "extractionPrompt": "xp-0.1.0",
+    "jevModel": "jev-1.13.0",
+    "llmModel": "claude-opus-5-5"
+  },
+  "requirements": [
+    {
+      "id": "R1",
+      "issue": {
+        "owner": "acme",
+        "repo": "app",
+        "number": 21
+      },
+      "text": "Failed uploads are retried up to 3 times.",
+      "quote": "Failed uploads must be retried up to 3 times",
+      "source": {
+        "kind": "body"
+      },
+      "kind": "behavior",
+      "explicitness": "explicit",
+      "priority": "must",
+      "examples": [],
+      "checkableInCode": true,
+      "signals": {
+        "ambiguous": 0.15,
+        "checkable": 0.92
+      }
+    }
+  ],
+  "units": [
+    {
+      "id": "U1",
+      "file": "config/defaults.ts",
+      "language": "ts",
+      "kind": "source",
+      "changeType": "modified",
+      "lines": {
+        "new": [
+          [
+            2,
+            2
+          ]
+        ],
+        "old": [
+          [
+            2,
+            2
+          ]
+        ]
+      },
+      "patch": "--- a/config/defaults.ts\n+++ b/config/defaults.ts\n@@ -1,4 +1,4 @@\n export const DEFAULTS = {\n-  requestTimeoutMs: 30000,\n+  requestTimeoutMs: 5000,\n   pageSize: 50,\n };\n",
+      "judgeView": "--- a/config/defaults.ts\n+++ b/config/defaults.ts\n@@ -1,4 +1,4 @@\n export const DEFAULTS = {\n-  requestTimeoutMs: 30000,\n+  requestTimeoutMs: 5000,\n   pageSize: 50,\n };\n",
+      "contentHash": "846f4f8398ad4ccb1d84341e621750b8598979be4a74432f575a9693682155ba",
+      "tokenEstimate": 57,
+      "facts": [],
+      "symbol": {
+        "name": "DEFAULTS",
+        "kind": "block",
+        "startLine": 1,
+        "endLine": 4
+      },
+      "before": "export const DEFAULTS = {\n  requestTimeoutMs: 30000,\n  pageSize: 50,\n};",
+      "after": "export const DEFAULTS = {\n  requestTimeoutMs: 5000,\n  pageSize: 50,\n};"
+    },
+    {
+      "id": "U2",
+      "file": "src/upload.ts",
+      "language": "ts",
+      "kind": "source",
+      "changeType": "modified",
+      "lines": {
+        "new": [
+          [
+            2,
+            8
+          ]
+        ],
+        "old": [
+          [
+            2,
+            2
+          ]
+        ]
+      },
+      "patch": "--- a/src/upload.ts\n+++ b/src/upload.ts\n@@ -1,3 +1,9 @@\n export async function upload(send: () => Promise<void>) {\n-  await send();\n+  for (let attempt = 1; ; attempt++) {\n+    try {\n+      return await send();\n+    } catch (e) {\n+      if (attempt >= 3) throw e;\n+    }\n+  }\n }\n",
+      "judgeView": "--- a/src/upload.ts\n+++ b/src/upload.ts\n@@ -1,3 +1,9 @@\n export async function upload(send: () => Promise<void>) {\n-  await send();\n+  for (let attempt = 1; ; attempt++) {\n+    try {\n+      return await send();\n+    } catch (e) {\n+      if (attempt >= 3) throw e;\n+    }\n+  }\n }\n",
+      "contentHash": "27b1e608a4831606f3ff0fd29cbf17f967691f87983d03ace91f1eb055dee1b6",
+      "tokenEstimate": 93,
+      "facts": [],
+      "symbol": {
+        "name": "upload",
+        "kind": "function",
+        "startLine": 1,
+        "endLine": 9
+      },
+      "before": "export async function upload(send: () => Promise<void>) {\n  await send();\n}",
+      "after": "export async function upload(send: () => Promise<void>) {\n  for (let attempt = 1; ; attempt++) {\n    try {\n      return await send();\n    } catch (e) {\n      if (attempt >= 3) throw e;\n    }\n  }\n}"
+    },
+    {
+      "id": "U3",
+      "file": "test/upload.test.ts",
+      "language": "ts",
+      "kind": "test",
+      "changeType": "added",
+      "lines": {
+        "new": [
+          [
+            1,
+            8
+          ]
+        ],
+        "old": []
+      },
+      "patch": "--- /dev/null\n+++ b/test/upload.test.ts\n@@ -0,0 +1,8 @@\n+import { expect, it, vi } from 'vitest';\n+import { upload } from '../src/upload';\n+\n+it('retries three times', async () => {\n+  const send = vi.fn().mockRejectedValue(new Error('x'));\n+  await expect(upload(send)).rejects.toThrow('x');\n+  expect(send).toHaveBeenCalledTimes(3);\n+});\n",
+      "judgeView": "--- /dev/null\n+++ b/test/upload.test.ts\n@@ -0,0 +1,8 @@\n+import { expect, it, vi } from 'vitest';\n+import { upload } from '../src/upload';\n+\n+it('retries three times', async () => {\n+  const send = vi.fn().mockRejectedValue(new Error('x'));\n+  await expect(upload(send)).rejects.toThrow('x');\n+  expect(send).toHaveBeenCalledTimes(3);\n+});\n",
+      "contentHash": "322a2613c8047b5b00182262de35817242708c4b64d0e418022448f9c1af92bf",
+      "tokenEstimate": 114,
+      "facts": [],
+      "symbol": {
+        "name": "retries three times",
+        "kind": "test",
+        "startLine": 4,
+        "endLine": 8
+      },
+      "after": "it('retries three times', async () => {\n  const send = vi.fn().mockRejectedValue(new Error('x'));\n  await expect(upload(send)).rejects.toThrow('x');\n  expect(send).toHaveBeenCalledTimes(3);\n});",
+      "testTitles": [
+        "retries three times"
+      ]
+    }
+  ],
+  "requirementVerdicts": [
+    {
+      "requirementId": "R1",
+      "status": "done",
+      "confidence": 0.85,
+      "calibrated": false,
+      "tested": "as_stated",
+      "evidence": [
+        {
+          "unitId": "U2",
+          "file": "src/upload.ts",
+          "lines": [
+            [
+              2,
+              8
+            ]
+          ],
+          "probability": 0.9
+        }
+      ],
+      "testEvidence": [
+        {
+          "unitId": "U3",
+          "file": "test/upload.test.ts",
+          "lines": [
+            [
+              1,
+              8
+            ]
+          ],
+          "probability": 0.9
+        }
+      ],
+      "answers": [
+        {
+          "call": "issue.v0",
+          "question": "ambiguous",
+          "type": "noul",
+          "value": 0.15
+        },
+        {
+          "call": "issue.v0",
+          "question": "checkable_in_code",
+          "type": "noul",
+          "value": 0.92
+        },
+        {
+          "call": "forward.v0",
+          "question": "coverage",
+          "type": "score",
+          "value": 2.78,
+          "probabilities": {
+            "0": 0.02,
+            "1": 0.03,
+            "2": 0.1,
+            "3": 0.85
+          },
+          "confidence": 0.85
+        },
+        {
+          "call": "forward.v0",
+          "question": "conflict",
+          "type": "noul",
+          "value": 0.05
+        },
+        {
+          "call": "forward.v0",
+          "question": "evidence",
+          "type": "choice",
+          "value": "U2",
+          "probabilities": {
+            "U1": 0.05,
+            "U2": 0.9,
+            "none": 0.05
+          },
+          "confidence": 0.9
+        },
+        {
+          "call": "tests.v0",
+          "question": "asserts_as_stated",
+          "type": "noul",
+          "value": 0.88
+        },
+        {
+          "call": "tests.v0",
+          "question": "asserts_differently",
+          "type": "noul",
+          "value": 0.04
+        },
+        {
+          "call": "tests.v0",
+          "question": "test_evidence",
+          "type": "choice",
+          "value": "U3",
+          "probabilities": {
+            "U3": 0.9,
+            "none": 0.1
+          },
+          "confidence": 0.9
+        }
+      ],
+      "reasons": [
+        {
+          "template": "req.done",
+          "text": "Implemented (`0.85`)."
+        }
+      ]
+    }
+  ],
+  "unitVerdicts": [
+    {
+      "unitId": "U1",
+      "role": "unexplained_behavioral",
+      "answers": [
+        {
+          "call": "reverse.v0",
+          "question": "serves",
+          "type": "choice",
+          "value": "none",
+          "probabilities": {
+            "R1": 0.1,
+            "none": 0.9
+          },
+          "confidence": 0.9
+        },
+        {
+          "call": "reverse.v0",
+          "question": "plumbing",
+          "type": "noul",
+          "value": 0.05
+        },
+        {
+          "call": "reverse.v0",
+          "question": "behavior_change",
+          "type": "noul",
+          "value": 0.85
+        }
+      ],
+      "reasons": [
+        {
+          "template": "unit.unexplained_behavioral",
+          "text": "Changes observable behavior that no requirement mentions (`0.85`)."
+        }
+      ]
+    },
+    {
+      "unitId": "U2",
+      "role": "implements",
+      "answers": [
+        {
+          "call": "reverse.v0",
+          "question": "serves",
+          "type": "choice",
+          "value": "R1",
+          "probabilities": {
+            "R1": 0.9,
+            "none": 0.1
+          },
+          "confidence": 0.9
+        },
+        {
+          "call": "reverse.v0",
+          "question": "plumbing",
+          "type": "noul",
+          "value": 0.1
+        },
+        {
+          "call": "reverse.v0",
+          "question": "behavior_change",
+          "type": "noul",
+          "value": 0.8
+        }
+      ],
+      "reasons": [
+        {
+          "template": "unit.implements",
+          "text": "Implements R1."
+        }
+      ],
+      "servesRequirementId": "R1"
+    },
+    {
+      "unitId": "U3",
+      "role": "implements",
+      "answers": [
+        {
+          "call": "reverse.v0",
+          "question": "serves",
+          "type": "choice",
+          "value": "R1",
+          "probabilities": {
+            "R1": 0.9,
+            "none": 0.1
+          },
+          "confidence": 0.9
+        },
+        {
+          "call": "reverse.v0",
+          "question": "plumbing",
+          "type": "noul",
+          "value": 0.1
+        },
+        {
+          "call": "reverse.v0",
+          "question": "behavior_change",
+          "type": "noul",
+          "value": 0.8
+        },
+        {
+          "call": "reverse.v0",
+          "question": "loosens_test",
+          "type": "noul",
+          "value": 0.05
+        }
+      ],
+      "reasons": [
+        {
+          "template": "unit.implements",
+          "text": "Implements R1."
+        }
+      ],
+      "servesRequirementId": "R1"
+    }
+  ],
+  "claims": [],
+  "findings": [
+    {
+      "id": "F-U1",
+      "type": "unit",
+      "targetId": "U1",
+      "priority": "P1",
+      "route": "reviewer_attention",
+      "confidence": 0.85,
+      "locations": [
+        {
+          "file": "config/defaults.ts",
+          "lines": [
+            2,
+            2
+          ]
+        }
+      ],
+      "reasons": [
+        {
+          "template": "unit.unexplained_behavioral",
+          "text": "Changes observable behavior that no requirement mentions (`0.85`)."
+        }
+      ],
+      "contentKey": "unit:846f4f8398ad4ccb1d84341e621750b8"
+    }
+  ],
+  "summary": {
+    "counts": {
+      "done": 1,
+      "unexplained_behavioral": 1,
+      "implements": 2,
+      "P1": 1
+    },
+    "mode": "comment_only"
+  },
+  "warnings": [],
+  "usage": {
+    "jevInputTokens": 0,
+    "llmInputTokens": 0,
+    "llmOutputTokens": 0,
+    "costUsd": 0,
+    "latencyMs": 0,
+    "calls": 0
+  }
+}

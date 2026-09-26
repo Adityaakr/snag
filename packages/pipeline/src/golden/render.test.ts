@@ -63,6 +63,16 @@ describe('renderer snapshots from golden results (M5)', () => {
     );
   });
 
+  it('unrelated_config: check run with summary and annotation batches, and the JSON result', async () => {
+    const { result } = await runScenario(loadScenario('unrelated_config'));
+    const run = checkRun(result, 'rv_unrelated_config');
+    expect(run.annotationBatches.flat().length).toBeGreaterThan(0);
+    await expect(`${JSON.stringify(run, null, 2)}\n`).toMatchFileSnapshot(
+      snap('unrelated_config.check.json'),
+    );
+    await expect(renderJson(result)).toMatchFileSnapshot(snap('unrelated_config.review.json'));
+  });
+
   it('unrelated_config: SARIF 2.1.0', async () => {
     const { result } = await runScenario(loadScenario('unrelated_config'));
     await expect(`${JSON.stringify(renderSarif(result), null, 2)}\n`).toMatchFileSnapshot(

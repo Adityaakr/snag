@@ -674,3 +674,12 @@ describe('last 6.7 edges (M4 re-audit)', () => {
     expect(notes(0.49)).toContainEqual({ kind: 'examples_not_checked', indexes: [0] });
   });
 });
+
+describe('reason text limits', () => {
+  it('caps a quoted PR sentence at 200 characters and drops trailing punctuation', async () => {
+    const { REASONS } = await import('./reasons.js');
+    const long = REASONS.claimMismatch(`${'word '.repeat(80)}.`).text;
+    expect(long.length).toBeLessThan(260);
+    expect(REASONS.deferred('Later.').text).toBe('The PR description says this is left for later: "Later".');
+  });
+});
