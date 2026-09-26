@@ -116,8 +116,8 @@ Status: TODO
 - [ ] The `security-reviewer` subagent returns `VERDICT: PASS`.
 
 ## M10 Eval-driven improvement
-Status: TODO
-- [ ] This needs live `TYPESAFE_API_KEY` and `ANTHROPIC_API_KEY`. Without them the milestone is `BLOCKED-HUMAN`, with exact unblock steps.
+Status: BLOCKED-HUMAN
+- [x] This needs live `TYPESAFE_API_KEY` and `ANTHROPIC_API_KEY`. Without them the milestone is `BLOCKED-HUMAN`, with exact unblock steps. (evidence: neither key is set and there is no .env on 2026-09-27; BLOCKERS B8 lists the ordered unblock steps, which also close B2, B3 and B5)
 - [ ] A live dev baseline on corpora A, B and D (plus C if it has data), with both baselines.
 - [ ] Up to 15 experiments per 11.7, each logged before and after.
 - [ ] Freeze the question set and calibration, then do one test-split run.
