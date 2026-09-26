@@ -1,0 +1,2 @@
+Remit  base..head -> the linked issue   comment-only   cost $0.00   0 s
+  warning: No linked issue was found, so Remit cannot check intent. Link one with a closing keyword in the PR description, for example "Fixes #123" or "Closes owner/repo#123".

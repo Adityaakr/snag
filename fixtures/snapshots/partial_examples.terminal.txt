@@ -1,0 +1,2 @@
+Remit  base..head -> #18   comment-only   cost $0.00   0 s
+  R1    🟡 PARTIAL                 0.65  src/text.py:2                       P1 reviewer

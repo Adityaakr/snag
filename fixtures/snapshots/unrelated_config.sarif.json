@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "Remit",
+          "version": "0.1.0",
+          "rules": [
+            {
+              "id": "remit/unit/unit.unexplained_behavioral",
+              "name": "unit.unit.unexplained_behavioral",
+              "shortDescription": {
+                "text": "unit unit unexplained behavioral"
+              }
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "ruleId": "remit/unit/unit.unexplained_behavioral",
+          "level": "warning",
+          "message": {
+            "text": "Changes observable behavior that no requirement mentions (`0.85`)."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "config/defaults.ts"
+                },
+                "region": {
+                  "startLine": 2,
+                  "endLine": 2
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "remitContentKey/v1": "unit:846f4f8398ad4ccb1d84341e621750b8"
+          },
+          "properties": {
+            "findingId": "F-U1",
+            "route": "reviewer_attention",
+            "priority": "P1",
+            "confidence": 0.85
+          }
+        }
+      ]
+    }
+  ]
+}

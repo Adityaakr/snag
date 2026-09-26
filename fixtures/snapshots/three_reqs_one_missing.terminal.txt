@@ -1,0 +1,4 @@
+Remit  base..head -> #12   comment-only   cost $0.00   0 s
+  R1    ✅ done                    0.85  src/reports/export.ts:15-17       
+  R2    ✅ done                    0.85  src/reports/export.ts:9-14        
+  R3    ❌ MISSING                 0.92  (none)                              P0 send back  claim mismatch

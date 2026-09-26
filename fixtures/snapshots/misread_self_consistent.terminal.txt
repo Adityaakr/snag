@@ -1,0 +1,2 @@
+Remit  base..head -> #7   comment-only   cost $0.00   0 s
+  R1    ⛔ CONTRADICTED            0.91  src/api/users.ts:5-7                P0 send back  claim mismatch
