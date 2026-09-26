@@ -12,6 +12,7 @@ import type { Context, Hono } from 'hono';
 import { deleteCookie, getCookie, setCookie } from 'hono/cookie';
 import { z } from 'zod';
 import type { DbStore } from './db/store.js';
+import { shadowRecords, toJsonl } from './export.js';
 import { RateLimiter, readSession, type Session, signSession } from './session.js';
 
 export interface DashboardDeps {
@@ -252,6 +253,15 @@ export function mountDashboard(app: Hono, deps: DashboardDeps): void {
         retention: defaults.retention,
         surfaces: defaults.surfaces,
       },
+    });
+  });
+
+  /** Corpus C export for the user's installations, as JSON Lines. */
+  app.get('/api/export/shadow', async (c) => {
+    const s = me(c);
+    return c.body(toJsonl(await shadowRecords(deps.store, s.installationIds)), 200, {
+      'content-type': 'application/x-ndjson',
+      'content-disposition': 'attachment; filename="remit-shadow.jsonl"',
     });
   });
 
