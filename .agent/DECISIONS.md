@@ -143,3 +143,11 @@ Append-only. Each entry: date, decision, alternatives, why. Deviations from BUIL
 - Scenarios give new implementing functions a real caller under `src/pages/` so the dead-implementation rule does not fire, except in `dead_implementation`. `large_diff` uses 60 filler modules that share "report export" with the requirements and 158 that do not, a `max_units` of 219 for the size warning, and puts R2's code low in the BM25 order so the first tranche misses it and the widen pass finds it.
 - Fixture trees are excluded from Biome so they stay byte-identical to their diffs.
 - Update 2026-09-26 (M4 gate follow-ups): unit rule 5 compares the probability of the most likely requirement option of `serves` (not the top answer, which may be `none`) with the 0.4 to 0.6 band; test candidates use the same rerank procedure as implementation candidates (rerank target ids `R<n>#t<k>`, implementation `R<n>#b<k>`); golden expectations now encode Appendix D fully (no other findings in scenarios 1 and 11, both readings in 3, `tested: differently` in 2, the P2 benign findings and `formatting_only` filter in 5), and the golden tests assert that PR sentences reach only `claims.v0` states.
+
+## 2026-09-26 D23 CLI review details (M5)
+- `--json`, `--markdown` and `--sarif` are mutually exclusive on stdout; `--out <dir>` writes all of them (review.json, comment.md, review.sarif, terminal.txt, and rework.md when there is a P0).
+- `--dry-run` builds units locally and guesses the requirement count from the issue text (task-list items, else requirement-like sentences); it calls no model. GitHub mode still reads the PR from GitHub.
+- GitHub mode from the CLI does not fetch the head tree, so `new_symbol_unreferenced` is skipped there with a note; local mode searches the working tree or the head commit.
+- A draft PR with `draft_prs: skip` prints the reason and exits `0`.
+- `--verbose` writes pino JSON logs with `reviewId` to stderr; secret-looking fields are redacted.
+- Rendering copy: parentheses, dashes and `!` are not escaped in sanitized text (brackets are, which already blocks links); reason templates keep their monospace numbers by rendering backtick spans through the safe `code` helper.

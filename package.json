@@ -21,7 +21,8 @@
     "progress": "node scripts/progress.mjs",
     "schemas": "tsx packages/core/src/contracts/write-schemas.ts",
     "remit": "tsx --conditions=source packages/cli/src/bin.ts",
-    "fixtures:golden": "tsx --conditions=source scripts/fixtures/golden.ts"
+    "fixtures:golden": "tsx --conditions=source scripts/fixtures/golden.ts",
+    "demo": "tsx --conditions=source packages/cli/src/bin.ts demo"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.14",

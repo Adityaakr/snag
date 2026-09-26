@@ -1,6 +1,9 @@
 import { BRAND } from '@remit/core';
+import { demoCommand } from './commands/demo.js';
 import { doctorCommand } from './commands/doctor.js';
 import { extractCommand } from './commands/extract.js';
+import { initCommand } from './commands/init.js';
+import { reviewCommand } from './commands/review.js';
 import { unitsCommand } from './commands/units.js';
 import { CliError, EXIT } from './errors.js';
 import type { Io } from './io.js';
@@ -8,6 +11,15 @@ import type { Io } from './io.js';
 type Command = (argv: string[], io: Io) => Promise<number>;
 
 const COMMANDS: Record<string, { run: Command; summary: string }> = {
+  demo: { run: demoCommand, summary: 'Offline demo on two recorded reviews (no keys needed)' },
+  init: {
+    run: async (argv, io) => initCommand(argv, io),
+    summary: 'Write a commented .remit.yml and check env vars',
+  },
+  review: {
+    run: (argv, io) => reviewCommand(argv, io),
+    summary: 'Review a GitHub PR, or a local diff against an issue',
+  },
   extract: {
     run: (argv, io) => extractCommand(argv, io),
     summary: 'Requirements and open questions for an issue URL or markdown file',

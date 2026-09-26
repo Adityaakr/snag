@@ -62,12 +62,12 @@ export function sanitize(text: string, max = MAX_QUOTE, keepEdges = false): stri
   return out;
 }
 
-/** Sanitizes for plain terminal output: no markdown escaping, but invisible characters and control codes removed. */
 // biome-ignore lint/suspicious/noControlCharactersInRegex: matches terminal escape sequences in user text
 const ANSI_ESCAPE = /\x1b\[[0-9;]*[A-Za-z]/g;
 // biome-ignore lint/suspicious/noControlCharactersInRegex: matches control characters in user text
 const CONTROL = /[\x00-\x08\x0b-\x1f\x7f]/g;
 
+/** Sanitizes for plain terminal output: no markdown escaping, but invisible characters and control codes removed. */
 export function plain(text: string, max = MAX_QUOTE): string {
   return truncate(
     stripInvisible(text).replace(ANSI_ESCAPE, '').replace(CONTROL, '').replace(/\s+/g, ' ').trim(),
