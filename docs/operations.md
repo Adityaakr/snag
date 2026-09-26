@@ -47,6 +47,8 @@ Set these environment variables. Every variable also has a `NAME_FILE` form that
 | `SESSION_SECRET`, `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | for the dashboard | the session secret must be at least 32 characters |
 | `REMIT_DAILY_BUDGET_USD` | no | per installation, default `20`. Every run reserves `budgets.max_usd_per_review` (capped at a quarter of this budget) in the `spend_ledger` table and settles to its real spend, whether it finished, was cancelled or failed. Issue checklists count against the same budget. |
 | `REMIT_REVIEWS_PER_HOUR` | no | per installation, default `200`; past it, PR and issue events wait 5 minutes. This smooths bursts and does not cap cost; the daily budget does. The count is kept per web process. |
+| `REMIT_LLM_PRICES` | no | JSON, model id to `{"input": n, "output": n}` in USD per million tokens, added to the built-in table. Budgets use the higher of this price and the repository's `llm_prices`, and a model with no price here is not called (extraction falls back to the task list). |
+| `REMIT_JEV_PRICE_PER_MILLION_USD` | no | default `0.042`; the floor for Jev's price, which a repository can raise but not lower. |
 | `METRICS_TOKEN` | no | bearer token for `/metrics` on the web and worker ports |
 | `LOG_LEVEL` | no | `info` by default |
 | `OTEL_*` | no | see "Tracing" |

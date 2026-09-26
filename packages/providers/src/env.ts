@@ -26,6 +26,61 @@ export interface EnvProviders {
   notes: string[];
 }
 
+export interface OperatorPrices {
+  /** USD per million tokens, by model id. */
+  llm: Record<string, { input: number; output: number }>;
+  jevPerMillionUsd: number;
+}
+
+/**
+ * The operator's price table: the built-in defaults, extended or overridden by `REMIT_LLM_PRICES` (JSON, model id to
+ * `{input, output}`) and `REMIT_JEV_PRICE_PER_MILLION_USD`. Invalid values throw at startup.
+ */
+export function operatorPricesFromEnv(
+  defaults: RemitConfig,
+  env: Record<string, string | undefined>,
+): OperatorPrices {
+  const llm: OperatorPrices['llm'] = { ...defaults.llm_prices };
+  if (env.REMIT_LLM_PRICES) {
+    const parsed: unknown = JSON.parse(env.REMIT_LLM_PRICES);
+    if (!parsed || typeof parsed !== 'object') throw new Error('REMIT_LLM_PRICES must be a JSON object');
+    for (const [model, p] of Object.entries(parsed)) {
+      const { input, output } = (p ?? {}) as { input?: unknown; output?: unknown };
+      if (typeof input !== 'number' || typeof output !== 'number' || !(input > 0) || !(output > 0))
+        throw new Error(`REMIT_LLM_PRICES.${model} needs positive input and output prices`);
+      llm[model] = { input, output };
+    }
+  }
+  const jev = env.REMIT_JEV_PRICE_PER_MILLION_USD
+    ? Number(env.REMIT_JEV_PRICE_PER_MILLION_USD)
+    : defaults.jev.price_per_million_input_usd;
+  if (!(jev > 0)) throw new Error('REMIT_JEV_PRICE_PER_MILLION_USD must be a positive number');
+  return { llm, jevPerMillionUsd: jev };
+}
+
+/**
+ * The prices budgets use. With operator prices, each is the higher of the operator's and the repository's, and a model
+ * the operator has not priced is not allowed. Without them (the CLI and the Action, where the repository pays), the
+ * repository's config is used as is.
+ */
+export function resolvePrices(
+  config: RemitConfig,
+  operator: OperatorPrices | undefined,
+): { llm: { input: number; output: number } | undefined; llmAllowed: boolean; jevPerMillionUsd: number } {
+  const repo = config.llm_prices[config.extraction.model];
+  if (!operator)
+    return { llm: repo, llmAllowed: true, jevPerMillionUsd: config.jev.price_per_million_input_usd };
+  const floor = operator.llm[config.extraction.model];
+  return {
+    llm: floor && {
+      input: Math.max(floor.input, repo?.input ?? 0),
+      output: Math.max(floor.output, repo?.output ?? 0),
+    },
+    llmAllowed: Boolean(floor),
+    jevPerMillionUsd: Math.max(operator.jevPerMillionUsd, config.jev.price_per_million_input_usd),
+  };
+}
+
 export function cacheDir(env: Record<string, string | undefined>): string {
   return env.REMIT_CACHE_DIR ?? join(env.XDG_CACHE_HOME ?? join(homedir(), '.cache'), BRAND.slug);
 }
@@ -39,6 +94,11 @@ export function providersFromEnv(
     logger?: Logger;
     breakers?: boolean;
     breakerOptions?: CircuitOptions;
+    /**
+     * Prices the operator trusts (the App). Repository config can raise a price but never lower it below these, and a
+     * model with no operator price gets no live LLM calls, so a repository cannot make spend invisible to budgets.
+     */
+    operatorPrices?: OperatorPrices;
   } = {},
 ): EnvProviders {
   const notes: string[] = [];
@@ -46,15 +106,19 @@ export function providersFromEnv(
   // Local caches keep answers by key only, never code or issue text (BUILD_PROMPT 7.4, 9 rule 9).
   const store = new FileStore(cacheDir(env), { contentFree: true });
   const costs = new CostTracker(opts.budgetUsd ?? config.budgets.max_usd_per_review);
-  const price = config.llm_prices[config.extraction.model];
+  const { llm: price, llmAllowed, jevPerMillionUsd: jevPrice } = resolvePrices(config, opts.operatorPrices);
   const llmPrice = { inputPerMillionUsd: price?.input ?? 0, outputPerMillionUsd: price?.output ?? 0 };
-  if (!price)
+  if (!llmAllowed)
+    notes.push(
+      `${config.extraction.model} has no operator price, so it is not called; extraction uses the task list only.`,
+    );
+  else if (!price)
     notes.push(
       `No price is configured for ${config.extraction.model}; its cost is counted as 0 (set llm_prices in .${BRAND.slug}.yml).`,
     );
 
   let liveLlm: LlmProvider | undefined;
-  if (!opts.offline) {
+  if (!opts.offline && llmAllowed) {
     if (config.extraction.provider === 'anthropic' && env.ANTHROPIC_API_KEY) {
       liveLlm = new AnthropicLlm({
         model: config.extraction.model,
@@ -90,7 +154,7 @@ export function providersFromEnv(
     : opts.offline
       ? replayOnlyLlm(config, store)
       : undefined;
-  if (!liveLlm && !opts.offline && config.extraction.mode !== 'tasklist_only')
+  if (!liveLlm && !opts.offline && llmAllowed && config.extraction.mode !== 'tasklist_only')
     notes.push(
       `${config.extraction.provider === 'anthropic' ? 'ANTHROPIC_API_KEY' : 'OPENAI_COMPATIBLE_API_KEY'} is not set; extraction uses the task list only.`,
     );
@@ -99,7 +163,7 @@ export function providersFromEnv(
     !opts.offline && env.TYPESAFE_API_KEY
       ? new LiveJev({
           model: config.jev.model,
-          pricePerMillionUsd: config.jev.price_per_million_input_usd,
+          pricePerMillionUsd: jevPrice,
           apiKey: env.TYPESAFE_API_KEY,
           maxStateTokens: config.jev.max_state_tokens,
           concurrency: config.jev.concurrency,

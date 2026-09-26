@@ -78,10 +78,8 @@ export async function confirmChecklist(
   const current = await deps.store.getChecklist(repo, ref.number);
   if (!current) return 'none';
   const issue = await gh.getIssue(ref);
-  if (issue.contentHash !== current.contentHash) {
-    await postChecklist(gh, ref, deps, installationId);
-    return 'stale';
-  }
+  // A stale checklist is read again by the caller through the debounced, rate-limited issue queue, never inline.
+  if (issue.contentHash !== current.contentHash) return 'stale';
   await deps.store.saveChecklist({ ...current, confirmedBy: login, confirmedAt: new Date().toISOString() });
   return 'confirmed';
 }
