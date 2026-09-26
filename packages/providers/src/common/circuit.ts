@@ -63,8 +63,12 @@ export class CircuitBreaker {
         this.openedAt = this.now;
         this.opts.onOpen?.(this.name);
       }
+      // A trial that failed without counting (a cancellation, a bad request) proves nothing: stay open.
+      if (this.state === 'half_open') {
+        this.state = 'open';
+        this.openedAt = this.now;
+      }
       this.trial = false;
-      if (this.state === 'half_open') this.state = 'closed';
       throw e;
     }
   }

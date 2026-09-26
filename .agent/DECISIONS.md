@@ -279,3 +279,11 @@ Append-only. Each entry: date, decision, alternatives, why. Deviations from BUIL
   - installation access lasts the 8-hour session;
   - the image's base tag is pinned by Renovate's first run rather than now.
 - `packages/server/src/pg-queue.test.ts:95`: the test "debounces a burst for the same key into one run" was renamed and re-scoped as "debounces a burst for the same key: at most one run now and one in the next slot, per slot the burst spans". The old bound (at most 2 runs) was wrong when the three sends crossed a 1 s slot boundary; pg-boss then legitimately creates up to 3 runs, and the test flaked on 2026-09-27. The new assertion keeps at most 2 runs within one slot and computes the allowance from the send timestamps. This follows pg-boss's `sendDebounced` source (manager.js, `singletonNextSlot`) rather than weakening the check.
+- Second security review: M1 fixed; M2 left a leak. The reservation was made before the `try` whose `finally` settles it, so a job superseded before it started, or a failed `createCheckRun`, kept a full reservation all day. Fixes:
+  - everything after the reservation now runs in that `try` (a pre-start supersession returns `cancelled` and is not retried);
+  - a review's reservation and its cost limit are capped at a quarter of the daily budget;
+  - ledger rows are deleted on uninstall and pruned after two days;
+  - pre-aborted calls use the `cancelled` kind;
+  - a half-open trial that fails without counting keeps the circuit open;
+  - logs redact any `env.*` value.
+  - Regression tests: `limits.test.ts` "budget reservations never leak", `circuit.test.ts` "half-open trials".

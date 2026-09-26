@@ -322,5 +322,11 @@ describe('spend ledger', () => {
     await store.settleSpend('a', 0.12);
     expect(await store.spendToday(1)).toBeCloseTo(0.12);
     expect(await store.spendToday(1, new Date(Date.now() + 2 * 86_400_000))).toBe(0);
+    // Uninstall deletes the installation's ledger rows; cleanup prunes rows older than two days.
+    await store.addInstallation(2, 'b', []);
+    await store.deleteInstallation(2);
+    expect(await store.spendToday(2)).toBe(0);
+    await store.cleanup(new Date(Date.now() + 3 * 86_400_000));
+    expect(await store.spendToday(1)).toBe(0);
   });
 });

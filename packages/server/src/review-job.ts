@@ -93,7 +93,9 @@ async function runPullReview(
   const check = (s: AbortSignal) => {
     if (s.aborted) throw new Superseded();
   };
-  const { config, errors } = await loadRepoConfig(gh, ref.owner, ref.repo);
+  const loaded = await loadRepoConfig(gh, ref.owner, ref.repo);
+  let config = loaded.config;
+  const errors = loaded.errors;
   const pull = await gh.getPull(ref);
   if (pull.draft && config.draft_prs === 'skip')
     return { status: 'skipped', reason: 'draft PR (draft_prs: skip)' };
@@ -101,7 +103,10 @@ async function runPullReview(
   // the reservation is settled to the real spend however the review ends (done, cancelled or failed).
   let reserved = false;
   if (deps.dailyBudgetUsd !== undefined) {
-    await deps.store.reserveSpend(installationId, reviewId, config.budgets.max_usd_per_review);
+    // One review may use at most a quarter of the installation's daily budget, whatever the repository config says.
+    const perReview = Math.min(config.budgets.max_usd_per_review, deps.dailyBudgetUsd / 4);
+    config = { ...config, budgets: { ...config.budgets, max_usd_per_review: perReview } };
+    await deps.store.reserveSpend(installationId, reviewId, perReview);
     const total = await deps.store.spendToday(installationId);
     if (total > deps.dailyBudgetUsd) {
       await deps.store.settleSpend(reviewId, 0);
@@ -124,17 +129,20 @@ async function runPullReview(
   }
   let reviewCosts: CostTracker | undefined;
   log.info({ head: pull.headSha }, 'review started');
-  check(signal);
-  const run = config.surfaces.check_run
-    ? await gh.createCheckRun(ref.owner, ref.repo, {
-        name: BRAND.checkName,
-        headSha: pull.headSha,
-        status: 'in_progress',
-        externalId: reviewId,
-      })
-    : null;
+  let run: { id: number } | null = null;
   const started = Date.now();
+  // Everything after the reservation runs inside this try, so the finally always settles it (even when the job is
+  // superseded or GitHub fails before the check run exists).
   try {
+    check(signal);
+    run = config.surfaces.check_run
+      ? await gh.createCheckRun(ref.owner, ref.repo, {
+          name: BRAND.checkName,
+          headSha: pull.headSha,
+          status: 'in_progress',
+          externalId: reviewId,
+        })
+      : null;
     check(signal);
     const ingest = await ingestPullRequest(gh, ref);
     check(signal);

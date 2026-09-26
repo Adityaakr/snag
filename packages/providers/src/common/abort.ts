@@ -10,7 +10,7 @@ import type { LlmMessage, LlmProvider, LlmResult, StructuredOptions } from '../l
 import { ProviderError } from './errors.js';
 
 const cancelled = (name: string) =>
-  new ProviderError(name, 'bad_request', 'cancelled: a newer push superseded this review');
+  new ProviderError(name, 'cancelled', 'cancelled: a newer push superseded this review');
 
 export class AbortableJev implements JevProvider {
   constructor(

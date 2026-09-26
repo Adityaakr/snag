@@ -30,11 +30,8 @@ export const REDACT_PATHS = [
   '*.clientSecret',
   'apiKey',
   '*.apiKey',
-  'env.TYPESAFE_API_KEY',
-  'env.ANTHROPIC_API_KEY',
-  'env.GITHUB_APP_PRIVATE_KEY',
-  'env.SESSION_SECRET',
-  'env.SECRETS_ENCRYPTION_KEY',
+  // Any environment object that reaches a log line is redacted whole.
+  'env.*',
 ];
 
 export type { Logger };

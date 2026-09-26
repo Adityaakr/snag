@@ -402,6 +402,7 @@ export class DbStore implements Store, DeliveryStore {
     const names = repos.map((r) => r.fullName);
     await this.db.transaction(async (tx) => {
       if (names.length) await tx.delete(t.feedback).where(inArray(t.feedback.repo, names));
+      await tx.delete(t.spendLedger).where(eq(t.spendLedger.installationId, id));
       // Reviews, units, findings, facts, payloads and checklists cascade from repositories.
       await tx.delete(t.installations).where(eq(t.installations.id, id));
     });
@@ -448,6 +449,10 @@ export class DbStore implements Store, DeliveryStore {
       .delete(t.payloads)
       .where(lt(t.payloads.expiresAt, now))
       .returning({ reviewId: t.payloads.reviewId });
+    // The ledger only needs today; keep two days for the UTC boundary.
+    await this.db
+      .delete(t.spendLedger)
+      .where(lt(t.spendLedger.createdAt, new Date(now.getTime() - 2 * 86_400_000)));
     const ids = [...new Set(expired.map((e) => e.reviewId))];
     if (ids.length) {
       await this.db

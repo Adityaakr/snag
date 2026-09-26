@@ -23,10 +23,10 @@ describe('per-installation daily budget', () => {
       metrics,
     });
     expect(first.status).toBe('done');
-    // The reservation (max_usd_per_review, 0.50) was settled to the real spend (the fakes cost nothing).
+    // The reservation (max_usd_per_review 0.50, capped at a quarter of the budget: 0.25) settled to the real spend.
     expect(await store.spendToday(7)).toBe(0);
-    // Earlier spend today: 0.60. A new review reserves 0.50, which would pass the 1.00 budget, so it is skipped.
-    await store.reserveSpend(7, 'rev_earlier', 0.6);
+    // Earlier spend today: 0.80. A new review reserves 0.25, which would pass the 1.00 budget, so it is skipped.
+    await store.reserveSpend(7, 'rev_earlier', 0.8);
     const second = await reviewPullRequest(repo.gh, 7, repo.pr, {
       providers: repo.providers,
       store,
@@ -40,7 +40,7 @@ describe('per-installation daily budget', () => {
       output: { title: 'Daily budget reached' },
     });
     expect(metrics.render()).toContain('remit_budget_skips_total 1');
-    expect(await store.spendToday(7)).toBeCloseTo(0.6);
+    expect(await store.spendToday(7)).toBeCloseTo(0.8);
     // Another installation is not affected.
     expect(
       (await reviewPullRequest(repo.gh, 8, repo.pr, { providers: repo.providers, store, dailyBudgetUsd: 1 }))
@@ -60,13 +60,13 @@ describe('per-installation daily budget', () => {
     };
     const charged = (config: Parameters<typeof repo.providers>[0]) => {
       const costs = new CostTracker(10);
-      costs.addJev(1000, 0.7);
+      costs.addJev(1000, 0.8);
       return { ...failing.providers(config), costs };
     };
     await expect(
       reviewPullRequest(failing.gh, 7, failing.pr, { providers: charged, store, dailyBudgetUsd: 1 }),
     ).rejects.toThrow('socket');
-    expect(await store.spendToday(7)).toBeCloseTo(0.7);
+    expect(await store.spendToday(7)).toBeCloseTo(0.8);
     const next = await reviewPullRequest(repo.gh, 7, repo.pr, {
       providers: repo.providers,
       store,
@@ -116,5 +116,49 @@ describe('per-installation review rate', () => {
     expect(delays).toEqual([0, 0, RATE_LIMITED_DEBOUNCE_MS]);
     expect(metrics.render()).toContain('remit_reviews_delayed_total 1');
     await queue.idle();
+  });
+});
+
+describe('budget reservations never leak', () => {
+  it('settles the reservation when the job is superseded before it starts', async () => {
+    const store = new MemoryStore();
+    const repo = fakeRepo('three_reqs_one_missing');
+    const controller = new AbortController();
+    controller.abort();
+    const out = await reviewPullRequest(
+      repo.gh,
+      7,
+      repo.pr,
+      { providers: repo.providers, store, dailyBudgetUsd: 1 },
+      controller.signal,
+    );
+    expect(out).toEqual({ status: 'cancelled' });
+    expect(await store.spendToday(7)).toBe(0);
+  });
+
+  it('settles the reservation when creating the check run fails', async () => {
+    const store = new MemoryStore();
+    const repo = fakeRepo('three_reqs_one_missing');
+    repo.gh.createCheckRun = async () => {
+      throw new Error('server error (502)');
+    };
+    for (let i = 0; i < 2; i++)
+      await expect(
+        reviewPullRequest(repo.gh, 7, repo.pr, { providers: repo.providers, store, dailyBudgetUsd: 1 }),
+      ).rejects.toThrow('502');
+    expect(await store.spendToday(7)).toBe(0);
+  });
+
+  it('caps a review at a quarter of the daily budget, whatever the repository config says', async () => {
+    const store = new MemoryStore();
+    const amounts: number[] = [];
+    const reserve = store.reserveSpend.bind(store);
+    store.reserveSpend = async (i, r, a) => {
+      amounts.push(a);
+      return reserve(i, r, a);
+    };
+    const repo = fakeRepo('three_reqs_one_missing', { config: 'budgets:\n  max_usd_per_review: 50\n' });
+    await reviewPullRequest(repo.gh, 7, repo.pr, { providers: repo.providers, store, dailyBudgetUsd: 20 });
+    expect(amounts).toEqual([5]);
   });
 });
