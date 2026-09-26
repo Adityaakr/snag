@@ -1,5 +1,12 @@
+import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vitest/config';
+
+// The app loads keys from .env at runtime; existing environment variables win.
+if (existsSync('.env')) process.loadEnvFile('.env');
+for (const key of ['TYPESAFE_API_KEY', 'ANTHROPIC_API_KEY', 'GITHUB_TOKEN']) {
+  if (!process.env[key]) process.stdout.write(`skipped: ${key} not set\n`);
+}
 
 const packages = [
   'core',
