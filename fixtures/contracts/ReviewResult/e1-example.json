@@ -1,0 +1,147 @@
+{
+  "schemaVersion": "1.0.0",
+  "product": { "name": "Remit", "version": "0.0.0" },
+  "input": {
+    "mode": "github",
+    "repo": "acme/reports",
+    "pr": 58,
+    "baseSha": "0a1b2c3",
+    "headSha": "abc1234",
+    "issues": [{ "owner": "acme", "repo": "reports", "number": 12 }],
+    "linkStrength": "closing"
+  },
+  "versions": {
+    "questionSet": "qs-0.1.0",
+    "extractionPrompt": "xp-0.1.0",
+    "jevModel": "jev-1.13.0",
+    "llmModel": "claude-opus-5-5"
+  },
+  "requirements": [
+    {
+      "id": "R3",
+      "issue": { "owner": "acme", "repo": "reports", "number": 12 },
+      "text": "The CSV filename includes the report date.",
+      "quote": "the filename includes the report date",
+      "source": { "kind": "tasklist" },
+      "kind": "behavior",
+      "explicitness": "explicit",
+      "priority": "must",
+      "examples": [],
+      "checkableInCode": true,
+      "signals": { "ambiguous": 0.66, "checkable": 0.91 },
+      "openQuestion": { "readings": ["the report's date", "today's date"] }
+    }
+  ],
+  "units": [
+    {
+      "id": "U7",
+      "file": "config/defaults.ts",
+      "language": "ts",
+      "kind": "config",
+      "changeType": "modified",
+      "symbol": { "name": "DEFAULTS", "kind": "block", "startLine": 10, "endLine": 14 },
+      "lines": { "new": [[12, 12]], "old": [[12, 12]] },
+      "patch": "@@ -12 +12 @@\n-  requestTimeoutMs: 30000,\n+  requestTimeoutMs: 5000,\n",
+      "judgeView": "@@ -12 +12 @@\n-  requestTimeoutMs: 30000,\n+  requestTimeoutMs: 5000,\n",
+      "contentHash": "sha256:77aa",
+      "tokenEstimate": 30,
+      "facts": []
+    }
+  ],
+  "requirementVerdicts": [
+    {
+      "requirementId": "R3",
+      "status": "missing",
+      "confidence": 0.9,
+      "calibrated": false,
+      "tested": "untested",
+      "evidence": [],
+      "testEvidence": [],
+      "answers": [
+        {
+          "call": "forward.v0",
+          "question": "coverage",
+          "type": "score",
+          "value": 0.2,
+          "probabilities": { "0": 0.82, "1": 0.08, "2": 0.06, "3": 0.04 },
+          "confidence": 0.77
+        }
+      ],
+      "claimMismatch": { "sentence": "All requirements are done." },
+      "reasons": [{ "template": "req.missing", "text": "No change implements R3." }]
+    }
+  ],
+  "unitVerdicts": [
+    {
+      "unitId": "U7",
+      "role": "unexplained_behavioral",
+      "answers": [{ "call": "reverse.v0", "question": "runtime_setting", "type": "noul", "value": 0.81 }],
+      "reasons": [
+        {
+          "template": "unit.runtime_default",
+          "text": "Changes a runtime default that no requirement mentions."
+        }
+      ]
+    }
+  ],
+  "claims": [
+    {
+      "sentence": "All requirements are done.",
+      "requirementId": "R3",
+      "claimsDone": 0.95,
+      "claimsDeferred": 0.02
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-R3",
+      "type": "requirement",
+      "targetId": "R3",
+      "priority": "P0",
+      "route": "send_back",
+      "confidence": 0.9,
+      "locations": [],
+      "reasons": [{ "template": "req.missing", "text": "No change implements R3." }],
+      "contentKey": "sha256:q3"
+    },
+    {
+      "id": "F-R3-ambiguity",
+      "type": "ambiguity",
+      "targetId": "R3",
+      "priority": "P2",
+      "route": "ask_author",
+      "confidence": 0.66,
+      "locations": [],
+      "reasons": [
+        { "template": "req.ambiguous", "text": "R3 could mean the report's date or today's date." }
+      ],
+      "contentKey": "sha256:q3"
+    },
+    {
+      "id": "F-U7",
+      "type": "unit",
+      "targetId": "U7",
+      "priority": "P1",
+      "route": "reviewer_attention",
+      "confidence": 0.81,
+      "locations": [{ "file": "config/defaults.ts", "lines": [12, 12] }],
+      "reasons": [
+        {
+          "template": "unit.runtime_default",
+          "text": "Changes a runtime default that no requirement mentions."
+        }
+      ],
+      "contentKey": "sha256:77aa"
+    }
+  ],
+  "summary": { "counts": { "missing": 1, "unexplained_behavioral": 1 }, "mode": "comment_only" },
+  "usage": {
+    "jevInputTokens": 41200,
+    "llmInputTokens": 1800,
+    "llmOutputTokens": 420,
+    "costUsd": 0.03,
+    "latencyMs": 14000,
+    "calls": 9
+  },
+  "warnings": []
+}

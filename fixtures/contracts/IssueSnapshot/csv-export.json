@@ -1,0 +1,17 @@
+{
+  "ref": { "owner": "acme", "repo": "reports", "number": 12 },
+  "title": "CSV export on the reports page",
+  "body": "Add an export button.\n\n- [ ] the export button downloads a CSV\n- [ ] include a header row\n- [ ] the filename includes the report date",
+  "author": "maya",
+  "state": "open",
+  "comments": [
+    {
+      "id": "c1",
+      "author": "lee",
+      "role": "maintainer",
+      "createdAt": "2026-09-01T10:00:00Z",
+      "body": "Use ISO dates in the filename."
+    }
+  ],
+  "contentHash": "sha256:1f0c"
+}

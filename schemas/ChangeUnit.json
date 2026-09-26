@@ -1,0 +1,253 @@
+{
+  "$id": "urn:remit:schema:ChangeUnit",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^U\\d+$"
+    },
+    "file": {
+      "type": "string"
+    },
+    "oldFile": {
+      "type": "string"
+    },
+    "language": {
+      "type": "string",
+      "enum": [
+        "ts",
+        "tsx",
+        "js",
+        "py",
+        "rs",
+        "other"
+      ]
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "source",
+        "test",
+        "config",
+        "docs",
+        "ci",
+        "build",
+        "migration",
+        "generated",
+        "lockfile",
+        "vendored",
+        "binary",
+        "asset"
+      ]
+    },
+    "changeType": {
+      "type": "string",
+      "enum": [
+        "added",
+        "modified",
+        "deleted",
+        "renamed"
+      ]
+    },
+    "symbol": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "function",
+            "method",
+            "class",
+            "module",
+            "block",
+            "test"
+          ]
+        },
+        "startLine": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "endLine": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "name",
+        "kind",
+        "startLine",
+        "endLine"
+      ],
+      "additionalProperties": false
+    },
+    "lines": {
+      "type": "object",
+      "properties": {
+        "new": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "prefixItems": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              }
+            ],
+            "items": false,
+            "minItems": 2,
+            "maxItems": 2
+          }
+        },
+        "old": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "prefixItems": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              }
+            ],
+            "items": false,
+            "minItems": 2,
+            "maxItems": 2
+          }
+        }
+      },
+      "required": [
+        "new",
+        "old"
+      ],
+      "additionalProperties": false
+    },
+    "patch": {
+      "type": "string"
+    },
+    "judgeView": {
+      "type": "string"
+    },
+    "before": {
+      "type": "string"
+    },
+    "after": {
+      "type": "string"
+    },
+    "testTitles": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "contentHash": {
+      "type": "string"
+    },
+    "tokenEstimate": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "filtered": {
+      "type": "string",
+      "enum": [
+        "lockfile",
+        "generated",
+        "formatting_only",
+        "vendored",
+        "binary"
+      ]
+    },
+    "facts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^X\\d+$"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "assertion_removed",
+              "assertion_weakened",
+              "expected_value_changed",
+              "test_skipped",
+              "test_focused",
+              "test_deleted",
+              "snapshot_updated",
+              "tolerance_widened",
+              "retry_or_timeout_added",
+              "suppression_added",
+              "catch_broadened",
+              "threshold_lowered",
+              "ci_changed",
+              "dependency_added",
+              "public_api_changed",
+              "new_symbol_unreferenced",
+              "secret_like"
+            ]
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "info",
+              "warn",
+              "high"
+            ]
+          },
+          "unitId": {
+            "type": "string"
+          },
+          "line": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "detail": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "severity",
+          "unitId",
+          "detail"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "id",
+    "file",
+    "language",
+    "kind",
+    "changeType",
+    "lines",
+    "patch",
+    "judgeView",
+    "contentHash",
+    "tokenEstimate",
+    "facts"
+  ],
+  "additionalProperties": false
+}
