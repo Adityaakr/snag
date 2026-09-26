@@ -61,10 +61,13 @@ export async function calibrateCommand(argv: string[], io: Io, loadDev?: DevLoad
       EXIT.provider,
     );
   const jevModel = mode === 'simulated' ? 'simulated-jev' : (p?.jev?.model ?? config.jev.model);
-  let sha = 'unknown';
+  let sha: string;
   try {
     sha = execFileSync('git', ['rev-parse', '--short=12', 'HEAD'], { cwd: io.cwd, encoding: 'utf8' }).trim();
-  } catch {}
+  } catch {
+    // Not a git checkout: the calibration id says so instead of failing the run.
+    sha = 'nogit';
+  }
   const result = await calibrateOnDev(
     items,
     {

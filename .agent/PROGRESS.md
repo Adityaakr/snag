@@ -72,14 +72,14 @@ Status: DONE
 ## M6 Evaluation system
 Status: IN_PROGRESS
 - [x] The corpus D runner: `pnpm eval:golden` at `100%`. (evidence: `pnpm eval:golden` Golden accuracy 100% (18/18); eval/src/eval.test.ts, af5f63c)
-- [ ] Corpus B: synthetic seeds, at least 4 each in TS, Python and Rust; when `GITHUB_TOKEN` exists, up to 30 mined real seeds (Appendix G.2); seed annotations; every mutation operator in G.1, with apply-and-reparse checks and expected labels.
-- [ ] The corpus A loader, built from the PatchDiff package and Zenodo results. The label mapping is documented in `docs/eval.md`.
-- [ ] The corpus C export format is defined (it gets populated in M8).
-- [ ] Splits, the freeze, `eval/corpora/test.sha256` and `guard:split`.
-- [ ] Metrics (11.4), calibration fitting (11.5), threshold tuning on dev, and the baselines (11.6).
-- [ ] Reports (11.9) in markdown and HTML.
+- [x] Corpus B: synthetic seeds, at least 4 each in TS, Python and Rust; when `GITHUB_TOKEN` exists, up to 30 mined real seeds (Appendix G.2); seed annotations; every mutation operator in G.1, with apply-and-reparse checks and expected labels. (evidence: 12 synthetic seeds (4 TS, 4 Python, 4 Rust) in eval/corpora/mutations/seeds with seed.json annotations (annotated_by: claude-code, spot checks listed as B4); all 9 G.1 operators via tree-sitter edits with re-parse checks in packages/eval/src/mutations/{ast,operators}.ts, tested by mutations/seeds.test.ts (every operator applies to every seed); 169 items (128 dev, 41 test); real seeds: miner in mutations/mine.ts (mine.test.ts) runs only with GITHUB_TOKEN, which is absent, so skipped and recorded as B6, 3c52ef9)
+- [x] The corpus A loader, built from the PatchDiff package and Zenodo results. The label mapping is documented in `docs/eval.md`. (evidence: corpora/swebench.ts and swebench-fetch.ts (swebench.test.ts; real-data totals checked in swebench.slow.test.ts: 877 plausible, 260 divergent, 68 RQ1, 77 manual); `pnpm eval:fetch-a` built 1,203 items (854 dev, 349 test); mapping in docs/eval.md 'Label mapping', f51bf41)
+- [x] The corpus C export format is defined (it gets populated in M8). (evidence: remit-shadow-1 in packages/eval/src/corpora/shadow.ts (shadow.test.ts), strong and weak feedback kept apart, f51bf41)
+- [x] Splits, the freeze, `eval/corpora/test.sha256` and `guard:split`. (evidence: 70/30 hash splits (seeds pinned by stratified hash, D26; corpus A by instance_id, D25); eval/corpora/test.sha256 froze 390 files; guard:split in pnpm verify (scripts/guards/split.mjs, scripts/__tests__/split.test.ts), f51bf41)
+- [x] Metrics (11.4), calibration fitting (11.5), threshold tuning on dev, and the baselines (11.6). (evidence: metrics.ts (metrics.test.ts: operator detection, AUROC, P0 precision); isotonic calibration with 5-fold cross-validated ECE (calibration.ts, calibrate.ts, `remit calibrate`); cost-weighted threshold tuning on dev (tuning.ts); single_pass baseline with the B.2 prompt in two variants plus the pr_agent notice (baselines.ts, baselines.test.ts); simulated calibration at eval/calibration/simulated-jev/qs-0.1.0.json, 3c52ef9)
+- [x] Reports (11.9) in markdown and HTML. (evidence: report.ts renders md and html (Satoshi, inline reliability SVG, targets, confusion, operators, worst items with dumps, versions and git SHA); `remit report <run>` re-renders; eval.test.ts, 3c52ef9)
 - [ ] **With keys:** the first live dev run is recorded to cassettes and reported.
-- [ ] **Without keys:** the report is generated from fakes and clearly marked `not a real measurement`, and M10 records the blocker.
+- [x] **Without keys:** the report is generated from fakes and clearly marked `not a real measurement`, and M10 records the blocker. (evidence: eval/reports/2026-09-26T17-22-28-991Z/report.md starts with 'Not a real measurement'; logged in EXPERIMENTS.md; M10.md 'Carried from M6' and BLOCKERS B5 record the blocker, 3c52ef9)
 
 ## M7 GitHub App and Action
 Status: TODO

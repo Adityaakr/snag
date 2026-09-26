@@ -1,7 +1,9 @@
 # Next
 
 Milestone: M6 Evaluation system
-Task: corpus D runner and eval package scaffolding.
+Task: the M6 gate.
 
 Next action:
-1. M6 (evaluation system): corpus D runner (`pnpm eval:golden` at 100%), corpus B synthetic seeds (4 each TS, Python, Rust) with annotations and every G.1 mutation operator (apply-and-reparse), corpus A loader (PatchDiff + Zenodo; no network in tests), corpus C export format, splits and freeze (`eval/corpora/test.sha256`, `guard:split`), metrics, isotonic calibration, threshold tuning on dev, baselines, reports (md + html, Satoshi font). Without keys, the dev report is from fakes and marked `not a real measurement`; M10 records the blocker.
+1. Run the `milestone-verifier` subagent on `.agent/milestones/M6.md` and fix every gap it reports.
+2. On PASS: M6 status `BLOCKED-HUMAN` (8 of 9 items; "With keys" waits on B5: TYPESAFE_API_KEY and ANTHROPIC_API_KEY), commit, tag `m6-done`.
+3. Then start M7 (GitHub App and Action): Hono server with `/webhooks`, `/setup`, `/healthz`, `/readyz`, `/metrics`.
