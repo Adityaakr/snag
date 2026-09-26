@@ -19,7 +19,7 @@ export interface CalibrateResult {
   calibration: Calibration;
   fits: Record<string, KeyFit>;
   tuning: TuneResult;
-  p0PrecisionBefore: number;
+  p0Before: { value: number; p0: number; correct: number };
 }
 
 export async function calibrateOnDev(
@@ -49,7 +49,7 @@ export async function calibrateOnDev(
       ? { thresholds: tuning.thresholds as Record<string, number> }
       : {}),
   };
-  return { calibration, fits, tuning, p0PrecisionBefore: before.p0Precision.value };
+  return { calibration, fits, tuning, p0Before: before.p0Precision };
 }
 
 export function calibrationPath(root: string, jevModel: string, questionSet = QUESTION_SET_VERSION): string {

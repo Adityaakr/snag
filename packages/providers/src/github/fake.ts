@@ -1,7 +1,7 @@
 import { type IssueRef, type IssueSnapshot, issueContentHash } from '@remit/core';
 import { ProviderError } from '../common/errors.js';
 import { commentRole, isBotComment } from './roles.js';
-import type { ContentResult, GitHubProvider, PullFile, PullRef, PullSnapshot } from './types.js';
+import type { ContentResult, GitHubMining, MergedPull, PullFile, PullRef, PullSnapshot } from './types.js';
 
 export interface FakeIssue {
   title: string;
@@ -27,12 +27,14 @@ export interface FakePull
 }
 
 /** In-memory GitHub for tests (BUILD_PROMPT M2): pulls, files, issues, contents at a SHA. Records every call. */
-export class FakeGitHub implements GitHubProvider {
+export class FakeGitHub implements GitHubMining {
   readonly calls: string[] = [];
   readonly pulls = new Map<string, FakePull>();
   readonly issues = new Map<string, FakeIssue>();
   /** `owner/repo@sha:path` -> content (a Buffer for binary). */
   readonly contents = new Map<string, string | Buffer>();
+  readonly licenses = new Map<string, string>();
+  readonly merged = new Map<string, string>();
 
   private key(owner: string, repo: string, n: number) {
     return `${owner}/${repo}#${n}`;
@@ -114,5 +116,35 @@ export class FakeGitHub implements GitHubProvider {
   async closingIssues(ref: PullRef): Promise<IssueRef[]> {
     this.calls.push(`closingIssues ${this.key(ref.owner, ref.repo, ref.number)}`);
     return this.pull(ref).closing ?? [];
+  }
+
+  /** Marks a pull as merged at a date (for searchMergedPulls). */
+  setMerged(ref: PullRef, mergedAt: string): this {
+    this.merged.set(this.key(ref.owner, ref.repo, ref.number), mergedAt);
+    return this;
+  }
+
+  async searchMergedPulls(
+    owner: string,
+    repo: string,
+    range: { from: string; to: string },
+    limit: number,
+  ): Promise<MergedPull[]> {
+    this.calls.push(`searchMergedPulls ${owner}/${repo}`);
+    const out: MergedPull[] = [];
+    for (const [key, pull] of this.pulls) {
+      const m = /^(.+)\/(.+)#(\d+)$/.exec(key);
+      const mergedAt = this.merged.get(key);
+      if (!m || m[1] !== owner || m[2] !== repo || !mergedAt) continue;
+      const day = mergedAt.slice(0, 10);
+      if (day < range.from || day > range.to) continue;
+      out.push({ ref: { owner, repo, number: Number(m[3]) }, title: pull.title, mergedAt });
+    }
+    return out.sort((a, b) => b.mergedAt.localeCompare(a.mergedAt)).slice(0, limit);
+  }
+
+  async getLicense(owner: string, repo: string): Promise<string | null> {
+    this.calls.push(`getLicense ${owner}/${repo}`);
+    return this.licenses.get(`${owner}/${repo}`) ?? null;
   }
 }

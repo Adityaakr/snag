@@ -55,3 +55,22 @@ export interface GitHubProvider {
   /** GraphQL `closingIssuesReferences` of a pull request. */
   closingIssues(ref: PullRef): Promise<IssueRef[]>;
 }
+
+export interface MergedPull {
+  ref: PullRef;
+  title: string;
+  mergedAt: string;
+}
+
+/** Extra read methods for mining real eval seeds (BUILD_PROMPT G.2). */
+export interface GitHubMining extends GitHubProvider {
+  /** Merged pull requests of one repository, merged within [from, to] (YYYY-MM-DD), newest first. */
+  searchMergedPulls(
+    owner: string,
+    repo: string,
+    range: { from: string; to: string },
+    limit: number,
+  ): Promise<MergedPull[]>;
+  /** The repository license as an SPDX id, or null. */
+  getLicense(owner: string, repo: string): Promise<string | null>;
+}

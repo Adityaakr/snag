@@ -5,6 +5,7 @@ export * from './common/budget.js';
 export * from './common/errors.js';
 export * from './common/limits.js';
 export * from './common/retry.js';
+export { CachedGitHub } from './github/cached.js';
 export { githubContents, type PullDiff, pullDiff } from './github/diff.js';
 export { FakeGitHub, type FakeIssue, type FakePull } from './github/fake.js';
 export { closingKeywordRefs, linkIssues, plainRefs } from './github/links.js';

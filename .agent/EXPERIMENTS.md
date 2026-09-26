@@ -25,3 +25,4 @@ No keys, so extraction used the task-list fast path and there were no Jev verdic
 | X4 | `new_symbol_unreferenced` `renderChecklist` | right | none (used by the issue checklist in M7) |
 | X5, X6 | `suppression_added` `biome-ignore` in sanitize.ts | right | none (deliberate: control-character regexes, justified inline) |
 | verdicts | 7 requirements `uncertain`, 154 units `uncertain` | expected without Jev | rerun with keys (B1) |
+- 2026-09-26T17:22:28.991Z mutations/dev simulated (not a real measurement): 0/128 items correct, requirement F1 0.30, PR recall 0.85, false alarms 9.94, P0 precision 0.19, cost $0.0000. Report: eval/reports/2026-09-26T17-22-28-991Z

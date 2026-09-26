@@ -65,3 +65,21 @@ describe('calibrateOnDev', () => {
     expect(loadCalibration(root, 'jev-1.13.0')).toBeUndefined();
   });
 });
+
+describe('cross-validated calibration error', () => {
+  it('measures ECE out of sample, so a map cannot score itself perfect on noise', async () => {
+    const { crossValidated, ece, isotonic } = await import('./calibration.js');
+    // Constant probability, coin-flip outcomes: an in-sample isotonic fit is exact, cross-validation is not.
+    const pairs = Array.from(
+      { length: 200 },
+      (_, i) => ({ p: (i % 10) / 10, y: (i * 7919) % 3 === 0 ? 1 : 0 }) as const,
+    );
+    expect(crossValidated(pairs, 5)).toHaveLength(200);
+    const inSample = pairs.map(({ p, y }) => {
+      const pts = isotonic(pairs);
+      const hit = pts.find((q) => q.x >= p) ?? pts[pts.length - 1];
+      return { p: hit?.y ?? p, y };
+    });
+    expect(ece(crossValidated(pairs, 5))).toBeGreaterThanOrEqual(ece(inSample) - 1e-9);
+  });
+});

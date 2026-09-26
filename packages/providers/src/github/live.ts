@@ -9,7 +9,7 @@ import { ProviderError } from '../common/errors.js';
 import { type Logger, silentLogger } from '../common/limits.js';
 import { type RetryOptions, withRetry } from '../common/retry.js';
 import { commentRole, isBotComment } from './roles.js';
-import type { ContentResult, GitHubProvider, PullFile, PullRef, PullSnapshot } from './types.js';
+import type { ContentResult, GitHubMining, MergedPull, PullFile, PullRef, PullSnapshot } from './types.js';
 
 export const MAX_CONTENT_BYTES = 1024 * 1024;
 export const MAX_PR_FILES = 3000;
@@ -90,7 +90,7 @@ export function classifyGitHubError(e: unknown, now: () => number = Date.now): P
   );
 }
 
-export class LiveGitHub implements GitHubProvider {
+export class LiveGitHub implements GitHubMining {
   private readonly octokit: Octokit;
   private readonly gql: typeof baseGraphql;
   private readonly logger: Logger;
@@ -279,5 +279,42 @@ export class LiveGitHub implements GitHubProvider {
       repo: n.repository.name,
       number: n.number,
     }));
+  }
+
+  async searchMergedPulls(
+    owner: string,
+    repo: string,
+    range: { from: string; to: string },
+    limit: number,
+  ): Promise<MergedPull[]> {
+    const out: MergedPull[] = [];
+    for (let page = 1; out.length < limit && page <= 10; page++) {
+      const { data } = await this.call('searchMergedPulls', () =>
+        this.octokit.search.issuesAndPullRequests({
+          q: `repo:${owner}/${repo} is:pr is:merged merged:${range.from}..${range.to}`,
+          sort: 'updated',
+          order: 'desc',
+          per_page: Math.min(100, limit),
+          page,
+        }),
+      );
+      for (const item of data.items) {
+        const mergedAt = item.pull_request?.merged_at;
+        if (mergedAt) out.push({ ref: { owner, repo, number: item.number }, title: item.title, mergedAt });
+      }
+      if (data.items.length < Math.min(100, limit)) break;
+    }
+    return out.slice(0, limit);
+  }
+
+  async getLicense(owner: string, repo: string): Promise<string | null> {
+    try {
+      const { data } = await this.call('license', () => this.octokit.licenses.getForRepo({ owner, repo }));
+      const id = data.license?.spdx_id;
+      return id && id !== 'NOASSERTION' ? id : null;
+    } catch (e) {
+      if (e instanceof ProviderError && e.kind === 'bad_request') return null;
+      throw e;
+    }
   }
 }
