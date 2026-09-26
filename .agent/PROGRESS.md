@@ -37,7 +37,7 @@ Status: IN_PROGRESS
 - [x] Record and replay per 7.4, with all four modes. A test proves cassettes contain no auth headers. (evidence: packages/providers/src/cache/store.test.ts + jev.test.ts/llm.test.ts cassette tests ("never stores auth headers"), 9d63961)
 - [x] `remit doctor` per 10.1, including model ID verification through the Anthropic Models API. The results are recorded in `docs/providers.md`. (evidence: packages/cli/src/commands/doctor.test.ts; `pnpm remit doctor` (keyless run recorded in docs/providers.md; live model check is B2), 6710c8a)
 - [x] `pnpm test:live` smoke tests run only when keys exist, and print `skipped: <KEY> not set` otherwise. (evidence: `pnpm test:live` prints "skipped: TYPESAFE_API_KEY not set" etc.; packages/providers/src/providers.live.test.ts, d09d9a2)
-- [ ] `guard:tests` (3.6) runs in `pnpm verify`.
+- [x] `guard:tests` (3.6) runs in `pnpm verify`. (evidence: scripts/__tests__/tests-guard.test.ts; `pnpm guard` prints guard:tests: ok, 4353c0f)
 
 ## M3 Blind requirement extraction
 Status: TODO
