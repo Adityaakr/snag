@@ -306,3 +306,6 @@ Append-only. Each entry: date, decision, alternatives, why. Deviations from BUIL
   - `reserveBudget` keeps the full reservation for a non-finite cost and counts a non-finite ledger total as over budget;
   - fixed two lows: the pre-call estimate includes `maxTokens` of output, and an OpenAI-compatible reply without `usage` is charged the worst case.
   - Regression tests: env.test.ts "object properties", budget.test.ts "non-finite costs fail closed", llm.test.ts "omits usage".
+- Addendum (sixth M9 security review, 2026-09-27): VERDICT: PASS on c561fd9. Its two lows are fixed:
+  - `pipeline/src/estimate.ts` looks prices up by own key;
+  - `REMIT_LLM_PRICES` rejects JSON arrays.

@@ -111,7 +111,8 @@ export async function estimateReview(
     calls.tests * testTokens +
     reviewable.reduce((n, u) => n + u.tokenEstimate + reqListTokens + reviewable.length * 15 + 400, 0) +
     sentences * (reqListTokens + 200);
-  const price = config.llm_prices[config.extraction.model];
+  const model = config.extraction.model;
+  const price = Object.hasOwn(config.llm_prices, model) ? config.llm_prices[model] : undefined;
   const cost =
     (jev * config.jev.price_per_million_input_usd) / 1e6 +
     (price ? (llmIn * price.input + llmOut * price.output) / 1e6 : 0);

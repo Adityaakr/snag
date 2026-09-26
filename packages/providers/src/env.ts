@@ -44,7 +44,8 @@ export function operatorPricesFromEnv(
   const llm: OperatorPrices['llm'] = Object.assign(Object.create(null), defaults.llm_prices);
   if (env.REMIT_LLM_PRICES) {
     const parsed: unknown = JSON.parse(env.REMIT_LLM_PRICES);
-    if (!parsed || typeof parsed !== 'object') throw new Error('REMIT_LLM_PRICES must be a JSON object');
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed))
+      throw new Error('REMIT_LLM_PRICES must be a JSON object');
     for (const [model, p] of Object.entries(parsed)) {
       const { input, output } = (p ?? {}) as { input?: unknown; output?: unknown };
       if (
