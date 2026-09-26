@@ -1,6 +1,12 @@
 packages:
   - "packages/*"
 
-# Dependency build scripts are off by default (pnpm 11). esbuild ships its binary as an optional dependency.
+# Dependency build scripts are off by default (pnpm 11). esbuild ships its binary as an optional dependency,
+# and the tree-sitter grammar packages are used only for their prebuilt .wasm files.
 allowBuilds:
   esbuild: false
+  tree-sitter-typescript: false
+  tree-sitter-javascript: false
+  tree-sitter-python: false
+  tree-sitter-rust: false
+  tree-sitter: false
