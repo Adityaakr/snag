@@ -15,8 +15,13 @@
     "test": "vitest run --root ../.. --project server"
   },
   "dependencies": {
+    "@hono/node-server": "2.1.1",
+    "@remit/analysis": "workspace:*",
     "@remit/core": "workspace:*",
+    "@remit/eval": "workspace:*",
+    "@remit/pipeline": "workspace:*",
     "@remit/providers": "workspace:*",
-    "@remit/pipeline": "workspace:*"
+    "hono": "4.13.9",
+    "zod": "4.6.5"
   }
 }

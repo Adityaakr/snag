@@ -1,0 +1,42 @@
+{
+  "action": "created",
+  "issue": {
+    "number": 77,
+    "title": "x",
+    "user": {
+      "login": "maya",
+      "type": "User"
+    },
+    "pull_request": {
+      "url": "https://api.github.com/repos/acme/reports/pulls/77"
+    }
+  },
+  "comment": {
+    "id": 506,
+    "body": "/remit help",
+    "user": {
+      "login": "maintainer",
+      "type": "User"
+    }
+  },
+  "repository": {
+    "id": 1001,
+    "name": "reports",
+    "full_name": "acme/reports",
+    "private": true,
+    "owner": {
+      "login": "acme",
+      "id": 9,
+      "type": "Organization"
+    },
+    "default_branch": "main"
+  },
+  "installation": {
+    "id": 4242,
+    "node_id": "MDIzOkludGVncmF0aW9uSW5zdGFsbGF0aW9uNDI0Mg=="
+  },
+  "sender": {
+    "login": "maintainer",
+    "type": "User"
+  }
+}

@@ -8,6 +8,9 @@
   "include": ["src"],
   "references": [
     {
+      "path": "../analysis"
+    },
+    {
       "path": "../core"
     },
     {
@@ -15,6 +18,9 @@
     },
     {
       "path": "../pipeline"
+    },
+    {
+      "path": "../eval"
     }
   ]
 }

@@ -1,0 +1,44 @@
+{
+  "action": "ready_for_review",
+  "number": 77,
+  "pull_request": {
+    "number": 77,
+    "state": "open",
+    "title": "Implement the issue",
+    "user": {
+      "login": "agent",
+      "id": 77,
+      "type": "User"
+    },
+    "draft": false,
+    "head": {
+      "sha": "head0000",
+      "ref": "feature"
+    },
+    "base": {
+      "sha": "base0000",
+      "ref": "main"
+    }
+  },
+  "repository": {
+    "id": 1001,
+    "name": "reports",
+    "full_name": "acme/reports",
+    "private": true,
+    "owner": {
+      "login": "acme",
+      "id": 9,
+      "type": "Organization"
+    },
+    "default_branch": "main"
+  },
+  "installation": {
+    "id": 4242,
+    "node_id": "MDIzOkludGVncmF0aW9uSW5zdGFsbGF0aW9uNDI0Mg=="
+  },
+  "sender": {
+    "login": "agent",
+    "id": 77,
+    "type": "User"
+  }
+}

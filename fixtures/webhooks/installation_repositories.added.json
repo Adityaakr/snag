@@ -1,0 +1,21 @@
+{
+  "action": "added",
+  "installation": {
+    "id": 4242
+  },
+  "repositories_added": [
+    {
+      "full_name": "acme/other"
+    }
+  ],
+  "repositories_removed": [
+    {
+      "full_name": "acme/reports"
+    }
+  ],
+  "sender": {
+    "login": "agent",
+    "id": 77,
+    "type": "User"
+  }
+}
