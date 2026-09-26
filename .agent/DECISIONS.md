@@ -309,3 +309,15 @@ Append-only. Each entry: date, decision, alternatives, why. Deviations from BUIL
 - Addendum (sixth M9 security review, 2026-09-27): VERDICT: PASS on c561fd9. Its two lows are fixed:
   - `pipeline/src/estimate.ts` looks prices up by own key;
   - `REMIT_LLM_PRICES` rejects JSON arrays.
+
+## 2026-09-27 D33 M9 closes BLOCKED-HUMAN on B7 (docker compose up)
+
+- Deviation: BUILD_PROMPT 3.7 allows BLOCKED-HUMAN only for the items in 3.8, and a container runtime is not listed there.
+- Why a human is still needed:
+  - installing Docker or Colima changes the host, which this build does not do without asking;
+  - the other path, the CI `docker` job, needs a push, and rule 10 reserves pushing for the human once a remote is configured.
+- Mitigation:
+  - `pnpm stack:smoke` runs the same compiled entry points and topology as processes (web, worker, Postgres, fake GitHub);
+  - `scripts/__tests__/deploy.test.ts` checks the Dockerfile and compose statically, including that every volume target the image mounts is created and owned by `node`, and that stale `*.tsbuildinfo` never reaches the build (the M9 milestone-verifier found both defects; fixed in the same commit);
+  - B7 lists the exact unblock commands.
+- Remaining risk: the image has never been built. The first `docker compose up` could still expose runtime-only problems (native modules, file permissions). The CI `docker` job would catch them on the first push.

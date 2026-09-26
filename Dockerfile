@@ -25,14 +25,15 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 FROM deps AS build
 COPY tsconfig.base.json ./
 COPY packages ./packages
-RUN pnpm exec tsc -b packages/server && pnpm --filter @remit/dashboard build
+RUN pnpm exec tsc -b --force packages/server && pnpm --filter @remit/dashboard build
 # Production dependencies only.
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --prod --filter @remit/server...
 
 FROM node:22-bookworm-slim AS runtime
 ENV NODE_ENV=production PORT=3000 WORKER_PORT=3001 DATA_DIR=/data
 WORKDIR /app
-RUN mkdir -p /data && chown node:node /data
+# Every volume mount target exists and belongs to node, so new named volumes inherit that ownership.
+RUN mkdir -p /data /shared && chown node:node /data /shared
 COPY --from=build --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/package.json ./
 # Each workspace package ships its compiled output and package.json (its dependencies are symlinked in node_modules).
