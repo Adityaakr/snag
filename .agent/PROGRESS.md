@@ -61,11 +61,11 @@ Status: DONE
 
 ## M5 CLI end to end, renderers, demo
 Status: IN_PROGRESS
-- [ ] `remit review` in GitHub and local modes, with every flag in 10.1.
-- [ ] `remit init`, `remit doctor` and `remit demo`. The demo runs offline on scenarios 1 and 2 in under `10 s`.
+- [x] `remit review` in GitHub and local modes, with every flag in 10.1. (evidence: cli/src/commands/review.test.ts (every 10.1 flag, local and GitHub via FakeGitHub) + pipeline/src/ingest.test.ts, b210f7e)
+- [x] `remit init`, `remit doctor` and `remit demo`. The demo runs offline on scenarios 1 and 2 in under `10 s`. (evidence: review.test.ts init and demo tests (demo under 10 s; `pnpm demo` 1.1 s) + doctor.test.ts, b210f7e)
 - [x] Renderers, with snapshot tests: terminal; sticky comment (Appendix E.1); check-run summary and annotations model; rework comment (E.2); issue checklist (E.3); JSON; SARIF 2.1.0. (evidence: core/src/render/render.test.ts + pipeline/src/golden/render.test.ts (fixtures/snapshots/*), b7269f2)
 - [x] Sanitization tests for mentions, links, HTML, images, bidi characters and very long quotes. (evidence: core/src/render/render.test.ts sanitize block (mentions, links, HTML, images, bidi, long quotes), b7269f2)
-- [ ] The exit codes in 10.1, each tested.
+- [x] The exit codes in 10.1, each tested. (evidence: review.test.ts "exit codes (10.1)" block: 0, 1, 2, 3, 4, b210f7e)
 - [ ] A README quickstart that goes from a fresh clone to `remit demo` in 5 minutes, then to a real PR review with keys. Verify it in a clean clone.
 - [ ] The first dogfood run is recorded (3.5).
 
