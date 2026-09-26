@@ -8,7 +8,7 @@ Status: IN_PROGRESS
 - [x] `pnpm verify` runs the format check, lint, typecheck, tests and guards, and passes. (evidence: `pnpm verify` green in 2.2 s, 4eaae58)
 - [x] The `.agent/` memory files (3.1) exist. `.agent/milestones/M0.md` to `M11.md` are generated from this section as issue-style specs.; `.agent/PROGRESS.md` is seeded from them. (evidence: `node scripts/progress.mjs` lists M0..M11 from .agent/milestones, 4eaae58)
 - [x] `scripts/progress.mjs` is implemented per Appendix A.4, with tests on fixture PROGRESS files. `pnpm progress` and `pnpm progress --check` are wired. (evidence: scripts/__tests__/progress.test.ts (21 tests), 4eaae58)
-- [ ] `.claude/settings.json`, `scripts/hooks/session-start.sh` and `scripts/hooks/stop-hygiene.sh` are created exactly as in Appendix A and marked executable. They are tested by piping sample JSON into them.
+- [x] `.claude/settings.json`, `scripts/hooks/session-start.sh` and `scripts/hooks/stop-hygiene.sh` are created exactly as in Appendix A and marked executable. They are tested by piping sample JSON into them. (evidence: scripts/__tests__/settings.test.ts + hooks.test.ts, 9bd25fd)
 - [x] The subagents `milestone-verifier`, `eval-analyst` and `security-reviewer` are created as in Appendix F. (evidence: .claude/agents/*.md extracted verbatim from Appendix F, 4eaae58)
 - [x] `.agent/protected.sha256` exists. `guard:protected` and `guard:secrets` run in `pnpm verify`. (evidence: `pnpm guard` + scripts/__tests__/guards.test.ts, 4eaae58)
 - [x] `CLAUDE.md` is under 150 lines. (evidence: `wc -l CLAUDE.md` = 64, 4eaae58)
