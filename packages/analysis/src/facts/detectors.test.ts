@@ -489,6 +489,14 @@ table('suppression_added', [
     after: 'export const b = 1;\n// @ts-ignore\nexport const a = f();\n',
     count: 0,
   },
+  {
+    // Dogfood M5 X1: prose that mentions a marker is not a suppression.
+    name: 'docs that mention a suppression',
+    path: 'README.md',
+    before: '# X\n',
+    after: '# X\n\nFacts such as a new `@ts-ignore` are flagged.\n',
+    count: 0,
+  },
 ]);
 
 table('catch_broadened', [
