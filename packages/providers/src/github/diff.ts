@@ -82,3 +82,17 @@ export async function pullDiff(gh: GitHubProvider, pr: PullSnapshot, files: Pull
   }
   return { text: out.length ? `${out.join('\n')}\n` : '', ignored };
 }
+
+/** Contents at the PR's base (base repo) and head (head repo, which differs for forks), for the unit builder. */
+export function githubContents(gh: GitHubProvider, pr: PullSnapshot) {
+  const [headOwner, headRepo] = pr.headRepo.split('/') as [string, string];
+  return {
+    async get(side: 'base' | 'head', path: string): Promise<string | null> {
+      const r =
+        side === 'base'
+          ? await gh.getContent(pr.ref.owner, pr.ref.repo, path, pr.baseSha)
+          : await gh.getContent(headOwner, headRepo, path, pr.headSha);
+      return r && 'content' in r ? r.content : null;
+    },
+  };
+}

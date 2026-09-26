@@ -15,9 +15,10 @@
     "test": "vitest run --root ../.. --project cli"
   },
   "dependencies": {
-    "@remit/core": "workspace:*",
     "@remit/analysis": "workspace:*",
+    "@remit/core": "workspace:*",
+    "@remit/pipeline": "workspace:*",
     "@remit/providers": "workspace:*",
-    "@remit/pipeline": "workspace:*"
+    "pino": "10.3.1"
   }
 }

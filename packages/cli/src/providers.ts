@@ -16,6 +16,7 @@ import {
   type JevProvider,
   LiveGitHub,
   LiveJev,
+  type Logger,
   type LlmProvider,
   OpenAiCompatibleLlm,
 } from '@remit/providers';
@@ -36,7 +37,7 @@ export function cacheDir(env: Record<string, string | undefined>): string {
 export function buildProviders(
   config: RemitConfig,
   env: Record<string, string | undefined>,
-  opts: { offline?: boolean; budgetUsd?: number } = {},
+  opts: { offline?: boolean; budgetUsd?: number; logger?: Logger } = {},
 ): CliProviders {
   const notes: string[] = [];
   const cacheMode: CacheMode = opts.offline ? 'replay' : cacheModeFrom(env, 'replay_or_live');
@@ -58,6 +59,7 @@ export function buildProviders(
         price: llmPrice,
         apiKey: env.ANTHROPIC_API_KEY,
         costs,
+        ...(opts.logger ? { logger: opts.logger } : {}),
         ...(config.extraction.effort ? { effort: config.extraction.effort } : {}),
       });
     } else if (
@@ -71,6 +73,7 @@ export function buildProviders(
         apiKey: env.OPENAI_COMPATIBLE_API_KEY,
         baseURL: env.OPENAI_COMPATIBLE_BASE_URL,
         costs,
+        ...(opts.logger ? { logger: opts.logger } : {}),
       });
     }
   }
@@ -93,6 +96,7 @@ export function buildProviders(
           maxStateTokens: config.jev.max_state_tokens,
           concurrency: config.jev.concurrency,
           costs,
+          ...(opts.logger ? { logger: opts.logger } : {}),
         })
       : null;
   const jev =
@@ -102,7 +106,10 @@ export function buildProviders(
   return {
     ...(llm ? { llm } : {}),
     ...(jev ? { jev } : {}),
-    github: new LiveGitHub({ ...(env.GITHUB_TOKEN ? { token: env.GITHUB_TOKEN } : {}) }),
+    github: new LiveGitHub({
+      ...(env.GITHUB_TOKEN ? { token: env.GITHUB_TOKEN } : {}),
+      ...(opts.logger ? { logger: opts.logger } : {}),
+    }),
     costs,
     cacheMode,
     notes,

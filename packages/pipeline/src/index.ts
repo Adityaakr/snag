@@ -12,3 +12,6 @@ export function describePackage(): string {
   return `${BRAND.name} ${PACKAGE}`;
 }
 export * from './review.js';
+export * from './golden/harness.js';
+export * from './ingest.js';
+export * from './estimate.js';
