@@ -1,0 +1,24 @@
+{
+  "ids": ["I1.R1", "I2.R1", "I2.R2"],
+  "requirements": [
+    {
+      "id": "I1.R1",
+      "issue": {
+        "number": 31
+      }
+    },
+    {
+      "id": "I2.R1",
+      "issue": {
+        "number": 32
+      }
+    },
+    {
+      "id": "I2.R2",
+      "openQuestion": {
+        "readings": ["a link to the stored file", "the file attached"]
+      }
+    }
+  ],
+  "warnings": []
+}

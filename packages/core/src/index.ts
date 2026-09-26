@@ -8,3 +8,4 @@ export const PACKAGE = '@remit/core';
 export * from './config/schema.js';
 export * from './extract/index.js';
 export * from './text/sanitize.js';
+export * from './questions/index.js';

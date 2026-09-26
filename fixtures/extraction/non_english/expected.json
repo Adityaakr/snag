@@ -1,0 +1,14 @@
+{
+  "ids": ["R1", "R2"],
+  "requirements": [
+    {
+      "id": "R1",
+      "text": "El botón de exportar descarga un archivo CSV."
+    },
+    {
+      "id": "R2",
+      "priority": "should"
+    }
+  ],
+  "warnings": []
+}

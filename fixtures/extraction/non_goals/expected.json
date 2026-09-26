@@ -1,0 +1,18 @@
+{
+  "ids": ["R1", "R2", "R3"],
+  "requirements": [
+    {
+      "id": "R1",
+      "kind": "behavior"
+    },
+    {
+      "id": "R2",
+      "kind": "non_goal"
+    },
+    {
+      "id": "R3",
+      "kind": "non_goal"
+    }
+  ],
+  "warnings": []
+}

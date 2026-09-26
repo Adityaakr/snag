@@ -1,0 +1,35 @@
+{
+  "extract:local/local#1": [
+    {
+      "requirements": [
+        {
+          "id": "R1",
+          "text": "The signup form rejects invalid email addresses.",
+          "quote": "The signup form must reject invalid email addresses",
+          "source": {
+            "kind": "body"
+          },
+          "kind": "behavior",
+          "explicitness": "explicit",
+          "priority": "must",
+          "examples": [],
+          "checkableInCode": true
+        },
+        {
+          "id": "R2",
+          "text": "The signup form rejects invalid email addresses.",
+          "quote": "The signup form must reject invalid  email addresses",
+          "source": {
+            "kind": "body"
+          },
+          "kind": "behavior",
+          "explicitness": "explicit",
+          "priority": "must",
+          "examples": [],
+          "checkableInCode": true
+        }
+      ],
+      "openQuestions": []
+    }
+  ]
+}

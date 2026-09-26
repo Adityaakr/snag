@@ -1,0 +1,21 @@
+{
+  "ids": ["R1", "R2"],
+  "requirements": [
+    {
+      "id": "R1",
+      "supersededBy": "R2"
+    },
+    {
+      "id": "R2",
+      "source": {
+        "kind": "comment",
+        "commentId": "c1"
+      },
+      "signals": {
+        "ambiguous": 0.1,
+        "checkable": 0.95
+      }
+    }
+  ],
+  "warnings": []
+}
