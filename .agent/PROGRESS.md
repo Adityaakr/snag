@@ -52,7 +52,7 @@ Status: DONE
 ## M4 Retrieval, Jev question sets, verdicts, routing
 Status: IN_PROGRESS
 - [ ] Retrieval per 6.5: the all-in shortcut; BM25 with boosts; `rerank.v0` over budget; the widen pass; test retrieval; base-code retrieval.
-- [ ] The question sets `issue.v0`, `forward.v0`, `tests.v0`, `reverse.v0`, `preexisting.v0`, `claims.v0` and `rerank.v0`, implemented exactly as in Appendix C, as `qs-0.1.0`.
+- [x] The question sets `issue.v0`, `forward.v0`, `tests.v0`, `reverse.v0`, `preexisting.v0`, `claims.v0` and `rerank.v0`, implemented exactly as in Appendix C, as `qs-0.1.0`. (evidence: packages/core/src/questions/questions.test.ts + issue.test.ts (verbatim against Appendix C), fe96bde)
 - [ ] The verdict engine and unit rules from 6.7 as pure functions. Table-driven tests cover every branch and every threshold edge.
 - [ ] The claims check from 6.8, which runs only after the blind pass (with a test).
 - [ ] Routing and modes from 6.9: gate refusal without calibration evidence (with a test); stable finding IDs and `contentKey`; templated reasons only.
