@@ -51,13 +51,13 @@ Status: DONE
 
 ## M4 Retrieval, Jev question sets, verdicts, routing
 Status: IN_PROGRESS
-- [ ] Retrieval per 6.5: the all-in shortcut; BM25 with boosts; `rerank.v0` over budget; the widen pass; test retrieval; base-code retrieval.
+- [x] Retrieval per 6.5: the all-in shortcut; BM25 with boosts; `rerank.v0` over budget; the widen pass; test retrieval; base-code retrieval. (evidence: analysis/src/retrieval/retrieval.test.ts + golden large_diff (rerank path, widen finds R2), 2c15d50)
 - [x] The question sets `issue.v0`, `forward.v0`, `tests.v0`, `reverse.v0`, `preexisting.v0`, `claims.v0` and `rerank.v0`, implemented exactly as in Appendix C, as `qs-0.1.0`. (evidence: packages/core/src/questions/questions.test.ts + issue.test.ts (verbatim against Appendix C), fe96bde)
 - [x] The verdict engine and unit rules from 6.7 as pure functions. Table-driven tests cover every branch and every threshold edge. (evidence: packages/core/src/verdicts/verdicts.test.ts (every branch and threshold edge), 6725d8c)
-- [ ] The claims check from 6.8, which runs only after the blind pass (with a test).
+- [x] The claims check from 6.8, which runs only after the blind pass (with a test). (evidence: core/src/claims.test.ts + golden.test.ts "runs the claims check only after the blind pass", 2c15d50)
 - [x] Routing and modes from 6.9: gate refusal without calibration evidence (with a test); stable finding IDs and `contentKey`; templated reasons only. (evidence: packages/core/src/routing/routing.test.ts (gate refusal, stable ids, contentKey, template reasons), 6725d8c)
 - [x] The verdict engine applies an optional calibration map, and marks results `calibrated: false` without one. (evidence: verdicts.test.ts "uses a calibration only for the matching model and question set", 6725d8c)
-- [ ] Golden scenarios 1 to 18 (Appendix D) pass with scripted Jev answers, including the state assertions for blindness and comment stripping.
+- [x] Golden scenarios 1 to 18 (Appendix D) pass with scripted Jev answers, including the state assertions for blindness and comment stripping. (evidence: pipeline/src/golden/golden.test.ts (18 scenarios, blindness and comment-stripping state assertions), 2c15d50)
 
 ## M5 CLI end to end, renderers, demo
 Status: TODO
