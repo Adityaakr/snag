@@ -4,18 +4,18 @@ One section per milestone. A checked item ends with `(evidence: <test or command
 
 ## M0 Bootstrap and loop infrastructure
 Status: IN_PROGRESS
-- [ ] A git repository with a pnpm workspace, `.nvmrc` (22), strict TypeScript project references, Biome and Vitest. Every package in 4.2 is scaffolded with a passing smoke test.
-- [ ] `pnpm verify` runs the format check, lint, typecheck, tests and guards, and passes.
-- [ ] The `.agent/` memory files (3.1) exist. `.agent/milestones/M0.md` to `M11.md` are generated from this section as issue-style specs.; `.agent/PROGRESS.md` is seeded from them.
-- [ ] `scripts/progress.mjs` is implemented per Appendix A.4, with tests on fixture PROGRESS files. `pnpm progress` and `pnpm progress --check` are wired.
+- [x] A git repository with a pnpm workspace, `.nvmrc` (22), strict TypeScript project references, Biome and Vitest. Every package in 4.2 is scaffolded with a passing smoke test. (evidence: `pnpm typecheck` + 9 package smoke tests (`pnpm test`), 4eaae58)
+- [x] `pnpm verify` runs the format check, lint, typecheck, tests and guards, and passes. (evidence: `pnpm verify` green in 2.2 s, 4eaae58)
+- [x] The `.agent/` memory files (3.1) exist. `.agent/milestones/M0.md` to `M11.md` are generated from this section as issue-style specs.; `.agent/PROGRESS.md` is seeded from them. (evidence: `node scripts/progress.mjs` lists M0..M11 from .agent/milestones, 4eaae58)
+- [x] `scripts/progress.mjs` is implemented per Appendix A.4, with tests on fixture PROGRESS files. `pnpm progress` and `pnpm progress --check` are wired. (evidence: scripts/__tests__/progress.test.ts (21 tests), 4eaae58)
 - [ ] `.claude/settings.json`, `scripts/hooks/session-start.sh` and `scripts/hooks/stop-hygiene.sh` are created exactly as in Appendix A and marked executable. They are tested by piping sample JSON into them.
-- [ ] The subagents `milestone-verifier`, `eval-analyst` and `security-reviewer` are created as in Appendix F.
-- [ ] `.agent/protected.sha256` exists. `guard:protected` and `guard:secrets` run in `pnpm verify`.
-- [ ] `CLAUDE.md` is under 150 lines.
-- [ ] `.env.example` lists every variable in 10.5. `.gitignore` covers: `.env*`, except `.env.example`; `node_modules`; build output and coverage; `.agent/loop-logs/`.
-- [ ] A CI workflow, `.github/workflows/ci.yml`, runs `pnpm install --frozen-lockfile` and `pnpm verify` on push and pull request, with no secrets.
-- [ ] `docs/providers.md` is written after reading the docs in 7.1. It records the exact SDK calls, limits, error classes, prices and links.
-- [ ] A README stub with a one-line pitch, the status and a quickstart placeholder.
+- [x] The subagents `milestone-verifier`, `eval-analyst` and `security-reviewer` are created as in Appendix F. (evidence: .claude/agents/*.md extracted verbatim from Appendix F, 4eaae58)
+- [x] `.agent/protected.sha256` exists. `guard:protected` and `guard:secrets` run in `pnpm verify`. (evidence: `pnpm guard` + scripts/__tests__/guards.test.ts, 4eaae58)
+- [x] `CLAUDE.md` is under 150 lines. (evidence: `wc -l CLAUDE.md` = 64, 4eaae58)
+- [x] `.env.example` lists every variable in 10.5. `.gitignore` covers: `.env*`, except `.env.example`; `node_modules`; build output and coverage; `.agent/loop-logs/`. (evidence: .env.example vs spec 10.5 table; .gitignore, 4eaae58)
+- [x] A CI workflow, `.github/workflows/ci.yml`, runs `pnpm install --frozen-lockfile` and `pnpm verify` on push and pull request, with no secrets. (evidence: .github/workflows/ci.yml, 4eaae58)
+- [x] `docs/providers.md` is written after reading the docs in 7.1. It records the exact SDK calls, limits, error classes, prices and links. (evidence: docs/providers.md (TypeSafe docs + SDK v0.6.0, linked), 4eaae58)
+- [x] A README stub with a one-line pitch, the status and a quickstart placeholder. (evidence: README.md, 4eaae58)
 
 ## M1 Contracts and diff analysis (offline)
 Status: TODO
