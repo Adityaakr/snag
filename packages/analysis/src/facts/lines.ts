@@ -56,12 +56,58 @@ export function viewOf(patch: string): LineView {
 
 export interface UnitViews {
   unit: ChangeUnit;
+  /** The unit patch, comments and strings included. */
   raw: LineView;
+  /** The comment-stripped judge view. */
   judge: LineView;
+  /** The judge view with string literal contents blanked (parsed languages only), for marker detectors. */
+  code: LineView;
+}
+
+/**
+ * Empties string literal contents on one line, keeping the quotes: `it.skip("a .only b")` becomes `it.skip("")`.
+ * Line-local, so multi-line strings are only partly blanked.
+ */
+export function blankStrings(content: string): string {
+  let out = '';
+  let quote: string | null = null;
+  for (let i = 0; i < content.length; i++) {
+    const ch = content[i] as string;
+    if (quote) {
+      if (ch === '\\') i++;
+      else if (ch === quote) {
+        quote = null;
+        out += ch;
+      }
+      continue;
+    }
+    if (ch === '"' || ch === "'" || ch === '`') quote = ch;
+    out += ch;
+  }
+  return out;
+}
+
+function mapView(view: LineView, fn: (s: string) => string): LineView {
+  const map = new Map<Line, Line>();
+  const conv = (l: Line) => {
+    let m = map.get(l);
+    if (!m) {
+      m = { content: fn(l.content), line: l.line };
+      map.set(l, m);
+    }
+    return m;
+  };
+  return {
+    adds: view.adds.map(conv),
+    dels: view.dels.map(conv),
+    blocks: view.blocks.map((b) => ({ adds: b.adds.map(conv), dels: b.dels.map(conv) })),
+  };
 }
 
 export function unitViews(unit: ChangeUnit): UnitViews {
-  return { unit, raw: viewOf(unit.patch), judge: viewOf(unit.judgeView) };
+  const judge = viewOf(unit.judgeView);
+  const parsed = unit.language !== 'other';
+  return { unit, raw: viewOf(unit.patch), judge, code: parsed ? mapView(judge, blankStrings) : judge };
 }
 
 /** Counts regex matches in text (the regex needs the g flag). */

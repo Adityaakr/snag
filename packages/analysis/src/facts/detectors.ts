@@ -82,7 +82,7 @@ const assertionRemoved: Detector = {
   kind: 'assertion_removed',
   languages: ['js', 'py', 'rs'],
   appliesTo: isTest,
-  detect({ unit, judge }) {
+  detect({ unit, code: judge }) {
     const g = langGroup(unit.language);
     if (!g) return [];
     const re = ASSERTION[g];
@@ -149,7 +149,7 @@ const assertionWeakened: Detector = {
   kind: 'assertion_weakened',
   languages: ['js', 'py', 'rs'],
   appliesTo: isTest,
-  detect({ unit, judge }) {
+  detect({ unit, code: judge }) {
     const g = langGroup(unit.language);
     const out: FactDraft[] = [];
     for (const block of judge.blocks) {
@@ -263,7 +263,7 @@ const testSkipped: Detector = {
   kind: 'test_skipped',
   languages: 'all',
   appliesTo: (u) => isTest(u) || u.language === 'rs',
-  detect({ unit, judge }) {
+  detect({ unit, code: judge }) {
     const g = langGroup(unit.language);
     const patterns = g ? [SKIP[g]] : Object.values(SKIP);
     return patterns.flatMap((re) =>
@@ -283,7 +283,7 @@ const testFocused: Detector = {
   kind: 'test_focused',
   languages: ['js'],
   appliesTo: isTest,
-  detect({ judge }) {
+  detect({ code: judge }) {
     return netAdded(judge, FOCUS).map((l) => ({
       kind: 'test_focused',
       severity: 'high',
@@ -444,7 +444,7 @@ const retryOrTimeoutAdded: Detector = {
   kind: 'retry_or_timeout_added',
   languages: 'all',
   appliesTo: (u) => isTest(u) || isTestConfig(u),
-  detect({ judge }) {
+  detect({ code: judge }) {
     const out: FactDraft[] = netAdded(judge, RETRY).map((l) => ({
       kind: 'retry_or_timeout_added' as const,
       severity: 'warn' as const,
@@ -495,7 +495,7 @@ const suppressionAdded: Detector = {
 const catchBroadened: Detector = {
   kind: 'catch_broadened',
   languages: ['js', 'py', 'rs'],
-  detect({ unit, judge }) {
+  detect({ unit, code: judge }) {
     const g = langGroup(unit.language);
     const out: FactDraft[] = [];
     const push = (l: Line, detail: string) =>

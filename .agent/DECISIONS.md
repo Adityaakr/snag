@@ -75,3 +75,9 @@ Append-only. Each entry: date, decision, alternatives, why. Deviations from BUIL
 - `ci_changed` is high for broadened `permissions`, a removed job, or a new `pull_request_target` trigger.
 - `new_symbol_unreferenced` uses `git grep -w` over the head SHA (or the working tree); test files and the definition line do not count. Entrypoint files (index, main, cli, bin/, cmd/, pages/, routes/ and similar) and names like `main` or `handler` are excluded.
 - `secret_like` combines known prefixes with a Shannon entropy test (at least `4.2` bits per char, 32+ chars, letters and digits, not plain hex, not on a hash/checksum line). Details are always redacted.
+
+## 2026-09-26 D12 M1 gate follow-ups
+- Marker and structure detectors (assertions, skip/focus, retry/timeout, catch) now read a `code` view: the judge view with string contents blanked per line. `expected_value_changed` keeps strings (literals are what it compares); `secret_like` and `suppression_added` keep the raw patch. Known limit: strings spanning several lines (template literals, triple-quoted strings) are only blanked on their first line. On this repo's own diff, facts fell from `49` to `24`, with one remaining false positive from a multi-line template literal.
+- A single hunk over the `6000` token unit cap stays one unit (6.3 step 5 splits only at hunk boundaries) and now raises a warning.
+- `remit` exits `0` quietly when stdout closes early (EPIPE).
+- PROGRESS.md item texts were regenerated from the milestone files; the M0 seeding script had collapsed `..` to `.` in 4 items (text only, no status change).
