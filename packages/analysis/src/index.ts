@@ -1,5 +1,8 @@
 import { BRAND } from '@remit/core';
 
+export * from './diff/parse.js';
+export * from './diff/render.js';
+
 /** The package name, used by smoke tests to prove workspace wiring. */
 export const PACKAGE = '@remit/analysis';
 
