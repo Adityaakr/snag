@@ -294,3 +294,9 @@ Append-only. Each entry: date, decision, alternatives, why. Deviations from BUIL
   - circuit breakers: while a half-open trial is in flight, other calls fail fast, and only the trial decides the state;
   - redaction covers `*.env.*` and `*.*.env.*`.
   - Regression tests: `budget.test.ts`, `circuit.test.ts` "half-open concurrency", `main.test.ts` "redacts credentials".
+- Addendum (fourth M9 security review, 2026-09-27): budgets failed open, because a repository could price its model at 0 or pick an unpriced one. Fixed:
+  - the App passes operator prices (`operatorPricesFromEnv`: the built-in table plus `REMIT_LLM_PRICES` and `REMIT_JEV_PRICE_PER_MILLION_USD`) to `providersFromEnv`;
+  - `resolvePrices` takes the higher of the operator and repository prices, and refuses live LLM calls for a model the operator has not priced (falls back to the task list);
+  - the CLI and the Action keep repository prices, because the repository owner pays there;
+  - a stale `/remit confirm` enqueues the debounced, rate-limited `issue:` job instead of extracting inline.
+  - Regression tests: `providers/src/env.test.ts`, `app.test.ts` "a confirm on a changed issue".

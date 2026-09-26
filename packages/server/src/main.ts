@@ -8,9 +8,10 @@ import { randomBytes } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { serve } from '@hono/node-server';
-import { BRAND, QUESTION_SET_VERSION } from '@remit/core';
+import { BRAND, defaultConfig, QUESTION_SET_VERSION } from '@remit/core';
 import { CALIBRATION_ROOT, EVAL_ROOT, loadCalibration } from '@remit/eval';
 import {
+  operatorPricesFromEnv,
   type AppCredentials,
   appSlug,
   installationToken,
@@ -68,6 +69,8 @@ export async function start(
   const env = withFileSecrets(rawEnv);
   const dailyBudgetUsd = positiveNumber(env, 'REMIT_DAILY_BUDGET_USD', 20);
   const reviewsPerHour = positiveNumber(env, 'REMIT_REVIEWS_PER_HOUR', 200);
+  // Budgets use the operator's prices; a repository's .remit.yml can raise them, never lower them (9.13).
+  const operatorPrices = operatorPricesFromEnv(defaultConfig(), env);
   if (env.SETUP_TOKEN !== undefined && env.SETUP_TOKEN.length < 32)
     throw new Error('SETUP_TOKEN must be at least 32 characters.');
   const role = (env.REMIT_ROLE ?? 'all') as Role;
@@ -184,6 +187,7 @@ export async function start(
         { ...env, REMIT_CACHE_MODE: env.REMIT_CACHE_MODE ?? 'live' },
         {
           logger,
+          operatorPrices,
           breakerOptions: {
             onOpen: (provider) => logger.warn({ provider }, 'circuit opened: failing fast'),
             onReject: (provider) => metrics.inc('remit_circuit_open_total', { provider }),

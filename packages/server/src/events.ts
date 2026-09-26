@@ -194,24 +194,7 @@ export async function handleEvent(name: string, payload: unknown, deps: AppDeps)
       const e = IssueEvent.parse(payload);
       if (!['labeled', 'assigned', 'edited'].includes(e.action)) return { ignored: `issues.${e.action}` };
       const ref = { owner: e.repository.owner.login, repo: e.repository.name, number: e.issue.number };
-      // Checklist runs spend provider money: debounce edits like pushes and apply the installation's hourly rate.
-      await deps.queue.enqueue(
-        `issue:${ref.owner}/${ref.repo}#${ref.number}`,
-        {
-          kind: 'issue',
-          installationId: e.installation.id,
-          ...ref,
-          action: e.action,
-          ...(e.label ? { label: e.label.name } : {}),
-        },
-        {
-          debounceMs: rateDebounce(
-            deps,
-            e.installation.id,
-            e.action === 'edited' ? (deps.debounceMs ?? 30_000) : 0,
-          ),
-        },
-      );
+      await enqueueIssue(deps, e.installation.id, ref, e.action, e.label?.name);
       return { handled: `issues.${e.action}` };
     }
     case 'installation': {
@@ -240,6 +223,23 @@ export async function handleEvent(name: string, payload: unknown, deps: AppDeps)
     default:
       return { ignored: name };
   }
+}
+
+/** Checklist runs spend provider money: debounce edits like pushes and apply the installation's hourly rate. */
+async function enqueueIssue(
+  deps: AppDeps,
+  installationId: number,
+  ref: { owner: string; repo: string; number: number },
+  action: string,
+  label?: string,
+): Promise<void> {
+  await deps.queue.enqueue(
+    `issue:${ref.owner}/${ref.repo}#${ref.number}`,
+    { kind: 'issue', installationId, ...ref, action, ...(label ? { label } : {}) },
+    {
+      debounceMs: rateDebounce(deps, installationId, action === 'edited' ? (deps.debounceMs ?? 30_000) : 0),
+    },
+  );
 }
 
 async function runSlash(
@@ -272,11 +272,12 @@ async function runSlash(
         return;
       }
       const r = await confirmChecklist(gh, ref, login, deps, e.installation.id);
+      if (r === 'stale') await enqueueIssue(deps, e.installation.id, ref, 'edited');
       await reply(
         r === 'confirmed'
           ? `Checklist confirmed by @${sanitize(login, 40)}. Reviews of PRs for this issue will use it.`
           : r === 'stale'
-            ? 'The issue changed since the checklist was posted, so it was read again. Please check the new list and confirm again.'
+            ? 'The issue changed since the checklist was posted, so it will be read again shortly. Please check the new list and confirm again.'
             : `There is no ${BRAND.name} checklist on this issue yet.`,
       );
       return;

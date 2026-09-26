@@ -220,6 +220,27 @@ describe('issue-time checklist', () => {
     ).toHaveLength(1);
   });
 
+  it('a confirm on a changed issue re-reads it through the issue queue, not inline', async () => {
+    const { hook, repo, store, queue } = setup({ config });
+    await hook('issues', 'issues.labeled');
+    const before = (await store.getChecklist('acme/reports', 12))?.contentHash;
+    const issue = repo.gh.issues.get('acme/reports#12');
+    if (issue) issue.body = `${issue.body}\n\n- Also support TSV.`;
+    const keys: string[] = [];
+    const enqueue = queue.enqueue.bind(queue);
+    queue.enqueue = (key, job, opts) => {
+      keys.push(key);
+      return enqueue(key, job, opts);
+    };
+    await hook('issue_comment', 'issue_comment.confirm');
+    expect(keys).toContain('issue:acme/reports#12');
+    const after = await store.getChecklist('acme/reports', 12);
+    expect(after?.confirmedBy).toBeUndefined();
+    expect(after?.contentHash).not.toBe(before);
+    const bodies = (repo.gh.posted.get('acme/reports#12') ?? []).map((c) => c.body);
+    expect(bodies.some((b) => b.includes('will be read again shortly'))).toBe(true);
+  });
+
   it('does nothing when the checklist is off or the label differs', async () => {
     const { hook, repo } = setup();
     await hook('issues', 'issues.labeled');
