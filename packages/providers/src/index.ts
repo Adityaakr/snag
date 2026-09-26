@@ -11,6 +11,18 @@ export { FakeJev, type JevScript, type RecordedCall, type ScriptedAnswer } from 
 export { classifyJevError, LiveJev, type LiveJevOptions, processJevLimiter } from './jev/live.js';
 export * from './jev/types.js';
 export { validateAnswers } from './jev/validate.js';
+export {
+  AnthropicLlm,
+  type AnthropicLlmOptions,
+  acceptsTemperature,
+  classifyAnthropicError,
+  type Effort,
+} from './llm/anthropic.js';
+export { CachedLlm } from './llm/cached.js';
+export { FakeLlm, type LlmScript } from './llm/fake.js';
+export { classifyOpenAiError, OpenAiCompatibleLlm, type OpenAiCompatibleOptions } from './llm/openai.js';
+export { parseStructured, repairMessages, withRepair } from './llm/repair.js';
+export * from './llm/types.js';
 
 /** The package name, used by smoke tests to prove workspace wiring. */
 export const PACKAGE = '@remit/providers';

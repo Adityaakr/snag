@@ -81,3 +81,11 @@ Append-only. Each entry: date, decision, alternatives, why. Deviations from BUIL
 - A single hunk over the `6000` token unit cap stays one unit (6.3 step 5 splits only at hunk boundaries) and now raises a warning.
 - `remit` exits `0` quietly when stdout closes early (EPIPE).
 - PROGRESS.md item texts were regenerated from the milestone files; the M0 seeding script had collapsed `..` to `.` in 4 items (text only, no status change).
+
+## 2026-09-26 D13 LLM adapter on current Claude models
+- Structured output uses native `output_config.format` (JSON Schema from zod via the SDK's `jsonSchemaOutputFormat` transform) instead of a forced single tool call: current Opus models, including the configured `claude-opus-5-5`, return 400 on forced `tool_choice`. The model gets no tools at all, which is stricter than 8's "no tool other than the output tool". Validation is our zod schema plus one repair turn with the errors.
+- Temperature `0` is sent only to models that still accept sampling parameters; Opus 4.7+, Opus 5/5.5, Fable, Mythos and Sonnet 5 reject it (8 says "where supported").
+- Thinking cannot be disabled on Opus 5.5 and its default effort is `medium`. Effort is configurable (`extraction.effort`, default unset, so the model default) to keep extraction near the `$0.10` review target.
+- A `refusal` or `max_tokens` stop is a typed error with a fix hint. Server-side refusal fallbacks are not enabled; extraction on refusal falls back to the task-list fast path in the pipeline (M3).
+- SDK retries are off (`maxRetries: 0`) for Anthropic and OpenAI-compatible; Remit's shared backoff handles 429/529/5xx/timeouts.
+- Pricing lives in config: `claude-opus-5-5` is `$4` input and `$20` output per million tokens.
