@@ -32,6 +32,8 @@ export const REDACT_PATHS = [
   '*.apiKey',
   // Any environment object that reaches a log line is redacted whole.
   'env.*',
+  '*.env.*',
+  '*.*.env.*',
 ];
 
 export type { Logger };

@@ -287,3 +287,10 @@ Append-only. Each entry: date, decision, alternatives, why. Deviations from BUIL
   - a half-open trial that fails without counting keeps the circuit open;
   - logs redact any `env.*` value.
   - Regression tests: `limits.test.ts` "budget reservations never leak", `circuit.test.ts` "half-open trials".
+- Addendum (third M9 security review, 2026-09-27): issue-checklist extraction bypassed the daily budget. Fixed:
+  - one helper, `packages/server/src/budget.ts` `reserveBudget`, used by reviews and checklists: reserve `min(max_usd_per_review, daily/4)`, skip past the budget, settle in `finally`;
+  - a reservation is settled to 0 if the budget query throws, and a settle failure is logged, never thrown over the original error;
+  - issue queue jobs are debounced on edits and fall under the per-installation hourly rate;
+  - circuit breakers: while a half-open trial is in flight, other calls fail fast, and only the trial decides the state;
+  - redaction covers `*.env.*` and `*.*.env.*`.
+  - Regression tests: `budget.test.ts`, `circuit.test.ts` "half-open concurrency", `main.test.ts` "redacts credentials".
