@@ -253,10 +253,12 @@ async function analyzeFile(file: DiffFile, opts: BuildUnitsOptions): Promise<Fil
 }
 
 interface Group {
-  symbol?: CodeSymbol;
-  symbolSide?: 'head' | 'base';
+  /** `kind:qualifiedName` of the symbol, when the lines sit inside one. */
+  key?: string;
   blocks: Block[];
 }
+
+const symbolKey = (s: CodeSymbol) => `${s.kind}:${s.qualifiedName}`;
 
 function isRustTestModule(fa: FileAnalysis, sym: CodeSymbol): boolean {
   if (fa.language !== 'rs') return false;
@@ -270,26 +272,66 @@ function isRustTestModule(fa: FileAnalysis, sym: CodeSymbol): boolean {
   );
 }
 
+/** The symbol owning one changed line: head side for additions, base side for deletions. */
+function symbolForLine(fa: FileAnalysis, line: HunkLine): CodeSymbol | null {
+  if (line.type === 'del')
+    return line.oldLine === undefined ? null : smallestEnclosing(fa.baseSymbols, line.oldLine, line.oldLine);
+  return line.newLine === undefined ? null : smallestEnclosing(fa.headSymbols, line.newLine, line.newLine);
+}
+
+/** Splits blocks where the owning symbol changes. Blank or unowned lines join a neighbour's symbol. */
+function splitBySymbol(fa: FileAnalysis, file: DiffFile, blocks: Block[]): { block: Block; key?: string }[] {
+  const out: { block: Block; key?: string }[] = [];
+  for (const b of blocks) {
+    const hunk = file.hunks[b.hunkIndex] as Hunk;
+    const lines = hunk.lines.slice(b.from, b.to + 1);
+    const keys: (string | undefined)[] = lines.map((l) => {
+      if (l.content.trim() === '') return undefined;
+      const sym = symbolForLine(fa, l);
+      return sym ? symbolKey(sym) : undefined;
+    });
+    const owned = keys.some((k) => k !== undefined);
+    if (owned) {
+      for (let i = 1; i < keys.length; i++) keys[i] ??= keys[i - 1];
+      for (let i = keys.length - 2; i >= 0; i--) keys[i] ??= keys[i + 1];
+    }
+    let start = 0;
+    for (let i = 1; i <= lines.length; i++) {
+      if (i === lines.length || keys[i] !== keys[start]) {
+        const slice = lines.slice(start, i);
+        const key = keys[start];
+        out.push({
+          block: {
+            hunkIndex: b.hunkIndex,
+            from: b.from + start,
+            to: b.from + i - 1,
+            newRange: span(
+              slice.flatMap((l) => (l.type === 'add' && l.newLine !== undefined ? [l.newLine] : [])),
+            ),
+            oldRange: span(
+              slice.flatMap((l) => (l.type === 'del' && l.oldLine !== undefined ? [l.oldLine] : [])),
+            ),
+          },
+          ...(key ? { key } : {}),
+        });
+        start = i;
+      }
+    }
+  }
+  return out;
+}
+
 function groupBlocks(fa: FileAnalysis, blocks: Block[], proximity: number): Group[] {
   const bySymbol = new Map<string, Group>();
   const loose: Block[] = [];
-  for (const b of blocks) {
-    let sym: CodeSymbol | null = null;
-    let side: 'head' | 'base' = 'head';
-    if (b.newRange && fa.headSymbols.length)
-      sym = smallestEnclosing(fa.headSymbols, b.newRange[0], b.newRange[1]);
-    if (!sym && !b.newRange && b.oldRange && fa.baseSymbols.length) {
-      sym = smallestEnclosing(fa.baseSymbols, b.oldRange[0], b.oldRange[1]);
-      side = 'base';
-    }
-    if (!sym) {
-      loose.push(b);
+  for (const { block, key } of splitBySymbol(fa, fa.file, blocks)) {
+    if (!key) {
+      loose.push(block);
       continue;
     }
-    const key = `${sym.kind}:${sym.name}:${sym.depth}`;
     const g = bySymbol.get(key);
-    if (g) g.blocks.push(b);
-    else bySymbol.set(key, { symbol: sym, symbolSide: side, blocks: [b] });
+    if (g) g.blocks.push(block);
+    else bySymbol.set(key, { key, blocks: [block] });
   }
   const groups = [...bySymbol.values()];
   // Proximity grouping for everything outside a symbol.
@@ -307,6 +349,16 @@ function groupBlocks(fa: FileAnalysis, blocks: Block[], proximity: number): Grou
     lastEnd = Math.max(lastEnd, r[1]);
   }
   return groups;
+}
+
+/** Picks the symbol with this key, preferring one that overlaps the given ranges. */
+function findSymbol(
+  symbols: readonly CodeSymbol[],
+  key: string,
+  ranges: [number, number][],
+): CodeSymbol | undefined {
+  const matches = symbols.filter((s) => symbolKey(s) === key);
+  return matches.find((s) => ranges.some(([a, b]) => s.startLine <= b && s.endLine >= a)) ?? matches[0];
 }
 
 /** Turns grouped blocks into sub-hunks, merging blocks of the same hunk that share context. */
@@ -366,7 +418,9 @@ function draftUnit(
   const judgeView = judgeViewOf(fa, hunks);
   const lines = { new: rangesOf(blocks, 'newRange'), old: rangesOf(blocks, 'oldRange') };
   let kind = fa.kind;
-  const sym = group.symbol;
+  const headSym = group.key ? findSymbol(fa.headSymbols, group.key, lines.new) : undefined;
+  const baseSym = group.key ? findSymbol(fa.baseSymbols, group.key, lines.old) : undefined;
+  const sym = headSym ?? baseSym;
   if (sym && (sym.kind === 'test' || isRustTestModule(fa, sym)) && kind === 'source') kind = 'test';
   const unit: Draft = {
     file: fa.path,
@@ -389,11 +443,6 @@ function draftUnit(
       startLine: sym.startLine,
       endLine: sym.endLine,
     };
-    const baseSym =
-      group.symbolSide === 'base'
-        ? sym
-        : fa.baseSymbols.find((s) => s.name === sym.name && s.kind === sym.kind && s.depth === sym.depth);
-    const headSym = group.symbolSide === 'head' ? sym : undefined;
     const after = headSym
       ? bounded(fa.headStripped, headSym.startLine, headSym.endLine, opts.contextLines)
       : undefined;
@@ -469,7 +518,7 @@ export async function buildUnits(diff: ParsedDiff, opts: BuildUnitsOptions = {})
       const chunks = capBySize(hunks, file, maxUnitTokens);
       if (chunks.length > 1)
         warnings.push(
-          `${fa.path}: split a ${group.symbol ? `symbol "${group.symbol.name}"` : 'change'} into ${chunks.length} units over ${maxUnitTokens} tokens`,
+          `${fa.path}: split a ${group.key ? `symbol "${group.key.slice(group.key.indexOf(':') + 1)}"` : 'change'} into ${chunks.length} units over ${maxUnitTokens} tokens`,
         );
       for (const chunk of chunks) {
         const chunkBlocks = group.blocks.filter((b) =>

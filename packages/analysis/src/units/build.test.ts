@@ -350,3 +350,46 @@ describe('helpers', () => {
     );
   });
 });
+
+describe('deletions inside surviving symbols', () => {
+  it('maps a deleted line inside a function to the head symbol, keeping before and after', async () => {
+    const base = "it('adds', () => {\n  expect(add(1, 1)).toBe(2);\n  expect(add(2, 2)).toBe(4);\n});\n";
+    const head = "it('adds', () => {\n  expect(add(1, 1)).toBe(2);\n});\n";
+    const { units } = await unitsFor({ 'src/add.test.ts': base }, { 'src/add.test.ts': head });
+    expect(units).toHaveLength(1);
+    expect(units[0]).toMatchObject({
+      symbol: { name: 'adds', kind: 'test' },
+      lines: { new: [], old: [[3, 3]] },
+    });
+    expect(units[0]?.after).toBeDefined();
+    expect(units[0]?.before).toContain('add(2, 2)');
+  });
+
+  it('still maps a whole deleted function to the base symbol', async () => {
+    const base = "it('a', () => {\n  expect(1).toBe(1);\n});\n\nit('b', () => {\n  expect(2).toBe(2);\n});\n";
+    const head = "it('a', () => {\n  expect(1).toBe(1);\n});\n";
+    const { units } = await unitsFor({ 'x.test.ts': base }, { 'x.test.ts': head });
+    expect(units[0]).toMatchObject({ symbol: { name: 'b' } });
+    expect(units[0]?.after).toBeUndefined();
+  });
+});
+
+describe('per-line symbol assignment', () => {
+  it('splits one added block holding two new functions into two units', async () => {
+    const base = 'export function a() {\n  return 1;\n}\n';
+    const head = `${base}\nexport function b() {\n  return 2;\n}\n\nexport function c() {\n  return 3;\n}\n`;
+    const { units } = await unitsFor({ 'f.ts': base }, { 'f.ts': head });
+    expect(units.map((u) => [u.symbol?.name, u.lines.new])).toEqual([
+      ['b', [[4, 8]]], // leading and trailing blank lines join the neighbouring function
+      ['c', [[9, 11]]],
+    ]);
+  });
+
+  it('keeps same-named methods in different classes apart', async () => {
+    const base = 'class A {\n  run() {\n    return 1;\n  }\n}\nclass B {\n  run() {\n    return 1;\n  }\n}\n';
+    const head = base.replace(/return 1;/g, 'return 2;');
+    const { units } = await unitsFor({ 'k.ts': base }, { 'k.ts': head });
+    expect(units).toHaveLength(2);
+    expect(units.map((u) => u.symbol?.startLine)).toEqual([2, 7]);
+  });
+});
