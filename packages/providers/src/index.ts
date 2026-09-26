@@ -5,6 +5,18 @@ export * from './common/budget.js';
 export * from './common/errors.js';
 export * from './common/limits.js';
 export * from './common/retry.js';
+export { type PullDiff, pullDiff } from './github/diff.js';
+export { FakeGitHub, type FakeIssue, type FakePull } from './github/fake.js';
+export { closingKeywordRefs, linkIssues, plainRefs } from './github/links.js';
+export {
+  classifyGitHubError,
+  LiveGitHub,
+  type LiveGitHubOptions,
+  MAX_CONTENT_BYTES,
+  MAX_PR_FILES,
+} from './github/live.js';
+export { commentRole, isBotComment } from './github/roles.js';
+export * from './github/types.js';
 export { toAnswers } from './jev/answers.js';
 export { CachedJev } from './jev/cached.js';
 export { FakeJev, type JevScript, type RecordedCall, type ScriptedAnswer } from './jev/fake.js';

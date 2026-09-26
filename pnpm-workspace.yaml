@@ -2,7 +2,7 @@ packages:
   - "packages/*"
 
 # Dependency build scripts are off by default (pnpm 11). esbuild ships its binary as an optional dependency,
-# and the tree-sitter grammar packages are used only for their prebuilt .wasm files.
+# the tree-sitter grammar packages are used only for their prebuilt .wasm files, and msw needs no postinstall in Node.
 allowBuilds:
   esbuild: false
   tree-sitter-typescript: false
@@ -10,3 +10,4 @@ allowBuilds:
   tree-sitter-python: false
   tree-sitter-rust: false
   tree-sitter: false
+  msw: false
