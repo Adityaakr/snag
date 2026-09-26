@@ -34,7 +34,7 @@ Status: IN_PROGRESS
 - [x] The Jev adapter from 7.3 (LiveJev, FakeJev, CachedJev), with tests for: packing; 400 shrink-and-retry; 429 and 529 backoff; validation; concurrency; cost accounting; model logging. (evidence: packages/providers/src/jev/jev.test.ts (overflow shrink, 429/529 backoff, validation, concurrency, cost, model logging, preflight packing) + common/common.test.ts, 0a53ab4)
 - [x] The LLM adapter from section 8 (Anthropic, OpenAI-compatible, FakeLlm, CachedLlm), with structured output, the repair retry and cost accounting. (evidence: packages/providers/src/llm/llm.test.ts, b453f61)
 - [x] A GitHub adapter covering: PR metadata; paginated files and patches, with the local diff fallback; contents at a SHA, with a size guard; issues and comments with roles; linked issues per 6.1; rate-limit handling. It includes FakeGitHub for tests. (evidence: packages/providers/src/github/github.test.ts (msw: PR, paginated files, contents size guard, issues with roles, GraphQL closing refs, rate limits; FakeGitHub diff fallback), bf95446)
-- [ ] Record and replay per 7.4, with all four modes. A test proves cassettes contain no auth headers.
+- [x] Record and replay per 7.4, with all four modes. A test proves cassettes contain no auth headers. (evidence: packages/providers/src/cache/store.test.ts + jev.test.ts/llm.test.ts cassette tests ("never stores auth headers"), 9d63961)
 - [ ] `remit doctor` per 10.1, including model ID verification through the Anthropic Models API. The results are recorded in `docs/providers.md`.
 - [ ] `pnpm test:live` smoke tests run only when keys exist, and print `skipped: <KEY> not set` otherwise.
 - [ ] `guard:tests` (3.6) runs in `pnpm verify`.
