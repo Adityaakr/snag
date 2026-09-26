@@ -61,7 +61,7 @@ Exit codes: 0 ok, 1 gate failure, 2 usage or config error, 3 provider or network
   doctor: {
     run: (argv, io) => doctorCommand(argv, io),
     summary: 'Check Node, keys, config, provider connectivity, model ids and rate limits',
-    help: `${s} doctor\n\nPrints a fix for every failed check. Exit 0 when all required checks pass, 3 otherwise, 2 for an invalid config.`,
+    help: `${s} doctor [--config <path>]\n\nPrints a fix for every failed check. Exit 0 when all required checks pass, 3 otherwise, 2 for an invalid config.`,
   },
   eval: {
     run: (argv, io) => evalCommand(argv, io),

@@ -71,6 +71,18 @@ export class OpenAiCompatibleLlm implements LlmProvider {
     this.logger = opts.logger ?? silentLogger;
   }
 
+  /** Model ids the endpoint serves (`GET /models`), for `remit doctor`. */
+  async listModels(): Promise<string[]> {
+    try {
+      const ids: string[] = [];
+      for await (const m of this.sdk().models.list()) ids.push(m.id);
+      return ids;
+    } catch (e) {
+      if (e instanceof ProviderError) throw e;
+      throw classifyOpenAiError(e);
+    }
+  }
+
   private sdk(): OpenAI {
     if (this.client) return this.client;
     const apiKey = this.opts.apiKey ?? process.env.OPENAI_COMPATIBLE_API_KEY;

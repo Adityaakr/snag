@@ -10,6 +10,7 @@ const deps = (over: Partial<DoctorDeps> = {}): DoctorDeps => ({
   configText: null,
   jevProbe: async (model) => ({ model }),
   anthropicModels: async () => ['claude-opus-5-5', 'claude-sonnet-5'],
+  openaiCompatibleModels: async () => ['anthropic/claude-opus-5.5', 'anthropic/claude-sonnet-5'],
   githubRateLimit: async () => ({ limit: 5000, remaining: 4990, resetAt: 0 }),
   ...over,
 });
@@ -34,6 +35,37 @@ describe('remit doctor', () => {
     expect(io.out).toMatch(/- skip\s+typesafe\s+skipped: TYPESAFE_API_KEY not set/);
     expect(io.out).toMatch(/- skip\s+anthropic\s+skipped: ANTHROPIC_API_KEY not set/);
     expect(io.out).toMatch(/! warn\s+env GITHUB_TOKEN/);
+  });
+
+  it('checks an OpenAI-compatible endpoint (such as OpenRouter): key, base URL, model and price', async () => {
+    const key = ['sk', 'or', 'secret', 'value'].join('-');
+    const cfg = (priced: boolean) =>
+      `extraction:\n  provider: openai_compatible\n  model: anthropic/claude-opus-5.5\n${
+        priced ? 'llm_prices:\n  anthropic/claude-opus-5.5:\n    input: 4\n    output: 20\n' : ''
+      }`;
+    const env = {
+      TYPESAFE_API_KEY: 'x',
+      OPENAI_COMPATIBLE_API_KEY: key,
+      OPENAI_COMPATIBLE_BASE_URL: 'https://openrouter.ai/api/v1',
+    };
+    const io = memoryIo('/tmp');
+    expect(await doctorCommand([], io.sink, deps({ env, configText: cfg(true), configName: 'or.yml' }))).toBe(
+      0,
+    );
+    expect(io.out).toMatch(/or\.yml is valid/);
+    expect(io.out).toMatch(/openai_compatible model\s+anthropic\/claude-opus-5.5 is available/);
+    expect(io.out).toMatch(/openai_compatible price\s+anthropic\/claude-opus-5.5 is priced/);
+    expect(io.out).not.toContain(key);
+    const unpriced = await runChecks(deps({ env, configText: cfg(false) }));
+    expect(unpriced.checks.find((c) => c.name === 'openai_compatible price')?.status).toBe('warn');
+    const missing = await runChecks(
+      deps({ env, configText: cfg(true), openaiCompatibleModels: async () => ['other/model'] }),
+    );
+    expect(missing.checks.find((c) => c.name === 'openai_compatible model')?.status).toBe('fail');
+    const noBase = await runChecks(
+      deps({ env: { ...env, OPENAI_COMPATIBLE_BASE_URL: '' }, configText: cfg(true) }),
+    );
+    expect(noBase.checks.find((c) => c.name === 'openai_compatible')?.status).toBe('fail');
   });
 
   it('does not require an LLM key in tasklist_only mode', async () => {
