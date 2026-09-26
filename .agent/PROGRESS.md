@@ -113,7 +113,7 @@ Status: TODO
 - [x] A load test with fakes: 50 concurrent PR events. Record p50 and p95 latency and the error rate in `docs/operations.md`. (evidence: server/src/load.slow.test.ts: 50 concurrent PR events, 50 reviewed, 0 errors, p50 2.0 s, p95 3.1 s, recorded in docs/operations.md 'Load test', 8d957ba)
 - [x] Chaos tests: Jev 400, 429, 529 and timeouts; GitHub 5xx; a database restart. (evidence: server/src/chaos.test.ts: Jev 400, 429, 529 and timeouts through LiveJev; GitHub 5xx transient and persistent through LiveGitHub; a database restart under pg-boss and the Postgres store (found and fixed an unhandled pool error), 8d957ba)
 - [x] Docs: `docs/security.md` (the threat model); `docs/operations.md` (a runbook with SLOs and alerts); CHANGELOG and CONTRIBUTING. (evidence: docs/security.md (threat model per 9.14), docs/operations.md (runbook, SLOs, alerts), CHANGELOG.md, CONTRIBUTING.md, 8d957ba)
-- [ ] The `security-reviewer` subagent returns `VERDICT: PASS`.
+- [x] The `security-reviewer` subagent returns `VERDICT: PASS`. (evidence: sixth round on c561fd9 returned VERDICT: PASS with no high or medium findings; rounds 1 to 5 findings fixed with regression tests and recorded in DECISIONS D32 and its addenda; its two remaining lows (estimate own-key lookup, REMIT_LLM_PRICES arrays) fixed in the following commit)
 
 ## M10 Eval-driven improvement
 Status: BLOCKED-HUMAN

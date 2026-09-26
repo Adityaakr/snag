@@ -78,5 +78,8 @@ describe('operator prices', () => {
     ).toThrow(/positive/);
     expect(() => operatorPricesFromEnv(defaultConfig(), { REMIT_JEV_PRICE_PER_MILLION_USD: '0' })).toThrow();
     expect(() => operatorPricesFromEnv(defaultConfig(), { REMIT_LLM_PRICES: 'not json' })).toThrow();
+    expect(() =>
+      operatorPricesFromEnv(defaultConfig(), { REMIT_LLM_PRICES: '[{"input":1,"output":1}]' }),
+    ).toThrow(/JSON object/);
   });
 });
