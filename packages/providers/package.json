@@ -15,8 +15,10 @@
     "test": "vitest run --root ../.. --project providers"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "0.128.0",
     "@remit/core": "workspace:*",
     "@typesafe-ai/sdk": "0.6.0",
+    "openai": "7.23.0",
     "zod": "4.6.5"
   }
 }
