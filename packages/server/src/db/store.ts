@@ -468,4 +468,42 @@ export class DbStore implements Store, DeliveryStore {
   async evalRuns() {
     return this.db.select().from(t.evalRuns).orderBy(desc(t.evalRuns.createdAt)).limit(200);
   }
+
+  /**
+   * Nightly recalibration from strong human labels (the `recalibrate` job): measured agreement per finding type and
+   * P0 precision, stored in `calibrations` as method `feedback`. Probability maps still come from `remit calibrate`.
+   */
+  async recalibrateFromFeedback(
+    jevModel: string,
+    questionSet: string,
+  ): Promise<{ n: number; p0Precision: number | null }> {
+    const rows = await this.db
+      .select({ priority: t.findings.priority, label: t.feedback.label, n: sql<number>`count(*)::int` })
+      .from(t.feedback)
+      .innerJoin(t.findings, eq(t.findings.contentKey, t.feedback.contentKey))
+      .where(inArray(t.feedback.label, ['agree', 'disagree']))
+      .groupBy(t.findings.priority, t.feedback.label);
+    const count = (priority: string | null, label: string) =>
+      rows
+        .filter((r) => (priority === null || r.priority === priority) && r.label === label)
+        .reduce((s, r) => s + r.n, 0);
+    const agree = count('P0', 'agree');
+    const disagree = count('P0', 'disagree');
+    const n = count(null, 'agree') + count(null, 'disagree');
+    const p0Precision = agree + disagree ? agree / (agree + disagree) : null;
+    await this.db
+      .update(t.calibrations)
+      .set({ active: false })
+      .where(and(eq(t.calibrations.method, 'feedback'), eq(t.calibrations.jevModel, jevModel)));
+    await this.db.insert(t.calibrations).values({
+      jevModel,
+      questionSet,
+      questionKey: 'finding.p0',
+      method: 'feedback',
+      params: { agree, disagree, p0Precision },
+      n,
+      active: true,
+    });
+    return { n, p0Precision };
+  }
 }

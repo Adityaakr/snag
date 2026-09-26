@@ -9,6 +9,7 @@ import { convertManifest, type ManifestConversion } from '@remit/providers';
 import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import { getCookie, setCookie } from 'hono/cookie';
+import { type DashboardDeps, mountDashboard } from './dashboard-api.js';
 import type { DeliveryStore } from './deliveries.js';
 import { type AppDeps, handleEvent, runJob } from './events.js';
 import type { Metrics } from './metrics.js';
@@ -34,6 +35,8 @@ export interface ServerDeps extends AppDeps {
   /** Bearer token for /metrics; when unset, /metrics is open, so bind it to an internal network. */
   metricsToken?: string;
   log?: (msg: string, data?: Record<string, unknown>) => void;
+  /** The dashboard and its API (needs the Postgres store and OAuth settings). */
+  dashboard?: DashboardDeps;
 }
 
 /** Constant-time string comparison for tokens; empty values never match. */
@@ -173,5 +176,6 @@ export function createApp(deps: ServerDeps): Hono {
     }
   });
 
+  if (deps.dashboard) mountDashboard(app, deps.dashboard);
   return app;
 }

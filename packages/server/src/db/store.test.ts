@@ -155,6 +155,10 @@ describe('DbStore', () => {
     expect(await kept.agreementByType([4242])).toEqual(
       expect.arrayContaining([expect.objectContaining({ label: 'disagree', n: 1 })]),
     );
+    const cal = await kept.recalibrateFromFeedback('jev-1.13.0', 'qs-0.1.0');
+    expect(cal.n).toBe(1);
+    expect(cal.p0Precision === null || (cal.p0Precision >= 0 && cal.p0Precision <= 1)).toBe(true);
+    expect((await kept.recalibrateFromFeedback('jev-1.13.0', 'qs-0.1.0')).n).toBe(1);
     // After the TTL, the cleanup job deletes payloads and text columns.
     expect(await kept.cleanup(new Date(Date.now() + 3 * 86_400_000))).toEqual({ payloads: 2 });
     expect((await kept.latestReview('acme/reports', 77))?.result.requirements[0]?.quote).toBe(NOT_RETAINED);
