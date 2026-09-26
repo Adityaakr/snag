@@ -26,7 +26,7 @@ Status: IN_PROGRESS
 - [x] The file classifier from 6.4.1, including `.gitattributes` `linguist-generated`. (evidence: packages/analysis/src/files/classify.test.ts, 281cca3)
 - [x] Formatting-only detection, and comment stripping that preserves line numbers (Python docstrings included), with tests. (evidence: packages/analysis/src/syntax/treesitter.test.ts (stripComments) + units/build.test.ts (formatting_only, docstrings), 4444511)
 - [x] Every code-fact detector in 6.4.2 for its listed languages. Each is table-driven, with 3 positive and 2 negative cases. (evidence: packages/analysis/src/facts/detectors.test.ts (17 tables, >=3 positive and >=2 negative each) + perf.test.ts, 4c22fb9)
-- [ ] `remit units --diff <file|range>` prints units and facts as a table and as JSON.
+- [x] `remit units --diff <file|range>` prints units and facts as a table and as JSON. (evidence: packages/cli/src/commands/units.test.ts; `pnpm remit units --diff HEAD~3..HEAD`, e9ac303)
 - [ ] Line coverage of `analysis` is `≥ 90%`.
 
 ## M2 Providers, budgets, record and replay
