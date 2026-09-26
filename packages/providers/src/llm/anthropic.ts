@@ -5,6 +5,7 @@
  */
 import Anthropic from '@anthropic-ai/sdk';
 import { jsonSchemaOutputFormat } from '@anthropic-ai/sdk/helpers/json-schema';
+import { estimateTokens } from '@remit/core';
 import { z } from 'zod';
 import type { CostTracker } from '../common/budget.js';
 import { ProviderError } from '../common/errors.js';
@@ -134,7 +135,8 @@ export class AnthropicLlm implements LlmProvider {
     const usage = { inputTokens: 0, outputTokens: 0 };
     let model = this.model;
     const call = async (msgs: LlmMessage[]): Promise<string> => {
-      this.opts.costs?.ensure('anthropic');
+      const estimate = estimateTokens([opts.system, ...msgs.map((m) => m.content)].join('\n'));
+      this.opts.costs?.ensure('anthropic', llmCost(this.opts.price, estimate, 0));
       const res = await withRetry(
         async () => {
           try {

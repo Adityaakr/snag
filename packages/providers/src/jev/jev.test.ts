@@ -184,6 +184,20 @@ describe('LiveJev', () => {
     await expect(noShrink.ask(META, 'z'.repeat(600), QUESTIONS)).rejects.toMatchObject({ kind: 'overflow' });
   });
 
+  it('shrinks before sending when state plus questions exceed the whole-request budget', async () => {
+    const f = scriptedFetch([ok()]);
+    const { jev } = live(f.fetch, { maxRequestTokens: 300 });
+    const long = { ...QUESTIONS, extra: noul('q'.repeat(900)) };
+    const shrinks: number[] = [];
+    await jev.ask(META, 'small state', long, {
+      shrink: (n) => (shrinks.push(n), { state: 'small state', questions: QUESTIONS }),
+    });
+    expect(shrinks).toEqual([1]);
+    expect(Object.keys((f.requests[0]?.body as { questions?: object } | undefined)?.questions ?? {})).toEqual(
+      ['covered', 'evidence', 'coverage'],
+    );
+  });
+
   it('retries once on an invalid answer, then fails', async () => {
     const bad = {
       status: 200,
