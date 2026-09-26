@@ -5,9 +5,10 @@
 import { parseDiff } from '@remit/analysis';
 import { parseIssueMarkdown, taskListRequirements } from '@remit/core';
 import { describe, expect, it } from 'vitest';
-import { assertParses } from './ast.js';
+import { extractSymbols } from '@remit/analysis';
+import { assertParses, languageFor } from './ast.js';
 import { SEEDS_ROOT, seedItems, splitOf, stratifiedSplits } from './generate.js';
-import { allMutations, OPERATORS } from './operators.js';
+import { allMutations, dropRequirement, OPERATORS } from './operators.js';
 import { loadSeed, seedDirs } from './seed.js';
 
 const dirs = seedDirs(SEEDS_ROOT);
@@ -36,19 +37,37 @@ describe('mutation seeds', () => {
       expect(seed.seed.annotated_by).toBe('claude-code');
     });
 
-    it('never reverts a whole symbol that another requirement also claims', () => {
-      const owners = new Map<string, string[]>();
+    it('never reverts one symbol whole for two requirements', () => {
+      const whole = new Map<string, string[]>();
       for (const r of seed.seed.requirements)
         for (const u of [...r.implementing, ...r.tests]) {
+          if (u.remove || u.replace) continue;
           const key = `${u.file}|${u.symbol ?? '*'}`;
-          owners.set(key, [...(owners.get(key) ?? []), u.remove || u.replace ? `${r.id}:edit` : r.id]);
+          whole.set(key, [...(whole.get(key) ?? []), r.id]);
         }
-      for (const [key, ids] of owners)
-        if (ids.length > 1)
-          expect(
-            ids.every((x) => x.endsWith(':edit')),
-            `${key} is reverted whole by ${ids}`,
-          ).toBe(true);
+      for (const [key, ids] of whole) expect(ids, `${key} is reverted whole by ${ids}`).toHaveLength(1);
+    });
+
+    it('leaves no reference to a symbol that drop_requirement deleted', async () => {
+      for (const r of seed.seed.requirements) {
+        const m = await dropRequirement(seed, r.id);
+        for (const [p, text] of Object.entries(seed.head)) {
+          if (!PARSED.test(p)) continue;
+          const lang = languageFor(p);
+          const top = async (t: string) =>
+            new Set((await extractSymbols(lang, t)).filter((x) => x.depth === 0).map((x) => x.name));
+          const before = await top(text);
+          const after = m.head[p] === undefined ? new Set<string>() : await top(m.head[p] as string);
+          for (const name of before) {
+            if (after.has(name) || !/^[A-Za-z_]\w*$/.test(name)) continue;
+            for (const [q, t] of Object.entries(m.head))
+              expect(
+                new RegExp(`\\b${name}\\b`).test(t),
+                `drop ${r.id} deleted ${name} but ${q} still uses it`,
+              ).toBe(false);
+          }
+        }
+      }
     });
 
     it('applies every operator, re-parses, and yields a parseable diff', async () => {

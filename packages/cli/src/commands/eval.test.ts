@@ -51,6 +51,9 @@ describe('remit eval', () => {
     await expect(run(['nope'])).rejects.toThrow(/needs a corpus/);
     await expect(run(['mutations', '--split', 'x'])).rejects.toThrow(/not dev or test/);
     await expect(run(['mutations', '--split', 'test'])).rejects.toThrow(/only with --gate/);
+    await expect(run(['mutations', '--split', 'test', '--gate', '--no-log'])).rejects.toThrow(
+      /cannot be used with --gate/,
+    );
     await expect(run(['mutations', '--limit', '0'])).rejects.toThrow(/positive integer/);
     await expect(run(['mutations', '--mode', 'magic'])).rejects.toThrow(/not scripted/);
     await expect(run(['mutations'])).rejects.toMatchObject({

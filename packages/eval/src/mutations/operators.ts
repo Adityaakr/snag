@@ -9,6 +9,7 @@ import {
   findExact,
   findRemovable,
   findToken,
+  removeImportsOf,
   MutationError,
   renameIdentifier,
   replaceCallWithArgument,
@@ -94,7 +95,12 @@ function requirement(seed: LoadedSeed, id: string): SeedRequirement {
 }
 
 /** Reverts one symbol to its base version, or removes it when the base does not have it. */
-async function revertSymbol(seed: LoadedSeed, head: Tree, path: string, symbol: string): Promise<void> {
+async function revertSymbol(
+  seed: LoadedSeed,
+  head: Tree,
+  path: string,
+  symbol: string,
+): Promise<'reverted' | 'deleted'> {
   const text = file(head, path);
   const span = await symbolSpan(text, path, symbol);
   if (!span) throw new MutationError(`${path}: symbol "${symbol}" not found`);
@@ -102,7 +108,7 @@ async function revertSymbol(seed: LoadedSeed, head: Tree, path: string, symbol: 
   const baseSpan = baseText === undefined ? null : await symbolSpan(baseText, path, symbol);
   if (baseText !== undefined && baseSpan) {
     head[path] = splice(text, span.start, span.end, baseText.slice(baseSpan.start, baseSpan.end));
-    return;
+    return 'reverted';
   }
   // Remove the symbol and the blank lines after it, so the separator before it keeps the file's spacing. At the end
   // of the file, the blank lines before it go instead.
@@ -114,11 +120,17 @@ async function revertSymbol(seed: LoadedSeed, head: Tree, path: string, symbol: 
     while (start >= 2 && text[start - 1] === '\n' && text[start - 2] === '\n') start -= 1;
   }
   head[path] = splice(text, start, end, '');
+  return 'deleted';
 }
 
 async function drop(seed: LoadedSeed, r: SeedRequirement): Promise<Tree> {
   const head = { ...seed.head };
-  for (const ref of [...r.implementing, ...r.tests]) {
+  const deleted: string[] = [];
+  // Requirements this drop makes missing (dropLabels) lose their tests too: nothing is left for them to test.
+  const alsoMissing = Object.entries(r.dropLabels ?? {})
+    .filter(([, status]) => status === 'missing')
+    .flatMap(([id]) => seed.seed.requirements.find((x) => x.id === id)?.tests ?? []);
+  for (const ref of [...r.implementing, ...r.tests, ...alsoMissing]) {
     if (ref.symbol && (ref.remove || ref.replace)) {
       for (const snippet of ref.remove ?? []) {
         const text = file(head, ref.file);
@@ -138,8 +150,13 @@ async function drop(seed: LoadedSeed, r: SeedRequirement): Promise<Tree> {
       else head[ref.file] = base;
       continue;
     }
-    await revertSymbol(seed, head, ref.file, ref.symbol);
+    if ((await revertSymbol(seed, head, ref.file, ref.symbol)) === 'deleted') deleted.push(ref.symbol);
   }
+  // Imports of deleted symbols go too, so the PR still reads like real code.
+  for (const name of deleted.filter((n) => /^[A-Za-z_]\w*$/.test(n)))
+    for (const [p, text] of Object.entries(head))
+      if (/\.(ts|tsx|js|py|rs)$/.test(p) && text.includes(name))
+        head[p] = await removeImportsOf(text, p, name);
   // A file the requirement created that is now empty of code goes away with it.
   for (const p of Object.keys(head))
     if (seed.base[p] === undefined && seed.head[p] !== undefined && !head[p]?.trim()) delete head[p];
@@ -153,7 +170,7 @@ export async function dropRequirement(seed: LoadedSeed, id: string): Promise<Mut
     operator: 'drop_requirement',
     target: id,
     head,
-    labels: labels(seed, { requirements: { ...allDone(seed), [id]: 'missing' } }),
+    labels: labels(seed, { requirements: { ...allDone(seed), ...r.dropLabels, [id]: 'missing' } }),
   };
 }
 

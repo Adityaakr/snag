@@ -1,0 +1,1849 @@
+{
+  "id": "ts-job-intervals.clean",
+  "labels": {
+    "requirements": {
+      "R1": "done",
+      "R2": "done",
+      "R3": "done",
+      "R4": "done"
+    },
+    "requirementsAccept": {},
+    "units": [
+      {
+        "file": "src/schedule.ts",
+        "symbol": "parseDuration",
+        "role": "implements"
+      },
+      {
+        "file": "src/schedule.ts",
+        "symbol": "scheduleJob",
+        "role": "implements"
+      },
+      {
+        "file": "src/schedule.test.ts",
+        "symbol": "keeps the job name",
+        "role": "implements"
+      },
+      {
+        "file": "src/schedule.test.ts",
+        "symbol": "parses seconds, minutes and hours",
+        "role": "implements"
+      },
+      {
+        "file": "src/schedule.test.ts",
+        "symbol": "schedules jobs with unit intervals",
+        "role": "implements"
+      },
+      {
+        "file": "src/schedule.ts",
+        "symbol": "DurationError",
+        "role": "implements"
+      },
+      {
+        "file": "src/schedule.test.ts",
+        "symbol": "throws a DurationError naming the bad value",
+        "role": "implements"
+      },
+      {
+        "file": "src/schedule.test.ts",
+        "symbol": "rejects intervals shorter than one second",
+        "role": "implements"
+      },
+      {
+        "file": "src/schedule.test.ts",
+        "symbol": "normalizes job names",
+        "role": "implements"
+      }
+    ],
+    "facts": [],
+    "testIntegrity": [],
+    "claimMismatch": [],
+    "pr": "clean"
+  },
+  "comparison": {
+    "requirements": [
+      {
+        "id": "R1",
+        "expected": "done",
+        "actual": "missing",
+        "ok": false
+      },
+      {
+        "id": "R2",
+        "expected": "done",
+        "actual": "missing",
+        "ok": false
+      },
+      {
+        "id": "R3",
+        "expected": "done",
+        "actual": "done",
+        "ok": true
+      },
+      {
+        "id": "R4",
+        "expected": "done",
+        "actual": "missing",
+        "ok": false
+      }
+    ],
+    "units": [
+      {
+        "file": "src/schedule.ts",
+        "symbol": "parseDuration",
+        "expected": "implements",
+        "actual": "unexplained_behavioral",
+        "ok": false
+      },
+      {
+        "file": "src/schedule.ts",
+        "symbol": "scheduleJob",
+        "expected": "implements",
+        "actual": "unexplained_behavioral",
+        "ok": false
+      },
+      {
+        "file": "src/schedule.test.ts",
+        "symbol": "keeps the job name",
+        "expected": "implements",
+        "actual": "unexplained_behavioral",
+        "ok": false
+      },
+      {
+        "file": "src/schedule.test.ts",
+        "symbol": "parses seconds, minutes and hours",
+        "expected": "implements",
+        "actual": "unexplained_behavioral",
+        "ok": false
+      },
+      {
+        "file": "src/schedule.test.ts",
+        "symbol": "schedules jobs with unit intervals",
+        "expected": "implements",
+        "actual": "unexplained_behavioral",
+        "ok": false
+      },
+      {
+        "file": "src/schedule.ts",
+        "symbol": "DurationError",
+        "expected": "implements",
+        "actual": "unexplained_behavioral",
+        "ok": false
+      },
+      {
+        "file": "src/schedule.test.ts",
+        "symbol": "throws a DurationError naming the bad value",
+        "expected": "implements",
+        "actual": "implements",
+        "ok": true
+      },
+      {
+        "file": "src/schedule.test.ts",
+        "symbol": "rejects intervals shorter than one second",
+        "expected": "implements",
+        "actual": "implements",
+        "ok": true
+      },
+      {
+        "file": "src/schedule.test.ts",
+        "symbol": "normalizes job names",
+        "expected": "implements",
+        "actual": "unexplained_behavioral",
+        "ok": false
+      }
+    ],
+    "facts": [],
+    "testIntegrity": [],
+    "claimMismatch": [],
+    "pr": {
+      "expected": "clean",
+      "predictedProblem": true
+    },
+    "p0p1": 12,
+    "passed": false
+  },
+  "result": {
+    "schemaVersion": "1.0.0",
+    "product": {
+      "name": "Remit",
+      "version": "0.1.0"
+    },
+    "input": {
+      "mode": "local",
+      "baseSha": "base",
+      "headSha": "head",
+      "issues": [
+        {
+          "owner": "acme",
+          "repo": "scheduler",
+          "number": 41
+        }
+      ],
+      "linkStrength": "closing"
+    },
+    "versions": {
+      "questionSet": "qs-0.1.0",
+      "extractionPrompt": "xp-0.1.0",
+      "jevModel": "simulated-jev"
+    },
+    "requirements": [
+      {
+        "id": "R1",
+        "issue": {
+          "owner": "acme",
+          "repo": "scheduler",
+          "number": 41
+        },
+        "text": "Job intervals accept a number with a unit suffix: s, m or h (for example `90s`, `5m`, `2h`)",
+        "quote": "Job intervals accept a number with a unit suffix: s, m or h (for example `90s`, `5m`, `2h`)",
+        "source": {
+          "kind": "tasklist"
+        },
+        "kind": "behavior",
+        "explicitness": "explicit",
+        "priority": "must",
+        "examples": [],
+        "checkableInCode": true,
+        "signals": {
+          "ambiguous": 0.3,
+          "checkable": 0.85
+        }
+      },
+      {
+        "id": "R2",
+        "issue": {
+          "owner": "acme",
+          "repo": "scheduler",
+          "number": 41
+        },
+        "text": "An interval that cannot be parsed throws a `DurationError` that names the bad value",
+        "quote": "An interval that cannot be parsed throws a `DurationError` that names the bad value",
+        "source": {
+          "kind": "tasklist"
+        },
+        "kind": "behavior",
+        "explicitness": "explicit",
+        "priority": "must",
+        "examples": [],
+        "checkableInCode": true,
+        "signals": {
+          "ambiguous": 0.3,
+          "checkable": 0.85
+        }
+      },
+      {
+        "id": "R3",
+        "issue": {
+          "owner": "acme",
+          "repo": "scheduler",
+          "number": 41
+        },
+        "text": "Intervals shorter than 1 second are rejected with a `RangeError`",
+        "quote": "Intervals shorter than 1 second are rejected with a `RangeError`",
+        "source": {
+          "kind": "tasklist"
+        },
+        "kind": "behavior",
+        "explicitness": "explicit",
+        "priority": "must",
+        "examples": [],
+        "checkableInCode": true,
+        "signals": {
+          "ambiguous": 0.3,
+          "checkable": 0.85
+        }
+      },
+      {
+        "id": "R4",
+        "issue": {
+          "owner": "acme",
+          "repo": "scheduler",
+          "number": 41
+        },
+        "text": "Job names are trimmed and lowercased when a job is scheduled",
+        "quote": "Job names are trimmed and lowercased when a job is scheduled",
+        "source": {
+          "kind": "tasklist"
+        },
+        "kind": "behavior",
+        "explicitness": "explicit",
+        "priority": "must",
+        "examples": [],
+        "checkableInCode": true,
+        "signals": {
+          "ambiguous": 0.3,
+          "checkable": 0.85
+        }
+      }
+    ],
+    "units": [
+      {
+        "id": "U1",
+        "file": "src/schedule.test.ts",
+        "language": "ts",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              2,
+              2
+            ]
+          ],
+          "old": [
+            [
+              2,
+              2
+            ]
+          ]
+        },
+        "patch": "--- a/src/schedule.test.ts\n+++ b/src/schedule.test.ts\n@@ -1,5 +1,5 @@\n import { describe, expect, it } from 'vitest';\n-import { scheduleJob } from './schedule.js';\n+import { DurationError, parseDuration, scheduleJob } from './schedule.js';\n \n describe('scheduleJob', () => {\n   it('keeps the job name', () => {\n",
+        "judgeView": "--- a/src/schedule.test.ts\n+++ b/src/schedule.test.ts\n@@ -1,5 +1,5 @@\n import { describe, expect, it } from 'vitest';\n-import { scheduleJob } from './schedule.js';\n+import { DurationError, parseDuration, scheduleJob } from './schedule.js';\n \n describe('scheduleJob', () => {\n   it('keeps the job name', () => {\n",
+        "contentHash": "63828848e9e016e7e1430611c03f2b891905d0e2b7c446d935947b9629a64b03",
+        "tokenEstimate": 104,
+        "facts": []
+      },
+      {
+        "id": "U2",
+        "file": "src/schedule.test.ts",
+        "language": "ts",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              6,
+              6
+            ]
+          ],
+          "old": [
+            [
+              6,
+              6
+            ]
+          ]
+        },
+        "patch": "--- a/src/schedule.test.ts\n+++ b/src/schedule.test.ts\n@@ -3,5 +3,5 @@\n \n describe('scheduleJob', () => {\n   it('keeps the job name', () => {\n-    expect(scheduleJob({ name: 'sync', every: '1000' }).name).toBe('sync');\n+    expect(scheduleJob({ name: 'sync', every: '1s' }).name).toBe('sync');\n   });\n",
+        "judgeView": "--- a/src/schedule.test.ts\n+++ b/src/schedule.test.ts\n@@ -3,5 +3,5 @@\n \n describe('scheduleJob', () => {\n   it('keeps the job name', () => {\n-    expect(scheduleJob({ name: 'sync', every: '1000' }).name).toBe('sync');\n+    expect(scheduleJob({ name: 'sync', every: '1s' }).name).toBe('sync');\n   });\n",
+        "contentHash": "efa113698db6b3fc23119f289a5a05cbcbf2f12f38c98b136e63bcf63883a3f7",
+        "tokenEstimate": 100,
+        "facts": [],
+        "symbol": {
+          "name": "keeps the job name",
+          "kind": "test",
+          "startLine": 5,
+          "endLine": 7
+        },
+        "before": "  it('keeps the job name', () => {\n    expect(scheduleJob({ name: 'sync', every: '1000' }).name).toBe('sync');\n  });",
+        "after": "  it('keeps the job name', () => {\n    expect(scheduleJob({ name: 'sync', every: '1s' }).name).toBe('sync');\n  });",
+        "testTitles": [
+          "scheduleJob",
+          "keeps the job name"
+        ]
+      },
+      {
+        "id": "U3",
+        "file": "src/schedule.test.ts",
+        "language": "ts",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              8,
+              14
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/src/schedule.test.ts\n+++ b/src/schedule.test.ts\n@@ -7,1 +7,8 @@\n   });\n+\n+  it('parses seconds, minutes and hours', () => {\n+    expect(parseDuration('90s')).toBe(90_000);\n+    expect(parseDuration('5m')).toBe(300_000);\n+    expect(parseDuration('2h')).toBe(7_200_000);\n+  });\n+\n",
+        "judgeView": "--- a/src/schedule.test.ts\n+++ b/src/schedule.test.ts\n@@ -7,1 +7,8 @@\n   });\n+\n+  it('parses seconds, minutes and hours', () => {\n+    expect(parseDuration('90s')).toBe(90_000);\n+    expect(parseDuration('5m')).toBe(300_000);\n+    expect(parseDuration('2h')).toBe(7_200_000);\n+  });\n+\n",
+        "contentHash": "f425c1c2a19e188dcb06a323ce0b35868b10e8c99044fbda2b2aeaf22f0082ce",
+        "tokenEstimate": 95,
+        "facts": [],
+        "symbol": {
+          "name": "parses seconds, minutes and hours",
+          "kind": "test",
+          "startLine": 9,
+          "endLine": 13
+        },
+        "after": "  it('parses seconds, minutes and hours', () => {\n    expect(parseDuration('90s')).toBe(90_000);\n    expect(parseDuration('5m')).toBe(300_000);\n    expect(parseDuration('2h')).toBe(7_200_000);\n  });",
+        "testTitles": [
+          "scheduleJob",
+          "parses seconds, minutes and hours"
+        ]
+      },
+      {
+        "id": "U4",
+        "file": "src/schedule.test.ts",
+        "language": "ts",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              15,
+              18
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/src/schedule.test.ts\n+++ b/src/schedule.test.ts\n@@ -7,0 +15,4 @@\n+  it('schedules jobs with unit intervals', () => {\n+    expect(scheduleJob({ name: 'sync', every: '5m' }).intervalMs).toBe(300_000);\n+  });\n+\n",
+        "judgeView": "--- a/src/schedule.test.ts\n+++ b/src/schedule.test.ts\n@@ -7,0 +15,4 @@\n+  it('schedules jobs with unit intervals', () => {\n+    expect(scheduleJob({ name: 'sync', every: '5m' }).intervalMs).toBe(300_000);\n+  });\n+\n",
+        "contentHash": "533f379f04d2524000b54ff70057827b45f1039fbab58025fdcf76d22c8d67ed",
+        "tokenEstimate": 72,
+        "facts": [],
+        "symbol": {
+          "name": "schedules jobs with unit intervals",
+          "kind": "test",
+          "startLine": 15,
+          "endLine": 17
+        },
+        "after": "  it('schedules jobs with unit intervals', () => {\n    expect(scheduleJob({ name: 'sync', every: '5m' }).intervalMs).toBe(300_000);\n  });",
+        "testTitles": [
+          "scheduleJob",
+          "schedules jobs with unit intervals"
+        ]
+      },
+      {
+        "id": "U5",
+        "file": "src/schedule.test.ts",
+        "language": "ts",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              19,
+              23
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/src/schedule.test.ts\n+++ b/src/schedule.test.ts\n@@ -7,0 +19,5 @@\n+  it('throws a DurationError naming the bad value', () => {\n+    expect(() => parseDuration('soon')).toThrow(DurationError);\n+    expect(() => parseDuration('soon')).toThrow('cannot parse duration \"soon\"');\n+  });\n+\n",
+        "judgeView": "--- a/src/schedule.test.ts\n+++ b/src/schedule.test.ts\n@@ -7,0 +19,5 @@\n+  it('throws a DurationError naming the bad value', () => {\n+    expect(() => parseDuration('soon')).toThrow(DurationError);\n+    expect(() => parseDuration('soon')).toThrow('cannot parse duration \"soon\"');\n+  });\n+\n",
+        "contentHash": "cb65a387ae6b6fd51ea60f6668eb25ef7e677a580e0f001eb3c049c7a054d630",
+        "tokenEstimate": 96,
+        "facts": [],
+        "symbol": {
+          "name": "throws a DurationError naming the bad value",
+          "kind": "test",
+          "startLine": 19,
+          "endLine": 22
+        },
+        "after": "  it('throws a DurationError naming the bad value', () => {\n    expect(() => parseDuration('soon')).toThrow(DurationError);\n    expect(() => parseDuration('soon')).toThrow('cannot parse duration \"soon\"');\n  });",
+        "testTitles": [
+          "scheduleJob",
+          "throws a DurationError naming the bad value"
+        ]
+      },
+      {
+        "id": "U6",
+        "file": "src/schedule.test.ts",
+        "language": "ts",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              24,
+              27
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/src/schedule.test.ts\n+++ b/src/schedule.test.ts\n@@ -7,0 +24,4 @@\n+  it('rejects intervals shorter than one second', () => {\n+    expect(() => scheduleJob({ name: 'spin', every: '0s' })).toThrow(RangeError);\n+  });\n+\n",
+        "judgeView": "--- a/src/schedule.test.ts\n+++ b/src/schedule.test.ts\n@@ -7,0 +24,4 @@\n+  it('rejects intervals shorter than one second', () => {\n+    expect(() => scheduleJob({ name: 'spin', every: '0s' })).toThrow(RangeError);\n+  });\n+\n",
+        "contentHash": "6fa2652fec9bbfd9a3cd2c905eb656990c3b719f0236af3943ef141c052aea48",
+        "tokenEstimate": 74,
+        "facts": [],
+        "symbol": {
+          "name": "rejects intervals shorter than one second",
+          "kind": "test",
+          "startLine": 24,
+          "endLine": 26
+        },
+        "after": "  it('rejects intervals shorter than one second', () => {\n    expect(() => scheduleJob({ name: 'spin', every: '0s' })).toThrow(RangeError);\n  });",
+        "testTitles": [
+          "scheduleJob",
+          "rejects intervals shorter than one second"
+        ]
+      },
+      {
+        "id": "U7",
+        "file": "src/schedule.test.ts",
+        "language": "ts",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              28,
+              30
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/src/schedule.test.ts\n+++ b/src/schedule.test.ts\n@@ -8,1 +28,4 @@\n+  it('normalizes job names', () => {\n+    expect(scheduleJob({ name: ' Nightly Sync ', every: '1h' }).name).toBe('nightly sync');\n+  });\n });\n",
+        "judgeView": "--- a/src/schedule.test.ts\n+++ b/src/schedule.test.ts\n@@ -8,1 +28,4 @@\n+  it('normalizes job names', () => {\n+    expect(scheduleJob({ name: ' Nightly Sync ', every: '1h' }).name).toBe('nightly sync');\n+  });\n });\n",
+        "contentHash": "28e5f276a400190a991825cad8c0c8c9459b88ebc119afdae2468bca1f9cc411",
+        "tokenEstimate": 72,
+        "facts": [],
+        "symbol": {
+          "name": "normalizes job names",
+          "kind": "test",
+          "startLine": 28,
+          "endLine": 30
+        },
+        "after": "  it('normalizes job names', () => {\n    expect(scheduleJob({ name: ' Nightly Sync ', every: '1h' }).name).toBe('nightly sync');\n  });",
+        "testTitles": [
+          "scheduleJob",
+          "normalizes job names"
+        ]
+      },
+      {
+        "id": "U8",
+        "file": "src/schedule.ts",
+        "language": "ts",
+        "kind": "source",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              14,
+              14
+            ],
+            [
+              19,
+              20
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/src/schedule.ts\n+++ b/src/schedule.ts\n@@ -11,3 +11,4 @@\n   timeoutMs: number;\n }\n \n+export class DurationError extends Error {\n@@ -13,0 +19,2 @@\n+}\n+\n",
+        "judgeView": "--- a/src/schedule.ts\n+++ b/src/schedule.ts\n@@ -11,3 +11,4 @@\n   timeoutMs: number;\n }\n \n+export class DurationError extends Error {\n@@ -13,0 +19,2 @@\n+}\n+\n",
+        "contentHash": "cbc969e54f68264fe9ea52d0531f2dac5252aa4544650408aa237c202b6bed1e",
+        "tokenEstimate": 52,
+        "facts": [],
+        "symbol": {
+          "name": "DurationError",
+          "kind": "class",
+          "startLine": 14,
+          "endLine": 19
+        },
+        "after": "export class DurationError extends Error {\n  constructor(readonly input: string) {\n    super(`cannot parse duration \"${input}\"`);\n    this.name = 'DurationError';\n  }\n}"
+      },
+      {
+        "id": "U9",
+        "file": "src/schedule.ts",
+        "language": "ts",
+        "kind": "source",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              15,
+              18
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/src/schedule.ts\n+++ b/src/schedule.ts\n@@ -13,0 +15,4 @@\n+  constructor(readonly input: string) {\n+    super(`cannot parse duration \"${input}\"`);\n+    this.name = 'DurationError';\n+  }\n",
+        "judgeView": "--- a/src/schedule.ts\n+++ b/src/schedule.ts\n@@ -13,0 +15,4 @@\n+  constructor(readonly input: string) {\n+    super(`cannot parse duration \"${input}\"`);\n+    this.name = 'DurationError';\n+  }\n",
+        "contentHash": "2933aaaf559e1e63c9c0b2a518e5d9b9d7f8c78c3f0bb31a46ce435510133018",
+        "tokenEstimate": 64,
+        "facts": [],
+        "symbol": {
+          "name": "constructor",
+          "kind": "method",
+          "startLine": 15,
+          "endLine": 18
+        },
+        "after": "  constructor(readonly input: string) {\n    super(`cannot parse duration \"${input}\"`);\n    this.name = 'DurationError';\n  }"
+      },
+      {
+        "id": "U10",
+        "file": "src/schedule.ts",
+        "language": "ts",
+        "kind": "source",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              21,
+              35
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/src/schedule.ts\n+++ b/src/schedule.ts\n@@ -14,1 +21,16 @@\n+export function parseDuration(text: string): number {\n+  const match = /^(\\d+)([smh])$/.exec(text.trim());\n+  if (!match) throw new DurationError(text);\n+  const amount = Number(match[1]);\n+  switch (match[2]) {\n+    case 's':\n+      return amount * 1000;\n+    case 'm':\n+      return amount * 60_000;\n+    case 'h':\n+      return amount * 3_600_000;\n+  }\n+  throw new DurationError(text);\n+}\n+\n export function scheduleJob(job: Job): ScheduledJob {\n",
+        "judgeView": "--- a/src/schedule.ts\n+++ b/src/schedule.ts\n@@ -14,1 +21,16 @@\n+export function parseDuration(text: string): number {\n+  const match = /^(\\d+)([smh])$/.exec(text.trim());\n+  if (!match) throw new DurationError(text);\n+  const amount = Number(match[1]);\n+  switch (match[2]) {\n+    case 's':\n+      return amount * 1000;\n+    case 'm':\n+      return amount * 60_000;\n+    case 'h':\n+      return amount * 3_600_000;\n+  }\n+  throw new DurationError(text);\n+}\n+\n export function scheduleJob(job: Job): ScheduledJob {\n",
+        "contentHash": "2f4939fe1bc30ae71b86b488c8a01e092f91a71c223e174194b3be18bf54c024",
+        "tokenEstimate": 172,
+        "facts": [],
+        "symbol": {
+          "name": "parseDuration",
+          "kind": "function",
+          "startLine": 21,
+          "endLine": 34
+        },
+        "after": "export function parseDuration(text: string): number {\n  const match = /^(\\d+)([smh])$/.exec(text.trim());\n  if (!match) throw new DurationError(text);\n  const amount = Number(match[1]);\n  switch (match[2]) {\n    case 's':\n      return amount * 1000;\n    case 'm':\n      return amount * 60_000;\n    case 'h':\n      return amount * 3_600_000;\n  }\n  throw new DurationError(text);\n}"
+      },
+      {
+        "id": "U11",
+        "file": "src/schedule.ts",
+        "language": "ts",
+        "kind": "source",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              37,
+              42
+            ]
+          ],
+          "old": [
+            [
+              15,
+              16
+            ]
+          ]
+        },
+        "patch": "--- a/src/schedule.ts\n+++ b/src/schedule.ts\n@@ -14,4 +36,8 @@\n export function scheduleJob(job: Job): ScheduledJob {\n-  const intervalMs = Number(job.every);\n-  return { name: job.name, intervalMs, timeoutMs: jobDefaults().timeoutMs };\n+  const intervalMs = parseDuration(job.every);\n+  if (intervalMs < 1000) {\n+    throw new RangeError(`interval for ${job.name} is shorter than 1 second`);\n+  }\n+  const name = job.name.trim().toLowerCase();\n+  return { name, intervalMs, timeoutMs: jobDefaults().timeoutMs };\n }\n",
+        "judgeView": "--- a/src/schedule.ts\n+++ b/src/schedule.ts\n@@ -14,4 +36,8 @@\n export function scheduleJob(job: Job): ScheduledJob {\n-  const intervalMs = Number(job.every);\n-  return { name: job.name, intervalMs, timeoutMs: jobDefaults().timeoutMs };\n+  const intervalMs = parseDuration(job.every);\n+  if (intervalMs < 1000) {\n+    throw new RangeError(`interval for ${job.name} is shorter than 1 second`);\n+  }\n+  const name = job.name.trim().toLowerCase();\n+  return { name, intervalMs, timeoutMs: jobDefaults().timeoutMs };\n }\n",
+        "contentHash": "efbeec3a785150681878b073a8517827921c42c76d2d1889b79040290755a2e5",
+        "tokenEstimate": 172,
+        "facts": [],
+        "symbol": {
+          "name": "scheduleJob",
+          "kind": "function",
+          "startLine": 36,
+          "endLine": 43
+        },
+        "before": "export function scheduleJob(job: Job): ScheduledJob {\n  const intervalMs = Number(job.every);\n  return { name: job.name, intervalMs, timeoutMs: jobDefaults().timeoutMs };\n}",
+        "after": "export function scheduleJob(job: Job): ScheduledJob {\n  const intervalMs = parseDuration(job.every);\n  if (intervalMs < 1000) {\n    throw new RangeError(`interval for ${job.name} is shorter than 1 second`);\n  }\n  const name = job.name.trim().toLowerCase();\n  return { name, intervalMs, timeoutMs: jobDefaults().timeoutMs };\n}"
+      }
+    ],
+    "requirementVerdicts": [
+      {
+        "requirementId": "R1",
+        "status": "missing",
+        "confidence": 0.8999999999999999,
+        "calibrated": false,
+        "tested": "untested",
+        "evidence": [],
+        "testEvidence": [],
+        "answers": [
+          {
+            "call": "issue.v0",
+            "question": "ambiguous",
+            "type": "noul",
+            "value": 0.3
+          },
+          {
+            "call": "issue.v0",
+            "question": "checkable_in_code",
+            "type": "noul",
+            "value": 0.85
+          },
+          {
+            "call": "forward.v0",
+            "question": "coverage",
+            "type": "score",
+            "value": 0.43000000000000005,
+            "probabilities": {
+              "0": 0.72,
+              "1": 0.18,
+              "2": 0.05,
+              "3": 0.05
+            },
+            "confidence": 0.72
+          },
+          {
+            "call": "forward.v0",
+            "question": "conflict",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "forward.v0",
+            "question": "evidence",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "U11": 0.04999999999999999,
+              "U10": 0.04999999999999999,
+              "U8": 0.04999999999999999,
+              "U9": 0.04999999999999999,
+              "none": 0.8
+            },
+            "confidence": 0.8
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_as_stated",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_differently",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "tests.v0",
+            "question": "test_evidence",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "U4": 0.03571428571428571,
+              "U3": 0.03571428571428571,
+              "U6": 0.03571428571428571,
+              "U2": 0.03571428571428571,
+              "U7": 0.03571428571428571,
+              "U1": 0.03571428571428571,
+              "U5": 0.03571428571428571,
+              "none": 0.75
+            },
+            "confidence": 0.75
+          },
+          {
+            "call": "preexisting.v0",
+            "question": "already_implemented",
+            "type": "noul",
+            "value": 0.2
+          }
+        ],
+        "reasons": [
+          {
+            "template": "req.missing",
+            "text": "No change implements this (`0.90`)."
+          }
+        ]
+      },
+      {
+        "requirementId": "R2",
+        "status": "missing",
+        "confidence": 0.8999999999999999,
+        "calibrated": false,
+        "tested": "as_stated",
+        "evidence": [],
+        "testEvidence": [
+          {
+            "unitId": "U5",
+            "file": "src/schedule.test.ts",
+            "lines": [
+              [
+                19,
+                23
+              ]
+            ],
+            "probability": 0.75
+          }
+        ],
+        "answers": [
+          {
+            "call": "issue.v0",
+            "question": "ambiguous",
+            "type": "noul",
+            "value": 0.3
+          },
+          {
+            "call": "issue.v0",
+            "question": "checkable_in_code",
+            "type": "noul",
+            "value": 0.85
+          },
+          {
+            "call": "forward.v0",
+            "question": "coverage",
+            "type": "score",
+            "value": 0.43000000000000005,
+            "probabilities": {
+              "0": 0.72,
+              "1": 0.18,
+              "2": 0.05,
+              "3": 0.05
+            },
+            "confidence": 0.72
+          },
+          {
+            "call": "forward.v0",
+            "question": "conflict",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "forward.v0",
+            "question": "evidence",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "U11": 0.04999999999999999,
+              "U9": 0.04999999999999999,
+              "U8": 0.04999999999999999,
+              "U10": 0.04999999999999999,
+              "none": 0.8
+            },
+            "confidence": 0.8
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_as_stated",
+            "type": "noul",
+            "value": 0.7
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_differently",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "tests.v0",
+            "question": "test_evidence",
+            "type": "choice",
+            "value": "U5",
+            "probabilities": {
+              "U5": 0.75,
+              "U7": 0.03571428571428571,
+              "U1": 0.03571428571428571,
+              "U4": 0.03571428571428571,
+              "U3": 0.03571428571428571,
+              "U6": 0.03571428571428571,
+              "U2": 0.03571428571428571,
+              "none": 0.03571428571428571
+            },
+            "confidence": 0.75
+          },
+          {
+            "call": "preexisting.v0",
+            "question": "already_implemented",
+            "type": "noul",
+            "value": 0.2
+          }
+        ],
+        "reasons": [
+          {
+            "template": "req.missing",
+            "text": "No change implements this (`0.90`)."
+          }
+        ]
+      },
+      {
+        "requirementId": "R3",
+        "status": "done",
+        "confidence": 0.6,
+        "calibrated": false,
+        "tested": "as_stated",
+        "evidence": [
+          {
+            "unitId": "U11",
+            "file": "src/schedule.ts",
+            "lines": [
+              [
+                37,
+                42
+              ]
+            ],
+            "probability": 0.8
+          }
+        ],
+        "testEvidence": [
+          {
+            "unitId": "U6",
+            "file": "src/schedule.test.ts",
+            "lines": [
+              [
+                24,
+                27
+              ]
+            ],
+            "probability": 0.75
+          }
+        ],
+        "answers": [
+          {
+            "call": "issue.v0",
+            "question": "ambiguous",
+            "type": "noul",
+            "value": 0.3
+          },
+          {
+            "call": "issue.v0",
+            "question": "checkable_in_code",
+            "type": "noul",
+            "value": 0.85
+          },
+          {
+            "call": "forward.v0",
+            "question": "coverage",
+            "type": "score",
+            "value": 2.55,
+            "probabilities": {
+              "0": 0.05,
+              "1": 0.05,
+              "2": 0.2,
+              "3": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "forward.v0",
+            "question": "conflict",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "forward.v0",
+            "question": "evidence",
+            "type": "choice",
+            "value": "U11",
+            "probabilities": {
+              "U11": 0.8,
+              "U8": 0.04999999999999999,
+              "U9": 0.04999999999999999,
+              "U10": 0.04999999999999999,
+              "none": 0.04999999999999999
+            },
+            "confidence": 0.8
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_as_stated",
+            "type": "noul",
+            "value": 0.7
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_differently",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "tests.v0",
+            "question": "test_evidence",
+            "type": "choice",
+            "value": "U6",
+            "probabilities": {
+              "U6": 0.75,
+              "U4": 0.03571428571428571,
+              "U5": 0.03571428571428571,
+              "U1": 0.03571428571428571,
+              "U2": 0.03571428571428571,
+              "U3": 0.03571428571428571,
+              "U7": 0.03571428571428571,
+              "none": 0.03571428571428571
+            },
+            "confidence": 0.75
+          }
+        ],
+        "reasons": [
+          {
+            "template": "req.done",
+            "text": "Implemented (`0.70`)."
+          },
+          {
+            "template": "check.disagree",
+            "text": "Forward and reverse checks disagree."
+          }
+        ]
+      },
+      {
+        "requirementId": "R4",
+        "status": "missing",
+        "confidence": 0.8999999999999999,
+        "calibrated": false,
+        "tested": "as_stated",
+        "evidence": [],
+        "testEvidence": [
+          {
+            "unitId": "U7",
+            "file": "src/schedule.test.ts",
+            "lines": [
+              [
+                28,
+                30
+              ]
+            ],
+            "probability": 0.75
+          }
+        ],
+        "answers": [
+          {
+            "call": "issue.v0",
+            "question": "ambiguous",
+            "type": "noul",
+            "value": 0.3
+          },
+          {
+            "call": "issue.v0",
+            "question": "checkable_in_code",
+            "type": "noul",
+            "value": 0.85
+          },
+          {
+            "call": "forward.v0",
+            "question": "coverage",
+            "type": "score",
+            "value": 0.43000000000000005,
+            "probabilities": {
+              "0": 0.72,
+              "1": 0.18,
+              "2": 0.05,
+              "3": 0.05
+            },
+            "confidence": 0.72
+          },
+          {
+            "call": "forward.v0",
+            "question": "conflict",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "forward.v0",
+            "question": "evidence",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "U11": 0.04999999999999999,
+              "U10": 0.04999999999999999,
+              "U8": 0.04999999999999999,
+              "U9": 0.04999999999999999,
+              "none": 0.8
+            },
+            "confidence": 0.8
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_as_stated",
+            "type": "noul",
+            "value": 0.7
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_differently",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "tests.v0",
+            "question": "test_evidence",
+            "type": "choice",
+            "value": "U7",
+            "probabilities": {
+              "U7": 0.75,
+              "U2": 0.03571428571428571,
+              "U1": 0.03571428571428571,
+              "U4": 0.03571428571428571,
+              "U6": 0.03571428571428571,
+              "U3": 0.03571428571428571,
+              "U5": 0.03571428571428571,
+              "none": 0.03571428571428571
+            },
+            "confidence": 0.75
+          },
+          {
+            "call": "preexisting.v0",
+            "question": "already_implemented",
+            "type": "noul",
+            "value": 0.2
+          }
+        ],
+        "reasons": [
+          {
+            "template": "req.missing",
+            "text": "No change implements this (`0.90`)."
+          }
+        ]
+      }
+    ],
+    "unitVerdicts": [
+      {
+        "unitId": "U1",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      },
+      {
+        "unitId": "U2",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      },
+      {
+        "unitId": "U3",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      },
+      {
+        "unitId": "U4",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      },
+      {
+        "unitId": "U5",
+        "role": "implements",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "R2",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.7,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.07500000000000001
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.implements",
+            "text": "Implements R2."
+          }
+        ],
+        "servesRequirementId": "R2"
+      },
+      {
+        "unitId": "U6",
+        "role": "implements",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "R3",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.7,
+              "R4": 0.07500000000000001,
+              "none": 0.07500000000000001
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.implements",
+            "text": "Implements R3."
+          }
+        ],
+        "servesRequirementId": "R3"
+      },
+      {
+        "unitId": "U7",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      },
+      {
+        "unitId": "U8",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      },
+      {
+        "unitId": "U9",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      },
+      {
+        "unitId": "U10",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      },
+      {
+        "unitId": "U11",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      }
+    ],
+    "claims": [
+      {
+        "sentence": "Parse job intervals with units",
+        "requirementId": "R1",
+        "claimsDone": 0.2,
+        "claimsDeferred": 0.1
+      },
+      {
+        "sentence": "Adds parseDuration for s, m and h suffixes and uses it in scheduleJob.",
+        "claimsDone": 0.8,
+        "claimsDeferred": 0.1
+      },
+      {
+        "sentence": "Bad input throws DurationError, intervals under a second throw RangeError, and job names are normalized.",
+        "requirementId": "R2",
+        "claimsDone": 0.2,
+        "claimsDeferred": 0.1
+      },
+      {
+        "sentence": "Tests cover each case.",
+        "claimsDone": 0.2,
+        "claimsDeferred": 0.1
+      }
+    ],
+    "findings": [
+      {
+        "id": "F-R1",
+        "type": "requirement",
+        "targetId": "R1",
+        "priority": "P0",
+        "route": "send_back",
+        "confidence": 0.8999999999999999,
+        "locations": [],
+        "reasons": [
+          {
+            "template": "req.missing",
+            "text": "No change implements this (`0.90`)."
+          }
+        ],
+        "contentKey": "req:7202570c124b33dfb0f416c8f88b7144"
+      },
+      {
+        "id": "F-R2",
+        "type": "requirement",
+        "targetId": "R2",
+        "priority": "P0",
+        "route": "send_back",
+        "confidence": 0.8999999999999999,
+        "locations": [],
+        "reasons": [
+          {
+            "template": "req.missing",
+            "text": "No change implements this (`0.90`)."
+          }
+        ],
+        "contentKey": "req:0a741bff651e384ae8963d1c9ef72a07"
+      },
+      {
+        "id": "F-R4",
+        "type": "requirement",
+        "targetId": "R4",
+        "priority": "P0",
+        "route": "send_back",
+        "confidence": 0.8999999999999999,
+        "locations": [],
+        "reasons": [
+          {
+            "template": "req.missing",
+            "text": "No change implements this (`0.90`)."
+          }
+        ],
+        "contentKey": "req:fac664ffd248202ac0bc184c856bd926"
+      },
+      {
+        "id": "F-U1",
+        "type": "unit",
+        "targetId": "U1",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.65,
+        "locations": [
+          {
+            "file": "src/schedule.test.ts",
+            "lines": [
+              2,
+              2
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ],
+        "contentKey": "unit:63828848e9e016e7e1430611c03f2b89"
+      },
+      {
+        "id": "F-U2",
+        "type": "unit",
+        "targetId": "U2",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.65,
+        "locations": [
+          {
+            "file": "src/schedule.test.ts",
+            "lines": [
+              6,
+              6
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ],
+        "contentKey": "unit:efa113698db6b3fc23119f289a5a05cb"
+      },
+      {
+        "id": "F-U3",
+        "type": "unit",
+        "targetId": "U3",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.65,
+        "locations": [
+          {
+            "file": "src/schedule.test.ts",
+            "lines": [
+              8,
+              14
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ],
+        "contentKey": "unit:f425c1c2a19e188dcb06a323ce0b3586"
+      },
+      {
+        "id": "F-U4",
+        "type": "unit",
+        "targetId": "U4",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.65,
+        "locations": [
+          {
+            "file": "src/schedule.test.ts",
+            "lines": [
+              15,
+              18
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ],
+        "contentKey": "unit:533f379f04d2524000b54ff70057827b"
+      },
+      {
+        "id": "F-U7",
+        "type": "unit",
+        "targetId": "U7",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.65,
+        "locations": [
+          {
+            "file": "src/schedule.test.ts",
+            "lines": [
+              28,
+              30
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ],
+        "contentKey": "unit:28e5f276a400190a991825cad8c0c8c9"
+      },
+      {
+        "id": "F-U8",
+        "type": "unit",
+        "targetId": "U8",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.65,
+        "locations": [
+          {
+            "file": "src/schedule.ts",
+            "lines": [
+              14,
+              14
+            ]
+          },
+          {
+            "file": "src/schedule.ts",
+            "lines": [
+              19,
+              20
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ],
+        "contentKey": "unit:cbc969e54f68264fe9ea52d0531f2dac"
+      },
+      {
+        "id": "F-U9",
+        "type": "unit",
+        "targetId": "U9",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.65,
+        "locations": [
+          {
+            "file": "src/schedule.ts",
+            "lines": [
+              15,
+              18
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ],
+        "contentKey": "unit:2933aaaf559e1e63c9c0b2a518e5d9b9"
+      },
+      {
+        "id": "F-U10",
+        "type": "unit",
+        "targetId": "U10",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.65,
+        "locations": [
+          {
+            "file": "src/schedule.ts",
+            "lines": [
+              21,
+              35
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ],
+        "contentKey": "unit:2f4939fe1bc30ae71b86b488c8a01e09"
+      },
+      {
+        "id": "F-U11",
+        "type": "unit",
+        "targetId": "U11",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.55,
+        "locations": [
+          {
+            "file": "src/schedule.ts",
+            "lines": [
+              37,
+              42
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          },
+          {
+            "template": "check.disagree",
+            "text": "Forward and reverse checks disagree."
+          }
+        ],
+        "contentKey": "unit:efbeec3a785150681878b073a8517827"
+      }
+    ],
+    "summary": {
+      "counts": {
+        "missing": 3,
+        "done": 1,
+        "unexplained_behavioral": 9,
+        "implements": 2,
+        "P0": 3,
+        "P1": 9
+      },
+      "mode": "comment_only"
+    },
+    "warnings": [],
+    "usage": {
+      "jevInputTokens": 0,
+      "llmInputTokens": 0,
+      "llmOutputTokens": 0,
+      "costUsd": 0,
+      "latencyMs": 0,
+      "calls": 0
+    }
+  }
+}

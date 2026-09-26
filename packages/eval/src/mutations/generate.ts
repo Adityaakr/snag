@@ -84,9 +84,18 @@ export async function seedItems(seed: LoadedSeed): Promise<EvalItem[]> {
 export async function writeSeedItems(
   dir: string,
   corporaRoot = CORPORA_ROOT,
-): Promise<{ seed: string; split: 'dev' | 'test'; items: number; operators: Record<string, number> }> {
+): Promise<{
+  seed: string;
+  split: 'dev' | 'test';
+  items: number;
+  operators: Record<string, number>;
+  frozen?: true;
+}> {
   const seed = loadSeed(dir);
   const split = seed.seed.split ?? splitOf(seed.seed.id);
+  // Test items are frozen (11.2): once the manifest exists, a test seed is never regenerated.
+  if (split === 'test' && existsSync(join(corporaRoot, 'test.sha256')))
+    return { seed: seed.seed.id, split, items: 0, operators: {}, frozen: true };
   const prefix = itemFileName(`${seed.seed.id}.`).replace(/\.json$/, '');
   for (const s of ['dev', 'test'] as const) {
     const d = join(corporaRoot, 'mutations', s);

@@ -1,0 +1,1767 @@
+{
+  "id": "rs-semver-compare.clean",
+  "labels": {
+    "requirements": {
+      "R1": "done",
+      "R2": "done",
+      "R3": "done",
+      "R4": "done"
+    },
+    "requirementsAccept": {},
+    "units": [
+      {
+        "file": "src/version.rs",
+        "symbol": "strip_v",
+        "role": "implements"
+      },
+      {
+        "file": "src/version.rs",
+        "symbol": "parse",
+        "role": "implements"
+      },
+      {
+        "file": "src/version.rs",
+        "symbol": "accepts_a_leading_v",
+        "role": "implements"
+      },
+      {
+        "file": "src/version.rs",
+        "symbol": "missing_parts_default_to_zero",
+        "role": "implements"
+      },
+      {
+        "file": "src/version.rs",
+        "symbol": "caret_matches",
+        "role": "implements"
+      },
+      {
+        "file": "src/version.rs",
+        "symbol": "caret_allows_minor_and_patch_updates",
+        "role": "implements"
+      },
+      {
+        "file": "src/version.rs",
+        "symbol": "caret_on_zero_major_pins_the_minor",
+        "role": "implements"
+      },
+      {
+        "file": "src/version.rs",
+        "symbol": "fmt::Display for VersionError",
+        "role": "implements"
+      },
+      {
+        "file": "src/version.rs",
+        "symbol": "parse_errors_name_the_input",
+        "role": "implements"
+      }
+    ],
+    "facts": [],
+    "testIntegrity": [],
+    "claimMismatch": [],
+    "pr": "clean"
+  },
+  "comparison": {
+    "requirements": [
+      {
+        "id": "R1",
+        "expected": "done",
+        "actual": "missing",
+        "ok": false
+      },
+      {
+        "id": "R2",
+        "expected": "done",
+        "actual": "partial",
+        "ok": false
+      },
+      {
+        "id": "R3",
+        "expected": "done",
+        "actual": "missing",
+        "ok": false
+      },
+      {
+        "id": "R4",
+        "expected": "done",
+        "actual": "partial",
+        "ok": false
+      }
+    ],
+    "units": [
+      {
+        "file": "src/version.rs",
+        "symbol": "strip_v",
+        "expected": "implements",
+        "actual": "implements",
+        "ok": true
+      },
+      {
+        "file": "src/version.rs",
+        "symbol": "parse",
+        "expected": "implements",
+        "actual": "unexplained_behavioral",
+        "ok": false
+      },
+      {
+        "file": "src/version.rs",
+        "symbol": "accepts_a_leading_v",
+        "expected": "implements",
+        "actual": "unexplained_behavioral",
+        "ok": false
+      },
+      {
+        "file": "src/version.rs",
+        "symbol": "missing_parts_default_to_zero",
+        "expected": "implements",
+        "actual": "implements",
+        "ok": true
+      },
+      {
+        "file": "src/version.rs",
+        "symbol": "caret_matches",
+        "expected": "implements",
+        "actual": "unexplained_behavioral",
+        "ok": false
+      },
+      {
+        "file": "src/version.rs",
+        "symbol": "caret_allows_minor_and_patch_updates",
+        "expected": "implements",
+        "actual": "unexplained_behavioral",
+        "ok": false
+      },
+      {
+        "file": "src/version.rs",
+        "symbol": "caret_on_zero_major_pins_the_minor",
+        "expected": "implements",
+        "actual": "unexplained_behavioral",
+        "ok": false
+      },
+      {
+        "file": "src/version.rs",
+        "symbol": "fmt::Display for VersionError",
+        "expected": "implements",
+        "actual": "unexplained_behavioral",
+        "ok": false
+      },
+      {
+        "file": "src/version.rs",
+        "symbol": "parse_errors_name_the_input",
+        "expected": "implements",
+        "actual": "implements",
+        "ok": true
+      }
+    ],
+    "facts": [],
+    "testIntegrity": [],
+    "claimMismatch": [],
+    "pr": {
+      "expected": "clean",
+      "predictedProblem": true
+    },
+    "p0p1": 10,
+    "passed": false
+  },
+  "result": {
+    "schemaVersion": "1.0.0",
+    "product": {
+      "name": "Remit",
+      "version": "0.1.0"
+    },
+    "input": {
+      "mode": "local",
+      "baseSha": "base",
+      "headSha": "head",
+      "issues": [
+        {
+          "owner": "verso",
+          "repo": "verso",
+          "number": 58
+        }
+      ],
+      "linkStrength": "closing"
+    },
+    "versions": {
+      "questionSet": "qs-0.1.0",
+      "extractionPrompt": "xp-0.1.0",
+      "jevModel": "simulated-jev"
+    },
+    "requirements": [
+      {
+        "id": "R1",
+        "issue": {
+          "owner": "verso",
+          "repo": "verso",
+          "number": 58
+        },
+        "text": "A leading `v` is accepted and ignored (for example `v1.2.3` parses as `1.2.3`)",
+        "quote": "A leading `v` is accepted and ignored (for example `v1.2.3` parses as `1.2.3`)",
+        "source": {
+          "kind": "tasklist"
+        },
+        "kind": "behavior",
+        "explicitness": "explicit",
+        "priority": "must",
+        "examples": [],
+        "checkableInCode": true,
+        "signals": {
+          "ambiguous": 0.3,
+          "checkable": 0.85
+        }
+      },
+      {
+        "id": "R2",
+        "issue": {
+          "owner": "verso",
+          "repo": "verso",
+          "number": 58
+        },
+        "text": "Missing minor or patch parts default to 0 (for example `1.4` parses as `1.4.0` and `2` as `2.0.0`)",
+        "quote": "Missing minor or patch parts default to 0 (for example `1.4` parses as `1.4.0` and `2` as `2.0.0`)",
+        "source": {
+          "kind": "tasklist"
+        },
+        "kind": "behavior",
+        "explicitness": "explicit",
+        "priority": "must",
+        "examples": [],
+        "checkableInCode": true,
+        "signals": {
+          "ambiguous": 0.3,
+          "checkable": 0.85
+        }
+      },
+      {
+        "id": "R3",
+        "issue": {
+          "owner": "verso",
+          "repo": "verso",
+          "number": 58
+        },
+        "text": "`caret_matches` implements caret ranges: `^1.2.3` matches versions from `1.2.3` up to but not including `2.0.0`, and `^0.3.1` only matches `0.3.x` versions from `0.3.1`",
+        "quote": "`caret_matches` implements caret ranges: `^1.2.3` matches versions from `1.2.3` up to but not including `2.0.0`, and `^0.3.1` only matches `0.3.x` versions from `0.3.1`",
+        "source": {
+          "kind": "tasklist"
+        },
+        "kind": "behavior",
+        "explicitness": "explicit",
+        "priority": "must",
+        "examples": [],
+        "checkableInCode": true,
+        "signals": {
+          "ambiguous": 0.3,
+          "checkable": 0.85
+        }
+      },
+      {
+        "id": "R4",
+        "issue": {
+          "owner": "verso",
+          "repo": "verso",
+          "number": 58
+        },
+        "text": "A parse failure displays as `invalid version: <input>`",
+        "quote": "A parse failure displays as `invalid version: <input>`",
+        "source": {
+          "kind": "tasklist"
+        },
+        "kind": "behavior",
+        "explicitness": "explicit",
+        "priority": "must",
+        "examples": [],
+        "checkableInCode": true,
+        "signals": {
+          "ambiguous": 0.3,
+          "checkable": 0.85
+        }
+      }
+    ],
+    "units": [
+      {
+        "id": "U1",
+        "file": "src/version.rs",
+        "language": "rs",
+        "kind": "source",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              21,
+              21
+            ],
+            [
+              27,
+              28
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/src/version.rs\n+++ b/src/version.rs\n@@ -18,3 +18,4 @@\n     }\n }\n \n+impl fmt::Display for VersionError {\n@@ -20,0 +27,2 @@\n+}\n+\n",
+        "judgeView": "--- a/src/version.rs\n+++ b/src/version.rs\n@@ -18,3 +18,4 @@\n     }\n }\n \n+impl fmt::Display for VersionError {\n@@ -20,0 +27,2 @@\n+}\n+\n",
+        "contentHash": "68b65d5462cda8e5a2604af044cb82e2c55f1e87a3b87411c97df6cecea1e333",
+        "tokenEstimate": 45,
+        "facts": [],
+        "symbol": {
+          "name": "fmt::Display for VersionError",
+          "kind": "class",
+          "startLine": 21,
+          "endLine": 27
+        },
+        "after": "impl fmt::Display for VersionError {\n    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {\n        match self {\n            VersionError::Malformed(input) => write!(f, \"invalid version: {}\", input),\n        }\n    }\n}"
+      },
+      {
+        "id": "U2",
+        "file": "src/version.rs",
+        "language": "rs",
+        "kind": "source",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              22,
+              26
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/src/version.rs\n+++ b/src/version.rs\n@@ -20,0 +22,5 @@\n+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {\n+        match self {\n+            VersionError::Malformed(input) => write!(f, \"invalid version: {}\", input),\n+        }\n+    }\n",
+        "judgeView": "--- a/src/version.rs\n+++ b/src/version.rs\n@@ -20,0 +22,5 @@\n+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {\n+        match self {\n+            VersionError::Malformed(input) => write!(f, \"invalid version: {}\", input),\n+        }\n+    }\n",
+        "contentHash": "7905a2ad507badb4f00062a1906aeb05b8da8026fffaf7a0c4fe2b6c11cde6f6",
+        "tokenEstimate": 84,
+        "facts": [],
+        "symbol": {
+          "name": "fmt",
+          "kind": "method",
+          "startLine": 22,
+          "endLine": 26
+        },
+        "after": "    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {\n        match self {\n            VersionError::Malformed(input) => write!(f, \"invalid version: {}\", input),\n        }\n    }"
+      },
+      {
+        "id": "U3",
+        "file": "src/version.rs",
+        "language": "rs",
+        "kind": "source",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              29,
+              32
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/src/version.rs\n+++ b/src/version.rs\n@@ -21,1 +29,5 @@\n+fn strip_v(input: &str) -> &str {\n+    input.strip_prefix('v').unwrap_or(input)\n+}\n+\n pub fn parse(input: &str) -> Result<Version, VersionError> {\n",
+        "judgeView": "--- a/src/version.rs\n+++ b/src/version.rs\n@@ -21,1 +29,5 @@\n+fn strip_v(input: &str) -> &str {\n+    input.strip_prefix('v').unwrap_or(input)\n+}\n+\n pub fn parse(input: &str) -> Result<Version, VersionError> {\n",
+        "contentHash": "7a0ace42a2ad423c4b9c898430e2b258c89039dd0a4b799cf297cef49d99f2c6",
+        "tokenEstimate": 70,
+        "facts": [],
+        "symbol": {
+          "name": "strip_v",
+          "kind": "function",
+          "startLine": 29,
+          "endLine": 31
+        },
+        "after": "fn strip_v(input: &str) -> &str {\n    input.strip_prefix('v').unwrap_or(input)\n}"
+      },
+      {
+        "id": "U4",
+        "file": "src/version.rs",
+        "language": "rs",
+        "kind": "source",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              34,
+              38
+            ],
+            [
+              40,
+              44
+            ]
+          ],
+          "old": [
+            [
+              22,
+              24
+            ],
+            [
+              26,
+              28
+            ],
+            [
+              30,
+              30
+            ]
+          ]
+        },
+        "patch": "--- a/src/version.rs\n+++ b/src/version.rs\n@@ -21,12 +33,15 @@\n pub fn parse(input: &str) -> Result<Version, VersionError> {\n-    let parts: Vec<&str> = input.split('.').collect();\n-    if parts.len() != 3 {\n-        return Err(VersionError::Malformed(input.to_string()));\n+    let text = strip_v(input);\n+    let mut nums = Vec::new();\n+    for part in text.split('.') {\n+        let n: u64 = part.parse().map_err(|_| VersionError::Malformed(input.to_string()))?;\n+        nums.push(n);\n     }\n-    let mut nums = [0u64; 3];\n-    for (slot, part) in nums.iter_mut().zip(&parts) {\n-        *slot = part.parse().map_err(|_| VersionError::Malformed(input.to_string()))?;\n+    match nums.as_slice() {\n+        [major, minor, patch] => Ok(Version { major: *major, minor: *minor, patch: *patch }),\n+        [major, minor] => Ok(Version { major: *major, minor: *minor, patch: 0 }),\n+        [major] => Ok(Version { major: *major, minor: 0, patch: 0 }),\n+        _ => Err(VersionError::Malformed(input.to_string())),\n     }\n-    Ok(Version { major: nums[0], minor: nums[1], patch: nums[2] })\n }\n \n",
+        "judgeView": "--- a/src/version.rs\n+++ b/src/version.rs\n@@ -21,12 +33,15 @@\n pub fn parse(input: &str) -> Result<Version, VersionError> {\n-    let parts: Vec<&str> = input.split('.').collect();\n-    if parts.len() != 3 {\n-        return Err(VersionError::Malformed(input.to_string()));\n+    let text = strip_v(input);\n+    let mut nums = Vec::new();\n+    for part in text.split('.') {\n+        let n: u64 = part.parse().map_err(|_| VersionError::Malformed(input.to_string()))?;\n+        nums.push(n);\n     }\n-    let mut nums = [0u64; 3];\n-    for (slot, part) in nums.iter_mut().zip(&parts) {\n-        *slot = part.parse().map_err(|_| VersionError::Malformed(input.to_string()))?;\n+    match nums.as_slice() {\n+        [major, minor, patch] => Ok(Version { major: *major, minor: *minor, patch: *patch }),\n+        [major, minor] => Ok(Version { major: *major, minor: *minor, patch: 0 }),\n+        [major] => Ok(Version { major: *major, minor: 0, patch: 0 }),\n+        _ => Err(VersionError::Malformed(input.to_string())),\n     }\n-    Ok(Version { major: nums[0], minor: nums[1], patch: nums[2] })\n }\n \n",
+        "contentHash": "ea4a5001acdfb93c161a1b125d1ccd9dbb2e8c08de1c918a3216963aca3e35d8",
+        "tokenEstimate": 363,
+        "facts": [],
+        "symbol": {
+          "name": "parse",
+          "kind": "function",
+          "startLine": 33,
+          "endLine": 46
+        },
+        "before": "pub fn parse(input: &str) -> Result<Version, VersionError> {\n    let parts: Vec<&str> = input.split('.').collect();\n    if parts.len() != 3 {\n        return Err(VersionError::Malformed(input.to_string()));\n    }\n    let mut nums = [0u64; 3];\n    for (slot, part) in nums.iter_mut().zip(&parts) {\n        *slot = part.parse().map_err(|_| VersionError::Malformed(input.to_string()))?;\n    }\n    Ok(Version { major: nums[0], minor: nums[1], patch: nums[2] })\n}",
+        "after": "pub fn parse(input: &str) -> Result<Version, VersionError> {\n    let text = strip_v(input);\n    let mut nums = Vec::new();\n    for part in text.split('.') {\n        let n: u64 = part.parse().map_err(|_| VersionError::Malformed(input.to_string()))?;\n        nums.push(n);\n    }\n    match nums.as_slice() {\n        [major, minor, patch] => Ok(Version { major: *major, minor: *minor, patch: *patch }),\n        [major, minor] => Ok(Version { major: *major, minor: *minor, patch: 0 }),\n        [major] => Ok(Version { major: *major, minor: 0, patch: 0 }),\n        _ => Err(VersionError::Malformed(input.to_string())),\n    }\n}"
+      },
+      {
+        "id": "U5",
+        "file": "src/version.rs",
+        "language": "rs",
+        "kind": "source",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              48,
+              57
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/src/version.rs\n+++ b/src/version.rs\n@@ -31,5 +46,15 @@\n }\n \n+pub fn caret_matches(req: &Version, candidate: &Version) -> bool {\n+    if candidate < req {\n+        return false;\n+    }\n+    if req.major == 0 {\n+        return candidate.major == 0 && candidate.minor == req.minor;\n+    }\n+    candidate.major == req.major\n+}\n+\n #[cfg(test)]\n mod tests {\n     use super::*;\n",
+        "judgeView": "--- a/src/version.rs\n+++ b/src/version.rs\n@@ -31,5 +46,15 @@\n }\n \n+pub fn caret_matches(req: &Version, candidate: &Version) -> bool {\n+    if candidate < req {\n+        return false;\n+    }\n+    if req.major == 0 {\n+        return candidate.major == 0 && candidate.minor == req.minor;\n+    }\n+    candidate.major == req.major\n+}\n+\n #[cfg(test)]\n mod tests {\n     use super::*;\n",
+        "contentHash": "e2b64ce13b8df3d3262044333321761f4fec00b4de31e8c616fcd0a303a10bbb",
+        "tokenEstimate": 126,
+        "facts": [],
+        "symbol": {
+          "name": "caret_matches",
+          "kind": "function",
+          "startLine": 48,
+          "endLine": 56
+        },
+        "after": "pub fn caret_matches(req: &Version, candidate: &Version) -> bool {\n    if candidate < req {\n        return false;\n    }\n    if req.major == 0 {\n        return candidate.major == 0 && candidate.minor == req.minor;\n    }\n    candidate.major == req.major\n}"
+      },
+      {
+        "id": "U6",
+        "file": "src/version.rs",
+        "language": "rs",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              81,
+              86
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/src/version.rs\n+++ b/src/version.rs\n@@ -53,3 +78,9 @@\n     fn displays_as_dotted_triple() {\n         assert_eq!(parse(\"4.0.12\").unwrap().to_string(), \"4.0.12\");\n     }\n+\n+    #[test]\n+    fn accepts_a_leading_v() {\n+        assert_eq!(parse(\"v1.2.3\"), Ok(Version { major: 1, minor: 2, patch: 3 }));\n+    }\n+\n",
+        "judgeView": "--- a/src/version.rs\n+++ b/src/version.rs\n@@ -53,3 +78,9 @@\n     fn displays_as_dotted_triple() {\n         assert_eq!(parse(\"4.0.12\").unwrap().to_string(), \"4.0.12\");\n     }\n+\n+    #[test]\n+    fn accepts_a_leading_v() {\n+        assert_eq!(parse(\"v1.2.3\"), Ok(Version { major: 1, minor: 2, patch: 3 }));\n+    }\n+\n",
+        "contentHash": "0e2a6219e4b42dd48eeb5cffef62fd3a1836b35b6d44e7c5c66b4132fdb791b8",
+        "tokenEstimate": 105,
+        "facts": [],
+        "symbol": {
+          "name": "accepts_a_leading_v",
+          "kind": "test",
+          "startLine": 82,
+          "endLine": 85
+        },
+        "after": "    #[test]\n    fn accepts_a_leading_v() {\n        assert_eq!(parse(\"v1.2.3\"), Ok(Version { major: 1, minor: 2, patch: 3 }));\n    }",
+        "testTitles": [
+          "accepts_a_leading_v"
+        ]
+      },
+      {
+        "id": "U7",
+        "file": "src/version.rs",
+        "language": "rs",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              87,
+              92
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/src/version.rs\n+++ b/src/version.rs\n@@ -55,0 +87,6 @@\n+    #[test]\n+    fn missing_parts_default_to_zero() {\n+        assert_eq!(parse(\"1.4\"), Ok(Version { major: 1, minor: 4, patch: 0 }));\n+        assert_eq!(parse(\"2\"), Ok(Version { major: 2, minor: 0, patch: 0 }));\n+    }\n+\n",
+        "judgeView": "--- a/src/version.rs\n+++ b/src/version.rs\n@@ -55,0 +87,6 @@\n+    #[test]\n+    fn missing_parts_default_to_zero() {\n+        assert_eq!(parse(\"1.4\"), Ok(Version { major: 1, minor: 4, patch: 0 }));\n+        assert_eq!(parse(\"2\"), Ok(Version { major: 2, minor: 0, patch: 0 }));\n+    }\n+\n",
+        "contentHash": "6b736b162dff4e91d29f0410e3ab1aa19082e6d6f2662ed41acbc514daab3342",
+        "tokenEstimate": 95,
+        "facts": [],
+        "symbol": {
+          "name": "missing_parts_default_to_zero",
+          "kind": "test",
+          "startLine": 87,
+          "endLine": 91
+        },
+        "after": "    #[test]\n    fn missing_parts_default_to_zero() {\n        assert_eq!(parse(\"1.4\"), Ok(Version { major: 1, minor: 4, patch: 0 }));\n        assert_eq!(parse(\"2\"), Ok(Version { major: 2, minor: 0, patch: 0 }));\n    }",
+        "testTitles": [
+          "missing_parts_default_to_zero"
+        ]
+      },
+      {
+        "id": "U8",
+        "file": "src/version.rs",
+        "language": "rs",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              93,
+              101
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/src/version.rs\n+++ b/src/version.rs\n@@ -55,0 +93,9 @@\n+    #[test]\n+    fn caret_allows_minor_and_patch_updates() {\n+        let req = parse(\"1.2.3\").unwrap();\n+        assert_eq!(caret_matches(&req, &parse(\"1.2.3\").unwrap()), true);\n+        assert_eq!(caret_matches(&req, &parse(\"1.9.0\").unwrap()), true);\n+        assert_eq!(caret_matches(&req, &parse(\"1.2.2\").unwrap()), false);\n+        assert_eq!(caret_matches(&req, &parse(\"2.0.0\").unwrap()), false);\n+    }\n+\n",
+        "judgeView": "--- a/src/version.rs\n+++ b/src/version.rs\n@@ -55,0 +93,9 @@\n+    #[test]\n+    fn caret_allows_minor_and_patch_updates() {\n+        let req = parse(\"1.2.3\").unwrap();\n+        assert_eq!(caret_matches(&req, &parse(\"1.2.3\").unwrap()), true);\n+        assert_eq!(caret_matches(&req, &parse(\"1.9.0\").unwrap()), true);\n+        assert_eq!(caret_matches(&req, &parse(\"1.2.2\").unwrap()), false);\n+        assert_eq!(caret_matches(&req, &parse(\"2.0.0\").unwrap()), false);\n+    }\n+\n",
+        "contentHash": "3252c5c7beb12d75cf9cafc7509e958094f108fdb49ba5c3928f9d613da0cb6b",
+        "tokenEstimate": 158,
+        "facts": [],
+        "symbol": {
+          "name": "caret_allows_minor_and_patch_updates",
+          "kind": "test",
+          "startLine": 93,
+          "endLine": 100
+        },
+        "after": "    #[test]\n    fn caret_allows_minor_and_patch_updates() {\n        let req = parse(\"1.2.3\").unwrap();\n        assert_eq!(caret_matches(&req, &parse(\"1.2.3\").unwrap()), true);\n        assert_eq!(caret_matches(&req, &parse(\"1.9.0\").unwrap()), true);\n        assert_eq!(caret_matches(&req, &parse(\"1.2.2\").unwrap()), false);\n        assert_eq!(caret_matches(&req, &parse(\"2.0.0\").unwrap()), false);\n    }",
+        "testTitles": [
+          "caret_allows_minor_and_patch_updates"
+        ]
+      },
+      {
+        "id": "U9",
+        "file": "src/version.rs",
+        "language": "rs",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              102,
+              109
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/src/version.rs\n+++ b/src/version.rs\n@@ -55,0 +102,8 @@\n+    #[test]\n+    fn caret_on_zero_major_pins_the_minor() {\n+        let req = parse(\"0.3.1\").unwrap();\n+        assert_eq!(caret_matches(&req, &parse(\"0.3.5\").unwrap()), true);\n+        assert_eq!(caret_matches(&req, &parse(\"0.4.0\").unwrap()), false);\n+        assert_eq!(caret_matches(&req, &parse(\"0.3.0\").unwrap()), false);\n+    }\n+\n",
+        "judgeView": "--- a/src/version.rs\n+++ b/src/version.rs\n@@ -55,0 +102,8 @@\n+    #[test]\n+    fn caret_on_zero_major_pins_the_minor() {\n+        let req = parse(\"0.3.1\").unwrap();\n+        assert_eq!(caret_matches(&req, &parse(\"0.3.5\").unwrap()), true);\n+        assert_eq!(caret_matches(&req, &parse(\"0.4.0\").unwrap()), false);\n+        assert_eq!(caret_matches(&req, &parse(\"0.3.0\").unwrap()), false);\n+    }\n+\n",
+        "contentHash": "34be9ce19d3bbc20fae9cfff7c8a330d006605a6096db3fe87aee1b1c6ae14f1",
+        "tokenEstimate": 133,
+        "facts": [],
+        "symbol": {
+          "name": "caret_on_zero_major_pins_the_minor",
+          "kind": "test",
+          "startLine": 102,
+          "endLine": 108
+        },
+        "after": "    #[test]\n    fn caret_on_zero_major_pins_the_minor() {\n        let req = parse(\"0.3.1\").unwrap();\n        assert_eq!(caret_matches(&req, &parse(\"0.3.5\").unwrap()), true);\n        assert_eq!(caret_matches(&req, &parse(\"0.4.0\").unwrap()), false);\n        assert_eq!(caret_matches(&req, &parse(\"0.3.0\").unwrap()), false);\n    }",
+        "testTitles": [
+          "caret_on_zero_major_pins_the_minor"
+        ]
+      },
+      {
+        "id": "U10",
+        "file": "src/version.rs",
+        "language": "rs",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              110,
+              113
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/src/version.rs\n+++ b/src/version.rs\n@@ -56,1 +110,5 @@\n+    #[test]\n+    fn parse_errors_name_the_input() {\n+        assert_eq!(parse(\"1.x\").unwrap_err().to_string(), \"invalid version: 1.x\");\n+    }\n }\n",
+        "judgeView": "--- a/src/version.rs\n+++ b/src/version.rs\n@@ -56,1 +110,5 @@\n+    #[test]\n+    fn parse_errors_name_the_input() {\n+        assert_eq!(parse(\"1.x\").unwrap_err().to_string(), \"invalid version: 1.x\");\n+    }\n }\n",
+        "contentHash": "322a114f24a1b14376b02da8cfe031bf7c54dd47948a2808d5d9d2670af52481",
+        "tokenEstimate": 70,
+        "facts": [],
+        "symbol": {
+          "name": "parse_errors_name_the_input",
+          "kind": "test",
+          "startLine": 110,
+          "endLine": 113
+        },
+        "after": "    #[test]\n    fn parse_errors_name_the_input() {\n        assert_eq!(parse(\"1.x\").unwrap_err().to_string(), \"invalid version: 1.x\");\n    }",
+        "testTitles": [
+          "parse_errors_name_the_input"
+        ]
+      }
+    ],
+    "requirementVerdicts": [
+      {
+        "requirementId": "R1",
+        "status": "missing",
+        "confidence": 0.8999999999999999,
+        "calibrated": false,
+        "tested": "untested",
+        "evidence": [],
+        "testEvidence": [],
+        "answers": [
+          {
+            "call": "issue.v0",
+            "question": "ambiguous",
+            "type": "noul",
+            "value": 0.3
+          },
+          {
+            "call": "issue.v0",
+            "question": "checkable_in_code",
+            "type": "noul",
+            "value": 0.85
+          },
+          {
+            "call": "forward.v0",
+            "question": "coverage",
+            "type": "score",
+            "value": 0.43000000000000005,
+            "probabilities": {
+              "0": 0.72,
+              "1": 0.18,
+              "2": 0.05,
+              "3": 0.05
+            },
+            "confidence": 0.72
+          },
+          {
+            "call": "forward.v0",
+            "question": "conflict",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "forward.v0",
+            "question": "evidence",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "U1": 0.039999999999999994,
+              "U2": 0.039999999999999994,
+              "U3": 0.039999999999999994,
+              "U4": 0.039999999999999994,
+              "U5": 0.039999999999999994,
+              "none": 0.8
+            },
+            "confidence": 0.8
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_as_stated",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_differently",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "tests.v0",
+            "question": "test_evidence",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "U6": 0.05,
+              "U7": 0.05,
+              "U8": 0.05,
+              "U9": 0.05,
+              "U10": 0.05,
+              "none": 0.75
+            },
+            "confidence": 0.75
+          },
+          {
+            "call": "preexisting.v0",
+            "question": "already_implemented",
+            "type": "noul",
+            "value": 0.2
+          }
+        ],
+        "reasons": [
+          {
+            "template": "req.missing",
+            "text": "No change implements this (`0.90`)."
+          }
+        ]
+      },
+      {
+        "requirementId": "R2",
+        "status": "partial",
+        "confidence": 0.4,
+        "calibrated": false,
+        "tested": "as_stated",
+        "evidence": [
+          {
+            "unitId": "U4",
+            "file": "src/version.rs",
+            "lines": [
+              [
+                34,
+                38
+              ],
+              [
+                40,
+                44
+              ]
+            ],
+            "probability": 0.8
+          }
+        ],
+        "testEvidence": [
+          {
+            "unitId": "U7",
+            "file": "src/version.rs",
+            "lines": [
+              [
+                87,
+                92
+              ]
+            ],
+            "probability": 0.75
+          }
+        ],
+        "answers": [
+          {
+            "call": "issue.v0",
+            "question": "ambiguous",
+            "type": "noul",
+            "value": 0.3
+          },
+          {
+            "call": "issue.v0",
+            "question": "checkable_in_code",
+            "type": "noul",
+            "value": 0.85
+          },
+          {
+            "call": "forward.v0",
+            "question": "coverage",
+            "type": "score",
+            "value": 1.8,
+            "probabilities": {
+              "0": 0.1,
+              "1": 0.2,
+              "2": 0.5,
+              "3": 0.2
+            },
+            "confidence": 0.5
+          },
+          {
+            "call": "forward.v0",
+            "question": "conflict",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "forward.v0",
+            "question": "evidence",
+            "type": "choice",
+            "value": "U4",
+            "probabilities": {
+              "U4": 0.8,
+              "U5": 0.039999999999999994,
+              "U1": 0.039999999999999994,
+              "U2": 0.039999999999999994,
+              "U3": 0.039999999999999994,
+              "none": 0.039999999999999994
+            },
+            "confidence": 0.8
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_as_stated",
+            "type": "noul",
+            "value": 0.7
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_differently",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "tests.v0",
+            "question": "test_evidence",
+            "type": "choice",
+            "value": "U7",
+            "probabilities": {
+              "U7": 0.75,
+              "U8": 0.05,
+              "U6": 0.05,
+              "U9": 0.05,
+              "U10": 0.05,
+              "none": 0.05
+            },
+            "confidence": 0.75
+          }
+        ],
+        "reasons": [
+          {
+            "template": "req.partial",
+            "text": "Mostly implemented, but at least one stated case, value or condition is not (`0.50`)."
+          },
+          {
+            "template": "check.disagree",
+            "text": "Forward and reverse checks disagree."
+          }
+        ]
+      },
+      {
+        "requirementId": "R3",
+        "status": "missing",
+        "confidence": 0.8999999999999999,
+        "calibrated": false,
+        "tested": "untested",
+        "evidence": [],
+        "testEvidence": [],
+        "answers": [
+          {
+            "call": "issue.v0",
+            "question": "ambiguous",
+            "type": "noul",
+            "value": 0.3
+          },
+          {
+            "call": "issue.v0",
+            "question": "checkable_in_code",
+            "type": "noul",
+            "value": 0.85
+          },
+          {
+            "call": "forward.v0",
+            "question": "coverage",
+            "type": "score",
+            "value": 0.43000000000000005,
+            "probabilities": {
+              "0": 0.72,
+              "1": 0.18,
+              "2": 0.05,
+              "3": 0.05
+            },
+            "confidence": 0.72
+          },
+          {
+            "call": "forward.v0",
+            "question": "conflict",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "forward.v0",
+            "question": "evidence",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "U5": 0.039999999999999994,
+              "U1": 0.039999999999999994,
+              "U2": 0.039999999999999994,
+              "U3": 0.039999999999999994,
+              "U4": 0.039999999999999994,
+              "none": 0.8
+            },
+            "confidence": 0.8
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_as_stated",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_differently",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "tests.v0",
+            "question": "test_evidence",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "U8": 0.05,
+              "U9": 0.05,
+              "U6": 0.05,
+              "U7": 0.05,
+              "U10": 0.05,
+              "none": 0.75
+            },
+            "confidence": 0.75
+          },
+          {
+            "call": "preexisting.v0",
+            "question": "already_implemented",
+            "type": "noul",
+            "value": 0.2
+          }
+        ],
+        "reasons": [
+          {
+            "template": "req.missing",
+            "text": "No change implements this (`0.90`)."
+          }
+        ]
+      },
+      {
+        "requirementId": "R4",
+        "status": "partial",
+        "confidence": 0.4,
+        "calibrated": false,
+        "tested": "as_stated",
+        "evidence": [
+          {
+            "unitId": "U4",
+            "file": "src/version.rs",
+            "lines": [
+              [
+                34,
+                38
+              ],
+              [
+                40,
+                44
+              ]
+            ],
+            "probability": 0.8
+          }
+        ],
+        "testEvidence": [
+          {
+            "unitId": "U10",
+            "file": "src/version.rs",
+            "lines": [
+              [
+                110,
+                113
+              ]
+            ],
+            "probability": 0.75
+          }
+        ],
+        "answers": [
+          {
+            "call": "issue.v0",
+            "question": "ambiguous",
+            "type": "noul",
+            "value": 0.3
+          },
+          {
+            "call": "issue.v0",
+            "question": "checkable_in_code",
+            "type": "noul",
+            "value": 0.85
+          },
+          {
+            "call": "forward.v0",
+            "question": "coverage",
+            "type": "score",
+            "value": 1.8,
+            "probabilities": {
+              "0": 0.1,
+              "1": 0.2,
+              "2": 0.5,
+              "3": 0.2
+            },
+            "confidence": 0.5
+          },
+          {
+            "call": "forward.v0",
+            "question": "conflict",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "forward.v0",
+            "question": "evidence",
+            "type": "choice",
+            "value": "U4",
+            "probabilities": {
+              "U4": 0.8,
+              "U2": 0.039999999999999994,
+              "U3": 0.039999999999999994,
+              "U1": 0.039999999999999994,
+              "U5": 0.039999999999999994,
+              "none": 0.039999999999999994
+            },
+            "confidence": 0.8
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_as_stated",
+            "type": "noul",
+            "value": 0.7
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_differently",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "tests.v0",
+            "question": "test_evidence",
+            "type": "choice",
+            "value": "U10",
+            "probabilities": {
+              "U10": 0.75,
+              "U6": 0.05,
+              "U7": 0.05,
+              "U8": 0.05,
+              "U9": 0.05,
+              "none": 0.05
+            },
+            "confidence": 0.75
+          }
+        ],
+        "reasons": [
+          {
+            "template": "req.partial",
+            "text": "Mostly implemented, but at least one stated case, value or condition is not (`0.50`)."
+          },
+          {
+            "template": "check.disagree",
+            "text": "Forward and reverse checks disagree."
+          }
+        ]
+      }
+    ],
+    "unitVerdicts": [
+      {
+        "unitId": "U1",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      },
+      {
+        "unitId": "U2",
+        "role": "implements",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "R4",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.7,
+              "none": 0.07500000000000001
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.implements",
+            "text": "Implements R4."
+          }
+        ],
+        "servesRequirementId": "R4"
+      },
+      {
+        "unitId": "U3",
+        "role": "implements",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "R4",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.7,
+              "none": 0.07500000000000001
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.implements",
+            "text": "Implements R4."
+          }
+        ],
+        "servesRequirementId": "R4"
+      },
+      {
+        "unitId": "U4",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      },
+      {
+        "unitId": "U5",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      },
+      {
+        "unitId": "U6",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      },
+      {
+        "unitId": "U7",
+        "role": "implements",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "R2",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.7,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.07500000000000001
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.implements",
+            "text": "Implements R2."
+          }
+        ],
+        "servesRequirementId": "R2"
+      },
+      {
+        "unitId": "U8",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      },
+      {
+        "unitId": "U9",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      },
+      {
+        "unitId": "U10",
+        "role": "implements",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "R4",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.7,
+              "none": 0.07500000000000001
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.implements",
+            "text": "Implements R4."
+          }
+        ],
+        "servesRequirementId": "R4"
+      }
+    ],
+    "claims": [
+      {
+        "sentence": "Accept v-prefixed and short versions, add caret matching",
+        "claimsDone": 0.8,
+        "claimsDeferred": 0.1
+      },
+      {
+        "sentence": "parse now strips one leading v through a new strip_v helper, and accepts one, two or three numeric parts, filling missing minor and patch parts with 0.",
+        "claimsDone": 0.2,
+        "claimsDeferred": 0.1
+      },
+      {
+        "sentence": "New caret_matches(req, candidate) accepts candidates at or above req with the same major version, and for 0.x requirements also the same minor version.",
+        "claimsDone": 0.2,
+        "claimsDeferred": 0.1
+      },
+      {
+        "sentence": "VersionError implements Display as invalid version: <input>.",
+        "requirementId": "R4",
+        "claimsDone": 0.2,
+        "claimsDeferred": 0.1
+      },
+      {
+        "sentence": "Tests in src/version.rs cover each case.",
+        "claimsDone": 0.2,
+        "claimsDeferred": 0.1
+      }
+    ],
+    "findings": [
+      {
+        "id": "F-R1",
+        "type": "requirement",
+        "targetId": "R1",
+        "priority": "P0",
+        "route": "send_back",
+        "confidence": 0.8999999999999999,
+        "locations": [],
+        "reasons": [
+          {
+            "template": "req.missing",
+            "text": "No change implements this (`0.90`)."
+          }
+        ],
+        "contentKey": "req:3095f649486a49d78b2440afa85de195"
+      },
+      {
+        "id": "F-R3",
+        "type": "requirement",
+        "targetId": "R3",
+        "priority": "P0",
+        "route": "send_back",
+        "confidence": 0.8999999999999999,
+        "locations": [],
+        "reasons": [
+          {
+            "template": "req.missing",
+            "text": "No change implements this (`0.90`)."
+          }
+        ],
+        "contentKey": "req:c9ec3ba8c61251040b96d0f7894a81a6"
+      },
+      {
+        "id": "F-R2",
+        "type": "requirement",
+        "targetId": "R2",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.4,
+        "locations": [
+          {
+            "file": "src/version.rs",
+            "lines": [
+              34,
+              38
+            ]
+          },
+          {
+            "file": "src/version.rs",
+            "lines": [
+              40,
+              44
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "req.partial",
+            "text": "Mostly implemented, but at least one stated case, value or condition is not (`0.50`)."
+          },
+          {
+            "template": "check.disagree",
+            "text": "Forward and reverse checks disagree."
+          }
+        ],
+        "contentKey": "req:b6a2366426d9f1508d43ebb3c0e8eb1b"
+      },
+      {
+        "id": "F-R4",
+        "type": "requirement",
+        "targetId": "R4",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.4,
+        "locations": [
+          {
+            "file": "src/version.rs",
+            "lines": [
+              34,
+              38
+            ]
+          },
+          {
+            "file": "src/version.rs",
+            "lines": [
+              40,
+              44
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "req.partial",
+            "text": "Mostly implemented, but at least one stated case, value or condition is not (`0.50`)."
+          },
+          {
+            "template": "check.disagree",
+            "text": "Forward and reverse checks disagree."
+          }
+        ],
+        "contentKey": "req:3e486fd1eba9c7a22951ee65cac47ef4"
+      },
+      {
+        "id": "F-U1",
+        "type": "unit",
+        "targetId": "U1",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.65,
+        "locations": [
+          {
+            "file": "src/version.rs",
+            "lines": [
+              21,
+              21
+            ]
+          },
+          {
+            "file": "src/version.rs",
+            "lines": [
+              27,
+              28
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ],
+        "contentKey": "unit:68b65d5462cda8e5a2604af044cb82e2"
+      },
+      {
+        "id": "F-U4",
+        "type": "unit",
+        "targetId": "U4",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.55,
+        "locations": [
+          {
+            "file": "src/version.rs",
+            "lines": [
+              34,
+              38
+            ]
+          },
+          {
+            "file": "src/version.rs",
+            "lines": [
+              40,
+              44
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          },
+          {
+            "template": "check.disagree",
+            "text": "Forward and reverse checks disagree."
+          }
+        ],
+        "contentKey": "unit:ea4a5001acdfb93c161a1b125d1ccd9d"
+      },
+      {
+        "id": "F-U5",
+        "type": "unit",
+        "targetId": "U5",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.65,
+        "locations": [
+          {
+            "file": "src/version.rs",
+            "lines": [
+              48,
+              57
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ],
+        "contentKey": "unit:e2b64ce13b8df3d3262044333321761f"
+      },
+      {
+        "id": "F-U6",
+        "type": "unit",
+        "targetId": "U6",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.65,
+        "locations": [
+          {
+            "file": "src/version.rs",
+            "lines": [
+              81,
+              86
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ],
+        "contentKey": "unit:0e2a6219e4b42dd48eeb5cffef62fd3a"
+      },
+      {
+        "id": "F-U8",
+        "type": "unit",
+        "targetId": "U8",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.65,
+        "locations": [
+          {
+            "file": "src/version.rs",
+            "lines": [
+              93,
+              101
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ],
+        "contentKey": "unit:3252c5c7beb12d75cf9cafc7509e9580"
+      },
+      {
+        "id": "F-U9",
+        "type": "unit",
+        "targetId": "U9",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.65,
+        "locations": [
+          {
+            "file": "src/version.rs",
+            "lines": [
+              102,
+              109
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ],
+        "contentKey": "unit:34be9ce19d3bbc20fae9cfff7c8a330d"
+      }
+    ],
+    "summary": {
+      "counts": {
+        "missing": 2,
+        "partial": 2,
+        "unexplained_behavioral": 6,
+        "implements": 4,
+        "P0": 2,
+        "P1": 8
+      },
+      "mode": "comment_only"
+    },
+    "warnings": [],
+    "usage": {
+      "jevInputTokens": 0,
+      "llmInputTokens": 0,
+      "llmOutputTokens": 0,
+      "costUsd": 0,
+      "latencyMs": 0,
+      "calls": 0
+    }
+  }
+}

@@ -1,0 +1,1900 @@
+{
+  "id": "py-csv-import.clean",
+  "labels": {
+    "requirements": {
+      "R1": "done",
+      "R2": "done",
+      "R3": "done",
+      "R4": "done"
+    },
+    "requirementsAccept": {},
+    "units": [
+      {
+        "file": "importer/csv_import.py",
+        "symbol": "import_rows",
+        "role": "implements"
+      },
+      {
+        "file": "tests/test_csv_import.py",
+        "symbol": "test_reports_missing_name_and_email",
+        "role": "implements"
+      },
+      {
+        "file": "importer/csv_import.py",
+        "symbol": "is_valid_email",
+        "role": "implements"
+      },
+      {
+        "file": "tests/test_csv_import.py",
+        "symbol": "test_is_valid_email",
+        "role": "implements"
+      },
+      {
+        "file": "tests/test_csv_import.py",
+        "symbol": "test_rejects_malformed_emails",
+        "role": "implements"
+      },
+      {
+        "file": "importer/csv_import.py",
+        "symbol": "parse_signup_date",
+        "role": "implements"
+      },
+      {
+        "file": "tests/test_csv_import.py",
+        "symbol": "test_parses_signup_dates",
+        "role": "implements"
+      },
+      {
+        "file": "tests/test_csv_import.py",
+        "symbol": "test_stores_signup_date",
+        "role": "implements"
+      },
+      {
+        "file": "tests/test_csv_import.py",
+        "symbol": "test_reports_bad_signup_date",
+        "role": "implements"
+      },
+      {
+        "file": "tests/test_csv_import.py",
+        "symbol": "test_rejects_long_names",
+        "role": "implements"
+      }
+    ],
+    "facts": [],
+    "testIntegrity": [],
+    "claimMismatch": [],
+    "pr": "clean"
+  },
+  "comparison": {
+    "requirements": [
+      {
+        "id": "R1",
+        "expected": "done",
+        "actual": "done",
+        "ok": true
+      },
+      {
+        "id": "R2",
+        "expected": "done",
+        "actual": "partial",
+        "ok": false
+      },
+      {
+        "id": "R3",
+        "expected": "done",
+        "actual": "partial",
+        "ok": false
+      },
+      {
+        "id": "R4",
+        "expected": "done",
+        "actual": "partial",
+        "ok": false
+      }
+    ],
+    "units": [
+      {
+        "file": "importer/csv_import.py",
+        "symbol": "import_rows",
+        "expected": "implements",
+        "actual": "unexplained_behavioral",
+        "ok": false
+      },
+      {
+        "file": "tests/test_csv_import.py",
+        "symbol": "test_reports_missing_name_and_email",
+        "expected": "implements",
+        "actual": "implements",
+        "ok": true
+      },
+      {
+        "file": "importer/csv_import.py",
+        "symbol": "is_valid_email",
+        "expected": "implements",
+        "actual": "unexplained_behavioral",
+        "ok": false
+      },
+      {
+        "file": "tests/test_csv_import.py",
+        "symbol": "test_is_valid_email",
+        "expected": "implements",
+        "actual": "implements",
+        "ok": true
+      },
+      {
+        "file": "tests/test_csv_import.py",
+        "symbol": "test_rejects_malformed_emails",
+        "expected": "implements",
+        "actual": "implements",
+        "ok": true
+      },
+      {
+        "file": "importer/csv_import.py",
+        "symbol": "parse_signup_date",
+        "expected": "implements",
+        "actual": "unexplained_behavioral",
+        "ok": false
+      },
+      {
+        "file": "tests/test_csv_import.py",
+        "symbol": "test_parses_signup_dates",
+        "expected": "implements",
+        "actual": "implements",
+        "ok": true
+      },
+      {
+        "file": "tests/test_csv_import.py",
+        "symbol": "test_stores_signup_date",
+        "expected": "implements",
+        "actual": "implements",
+        "ok": true
+      },
+      {
+        "file": "tests/test_csv_import.py",
+        "symbol": "test_reports_bad_signup_date",
+        "expected": "implements",
+        "actual": "unexplained_behavioral",
+        "ok": false
+      },
+      {
+        "file": "tests/test_csv_import.py",
+        "symbol": "test_rejects_long_names",
+        "expected": "implements",
+        "actual": "implements",
+        "ok": true
+      }
+    ],
+    "facts": [],
+    "testIntegrity": [],
+    "claimMismatch": [],
+    "pr": {
+      "expected": "clean",
+      "predictedProblem": false
+    },
+    "p0p1": 9,
+    "passed": false
+  },
+  "result": {
+    "schemaVersion": "1.0.0",
+    "product": {
+      "name": "Remit",
+      "version": "0.1.0"
+    },
+    "input": {
+      "mode": "local",
+      "baseSha": "base",
+      "headSha": "head",
+      "issues": [
+        {
+          "owner": "northwind",
+          "repo": "contacts",
+          "number": 112
+        }
+      ],
+      "linkStrength": "closing"
+    },
+    "versions": {
+      "questionSet": "qs-0.1.0",
+      "extractionPrompt": "xp-0.1.0",
+      "jevModel": "simulated-jev"
+    },
+    "requirements": [
+      {
+        "id": "R1",
+        "issue": {
+          "owner": "northwind",
+          "repo": "contacts",
+          "number": 112
+        },
+        "text": "Rows with an empty `name` or `email` are skipped and reported as `missing name` or `missing email`",
+        "quote": "Rows with an empty `name` or `email` are skipped and reported as `missing name` or `missing email`",
+        "source": {
+          "kind": "tasklist"
+        },
+        "kind": "behavior",
+        "explicitness": "explicit",
+        "priority": "must",
+        "examples": [],
+        "checkableInCode": true,
+        "signals": {
+          "ambiguous": 0.3,
+          "checkable": 0.85
+        }
+      },
+      {
+        "id": "R2",
+        "issue": {
+          "owner": "northwind",
+          "repo": "contacts",
+          "number": 112
+        },
+        "text": "Emails must contain exactly one `@` and a dot in the domain (`ann@example.com` is valid, `ann@example` is not); other rows are reported as `invalid email`",
+        "quote": "Emails must contain exactly one `@` and a dot in the domain (`ann@example.com` is valid, `ann@example` is not); other rows are reported as `invalid email`",
+        "source": {
+          "kind": "tasklist"
+        },
+        "kind": "behavior",
+        "explicitness": "explicit",
+        "priority": "must",
+        "examples": [],
+        "checkableInCode": true,
+        "signals": {
+          "ambiguous": 0.3,
+          "checkable": 0.85
+        }
+      },
+      {
+        "id": "R3",
+        "issue": {
+          "owner": "northwind",
+          "repo": "contacts",
+          "number": 112
+        },
+        "text": "The optional `signup_date` column accepts `2024-03-05`, `05/03/2024` (day first, so 5 March) and `5 Mar 2024`; any other value is reported as `bad signup_date`",
+        "quote": "The optional `signup_date` column accepts `2024-03-05`, `05/03/2024` (day first, so 5 March) and `5 Mar 2024`; any other value is reported as `bad signup_date`",
+        "source": {
+          "kind": "tasklist"
+        },
+        "kind": "behavior",
+        "explicitness": "explicit",
+        "priority": "must",
+        "examples": [],
+        "checkableInCode": true,
+        "signals": {
+          "ambiguous": 0.3,
+          "checkable": 0.85
+        }
+      },
+      {
+        "id": "R4",
+        "issue": {
+          "owner": "northwind",
+          "repo": "contacts",
+          "number": 112
+        },
+        "text": "Names longer than 80 characters are rejected with a `name too long` error",
+        "quote": "Names longer than 80 characters are rejected with a `name too long` error",
+        "source": {
+          "kind": "tasklist"
+        },
+        "kind": "behavior",
+        "explicitness": "explicit",
+        "priority": "must",
+        "examples": [],
+        "checkableInCode": true,
+        "signals": {
+          "ambiguous": 0.3,
+          "checkable": 0.85
+        }
+      }
+    ],
+    "units": [
+      {
+        "id": "U1",
+        "file": "importer/csv_import.py",
+        "language": "py",
+        "kind": "source",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              5,
+              6
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/importer/csv_import.py\n+++ b/importer/csv_import.py\n@@ -2,6 +2,8 @@\n \n import csv\n import io\n+import re\n+from datetime import datetime\n \n from importer.config import import_limits\n \n",
+        "judgeView": "--- a/importer/csv_import.py\n+++ b/importer/csv_import.py\n@@ -2,6 +2,8 @@\n \n import csv\n import io\n+import re\n+from datetime import datetime\n \n from importer.config import import_limits\n \n",
+        "contentHash": "e3836e2ca7d9c6849ce8d1fd2d6b62242a946835c59a1af3012e0b89a82c905c",
+        "tokenEstimate": 63,
+        "facts": []
+      },
+      {
+        "id": "U2",
+        "file": "importer/csv_import.py",
+        "language": "py",
+        "kind": "source",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              20,
+              26
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/importer/csv_import.py\n+++ b/importer/csv_import.py\n@@ -15,3 +17,10 @@\n         self.errors.append((line, message))\n \n \n+def is_valid_email(value):\n+    if value.count(\"@\") != 1:\n+        return False\n+    local, domain = value.split(\"@\")\n+    return bool(local) and \".\" in domain.strip(\".\")\n+\n+\n",
+        "judgeView": "--- a/importer/csv_import.py\n+++ b/importer/csv_import.py\n@@ -15,3 +17,10 @@\n         self.errors.append((line, message))\n \n \n+def is_valid_email(value):\n+    if value.count(\"@\") != 1:\n+        return False\n+    local, domain = value.split(\"@\")\n+    return bool(local) and \".\" in domain.strip(\".\")\n+\n+\n",
+        "contentHash": "11046f0065ba71d553884d53d411e9485915bd218c5488634e2e69153ee5d738",
+        "tokenEstimate": 101,
+        "facts": [],
+        "symbol": {
+          "name": "is_valid_email",
+          "kind": "function",
+          "startLine": 20,
+          "endLine": 24
+        },
+        "after": "def is_valid_email(value):\n    if value.count(\"@\") != 1:\n        return False\n    local, domain = value.split(\"@\")\n    return bool(local) and \".\" in domain.strip(\".\")"
+      },
+      {
+        "id": "U3",
+        "file": "importer/csv_import.py",
+        "language": "py",
+        "kind": "source",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              27,
+              37
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/importer/csv_import.py\n+++ b/importer/csv_import.py\n@@ -18,3 +27,14 @@\n+def parse_signup_date(value):\n+    text = value.strip()\n+    if re.fullmatch(r\"\\d{4}-\\d{2}-\\d{2}\", text):\n+        return datetime.strptime(text, \"%Y-%m-%d\").date()\n+    if re.fullmatch(r\"\\d{2}/\\d{2}/\\d{4}\", text):\n+        return datetime.strptime(text, \"%d/%m/%Y\").date()\n+    if re.fullmatch(r\"\\d{1,2} [A-Za-z]{3} \\d{4}\", text):\n+        return datetime.strptime(text, \"%d %b %Y\").date()\n+    return None\n+\n+\n def import_rows(text):\n     limits = import_limits()\n     reader = csv.DictReader(io.StringIO(text), delimiter=limits[\"delimiter\"])\n",
+        "judgeView": "--- a/importer/csv_import.py\n+++ b/importer/csv_import.py\n@@ -18,3 +27,14 @@\n+def parse_signup_date(value):\n+    text = value.strip()\n+    if re.fullmatch(r\"\\d{4}-\\d{2}-\\d{2}\", text):\n+        return datetime.strptime(text, \"%Y-%m-%d\").date()\n+    if re.fullmatch(r\"\\d{2}/\\d{2}/\\d{4}\", text):\n+        return datetime.strptime(text, \"%d/%m/%Y\").date()\n+    if re.fullmatch(r\"\\d{1,2} [A-Za-z]{3} \\d{4}\", text):\n+        return datetime.strptime(text, \"%d %b %Y\").date()\n+    return None\n+\n+\n def import_rows(text):\n     limits = import_limits()\n     reader = csv.DictReader(io.StringIO(text), delimiter=limits[\"delimiter\"])\n",
+        "contentHash": "6e00d9ba1769f75c402408b47e285152c5619d16fff88269603bdb3e6cc7f328",
+        "tokenEstimate": 208,
+        "facts": [],
+        "symbol": {
+          "name": "parse_signup_date",
+          "kind": "function",
+          "startLine": 27,
+          "endLine": 35
+        },
+        "after": "def parse_signup_date(value):\n    text = value.strip()\n    if re.fullmatch(r\"\\d{4}-\\d{2}-\\d{2}\", text):\n        return datetime.strptime(text, \"%Y-%m-%d\").date()\n    if re.fullmatch(r\"\\d{2}/\\d{2}/\\d{4}\", text):\n        return datetime.strptime(text, \"%d/%m/%Y\").date()\n    if re.fullmatch(r\"\\d{1,2} [A-Za-z]{3} \\d{4}\", text):\n        return datetime.strptime(text, \"%d %b %Y\").date()\n    return None"
+      },
+      {
+        "id": "U4",
+        "file": "importer/csv_import.py",
+        "language": "py",
+        "kind": "source",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              48,
+              65
+            ]
+          ],
+          "old": [
+            [
+              28,
+              28
+            ]
+          ]
+        },
+        "patch": "--- a/importer/csv_import.py\n+++ b/importer/csv_import.py\n@@ -25,5 +45,22 @@\n             break\n         name = (row.get(\"name\") or \"\").strip()\n         email = (row.get(\"email\") or \"\").strip()\n-        result.contacts.append({\"name\": name, \"email\": email})\n+        missing = [col for col, value in ((\"name\", name), (\"email\", email)) if not value]\n+        if missing:\n+            result.fail(line, \"missing \" + missing[0])\n+            continue\n+        if not is_valid_email(email):\n+            result.fail(line, \"invalid email\")\n+            continue\n+        if len(name) > 80:\n+            result.fail(line, \"name too long\")\n+            continue\n+        contact = {\"name\": name, \"email\": email}\n+        if row.get(\"signup_date\"):\n+            signup = parse_signup_date(row[\"signup_date\"])\n+            if signup is None:\n+                result.fail(line, \"bad signup_date\")\n+                continue\n+            contact[\"signup_date\"] = signup\n+        result.contacts.append(contact)\n     return result\n",
+        "judgeView": "--- a/importer/csv_import.py\n+++ b/importer/csv_import.py\n@@ -25,5 +45,22 @@\n             break\n         name = (row.get(\"name\") or \"\").strip()\n         email = (row.get(\"email\") or \"\").strip()\n-        result.contacts.append({\"name\": name, \"email\": email})\n+        missing = [col for col, value in ((\"name\", name), (\"email\", email)) if not value]\n+        if missing:\n+            result.fail(line, \"missing \" + missing[0])\n+            continue\n+        if not is_valid_email(email):\n+            result.fail(line, \"invalid email\")\n+            continue\n+        if len(name) > 80:\n+            result.fail(line, \"name too long\")\n+            continue\n+        contact = {\"name\": name, \"email\": email}\n+        if row.get(\"signup_date\"):\n+            signup = parse_signup_date(row[\"signup_date\"])\n+            if signup is None:\n+                result.fail(line, \"bad signup_date\")\n+                continue\n+            contact[\"signup_date\"] = signup\n+        result.contacts.append(contact)\n     return result\n",
+        "contentHash": "d1b0b1ad0872c09288f7fb10914892a6ce31c1c5fe3b63c0b07b9a9f8a73853b",
+        "tokenEstimate": 340,
+        "facts": [],
+        "symbol": {
+          "name": "import_rows",
+          "kind": "function",
+          "startLine": 38,
+          "endLine": 66
+        },
+        "before": "def import_rows(text):\n    limits = import_limits()\n    reader = csv.DictReader(io.StringIO(text), delimiter=limits[\"delimiter\"])\n    result = ImportResult()\n    for line, row in enumerate(reader, start=2):\n        if len(result.contacts) >= limits[\"max_rows\"]:\n            result.fail(line, \"too many rows\")\n            break\n        name = (row.get(\"name\") or \"\").strip()\n        email = (row.get(\"email\") or \"\").strip()\n        result.contacts.append({\"name\": name, \"email\": email})\n    return result",
+        "after": "def import_rows(text):\n    limits = import_limits()\n    reader = csv.DictReader(io.StringIO(text), delimiter=limits[\"delimiter\"])\n    result = ImportResult()\n    for line, row in enumerate(reader, start=2):\n        if len(result.contacts) >= limits[\"max_rows\"]:\n            result.fail(line, \"too many rows\")\n            break\n        name = (row.get(\"name\") or \"\").strip()\n        email = (row.get(\"email\") or \"\").strip()\n        missing = [col for col, value in ((\"name\", name), (\"email\", email)) if not value]\n        if missing:\n            result.fail(line, \"missing \" + missing[0])\n            continue\n        if not is_valid_email(email):\n            result.fail(line, \"invalid email\")\n            continue\n        if len(name) > 80:\n            result.fail(line, \"name too long\")\n            continue\n        contact = {\"name\": name, \"email\": email}\n        if row.get(\"signup_date\"):\n            signup = parse_signup_date(row[\"signup_date\"])\n            if signup is None:\n                result.fail(line, \"bad signup_date\")\n                continue\n            contact[\"signup_date\"] = signup\n        result.contacts.append(contact)\n    return result"
+      },
+      {
+        "id": "U5",
+        "file": "tests/test_csv_import.py",
+        "language": "py",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              1,
+              2
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/tests/test_csv_import.py\n+++ b/tests/test_csv_import.py\n@@ -1,3 +1,5 @@\n+from datetime import date\n+\n import pytest\n \n from importer import csv_import\n",
+        "judgeView": "--- a/tests/test_csv_import.py\n+++ b/tests/test_csv_import.py\n@@ -1,3 +1,5 @@\n+from datetime import date\n+\n import pytest\n \n from importer import csv_import\n",
+        "contentHash": "c5a0d41e95cc136938534faec8b4efe5143d0cacda6627727ba1fa474c7dd4af",
+        "tokenEstimate": 53,
+        "facts": []
+      },
+      {
+        "id": "U6",
+        "file": "tests/test_csv_import.py",
+        "language": "py",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              14,
+              21
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/tests/test_csv_import.py\n+++ b/tests/test_csv_import.py\n@@ -9,3 +11,11 @@\n     result = csv_import.import_rows(HEADER + \" Ann ,ann@example.com,\\n\")\n     assert result.contacts == [{\"name\": \"Ann\", \"email\": \"ann@example.com\"}]\n     assert result.errors == []\n+\n+\n+def test_reports_missing_name_and_email():\n+    result = csv_import.import_rows(HEADER + \",ann@example.com,\\nBob,,\\n\")\n+    assert result.contacts == []\n+    assert result.errors == [(2, \"missing name\"), (3, \"missing email\")]\n+\n+\n",
+        "judgeView": "--- a/tests/test_csv_import.py\n+++ b/tests/test_csv_import.py\n@@ -9,3 +11,11 @@\n     result = csv_import.import_rows(HEADER + \" Ann ,ann@example.com,\\n\")\n     assert result.contacts == [{\"name\": \"Ann\", \"email\": \"ann@example.com\"}]\n     assert result.errors == []\n+\n+\n+def test_reports_missing_name_and_email():\n+    result = csv_import.import_rows(HEADER + \",ann@example.com,\\nBob,,\\n\")\n+    assert result.contacts == []\n+    assert result.errors == [(2, \"missing name\"), (3, \"missing email\")]\n+\n+\n",
+        "contentHash": "e81f51fd6db48f7a978175c0fb7a293d8f14dfe7d846594423916d44d02c6584",
+        "tokenEstimate": 166,
+        "facts": [],
+        "symbol": {
+          "name": "test_reports_missing_name_and_email",
+          "kind": "test",
+          "startLine": 16,
+          "endLine": 19
+        },
+        "after": "def test_reports_missing_name_and_email():\n    result = csv_import.import_rows(HEADER + \",ann@example.com,\\nBob,,\\n\")\n    assert result.contacts == []\n    assert result.errors == [(2, \"missing name\"), (3, \"missing email\")]",
+        "testTitles": [
+          "test_reports_missing_name_and_email"
+        ]
+      },
+      {
+        "id": "U7",
+        "file": "tests/test_csv_import.py",
+        "language": "py",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              22,
+              27
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/tests/test_csv_import.py\n+++ b/tests/test_csv_import.py\n@@ -11,0 +22,6 @@\n+def test_is_valid_email():\n+    assert csv_import.is_valid_email(\"ann@example.com\")\n+    assert not csv_import.is_valid_email(\"ann@example\")\n+    assert not csv_import.is_valid_email(\"ann@x@example.com\")\n+\n+\n",
+        "judgeView": "--- a/tests/test_csv_import.py\n+++ b/tests/test_csv_import.py\n@@ -11,0 +22,6 @@\n+def test_is_valid_email():\n+    assert csv_import.is_valid_email(\"ann@example.com\")\n+    assert not csv_import.is_valid_email(\"ann@example\")\n+    assert not csv_import.is_valid_email(\"ann@x@example.com\")\n+\n+\n",
+        "contentHash": "6cb13a7a37c14f5de6b402eadd49cf1ef302193109328735aff5e4979a529e01",
+        "tokenEstimate": 97,
+        "facts": [],
+        "symbol": {
+          "name": "test_is_valid_email",
+          "kind": "test",
+          "startLine": 22,
+          "endLine": 25
+        },
+        "after": "def test_is_valid_email():\n    assert csv_import.is_valid_email(\"ann@example.com\")\n    assert not csv_import.is_valid_email(\"ann@example\")\n    assert not csv_import.is_valid_email(\"ann@x@example.com\")",
+        "testTitles": [
+          "test_is_valid_email"
+        ]
+      },
+      {
+        "id": "U8",
+        "file": "tests/test_csv_import.py",
+        "language": "py",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              28,
+              33
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/tests/test_csv_import.py\n+++ b/tests/test_csv_import.py\n@@ -11,0 +28,6 @@\n+def test_rejects_malformed_emails():\n+    result = csv_import.import_rows(HEADER + \"Ann,ann@example,\\nBob,bob@@example.com,\\n\")\n+    assert result.contacts == []\n+    assert result.errors == [(2, \"invalid email\"), (3, \"invalid email\")]\n+\n+\n",
+        "judgeView": "--- a/tests/test_csv_import.py\n+++ b/tests/test_csv_import.py\n@@ -11,0 +28,6 @@\n+def test_rejects_malformed_emails():\n+    result = csv_import.import_rows(HEADER + \"Ann,ann@example,\\nBob,bob@@example.com,\\n\")\n+    assert result.contacts == []\n+    assert result.errors == [(2, \"invalid email\"), (3, \"invalid email\")]\n+\n+\n",
+        "contentHash": "791fb5adbd05da2f5157c0cc79e021e35ff86d98b2af8bd168c34613be45082c",
+        "tokenEstimate": 107,
+        "facts": [],
+        "symbol": {
+          "name": "test_rejects_malformed_emails",
+          "kind": "test",
+          "startLine": 28,
+          "endLine": 31
+        },
+        "after": "def test_rejects_malformed_emails():\n    result = csv_import.import_rows(HEADER + \"Ann,ann@example,\\nBob,bob@@example.com,\\n\")\n    assert result.contacts == []\n    assert result.errors == [(2, \"invalid email\"), (3, \"invalid email\")]",
+        "testTitles": [
+          "test_rejects_malformed_emails"
+        ]
+      },
+      {
+        "id": "U9",
+        "file": "tests/test_csv_import.py",
+        "language": "py",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              34,
+              39
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/tests/test_csv_import.py\n+++ b/tests/test_csv_import.py\n@@ -11,0 +34,6 @@\n+def test_parses_signup_dates():\n+    assert csv_import.parse_signup_date(\"2024-03-05\") == date(2024, 3, 5)\n+    assert csv_import.parse_signup_date(\"05/03/2024\") == date(2024, 3, 5)\n+    assert csv_import.parse_signup_date(\"5 Mar 2024\") == date(2024, 3, 5)\n+\n+\n",
+        "judgeView": "--- a/tests/test_csv_import.py\n+++ b/tests/test_csv_import.py\n@@ -11,0 +34,6 @@\n+def test_parses_signup_dates():\n+    assert csv_import.parse_signup_date(\"2024-03-05\") == date(2024, 3, 5)\n+    assert csv_import.parse_signup_date(\"05/03/2024\") == date(2024, 3, 5)\n+    assert csv_import.parse_signup_date(\"5 Mar 2024\") == date(2024, 3, 5)\n+\n+\n",
+        "contentHash": "677896d0e1c46d285ca9f27a65c4f936f22e3ebf025e7ad3645eae147c173b47",
+        "tokenEstimate": 114,
+        "facts": [],
+        "symbol": {
+          "name": "test_parses_signup_dates",
+          "kind": "test",
+          "startLine": 34,
+          "endLine": 37
+        },
+        "after": "def test_parses_signup_dates():\n    assert csv_import.parse_signup_date(\"2024-03-05\") == date(2024, 3, 5)\n    assert csv_import.parse_signup_date(\"05/03/2024\") == date(2024, 3, 5)\n    assert csv_import.parse_signup_date(\"5 Mar 2024\") == date(2024, 3, 5)",
+        "testTitles": [
+          "test_parses_signup_dates"
+        ]
+      },
+      {
+        "id": "U10",
+        "file": "tests/test_csv_import.py",
+        "language": "py",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              40,
+              44
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/tests/test_csv_import.py\n+++ b/tests/test_csv_import.py\n@@ -11,0 +40,5 @@\n+def test_stores_signup_date():\n+    result = csv_import.import_rows(HEADER + \"Ann,ann@example.com,2024-03-05\\n\")\n+    assert result.contacts[0][\"signup_date\"] == date(2024, 3, 5)\n+\n+\n",
+        "judgeView": "--- a/tests/test_csv_import.py\n+++ b/tests/test_csv_import.py\n@@ -11,0 +40,5 @@\n+def test_stores_signup_date():\n+    result = csv_import.import_rows(HEADER + \"Ann,ann@example.com,2024-03-05\\n\")\n+    assert result.contacts[0][\"signup_date\"] == date(2024, 3, 5)\n+\n+\n",
+        "contentHash": "0ae1a789b5816f9d0654a321fed3fd299fdd6f8b346194c8c892743398afe64c",
+        "tokenEstimate": 88,
+        "facts": [],
+        "symbol": {
+          "name": "test_stores_signup_date",
+          "kind": "test",
+          "startLine": 40,
+          "endLine": 42
+        },
+        "after": "def test_stores_signup_date():\n    result = csv_import.import_rows(HEADER + \"Ann,ann@example.com,2024-03-05\\n\")\n    assert result.contacts[0][\"signup_date\"] == date(2024, 3, 5)",
+        "testTitles": [
+          "test_stores_signup_date"
+        ]
+      },
+      {
+        "id": "U11",
+        "file": "tests/test_csv_import.py",
+        "language": "py",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              45,
+              50
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/tests/test_csv_import.py\n+++ b/tests/test_csv_import.py\n@@ -11,0 +45,6 @@\n+def test_reports_bad_signup_date():\n+    result = csv_import.import_rows(HEADER + \"Ann,ann@example.com,March 5th\\n\")\n+    assert result.contacts == []\n+    assert result.errors == [(2, \"bad signup_date\")]\n+\n+\n",
+        "judgeView": "--- a/tests/test_csv_import.py\n+++ b/tests/test_csv_import.py\n@@ -11,0 +45,6 @@\n+def test_reports_bad_signup_date():\n+    result = csv_import.import_rows(HEADER + \"Ann,ann@example.com,March 5th\\n\")\n+    assert result.contacts == []\n+    assert result.errors == [(2, \"bad signup_date\")]\n+\n+\n",
+        "contentHash": "c39aca79487d9e7916ba521346e95287baa3c6c68210cec03f729ed98dbac2b0",
+        "tokenEstimate": 97,
+        "facts": [],
+        "symbol": {
+          "name": "test_reports_bad_signup_date",
+          "kind": "test",
+          "startLine": 45,
+          "endLine": 48
+        },
+        "after": "def test_reports_bad_signup_date():\n    result = csv_import.import_rows(HEADER + \"Ann,ann@example.com,March 5th\\n\")\n    assert result.contacts == []\n    assert result.errors == [(2, \"bad signup_date\")]",
+        "testTitles": [
+          "test_reports_bad_signup_date"
+        ]
+      },
+      {
+        "id": "U12",
+        "file": "tests/test_csv_import.py",
+        "language": "py",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              51,
+              55
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/tests/test_csv_import.py\n+++ b/tests/test_csv_import.py\n@@ -11,0 +51,5 @@\n+def test_rejects_long_names():\n+    accepted = csv_import.import_rows(HEADER + \"x\" * 80 + \",a@example.com,\\n\")\n+    rejected = csv_import.import_rows(HEADER + \"x\" * 81 + \",b@example.com,\\n\")\n+    assert len(accepted.contacts) == 1\n+    assert rejected.errors == [(2, \"name too long\")]\n",
+        "judgeView": "--- a/tests/test_csv_import.py\n+++ b/tests/test_csv_import.py\n@@ -11,0 +51,5 @@\n+def test_rejects_long_names():\n+    accepted = csv_import.import_rows(HEADER + \"x\" * 80 + \",a@example.com,\\n\")\n+    rejected = csv_import.import_rows(HEADER + \"x\" * 81 + \",b@example.com,\\n\")\n+    assert len(accepted.contacts) == 1\n+    assert rejected.errors == [(2, \"name too long\")]\n",
+        "contentHash": "7dc622d7d10930e782d79065759e18d72c97ae46679b8f984540c560506fde55",
+        "tokenEstimate": 122,
+        "facts": [],
+        "symbol": {
+          "name": "test_rejects_long_names",
+          "kind": "test",
+          "startLine": 51,
+          "endLine": 55
+        },
+        "after": "def test_rejects_long_names():\n    accepted = csv_import.import_rows(HEADER + \"x\" * 80 + \",a@example.com,\\n\")\n    rejected = csv_import.import_rows(HEADER + \"x\" * 81 + \",b@example.com,\\n\")\n    assert len(accepted.contacts) == 1\n    assert rejected.errors == [(2, \"name too long\")]",
+        "testTitles": [
+          "test_rejects_long_names"
+        ]
+      }
+    ],
+    "requirementVerdicts": [
+      {
+        "requirementId": "R1",
+        "status": "done",
+        "confidence": 0.6,
+        "calibrated": false,
+        "tested": "as_stated",
+        "evidence": [
+          {
+            "unitId": "U4",
+            "file": "importer/csv_import.py",
+            "lines": [
+              [
+                48,
+                65
+              ]
+            ],
+            "probability": 0.8
+          }
+        ],
+        "testEvidence": [
+          {
+            "unitId": "U6",
+            "file": "tests/test_csv_import.py",
+            "lines": [
+              [
+                14,
+                21
+              ]
+            ],
+            "probability": 0.75
+          }
+        ],
+        "answers": [
+          {
+            "call": "issue.v0",
+            "question": "ambiguous",
+            "type": "noul",
+            "value": 0.3
+          },
+          {
+            "call": "issue.v0",
+            "question": "checkable_in_code",
+            "type": "noul",
+            "value": 0.85
+          },
+          {
+            "call": "forward.v0",
+            "question": "coverage",
+            "type": "score",
+            "value": 2.55,
+            "probabilities": {
+              "0": 0.05,
+              "1": 0.05,
+              "2": 0.2,
+              "3": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "forward.v0",
+            "question": "conflict",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "forward.v0",
+            "question": "evidence",
+            "type": "choice",
+            "value": "U4",
+            "probabilities": {
+              "U4": 0.8,
+              "U2": 0.04999999999999999,
+              "U3": 0.04999999999999999,
+              "U1": 0.04999999999999999,
+              "none": 0.04999999999999999
+            },
+            "confidence": 0.8
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_as_stated",
+            "type": "noul",
+            "value": 0.7
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_differently",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "tests.v0",
+            "question": "test_evidence",
+            "type": "choice",
+            "value": "U6",
+            "probabilities": {
+              "U6": 0.75,
+              "U12": 0.03125,
+              "U8": 0.03125,
+              "U7": 0.03125,
+              "U10": 0.03125,
+              "U11": 0.03125,
+              "U5": 0.03125,
+              "U9": 0.03125,
+              "none": 0.03125
+            },
+            "confidence": 0.75
+          }
+        ],
+        "reasons": [
+          {
+            "template": "req.done",
+            "text": "Implemented (`0.70`)."
+          },
+          {
+            "template": "check.disagree",
+            "text": "Forward and reverse checks disagree."
+          }
+        ]
+      },
+      {
+        "requirementId": "R2",
+        "status": "partial",
+        "confidence": 0.4,
+        "calibrated": false,
+        "tested": "as_stated",
+        "evidence": [
+          {
+            "unitId": "U4",
+            "file": "importer/csv_import.py",
+            "lines": [
+              [
+                48,
+                65
+              ]
+            ],
+            "probability": 0.8
+          }
+        ],
+        "testEvidence": [
+          {
+            "unitId": "U8",
+            "file": "tests/test_csv_import.py",
+            "lines": [
+              [
+                28,
+                33
+              ]
+            ],
+            "probability": 0.75
+          }
+        ],
+        "answers": [
+          {
+            "call": "issue.v0",
+            "question": "ambiguous",
+            "type": "noul",
+            "value": 0.3
+          },
+          {
+            "call": "issue.v0",
+            "question": "checkable_in_code",
+            "type": "noul",
+            "value": 0.85
+          },
+          {
+            "call": "forward.v0",
+            "question": "coverage",
+            "type": "score",
+            "value": 1.8,
+            "probabilities": {
+              "0": 0.1,
+              "1": 0.2,
+              "2": 0.5,
+              "3": 0.2
+            },
+            "confidence": 0.5
+          },
+          {
+            "call": "forward.v0",
+            "question": "conflict",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "forward.v0",
+            "question": "evidence",
+            "type": "choice",
+            "value": "U4",
+            "probabilities": {
+              "U2": 0.04999999999999999,
+              "U4": 0.8,
+              "U3": 0.04999999999999999,
+              "U1": 0.04999999999999999,
+              "none": 0.04999999999999999
+            },
+            "confidence": 0.8
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_as_stated",
+            "type": "noul",
+            "value": 0.7
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_differently",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "tests.v0",
+            "question": "test_evidence",
+            "type": "choice",
+            "value": "U8",
+            "probabilities": {
+              "U8": 0.75,
+              "U7": 0.03125,
+              "U6": 0.03125,
+              "U10": 0.03125,
+              "U11": 0.03125,
+              "U12": 0.03125,
+              "U5": 0.03125,
+              "U9": 0.03125,
+              "none": 0.03125
+            },
+            "confidence": 0.75
+          }
+        ],
+        "reasons": [
+          {
+            "template": "req.partial",
+            "text": "Mostly implemented, but at least one stated case, value or condition is not (`0.50`)."
+          },
+          {
+            "template": "check.disagree",
+            "text": "Forward and reverse checks disagree."
+          }
+        ]
+      },
+      {
+        "requirementId": "R3",
+        "status": "partial",
+        "confidence": 0.4,
+        "calibrated": false,
+        "tested": "untested",
+        "evidence": [
+          {
+            "unitId": "U4",
+            "file": "importer/csv_import.py",
+            "lines": [
+              [
+                48,
+                65
+              ]
+            ],
+            "probability": 0.8
+          }
+        ],
+        "testEvidence": [],
+        "answers": [
+          {
+            "call": "issue.v0",
+            "question": "ambiguous",
+            "type": "noul",
+            "value": 0.3
+          },
+          {
+            "call": "issue.v0",
+            "question": "checkable_in_code",
+            "type": "noul",
+            "value": 0.85
+          },
+          {
+            "call": "forward.v0",
+            "question": "coverage",
+            "type": "score",
+            "value": 1.8,
+            "probabilities": {
+              "0": 0.1,
+              "1": 0.2,
+              "2": 0.5,
+              "3": 0.2
+            },
+            "confidence": 0.5
+          },
+          {
+            "call": "forward.v0",
+            "question": "conflict",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "forward.v0",
+            "question": "evidence",
+            "type": "choice",
+            "value": "U4",
+            "probabilities": {
+              "U4": 0.8,
+              "U3": 0.04999999999999999,
+              "U2": 0.04999999999999999,
+              "U1": 0.04999999999999999,
+              "none": 0.04999999999999999
+            },
+            "confidence": 0.8
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_as_stated",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_differently",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "tests.v0",
+            "question": "test_evidence",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "U9": 0.03125,
+              "U10": 0.03125,
+              "U11": 0.03125,
+              "U5": 0.03125,
+              "U6": 0.03125,
+              "U7": 0.03125,
+              "U8": 0.03125,
+              "U12": 0.03125,
+              "none": 0.75
+            },
+            "confidence": 0.75
+          }
+        ],
+        "reasons": [
+          {
+            "template": "req.partial",
+            "text": "Mostly implemented, but at least one stated case, value or condition is not (`0.50`)."
+          },
+          {
+            "template": "check.disagree",
+            "text": "Forward and reverse checks disagree."
+          }
+        ]
+      },
+      {
+        "requirementId": "R4",
+        "status": "partial",
+        "confidence": 0.4,
+        "calibrated": false,
+        "tested": "as_stated",
+        "evidence": [
+          {
+            "unitId": "U4",
+            "file": "importer/csv_import.py",
+            "lines": [
+              [
+                48,
+                65
+              ]
+            ],
+            "probability": 0.8
+          }
+        ],
+        "testEvidence": [
+          {
+            "unitId": "U12",
+            "file": "tests/test_csv_import.py",
+            "lines": [
+              [
+                51,
+                55
+              ]
+            ],
+            "probability": 0.75
+          }
+        ],
+        "answers": [
+          {
+            "call": "issue.v0",
+            "question": "ambiguous",
+            "type": "noul",
+            "value": 0.3
+          },
+          {
+            "call": "issue.v0",
+            "question": "checkable_in_code",
+            "type": "noul",
+            "value": 0.85
+          },
+          {
+            "call": "forward.v0",
+            "question": "coverage",
+            "type": "score",
+            "value": 1.8,
+            "probabilities": {
+              "0": 0.1,
+              "1": 0.2,
+              "2": 0.5,
+              "3": 0.2
+            },
+            "confidence": 0.5
+          },
+          {
+            "call": "forward.v0",
+            "question": "conflict",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "forward.v0",
+            "question": "evidence",
+            "type": "choice",
+            "value": "U4",
+            "probabilities": {
+              "U4": 0.8,
+              "U1": 0.04999999999999999,
+              "U2": 0.04999999999999999,
+              "U3": 0.04999999999999999,
+              "none": 0.04999999999999999
+            },
+            "confidence": 0.8
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_as_stated",
+            "type": "noul",
+            "value": 0.7
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_differently",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "tests.v0",
+            "question": "test_evidence",
+            "type": "choice",
+            "value": "U12",
+            "probabilities": {
+              "U12": 0.75,
+              "U6": 0.03125,
+              "U5": 0.03125,
+              "U7": 0.03125,
+              "U8": 0.03125,
+              "U9": 0.03125,
+              "U10": 0.03125,
+              "U11": 0.03125,
+              "none": 0.03125
+            },
+            "confidence": 0.75
+          }
+        ],
+        "reasons": [
+          {
+            "template": "req.partial",
+            "text": "Mostly implemented, but at least one stated case, value or condition is not (`0.50`)."
+          },
+          {
+            "template": "check.disagree",
+            "text": "Forward and reverse checks disagree."
+          }
+        ]
+      }
+    ],
+    "unitVerdicts": [
+      {
+        "unitId": "U1",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      },
+      {
+        "unitId": "U2",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      },
+      {
+        "unitId": "U3",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      },
+      {
+        "unitId": "U4",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      },
+      {
+        "unitId": "U5",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      },
+      {
+        "unitId": "U6",
+        "role": "implements",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "R2",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.7,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.07500000000000001
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.implements",
+            "text": "Implements R2."
+          }
+        ],
+        "servesRequirementId": "R2"
+      },
+      {
+        "unitId": "U7",
+        "role": "implements",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "R2",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.7,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.07500000000000001
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.implements",
+            "text": "Implements R2."
+          }
+        ],
+        "servesRequirementId": "R2"
+      },
+      {
+        "unitId": "U8",
+        "role": "implements",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "R2",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.7,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.07500000000000001
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.implements",
+            "text": "Implements R2."
+          }
+        ],
+        "servesRequirementId": "R2"
+      },
+      {
+        "unitId": "U9",
+        "role": "implements",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "R3",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.7,
+              "R4": 0.07500000000000001,
+              "none": 0.07500000000000001
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.implements",
+            "text": "Implements R3."
+          }
+        ],
+        "servesRequirementId": "R3"
+      },
+      {
+        "unitId": "U10",
+        "role": "implements",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "R2",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.7,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.07500000000000001
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.implements",
+            "text": "Implements R2."
+          }
+        ],
+        "servesRequirementId": "R2"
+      },
+      {
+        "unitId": "U11",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      },
+      {
+        "unitId": "U12",
+        "role": "implements",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "R4",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.7,
+              "none": 0.07500000000000001
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.implements",
+            "text": "Implements R4."
+          }
+        ],
+        "servesRequirementId": "R4"
+      }
+    ],
+    "claims": [
+      {
+        "sentence": "Validate contact rows during CSV import",
+        "claimsDone": 0.2,
+        "claimsDeferred": 0.1
+      },
+      {
+        "sentence": "Adds row validation to import_rows.",
+        "claimsDone": 0.8,
+        "claimsDeferred": 0.1
+      },
+      {
+        "sentence": "Rows with an empty name or email, a malformed email, a name over 80 characters, or an unreadable signup_date are skipped and reported with their line number. is_valid_email checks for exactly one @ and a dot in the domain, and parse_signup_date reads ISO dates, day-first DD/MM/YYYY dates and 5 Mar 2024 style dates.",
+        "claimsDone": 0.2,
+        "claimsDeferred": 0.1
+      },
+      {
+        "sentence": "Tests cover each rule.",
+        "claimsDone": 0.2,
+        "claimsDeferred": 0.1
+      }
+    ],
+    "findings": [
+      {
+        "id": "F-R2",
+        "type": "requirement",
+        "targetId": "R2",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.4,
+        "locations": [
+          {
+            "file": "importer/csv_import.py",
+            "lines": [
+              48,
+              65
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "req.partial",
+            "text": "Mostly implemented, but at least one stated case, value or condition is not (`0.50`)."
+          },
+          {
+            "template": "check.disagree",
+            "text": "Forward and reverse checks disagree."
+          }
+        ],
+        "contentKey": "req:0d0bf44210d85d4f1d00e678bddef5e2"
+      },
+      {
+        "id": "F-R3",
+        "type": "requirement",
+        "targetId": "R3",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.4,
+        "locations": [
+          {
+            "file": "importer/csv_import.py",
+            "lines": [
+              48,
+              65
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "req.partial",
+            "text": "Mostly implemented, but at least one stated case, value or condition is not (`0.50`)."
+          },
+          {
+            "template": "check.disagree",
+            "text": "Forward and reverse checks disagree."
+          }
+        ],
+        "contentKey": "req:b6d2636f8c41b277957066403f0bc204"
+      },
+      {
+        "id": "F-R4",
+        "type": "requirement",
+        "targetId": "R4",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.4,
+        "locations": [
+          {
+            "file": "importer/csv_import.py",
+            "lines": [
+              48,
+              65
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "req.partial",
+            "text": "Mostly implemented, but at least one stated case, value or condition is not (`0.50`)."
+          },
+          {
+            "template": "check.disagree",
+            "text": "Forward and reverse checks disagree."
+          }
+        ],
+        "contentKey": "req:ebe7d72b2243614264a2ba3d5e517055"
+      },
+      {
+        "id": "F-U1",
+        "type": "unit",
+        "targetId": "U1",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.65,
+        "locations": [
+          {
+            "file": "importer/csv_import.py",
+            "lines": [
+              5,
+              6
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ],
+        "contentKey": "unit:e3836e2ca7d9c6849ce8d1fd2d6b6224"
+      },
+      {
+        "id": "F-U2",
+        "type": "unit",
+        "targetId": "U2",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.65,
+        "locations": [
+          {
+            "file": "importer/csv_import.py",
+            "lines": [
+              20,
+              26
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ],
+        "contentKey": "unit:11046f0065ba71d553884d53d411e948"
+      },
+      {
+        "id": "F-U3",
+        "type": "unit",
+        "targetId": "U3",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.65,
+        "locations": [
+          {
+            "file": "importer/csv_import.py",
+            "lines": [
+              27,
+              37
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ],
+        "contentKey": "unit:6e00d9ba1769f75c402408b47e285152"
+      },
+      {
+        "id": "F-U4",
+        "type": "unit",
+        "targetId": "U4",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.55,
+        "locations": [
+          {
+            "file": "importer/csv_import.py",
+            "lines": [
+              48,
+              65
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          },
+          {
+            "template": "check.disagree",
+            "text": "Forward and reverse checks disagree."
+          }
+        ],
+        "contentKey": "unit:d1b0b1ad0872c09288f7fb10914892a6"
+      },
+      {
+        "id": "F-U5",
+        "type": "unit",
+        "targetId": "U5",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.65,
+        "locations": [
+          {
+            "file": "tests/test_csv_import.py",
+            "lines": [
+              1,
+              2
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ],
+        "contentKey": "unit:c5a0d41e95cc136938534faec8b4efe5"
+      },
+      {
+        "id": "F-U11",
+        "type": "unit",
+        "targetId": "U11",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.65,
+        "locations": [
+          {
+            "file": "tests/test_csv_import.py",
+            "lines": [
+              45,
+              50
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ],
+        "contentKey": "unit:c39aca79487d9e7916ba521346e95287"
+      }
+    ],
+    "summary": {
+      "counts": {
+        "done": 1,
+        "partial": 3,
+        "unexplained_behavioral": 6,
+        "implements": 6,
+        "P1": 9
+      },
+      "mode": "comment_only"
+    },
+    "warnings": [],
+    "usage": {
+      "jevInputTokens": 0,
+      "llmInputTokens": 0,
+      "llmOutputTokens": 0,
+      "costUsd": 0,
+      "latencyMs": 0,
+      "calls": 0
+    }
+  }
+}

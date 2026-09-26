@@ -3,8 +3,8 @@
     "corpus": "mutations",
     "split": "dev",
     "mode": "simulated",
-    "gitSha": "f51bf4125bf849d921690080b1727ec75f496132",
-    "startedAt": "2026-09-26T17:22:28.991Z",
+    "gitSha": "f3c635e72750b8aef3f6157d978ac5955a53dbdb",
+    "startedAt": "2026-09-26T17:40:19.484Z",
     "jevModel": "simulated-jev",
     "stoppedForBudget": false,
     "baselines": {}
@@ -13,20 +13,20 @@
     "items": 128,
     "passed": 0,
     "requirement": {
-      "tp": 79,
-      "fp": 373,
+      "tp": 81,
+      "fp": 371,
       "fn": 4,
-      "precision": 0.1747787610619469,
-      "recall": 0.9518072289156626,
-      "f1": 0.29532710280373825,
+      "precision": 0.17920353982300885,
+      "recall": 0.9529411764705882,
+      "f1": 0.30167597765363124,
       "abstentionRate": 0,
       "confusion": {
         "missing": {
-          "missing": 37,
+          "missing": 39,
           "partial": 8
         },
         "done": {
-          "missing": 220,
+          "missing": 218,
           "partial": 153,
           "done": 55,
           "deferred": 1
@@ -46,11 +46,11 @@
     },
     "unitBehavioral": {
       "tp": 8,
-      "fp": 749,
+      "fp": 748,
       "fn": 1,
-      "precision": 0.010568031704095112,
+      "precision": 0.010582010582010581,
       "recall": 0.8888888888888888,
-      "f1": 0.020887728459530026
+      "f1": 0.02091503267973856
     },
     "testIntegrity": {
       "tp": 9,
@@ -70,12 +70,13 @@
       "falseAlarmRate": 9.944444444444445,
       "cleanItems": 18,
       "problemItems": 110,
-      "auroc": 0.5388888888888889
+      "auroc": 0.5388888888888889,
+      "cleanSeedFalseAlarmRate": 9.444444444444445
     },
     "p0Precision": {
-      "value": 0.19063545150501673,
+      "value": 0.19732441471571907,
       "p0": 299,
-      "correct": 57
+      "correct": 59
     },
     "operators": {
       "claim_all_done": {
@@ -144,15 +145,16 @@
     "calibration": {
       "forward.coverage.level3": {
         "n": 512,
-        "ece": 0.66015625,
-        "brier": 0.5973242187499972,
+        "ece": 0.65625,
+        "eceCalibrated": 0.08600141152534682,
+        "brier": 0.5938085937499974,
         "bins": [
           {
             "lo": 0,
             "hi": 0.1,
             "n": 276,
             "meanP": 0.050000000000000225,
-            "accuracy": 0.8007246376811594
+            "accuracy": 0.7934782608695652
           },
           {
             "lo": 0.1,
@@ -222,6 +224,7 @@
       "forward.coverage.level2": {
         "n": 512,
         "ece": 0.1871093750000001,
+        "eceCalibrated": 0.011442445242788122,
         "brier": 0.11189453124999917,
         "bins": [
           {
@@ -298,8 +301,9 @@
       },
       "forward.coverage.missing": {
         "n": 512,
-        "ece": 0.5121093750000018,
-        "brier": 0.41718750000000143,
+        "ece": 0.5082031250000019,
+        "eceCalibrated": 0.07469379048223938,
+        "brier": 0.4140625000000014,
         "bins": [
           {
             "lo": 0,
@@ -369,13 +373,14 @@
             "hi": 1,
             "n": 276,
             "meanP": 0.9000000000000039,
-            "accuracy": 0.13405797101449277
+            "accuracy": 0.14130434782608695
           }
         ]
       },
       "forward.conflict": {
         "n": 512,
         "ece": 0.060937500000000894,
+        "eceCalibrated": 2.795336633762413e-7,
         "brier": 0.04125000000000018,
         "bins": [
           {
@@ -453,6 +458,7 @@
       "tests.asserts_differently": {
         "n": 512,
         "ece": 0.060937500000000894,
+        "eceCalibrated": 2.795336633762413e-7,
         "brier": 0.04125000000000018,
         "bins": [
           {
@@ -528,9 +534,10 @@
         ]
       },
       "reverse.loosens_test": {
-        "n": 724,
-        "ece": 0.10013812154696165,
-        "brier": 0.023522099447513715,
+        "n": 721,
+        "ece": 0.10013869625520146,
+        "eceCalibrated": 0.005509147061507197,
+        "brier": 0.023578363384188523,
         "bins": [
           {
             "lo": 0,
@@ -542,9 +549,9 @@
           {
             "lo": 0.1,
             "hi": 0.2,
-            "n": 711,
-            "meanP": 0.10000000000000034,
-            "accuracy": 0.007032348804500703
+            "n": 708,
+            "meanP": 0.10000000000000035,
+            "accuracy": 0.007062146892655367
           },
           {
             "lo": 0.2,
@@ -607,6 +614,7 @@
       "reverse.behavior_change": {
         "n": 101,
         "ece": 0.5608910891089102,
+        "eceCalibrated": 0.00001986309742074699,
         "brier": 0.3957673267326729,
         "bins": [
           {
@@ -683,14 +691,21 @@
       }
     },
     "ops": {
-      "latencyP50": 16,
-      "latencyP95": 20,
+      "latencyP50": 17,
+      "latencyP95": 25,
       "costP50": 0,
       "costTotal": 0,
       "jevInputTokens": 0,
       "llmInputTokens": 0,
       "llmOutputTokens": 0,
       "truncationRate": 0
+    },
+    "stability": {
+      "sampled": 7,
+      "measured": 7,
+      "skipped": 0,
+      "meanJaccard": 1,
+      "deterministic": true
     }
   },
   "realMeasurement": false

@@ -27,3 +27,4 @@ export * from './tuning.js';
 export * from './calibrate.js';
 export * from './corpora/shadow.js';
 export * from './mutations/mine.js';
+export * from './stability.js';

@@ -1,0 +1,1969 @@
+{
+  "id": "ts-flag-rules.clean",
+  "labels": {
+    "requirements": {
+      "R1": "done",
+      "R2": "done",
+      "R3": "done",
+      "R4": "done"
+    },
+    "requirementsAccept": {},
+    "units": [
+      {
+        "file": "src/flags.ts",
+        "symbol": "matchesTargets",
+        "role": "implements"
+      },
+      {
+        "file": "src/flags.ts",
+        "symbol": "isEnabled",
+        "role": "implements"
+      },
+      {
+        "file": "src/flags.test.ts",
+        "symbol": "targets countries and email domains",
+        "role": "implements"
+      },
+      {
+        "file": "src/flags.ts",
+        "symbol": "bucketOf",
+        "role": "implements"
+      },
+      {
+        "file": "src/flags.ts",
+        "symbol": "inRollout",
+        "role": "implements"
+      },
+      {
+        "file": "src/flags.test.ts",
+        "symbol": "keeps a user in the same bucket",
+        "role": "implements"
+      },
+      {
+        "file": "src/flags.test.ts",
+        "symbol": "rolls out to everyone at 100 percent and no one at 0 percent",
+        "role": "implements"
+      },
+      {
+        "file": "src/flags.test.ts",
+        "symbol": "turns on exactly at startsAt",
+        "role": "implements"
+      },
+      {
+        "file": "src/flags.test.ts",
+        "symbol": "lets allow-listed users skip the other checks",
+        "role": "implements"
+      },
+      {
+        "file": "src/flags.ts",
+        "symbol": "FlagRule",
+        "role": "supporting"
+      }
+    ],
+    "facts": [],
+    "testIntegrity": [],
+    "claimMismatch": [],
+    "pr": "clean"
+  },
+  "comparison": {
+    "requirements": [
+      {
+        "id": "R1",
+        "expected": "done",
+        "actual": "partial",
+        "ok": false
+      },
+      {
+        "id": "R2",
+        "expected": "done",
+        "actual": "missing",
+        "ok": false
+      },
+      {
+        "id": "R3",
+        "expected": "done",
+        "actual": "missing",
+        "ok": false
+      },
+      {
+        "id": "R4",
+        "expected": "done",
+        "actual": "partial",
+        "ok": false
+      }
+    ],
+    "units": [
+      {
+        "file": "src/flags.ts",
+        "symbol": "matchesTargets",
+        "expected": "implements",
+        "actual": "implements",
+        "ok": true
+      },
+      {
+        "file": "src/flags.ts",
+        "symbol": "isEnabled",
+        "expected": "implements",
+        "actual": "unexplained_behavioral",
+        "ok": false
+      },
+      {
+        "file": "src/flags.test.ts",
+        "symbol": "targets countries and email domains",
+        "expected": "implements",
+        "actual": "implements",
+        "ok": true
+      },
+      {
+        "file": "src/flags.ts",
+        "symbol": "bucketOf",
+        "expected": "implements",
+        "actual": "unexplained_behavioral",
+        "ok": false
+      },
+      {
+        "file": "src/flags.ts",
+        "symbol": "inRollout",
+        "expected": "implements",
+        "actual": "unexplained_behavioral",
+        "ok": false
+      },
+      {
+        "file": "src/flags.test.ts",
+        "symbol": "keeps a user in the same bucket",
+        "expected": "implements",
+        "actual": "implements",
+        "ok": true
+      },
+      {
+        "file": "src/flags.test.ts",
+        "symbol": "rolls out to everyone at 100 percent and no one at 0 percent",
+        "expected": "implements",
+        "actual": "implements",
+        "ok": true
+      },
+      {
+        "file": "src/flags.test.ts",
+        "symbol": "turns on exactly at startsAt",
+        "expected": "implements",
+        "actual": "implements",
+        "ok": true
+      },
+      {
+        "file": "src/flags.test.ts",
+        "symbol": "lets allow-listed users skip the other checks",
+        "expected": "implements",
+        "actual": "unexplained_behavioral",
+        "ok": false
+      },
+      {
+        "file": "src/flags.ts",
+        "symbol": "FlagRule",
+        "expected": "supporting",
+        "actual": "unexplained_behavioral",
+        "ok": false
+      }
+    ],
+    "facts": [],
+    "testIntegrity": [],
+    "claimMismatch": [],
+    "pr": {
+      "expected": "clean",
+      "predictedProblem": true
+    },
+    "p0p1": 11,
+    "passed": false
+  },
+  "result": {
+    "schemaVersion": "1.0.0",
+    "product": {
+      "name": "Remit",
+      "version": "0.1.0"
+    },
+    "input": {
+      "mode": "local",
+      "baseSha": "base",
+      "headSha": "head",
+      "issues": [
+        {
+          "owner": "acme",
+          "repo": "flags",
+          "number": 23
+        }
+      ],
+      "linkStrength": "closing"
+    },
+    "versions": {
+      "questionSet": "qs-0.1.0",
+      "extractionPrompt": "xp-0.1.0",
+      "jevModel": "simulated-jev"
+    },
+    "requirements": [
+      {
+        "id": "R1",
+        "issue": {
+          "owner": "acme",
+          "repo": "flags",
+          "number": 23
+        },
+        "text": "Rules can target `countries` (for example `['DE', 'FR']`) and email `domains` (for example `['example.com']`, matched ignoring case); a user must match every list the rule sets",
+        "quote": "Rules can target `countries` (for example `['DE', 'FR']`) and email `domains` (for example `['example.com']`, matched ignoring case); a user must match every list the rule sets",
+        "source": {
+          "kind": "tasklist"
+        },
+        "kind": "behavior",
+        "explicitness": "explicit",
+        "priority": "must",
+        "examples": [],
+        "checkableInCode": true,
+        "signals": {
+          "ambiguous": 0.3,
+          "checkable": 0.85
+        }
+      },
+      {
+        "id": "R2",
+        "issue": {
+          "owner": "acme",
+          "repo": "flags",
+          "number": 23
+        },
+        "text": "Rules can roll out to a `percent` of users, bucketed by a stable hash of the flag name and user id so the same user always gets the same answer (`percent: 0` is off for everyone, `percent: 100` is on for everyone)",
+        "quote": "Rules can roll out to a `percent` of users, bucketed by a stable hash of the flag name and user id so the same user always gets the same answer (`percent: 0` is off for everyone, `percent: 100` is on for everyone)",
+        "source": {
+          "kind": "tasklist"
+        },
+        "kind": "behavior",
+        "explicitness": "explicit",
+        "priority": "must",
+        "examples": [],
+        "checkableInCode": true,
+        "signals": {
+          "ambiguous": 0.3,
+          "checkable": 0.85
+        }
+      },
+      {
+        "id": "R3",
+        "issue": {
+          "owner": "acme",
+          "repo": "flags",
+          "number": 23
+        },
+        "text": "A rule with `startsAt` is off before that time and on from it (for example `startsAt: '2026-10-01T00:00:00Z'` is already on at exactly that instant)",
+        "quote": "A rule with `startsAt` is off before that time and on from it (for example `startsAt: '2026-10-01T00:00:00Z'` is already on at exactly that instant)",
+        "source": {
+          "kind": "tasklist"
+        },
+        "kind": "behavior",
+        "explicitness": "explicit",
+        "priority": "must",
+        "examples": [],
+        "checkableInCode": true,
+        "signals": {
+          "ambiguous": 0.3,
+          "checkable": 0.85
+        }
+      },
+      {
+        "id": "R4",
+        "issue": {
+          "owner": "acme",
+          "repo": "flags",
+          "number": 23
+        },
+        "text": "Users listed in `allowUsers` get the flag on whenever the rule is enabled, skipping the targeting, rollout and schedule checks",
+        "quote": "Users listed in `allowUsers` get the flag on whenever the rule is enabled, skipping the targeting, rollout and schedule checks",
+        "source": {
+          "kind": "tasklist"
+        },
+        "kind": "behavior",
+        "explicitness": "explicit",
+        "priority": "must",
+        "examples": [],
+        "checkableInCode": true,
+        "signals": {
+          "ambiguous": 0.3,
+          "checkable": 0.85
+        }
+      }
+    ],
+    "units": [
+      {
+        "id": "U1",
+        "file": "src/flags.test.ts",
+        "language": "ts",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              2,
+              2
+            ]
+          ],
+          "old": [
+            [
+              2,
+              2
+            ]
+          ]
+        },
+        "patch": "--- a/src/flags.test.ts\n+++ b/src/flags.test.ts\n@@ -1,5 +1,5 @@\n import { describe, expect, it } from 'vitest';\n-import { isEnabled } from './flags.js';\n+import { bucketOf, isEnabled } from './flags.js';\n \n const ana = { id: 'u1', email: 'ana@Example.com', country: 'DE' };\n const base = { flag: 'beta', enabled: true };\n",
+        "judgeView": "--- a/src/flags.test.ts\n+++ b/src/flags.test.ts\n@@ -1,5 +1,5 @@\n import { describe, expect, it } from 'vitest';\n-import { isEnabled } from './flags.js';\n+import { bucketOf, isEnabled } from './flags.js';\n \n const ana = { id: 'u1', email: 'ana@Example.com', country: 'DE' };\n const base = { flag: 'beta', enabled: true };\n",
+        "contentHash": "23eb37c9bc03ad0e6dd15554ed3659c8117ea4619d5aa2f398474342d661f4bd",
+        "tokenEstimate": 107,
+        "facts": []
+      },
+      {
+        "id": "U2",
+        "file": "src/flags.test.ts",
+        "language": "ts",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              13,
+              20
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/src/flags.test.ts\n+++ b/src/flags.test.ts\n@@ -10,3 +10,11 @@\n     expect(isEnabled([{ ...base, enabled: false }], 'beta', ana)).toBe(false);\n     expect(isEnabled([base], 'other', ana)).toBe(false);\n   });\n+\n+  it('targets countries and email domains', () => {\n+    const rules = [{ ...base, countries: ['DE', 'FR'], domains: ['example.com'] }];\n+    expect(isEnabled(rules, 'beta', ana)).toBe(true);\n+    expect(isEnabled(rules, 'beta', { ...ana, country: 'US' })).toBe(false);\n+    expect(isEnabled(rules, 'beta', { ...ana, email: 'ana@other.org' })).toBe(false);\n+  });\n+\n",
+        "judgeView": "--- a/src/flags.test.ts\n+++ b/src/flags.test.ts\n@@ -10,3 +10,11 @@\n     expect(isEnabled([{ ...base, enabled: false }], 'beta', ana)).toBe(false);\n     expect(isEnabled([base], 'other', ana)).toBe(false);\n   });\n+\n+  it('targets countries and email domains', () => {\n+    const rules = [{ ...base, countries: ['DE', 'FR'], domains: ['example.com'] }];\n+    expect(isEnabled(rules, 'beta', ana)).toBe(true);\n+    expect(isEnabled(rules, 'beta', { ...ana, country: 'US' })).toBe(false);\n+    expect(isEnabled(rules, 'beta', { ...ana, email: 'ana@other.org' })).toBe(false);\n+  });\n+\n",
+        "contentHash": "cb15ebf14a51fd54db13b5219260fff87387611088c115878f8da011ee2dc495",
+        "tokenEstimate": 194,
+        "facts": [],
+        "symbol": {
+          "name": "targets countries and email domains",
+          "kind": "test",
+          "startLine": 14,
+          "endLine": 19
+        },
+        "after": "  it('targets countries and email domains', () => {\n    const rules = [{ ...base, countries: ['DE', 'FR'], domains: ['example.com'] }];\n    expect(isEnabled(rules, 'beta', ana)).toBe(true);\n    expect(isEnabled(rules, 'beta', { ...ana, country: 'US' })).toBe(false);\n    expect(isEnabled(rules, 'beta', { ...ana, email: 'ana@other.org' })).toBe(false);\n  });",
+        "testTitles": [
+          "isEnabled",
+          "targets countries and email domains"
+        ]
+      },
+      {
+        "id": "U3",
+        "file": "src/flags.test.ts",
+        "language": "ts",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              21,
+              26
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/src/flags.test.ts\n+++ b/src/flags.test.ts\n@@ -12,0 +21,6 @@\n+  it('keeps a user in the same bucket', () => {\n+    expect(bucketOf('beta', 'u1')).toBe(bucketOf('beta', 'u1'));\n+    expect(bucketOf('beta', 'u1')).toBeGreaterThanOrEqual(0);\n+    expect(bucketOf('beta', 'u1')).toBeLessThan(100);\n+  });\n+\n",
+        "judgeView": "--- a/src/flags.test.ts\n+++ b/src/flags.test.ts\n@@ -12,0 +21,6 @@\n+  it('keeps a user in the same bucket', () => {\n+    expect(bucketOf('beta', 'u1')).toBe(bucketOf('beta', 'u1'));\n+    expect(bucketOf('beta', 'u1')).toBeGreaterThanOrEqual(0);\n+    expect(bucketOf('beta', 'u1')).toBeLessThan(100);\n+  });\n+\n",
+        "contentHash": "e846e10a87a31ffcfbdcda2f1882cf1d15351f09a2698d483c05c96b2cc268cf",
+        "tokenEstimate": 103,
+        "facts": [],
+        "symbol": {
+          "name": "keeps a user in the same bucket",
+          "kind": "test",
+          "startLine": 21,
+          "endLine": 25
+        },
+        "after": "  it('keeps a user in the same bucket', () => {\n    expect(bucketOf('beta', 'u1')).toBe(bucketOf('beta', 'u1'));\n    expect(bucketOf('beta', 'u1')).toBeGreaterThanOrEqual(0);\n    expect(bucketOf('beta', 'u1')).toBeLessThan(100);\n  });",
+        "testTitles": [
+          "isEnabled",
+          "keeps a user in the same bucket"
+        ]
+      },
+      {
+        "id": "U4",
+        "file": "src/flags.test.ts",
+        "language": "ts",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              27,
+              28
+            ],
+            [
+              30,
+              33
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/src/flags.test.ts\n+++ b/src/flags.test.ts\n@@ -12,0 +27,2 @@\n+  it('rolls out to everyone at 100 percent and no one at 0 percent', () => {\n+    const users = Array.from({ length: 50 }, (_, i) => ({ ...ana, id: `u${i}` }));\n@@ -12,0 +30,4 @@\n+    expect(count(100)).toBe(50);\n+    expect(count(0)).toBe(0);\n+  });\n+\n",
+        "judgeView": "--- a/src/flags.test.ts\n+++ b/src/flags.test.ts\n@@ -12,0 +27,2 @@\n+  it('rolls out to everyone at 100 percent and no one at 0 percent', () => {\n+    const users = Array.from({ length: 50 }, (_, i) => ({ ...ana, id: `u${i}` }));\n@@ -12,0 +30,4 @@\n+    expect(count(100)).toBe(50);\n+    expect(count(0)).toBe(0);\n+  });\n+\n",
+        "contentHash": "465e96dfe69f16405cd6908a2f2f804e31c6d2ebdc7115343d2e5205562d4412",
+        "tokenEstimate": 107,
+        "facts": [],
+        "symbol": {
+          "name": "rolls out to everyone at 100 percent and no one at 0 percent",
+          "kind": "test",
+          "startLine": 27,
+          "endLine": 32
+        },
+        "after": "  it('rolls out to everyone at 100 percent and no one at 0 percent', () => {\n    const users = Array.from({ length: 50 }, (_, i) => ({ ...ana, id: `u${i}` }));\n    const count = (percent: number) => users.filter((u) => isEnabled([{ ...base, percent }], 'beta', u)).length;\n    expect(count(100)).toBe(50);\n    expect(count(0)).toBe(0);\n  });",
+        "testTitles": [
+          "isEnabled",
+          "rolls out to everyone at 100 percent and no one at 0 percent"
+        ]
+      },
+      {
+        "id": "U5",
+        "file": "src/flags.test.ts",
+        "language": "ts",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              29,
+              29
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/src/flags.test.ts\n+++ b/src/flags.test.ts\n@@ -12,0 +29,1 @@\n+    const count = (percent: number) => users.filter((u) => isEnabled([{ ...base, percent }], 'beta', u)).length;\n",
+        "judgeView": "--- a/src/flags.test.ts\n+++ b/src/flags.test.ts\n@@ -12,0 +29,1 @@\n+    const count = (percent: number) => users.filter((u) => isEnabled([{ ...base, percent }], 'beta', u)).length;\n",
+        "contentHash": "5c038db296da382b67d09697fa80d04177dbb5f1fa5710d57346e830ec055709",
+        "tokenEstimate": 60,
+        "facts": [],
+        "symbol": {
+          "name": "count",
+          "kind": "function",
+          "startLine": 29,
+          "endLine": 29
+        },
+        "after": "    const count = (percent: number) => users.filter((u) => isEnabled([{ ...base, percent }], 'beta', u)).length;",
+        "testTitles": [
+          "isEnabled",
+          "rolls out to everyone at 100 percent and no one at 0 percent"
+        ]
+      },
+      {
+        "id": "U6",
+        "file": "src/flags.test.ts",
+        "language": "ts",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              34,
+              39
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/src/flags.test.ts\n+++ b/src/flags.test.ts\n@@ -12,0 +34,6 @@\n+  it('turns on exactly at startsAt', () => {\n+    const rules = [{ ...base, startsAt: '2026-10-01T00:00:00Z' }];\n+    expect(isEnabled(rules, 'beta', ana, new Date('2026-09-30T23:59:59Z'))).toBe(false);\n+    expect(isEnabled(rules, 'beta', ana, new Date('2026-10-01T00:00:00Z'))).toBe(true);\n+  });\n+\n",
+        "judgeView": "--- a/src/flags.test.ts\n+++ b/src/flags.test.ts\n@@ -12,0 +34,6 @@\n+  it('turns on exactly at startsAt', () => {\n+    const rules = [{ ...base, startsAt: '2026-10-01T00:00:00Z' }];\n+    expect(isEnabled(rules, 'beta', ana, new Date('2026-09-30T23:59:59Z'))).toBe(false);\n+    expect(isEnabled(rules, 'beta', ana, new Date('2026-10-01T00:00:00Z'))).toBe(true);\n+  });\n+\n",
+        "contentHash": "4614e15f2dc4a4b61b5b55f15b4d887b455a6b28c7164b469cb261fb43c45b38",
+        "tokenEstimate": 123,
+        "facts": [],
+        "symbol": {
+          "name": "turns on exactly at startsAt",
+          "kind": "test",
+          "startLine": 34,
+          "endLine": 38
+        },
+        "after": "  it('turns on exactly at startsAt', () => {\n    const rules = [{ ...base, startsAt: '2026-10-01T00:00:00Z' }];\n    expect(isEnabled(rules, 'beta', ana, new Date('2026-09-30T23:59:59Z'))).toBe(false);\n    expect(isEnabled(rules, 'beta', ana, new Date('2026-10-01T00:00:00Z'))).toBe(true);\n  });",
+        "testTitles": [
+          "isEnabled",
+          "turns on exactly at startsAt"
+        ]
+      },
+      {
+        "id": "U7",
+        "file": "src/flags.test.ts",
+        "language": "ts",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              40,
+              43
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/src/flags.test.ts\n+++ b/src/flags.test.ts\n@@ -13,1 +40,5 @@\n+  it('lets allow-listed users skip the other checks', () => {\n+    const rules = [{ ...base, countries: ['FR'], percent: 0, allowUsers: ['u1'] }];\n+    expect(isEnabled(rules, 'beta', ana)).toBe(true);\n+  });\n });\n",
+        "judgeView": "--- a/src/flags.test.ts\n+++ b/src/flags.test.ts\n@@ -13,1 +40,5 @@\n+  it('lets allow-listed users skip the other checks', () => {\n+    const rules = [{ ...base, countries: ['FR'], percent: 0, allowUsers: ['u1'] }];\n+    expect(isEnabled(rules, 'beta', ana)).toBe(true);\n+  });\n });\n",
+        "contentHash": "cc536e9b8677d48e635614675f80ef28b630d43f89bc100f41c778363dbafee5",
+        "tokenEstimate": 94,
+        "facts": [],
+        "symbol": {
+          "name": "lets allow-listed users skip the other checks",
+          "kind": "test",
+          "startLine": 40,
+          "endLine": 43
+        },
+        "after": "  it('lets allow-listed users skip the other checks', () => {\n    const rules = [{ ...base, countries: ['FR'], percent: 0, allowUsers: ['u1'] }];\n    expect(isEnabled(rules, 'beta', ana)).toBe(true);\n  });",
+        "testTitles": [
+          "isEnabled",
+          "lets allow-listed users skip the other checks"
+        ]
+      },
+      {
+        "id": "U8",
+        "file": "src/flags.ts",
+        "language": "ts",
+        "kind": "source",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              10,
+              14
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/src/flags.ts\n+++ b/src/flags.ts\n@@ -7,5 +7,10 @@\n export interface FlagRule {\n   flag: string;\n   enabled: boolean;\n+  countries?: string[];\n+  domains?: string[];\n+  percent?: number;\n+  startsAt?: string;\n+  allowUsers?: string[];\n }\n \n",
+        "judgeView": "--- a/src/flags.ts\n+++ b/src/flags.ts\n@@ -7,5 +7,10 @@\n export interface FlagRule {\n   flag: string;\n   enabled: boolean;\n+  countries?: string[];\n+  domains?: string[];\n+  percent?: number;\n+  startsAt?: string;\n+  allowUsers?: string[];\n }\n \n",
+        "contentHash": "29ed1be07d020d28f2a7be08933d633a3728425b638903289a2de785fe1549c5",
+        "tokenEstimate": 82,
+        "facts": [],
+        "symbol": {
+          "name": "FlagRule",
+          "kind": "block",
+          "startLine": 7,
+          "endLine": 15
+        },
+        "before": "export interface FlagRule {\n  flag: string;\n  enabled: boolean;\n}",
+        "after": "export interface FlagRule {\n  flag: string;\n  enabled: boolean;\n  countries?: string[];\n  domains?: string[];\n  percent?: number;\n  startsAt?: string;\n  allowUsers?: string[];\n}"
+      },
+      {
+        "id": "U9",
+        "file": "src/flags.ts",
+        "language": "ts",
+        "kind": "source",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              17,
+              22
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/src/flags.ts\n+++ b/src/flags.ts\n@@ -12,0 +17,6 @@\n+export function matchesTargets(rule: FlagRule, user: User): boolean {\n+  if (rule.countries && !rule.countries.includes(user.country)) return false;\n+  if (rule.domains && !rule.domains.includes(user.email.slice(user.email.indexOf('@') + 1).toLowerCase())) return false;\n+  return true;\n+}\n+\n",
+        "judgeView": "--- a/src/flags.ts\n+++ b/src/flags.ts\n@@ -12,0 +17,6 @@\n+export function matchesTargets(rule: FlagRule, user: User): boolean {\n+  if (rule.countries && !rule.countries.includes(user.country)) return false;\n+  if (rule.domains && !rule.domains.includes(user.email.slice(user.email.indexOf('@') + 1).toLowerCase())) return false;\n+  return true;\n+}\n+\n",
+        "contentHash": "84353b1efd7a6fe0a65ffcfb73a78396b7aa7446a41c5bfe58563859150d3a63",
+        "tokenEstimate": 117,
+        "facts": [],
+        "symbol": {
+          "name": "matchesTargets",
+          "kind": "function",
+          "startLine": 17,
+          "endLine": 21
+        },
+        "after": "export function matchesTargets(rule: FlagRule, user: User): boolean {\n  if (rule.countries && !rule.countries.includes(user.country)) return false;\n  if (rule.domains && !rule.domains.includes(user.email.slice(user.email.indexOf('@') + 1).toLowerCase())) return false;\n  return true;\n}"
+      },
+      {
+        "id": "U10",
+        "file": "src/flags.ts",
+        "language": "ts",
+        "kind": "source",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              23,
+              31
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/src/flags.ts\n+++ b/src/flags.ts\n@@ -12,0 +23,9 @@\n+export function bucketOf(flag: string, userId: string): number {\n+  let hash = 2166136261;\n+  for (const ch of `${flag}:${userId}`) {\n+    hash ^= ch.charCodeAt(0);\n+    hash = Math.imul(hash, 16777619) >>> 0;\n+  }\n+  return hash % 100;\n+}\n+\n",
+        "judgeView": "--- a/src/flags.ts\n+++ b/src/flags.ts\n@@ -12,0 +23,9 @@\n+export function bucketOf(flag: string, userId: string): number {\n+  let hash = 2166136261;\n+  for (const ch of `${flag}:${userId}`) {\n+    hash ^= ch.charCodeAt(0);\n+    hash = Math.imul(hash, 16777619) >>> 0;\n+  }\n+  return hash % 100;\n+}\n+\n",
+        "contentHash": "03a78e8b572ea6e98b785e8e509688bd540667b524e316c947fbaaef65389e9e",
+        "tokenEstimate": 100,
+        "facts": [],
+        "symbol": {
+          "name": "bucketOf",
+          "kind": "function",
+          "startLine": 23,
+          "endLine": 30
+        },
+        "after": "export function bucketOf(flag: string, userId: string): number {\n  let hash = 2166136261;\n  for (const ch of `${flag}:${userId}`) {\n    hash ^= ch.charCodeAt(0);\n    hash = Math.imul(hash, 16777619) >>> 0;\n  }\n  return hash % 100;\n}"
+      },
+      {
+        "id": "U11",
+        "file": "src/flags.ts",
+        "language": "ts",
+        "kind": "source",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              32,
+              36
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/src/flags.ts\n+++ b/src/flags.ts\n@@ -12,0 +32,5 @@\n+function inRollout(rule: FlagRule, flag: string, user: User): boolean {\n+  if (rule.percent === undefined) return true;\n+  return bucketOf(flag, user.id) < rule.percent;\n+}\n+\n",
+        "judgeView": "--- a/src/flags.ts\n+++ b/src/flags.ts\n@@ -12,0 +32,5 @@\n+function inRollout(rule: FlagRule, flag: string, user: User): boolean {\n+  if (rule.percent === undefined) return true;\n+  return bucketOf(flag, user.id) < rule.percent;\n+}\n+\n",
+        "contentHash": "f3964ee044be3d807ebb54ee9851aef51bcd4243d4d347efeca5b9443eb4e77a",
+        "tokenEstimate": 78,
+        "facts": [],
+        "symbol": {
+          "name": "inRollout",
+          "kind": "function",
+          "startLine": 32,
+          "endLine": 35
+        },
+        "after": "function inRollout(rule: FlagRule, flag: string, user: User): boolean {\n  if (rule.percent === undefined) return true;\n  return bucketOf(flag, user.id) < rule.percent;\n}"
+      },
+      {
+        "id": "U12",
+        "file": "src/flags.ts",
+        "language": "ts",
+        "kind": "source",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              37,
+              37
+            ],
+            [
+              39,
+              44
+            ]
+          ],
+          "old": [
+            [
+              12,
+              12
+            ],
+            [
+              14,
+              14
+            ]
+          ]
+        },
+        "patch": "--- a/src/flags.ts\n+++ b/src/flags.ts\n@@ -10,3 +15,2 @@\n }\n \n-export function isEnabled(rules: FlagRule[], flag: string, user: User): boolean {\n@@ -13,3 +37,9 @@\n+export function isEnabled(rules: FlagRule[], flag: string, user: User, now: Date = new Date()): boolean {\n   const rule = rules.find((r) => r.flag === flag);\n-  return rule ? rule.enabled : false;\n+  if (!rule || !rule.enabled) return false;\n+  if (rule.allowUsers?.includes(user.id)) return true;\n+  if (rule.startsAt && now.getTime() < Date.parse(rule.startsAt)) return false;\n+  if (!matchesTargets(rule, user)) return false;\n+  if (!inRollout(rule, flag, user)) return false;\n+  return true;\n }\n",
+        "judgeView": "--- a/src/flags.ts\n+++ b/src/flags.ts\n@@ -10,3 +15,2 @@\n }\n \n-export function isEnabled(rules: FlagRule[], flag: string, user: User): boolean {\n@@ -13,3 +37,9 @@\n+export function isEnabled(rules: FlagRule[], flag: string, user: User, now: Date = new Date()): boolean {\n   const rule = rules.find((r) => r.flag === flag);\n-  return rule ? rule.enabled : false;\n+  if (!rule || !rule.enabled) return false;\n+  if (rule.allowUsers?.includes(user.id)) return true;\n+  if (rule.startsAt && now.getTime() < Date.parse(rule.startsAt)) return false;\n+  if (!matchesTargets(rule, user)) return false;\n+  if (!inRollout(rule, flag, user)) return false;\n+  return true;\n }\n",
+        "contentHash": "3a82fed6bdce8165cf94b3ddca746b818363a946d4370a795468e59db115542b",
+        "tokenEstimate": 221,
+        "facts": [
+          {
+            "id": "X1",
+            "kind": "public_api_changed",
+            "severity": "warn",
+            "unitId": "U12",
+            "line": 37,
+            "detail": "signature of exported function `isEnabled` changed"
+          }
+        ],
+        "symbol": {
+          "name": "isEnabled",
+          "kind": "function",
+          "startLine": 37,
+          "endLine": 45
+        },
+        "before": "export function isEnabled(rules: FlagRule[], flag: string, user: User): boolean {\n  const rule = rules.find((r) => r.flag === flag);\n  return rule ? rule.enabled : false;\n}",
+        "after": "export function isEnabled(rules: FlagRule[], flag: string, user: User, now: Date = new Date()): boolean {\n  const rule = rules.find((r) => r.flag === flag);\n  if (!rule || !rule.enabled) return false;\n  if (rule.allowUsers?.includes(user.id)) return true;\n  if (rule.startsAt && now.getTime() < Date.parse(rule.startsAt)) return false;\n  if (!matchesTargets(rule, user)) return false;\n  if (!inRollout(rule, flag, user)) return false;\n  return true;\n}"
+      }
+    ],
+    "requirementVerdicts": [
+      {
+        "requirementId": "R1",
+        "status": "partial",
+        "confidence": 0.5,
+        "calibrated": false,
+        "tested": "as_stated",
+        "evidence": [
+          {
+            "unitId": "U9",
+            "file": "src/flags.ts",
+            "lines": [
+              [
+                17,
+                22
+              ]
+            ],
+            "probability": 0.8
+          }
+        ],
+        "testEvidence": [
+          {
+            "unitId": "U2",
+            "file": "src/flags.test.ts",
+            "lines": [
+              [
+                13,
+                20
+              ]
+            ],
+            "probability": 0.75
+          }
+        ],
+        "answers": [
+          {
+            "call": "issue.v0",
+            "question": "ambiguous",
+            "type": "noul",
+            "value": 0.3
+          },
+          {
+            "call": "issue.v0",
+            "question": "checkable_in_code",
+            "type": "noul",
+            "value": 0.85
+          },
+          {
+            "call": "forward.v0",
+            "question": "coverage",
+            "type": "score",
+            "value": 1.8,
+            "probabilities": {
+              "0": 0.1,
+              "1": 0.2,
+              "2": 0.5,
+              "3": 0.2
+            },
+            "confidence": 0.5
+          },
+          {
+            "call": "forward.v0",
+            "question": "conflict",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "forward.v0",
+            "question": "evidence",
+            "type": "choice",
+            "value": "U9",
+            "probabilities": {
+              "U9": 0.8,
+              "U12": 0.039999999999999994,
+              "U8": 0.039999999999999994,
+              "U11": 0.039999999999999994,
+              "U10": 0.039999999999999994,
+              "none": 0.039999999999999994
+            },
+            "confidence": 0.8
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_as_stated",
+            "type": "noul",
+            "value": 0.7
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_differently",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "tests.v0",
+            "question": "test_evidence",
+            "type": "choice",
+            "value": "U2",
+            "probabilities": {
+              "U2": 0.75,
+              "U1": 0.03571428571428571,
+              "U7": 0.03571428571428571,
+              "U3": 0.03571428571428571,
+              "U6": 0.03571428571428571,
+              "U4": 0.03571428571428571,
+              "U5": 0.03571428571428571,
+              "none": 0.03571428571428571
+            },
+            "confidence": 0.75
+          }
+        ],
+        "reasons": [
+          {
+            "template": "req.partial",
+            "text": "Mostly implemented, but at least one stated case, value or condition is not (`0.50`)."
+          }
+        ]
+      },
+      {
+        "requirementId": "R2",
+        "status": "missing",
+        "confidence": 0.8999999999999999,
+        "calibrated": false,
+        "tested": "untested",
+        "evidence": [],
+        "testEvidence": [],
+        "answers": [
+          {
+            "call": "issue.v0",
+            "question": "ambiguous",
+            "type": "noul",
+            "value": 0.3
+          },
+          {
+            "call": "issue.v0",
+            "question": "checkable_in_code",
+            "type": "noul",
+            "value": 0.85
+          },
+          {
+            "call": "forward.v0",
+            "question": "coverage",
+            "type": "score",
+            "value": 0.43000000000000005,
+            "probabilities": {
+              "0": 0.72,
+              "1": 0.18,
+              "2": 0.05,
+              "3": 0.05
+            },
+            "confidence": 0.72
+          },
+          {
+            "call": "forward.v0",
+            "question": "conflict",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "forward.v0",
+            "question": "evidence",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "U10": 0.039999999999999994,
+              "U12": 0.039999999999999994,
+              "U11": 0.039999999999999994,
+              "U8": 0.039999999999999994,
+              "U9": 0.039999999999999994,
+              "none": 0.8
+            },
+            "confidence": 0.8
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_as_stated",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_differently",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "tests.v0",
+            "question": "test_evidence",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "U4": 0.03571428571428571,
+              "U3": 0.03571428571428571,
+              "U5": 0.03571428571428571,
+              "U7": 0.03571428571428571,
+              "U1": 0.03571428571428571,
+              "U2": 0.03571428571428571,
+              "U6": 0.03571428571428571,
+              "none": 0.75
+            },
+            "confidence": 0.75
+          },
+          {
+            "call": "preexisting.v0",
+            "question": "already_implemented",
+            "type": "noul",
+            "value": 0.2
+          }
+        ],
+        "reasons": [
+          {
+            "template": "req.missing",
+            "text": "No change implements this (`0.90`)."
+          }
+        ]
+      },
+      {
+        "requirementId": "R3",
+        "status": "missing",
+        "confidence": 0.8999999999999999,
+        "calibrated": false,
+        "tested": "as_stated",
+        "evidence": [],
+        "testEvidence": [
+          {
+            "unitId": "U6",
+            "file": "src/flags.test.ts",
+            "lines": [
+              [
+                34,
+                39
+              ]
+            ],
+            "probability": 0.75
+          }
+        ],
+        "answers": [
+          {
+            "call": "issue.v0",
+            "question": "ambiguous",
+            "type": "noul",
+            "value": 0.3
+          },
+          {
+            "call": "issue.v0",
+            "question": "checkable_in_code",
+            "type": "noul",
+            "value": 0.85
+          },
+          {
+            "call": "forward.v0",
+            "question": "coverage",
+            "type": "score",
+            "value": 0.43000000000000005,
+            "probabilities": {
+              "0": 0.72,
+              "1": 0.18,
+              "2": 0.05,
+              "3": 0.05
+            },
+            "confidence": 0.72
+          },
+          {
+            "call": "forward.v0",
+            "question": "conflict",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "forward.v0",
+            "question": "evidence",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "U12": 0.039999999999999994,
+              "U8": 0.039999999999999994,
+              "U9": 0.039999999999999994,
+              "U11": 0.039999999999999994,
+              "U10": 0.039999999999999994,
+              "none": 0.8
+            },
+            "confidence": 0.8
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_as_stated",
+            "type": "noul",
+            "value": 0.7
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_differently",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "tests.v0",
+            "question": "test_evidence",
+            "type": "choice",
+            "value": "U6",
+            "probabilities": {
+              "U6": 0.75,
+              "U2": 0.03571428571428571,
+              "U1": 0.03571428571428571,
+              "U3": 0.03571428571428571,
+              "U4": 0.03571428571428571,
+              "U5": 0.03571428571428571,
+              "U7": 0.03571428571428571,
+              "none": 0.03571428571428571
+            },
+            "confidence": 0.75
+          },
+          {
+            "call": "preexisting.v0",
+            "question": "already_implemented",
+            "type": "noul",
+            "value": 0.2
+          }
+        ],
+        "reasons": [
+          {
+            "template": "req.missing",
+            "text": "No change implements this (`0.90`)."
+          }
+        ]
+      },
+      {
+        "requirementId": "R4",
+        "status": "partial",
+        "confidence": 0.4,
+        "calibrated": false,
+        "tested": "as_stated",
+        "evidence": [
+          {
+            "unitId": "U12",
+            "file": "src/flags.ts",
+            "lines": [
+              [
+                37,
+                37
+              ],
+              [
+                39,
+                44
+              ]
+            ],
+            "probability": 0.8
+          }
+        ],
+        "testEvidence": [
+          {
+            "unitId": "U7",
+            "file": "src/flags.test.ts",
+            "lines": [
+              [
+                40,
+                43
+              ]
+            ],
+            "probability": 0.75
+          }
+        ],
+        "answers": [
+          {
+            "call": "issue.v0",
+            "question": "ambiguous",
+            "type": "noul",
+            "value": 0.3
+          },
+          {
+            "call": "issue.v0",
+            "question": "checkable_in_code",
+            "type": "noul",
+            "value": 0.85
+          },
+          {
+            "call": "forward.v0",
+            "question": "coverage",
+            "type": "score",
+            "value": 1.8,
+            "probabilities": {
+              "0": 0.1,
+              "1": 0.2,
+              "2": 0.5,
+              "3": 0.2
+            },
+            "confidence": 0.5
+          },
+          {
+            "call": "forward.v0",
+            "question": "conflict",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "forward.v0",
+            "question": "evidence",
+            "type": "choice",
+            "value": "U12",
+            "probabilities": {
+              "U12": 0.8,
+              "U8": 0.039999999999999994,
+              "U11": 0.039999999999999994,
+              "U9": 0.039999999999999994,
+              "U10": 0.039999999999999994,
+              "none": 0.039999999999999994
+            },
+            "confidence": 0.8
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_as_stated",
+            "type": "noul",
+            "value": 0.7
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_differently",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "tests.v0",
+            "question": "test_evidence",
+            "type": "choice",
+            "value": "U7",
+            "probabilities": {
+              "U7": 0.75,
+              "U1": 0.03571428571428571,
+              "U5": 0.03571428571428571,
+              "U4": 0.03571428571428571,
+              "U2": 0.03571428571428571,
+              "U6": 0.03571428571428571,
+              "U3": 0.03571428571428571,
+              "none": 0.03571428571428571
+            },
+            "confidence": 0.75
+          }
+        ],
+        "reasons": [
+          {
+            "template": "req.partial",
+            "text": "Mostly implemented, but at least one stated case, value or condition is not (`0.50`)."
+          },
+          {
+            "template": "check.disagree",
+            "text": "Forward and reverse checks disagree."
+          }
+        ]
+      }
+    ],
+    "unitVerdicts": [
+      {
+        "unitId": "U1",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      },
+      {
+        "unitId": "U2",
+        "role": "implements",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "R1",
+            "probabilities": {
+              "R1": 0.7,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.07500000000000001
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.implements",
+            "text": "Implements R1."
+          }
+        ],
+        "servesRequirementId": "R1"
+      },
+      {
+        "unitId": "U3",
+        "role": "implements",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "R2",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.7,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.07500000000000001
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.implements",
+            "text": "Implements R2."
+          }
+        ],
+        "servesRequirementId": "R2"
+      },
+      {
+        "unitId": "U4",
+        "role": "implements",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "R2",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.7,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.07500000000000001
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.implements",
+            "text": "Implements R2."
+          }
+        ],
+        "servesRequirementId": "R2"
+      },
+      {
+        "unitId": "U5",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      },
+      {
+        "unitId": "U6",
+        "role": "implements",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "R3",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.7,
+              "R4": 0.07500000000000001,
+              "none": 0.07500000000000001
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.implements",
+            "text": "Implements R3."
+          }
+        ],
+        "servesRequirementId": "R3"
+      },
+      {
+        "unitId": "U7",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      },
+      {
+        "unitId": "U8",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      },
+      {
+        "unitId": "U9",
+        "role": "implements",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "R1",
+            "probabilities": {
+              "R1": 0.7,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.07500000000000001
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.implements",
+            "text": "Implements R1."
+          }
+        ],
+        "servesRequirementId": "R1"
+      },
+      {
+        "unitId": "U10",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      },
+      {
+        "unitId": "U11",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      },
+      {
+        "unitId": "U12",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      }
+    ],
+    "claims": [
+      {
+        "sentence": "Flag targeting, percentage rollouts, schedules and allow lists",
+        "claimsDone": 0.2,
+        "claimsDeferred": 0.1
+      },
+      {
+        "sentence": "isEnabled now checks, in order: the rule is enabled, allowUsers (which short-circuits to on), startsAt against an injectable now, country and email-domain targeting in matchesTargets, and a percentage rollout that uses a stable FNV-1a bucket from bucketOf.",
+        "claimsDone": 0.2,
+        "claimsDeferred": 0.1
+      },
+      {
+        "sentence": "Tests cover each rule field.",
+        "claimsDone": 0.2,
+        "claimsDeferred": 0.1
+      }
+    ],
+    "findings": [
+      {
+        "id": "F-R2",
+        "type": "requirement",
+        "targetId": "R2",
+        "priority": "P0",
+        "route": "send_back",
+        "confidence": 0.8999999999999999,
+        "locations": [],
+        "reasons": [
+          {
+            "template": "req.missing",
+            "text": "No change implements this (`0.90`)."
+          }
+        ],
+        "contentKey": "req:fc033b58db2642fb52e309f5abafa8ef"
+      },
+      {
+        "id": "F-R3",
+        "type": "requirement",
+        "targetId": "R3",
+        "priority": "P0",
+        "route": "send_back",
+        "confidence": 0.8999999999999999,
+        "locations": [],
+        "reasons": [
+          {
+            "template": "req.missing",
+            "text": "No change implements this (`0.90`)."
+          }
+        ],
+        "contentKey": "req:66431044b163db347f6bb1745041301b"
+      },
+      {
+        "id": "F-R1",
+        "type": "requirement",
+        "targetId": "R1",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.5,
+        "locations": [
+          {
+            "file": "src/flags.ts",
+            "lines": [
+              17,
+              22
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "req.partial",
+            "text": "Mostly implemented, but at least one stated case, value or condition is not (`0.50`)."
+          }
+        ],
+        "contentKey": "req:e30cf3f86df7a86177ae1640b2a590f0"
+      },
+      {
+        "id": "F-R4",
+        "type": "requirement",
+        "targetId": "R4",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.4,
+        "locations": [
+          {
+            "file": "src/flags.ts",
+            "lines": [
+              37,
+              37
+            ]
+          },
+          {
+            "file": "src/flags.ts",
+            "lines": [
+              39,
+              44
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "req.partial",
+            "text": "Mostly implemented, but at least one stated case, value or condition is not (`0.50`)."
+          },
+          {
+            "template": "check.disagree",
+            "text": "Forward and reverse checks disagree."
+          }
+        ],
+        "contentKey": "req:107232912d7777154194c9c1ed1c1d50"
+      },
+      {
+        "id": "F-U1",
+        "type": "unit",
+        "targetId": "U1",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.65,
+        "locations": [
+          {
+            "file": "src/flags.test.ts",
+            "lines": [
+              2,
+              2
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ],
+        "contentKey": "unit:23eb37c9bc03ad0e6dd15554ed3659c8"
+      },
+      {
+        "id": "F-U5",
+        "type": "unit",
+        "targetId": "U5",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.65,
+        "locations": [
+          {
+            "file": "src/flags.test.ts",
+            "lines": [
+              29,
+              29
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ],
+        "contentKey": "unit:5c038db296da382b67d09697fa80d041"
+      },
+      {
+        "id": "F-U7",
+        "type": "unit",
+        "targetId": "U7",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.65,
+        "locations": [
+          {
+            "file": "src/flags.test.ts",
+            "lines": [
+              40,
+              43
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ],
+        "contentKey": "unit:cc536e9b8677d48e635614675f80ef28"
+      },
+      {
+        "id": "F-U8",
+        "type": "unit",
+        "targetId": "U8",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.65,
+        "locations": [
+          {
+            "file": "src/flags.ts",
+            "lines": [
+              10,
+              14
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ],
+        "contentKey": "unit:29ed1be07d020d28f2a7be08933d633a"
+      },
+      {
+        "id": "F-U10",
+        "type": "unit",
+        "targetId": "U10",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.65,
+        "locations": [
+          {
+            "file": "src/flags.ts",
+            "lines": [
+              23,
+              31
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ],
+        "contentKey": "unit:03a78e8b572ea6e98b785e8e509688bd"
+      },
+      {
+        "id": "F-U11",
+        "type": "unit",
+        "targetId": "U11",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.65,
+        "locations": [
+          {
+            "file": "src/flags.ts",
+            "lines": [
+              32,
+              36
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ],
+        "contentKey": "unit:f3964ee044be3d807ebb54ee9851aef5"
+      },
+      {
+        "id": "F-U12",
+        "type": "unit",
+        "targetId": "U12",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.55,
+        "locations": [
+          {
+            "file": "src/flags.ts",
+            "lines": [
+              37,
+              37
+            ]
+          },
+          {
+            "file": "src/flags.ts",
+            "lines": [
+              39,
+              44
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          },
+          {
+            "template": "check.disagree",
+            "text": "Forward and reverse checks disagree."
+          }
+        ],
+        "contentKey": "unit:3a82fed6bdce8165cf94b3ddca746b81"
+      },
+      {
+        "id": "F-X1",
+        "type": "fact",
+        "targetId": "X1",
+        "priority": "P2",
+        "route": "reviewer_attention",
+        "confidence": 1,
+        "locations": [
+          {
+            "file": "src/flags.ts",
+            "lines": [
+              37,
+              37
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "fact",
+            "text": "signature of exported function `isEnabled` changed"
+          }
+        ],
+        "contentKey": "unit:3a82fed6bdce8165cf94b3ddca746b81:public_api_changed:d1a83f5150c4369ebe2aaccb635eb1f6"
+      }
+    ],
+    "summary": {
+      "counts": {
+        "partial": 2,
+        "missing": 2,
+        "unexplained_behavioral": 7,
+        "implements": 5,
+        "P0": 2,
+        "P1": 9,
+        "P2": 1
+      },
+      "mode": "comment_only"
+    },
+    "warnings": [],
+    "usage": {
+      "jevInputTokens": 0,
+      "llmInputTokens": 0,
+      "llmOutputTokens": 0,
+      "costUsd": 0,
+      "latencyMs": 0,
+      "calls": 0
+    }
+  }
+}

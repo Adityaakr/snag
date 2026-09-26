@@ -363,3 +363,59 @@ export async function weakenAssertion(text: string, path: string, symbol: string
   if (!edit) throw new MutationError(`${path}: no strict assertion to weaken in ${symbol}`);
   return splice(text, edit.start, edit.end, edit.text);
 }
+
+const IMPORTS: Record<'ts' | 'py' | 'rs', { statement: string; specifiers: Set<string> }> = {
+  ts: { statement: 'import_statement', specifiers: new Set(['import_specifier']) },
+  py: { statement: 'import_from_statement', specifiers: new Set(['dotted_name', 'aliased_import']) },
+  rs: {
+    statement: 'use_declaration',
+    specifiers: new Set(['identifier', 'use_as_clause', 'scoped_identifier']),
+  },
+};
+
+/**
+ * Removes imports of `name` from a file: the specifier (with its comma), or the whole import statement when it was
+ * the only one. Used when drop_requirement deletes a symbol, so no import of it is left dangling.
+ */
+export async function removeImportsOf(text: string, path: string, name: string): Promise<string> {
+  const g = group(path);
+  const { statement, specifiers } = IMPORTS[g];
+  const edit = await withTree(text, path, (root) => {
+    for (const stmt of descendants(root).filter((n) => n.type === statement)) {
+      const lastSegment = (n: SyntaxNode) =>
+        n.text
+          .split(/::|\./)
+          .pop()
+          ?.split(/\s+as\s+/)[0]
+          ?.trim();
+      const specs = descendants(stmt).filter(
+        (n) =>
+          specifiers.has(n.type) &&
+          n.parent?.type !== n.type &&
+          // Python: the module path of `from x import a` is not a specifier.
+          !(g === 'py' && n === stmt.childForFieldName('module_name')) &&
+          // Rust: only items of a `{...}` list or the final path segment are specifiers.
+          (g !== 'rs' || n.parent?.type === 'use_list' || n.parent === stmt),
+      );
+      const hit = specs.find((n) => lastSegment(n) === name);
+      if (!hit) continue;
+      if (specs.length === 1 || (g === 'rs' && hit.parent === stmt)) {
+        const r = removalRange(text, stmt.startIndex, stmt.endIndex);
+        return { start: r.start, end: r.end, text: '' };
+      }
+      // Remove the specifier and one adjacent comma.
+      let start = hit.startIndex;
+      let end = hit.endIndex;
+      const after = /^\s*,[ \t]*/.exec(text.slice(end));
+      if (after) end += after[0].length;
+      else {
+        const before = /,\s*$/.exec(text.slice(stmt.startIndex, start));
+        if (before) start -= before[0].length;
+      }
+      return { start, end, text: '' };
+    }
+    return null;
+  });
+  if (!edit) return text;
+  return removeImportsOf(splice(text, edit.start, edit.end, edit.text), path, name);
+}

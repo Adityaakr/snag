@@ -1,0 +1,2009 @@
+{
+  "id": "py-retry-backoff.clean",
+  "labels": {
+    "requirements": {
+      "R1": "done",
+      "R2": "done",
+      "R3": "done",
+      "R4": "done"
+    },
+    "requirementsAccept": {},
+    "units": [
+      {
+        "file": "client/retry.py",
+        "symbol": "backoff_delay",
+        "role": "implements"
+      },
+      {
+        "file": "client/retry.py",
+        "symbol": "call_with_retry",
+        "role": "implements"
+      },
+      {
+        "file": "tests/test_retry.py",
+        "symbol": "test_backoff_doubles_each_attempt",
+        "role": "implements"
+      },
+      {
+        "file": "tests/test_retry.py",
+        "symbol": "test_backoff_is_capped",
+        "role": "implements"
+      },
+      {
+        "file": "tests/test_retry.py",
+        "symbol": "test_sleeps_grow_between_attempts",
+        "role": "implements"
+      },
+      {
+        "file": "client/retry.py",
+        "symbol": "is_retryable",
+        "role": "implements"
+      },
+      {
+        "file": "tests/test_retry.py",
+        "symbol": "test_retryable_statuses",
+        "role": "implements"
+      },
+      {
+        "file": "tests/test_retry.py",
+        "symbol": "test_other_statuses_are_not_retried",
+        "role": "implements"
+      },
+      {
+        "file": "client/retry.py",
+        "symbol": "RetryExhausted",
+        "role": "implements"
+      },
+      {
+        "file": "tests/test_retry.py",
+        "symbol": "test_gives_up_after_max_attempts",
+        "role": "implements"
+      },
+      {
+        "file": "tests/test_retry.py",
+        "symbol": "test_logs_each_retry",
+        "role": "implements"
+      }
+    ],
+    "facts": [],
+    "testIntegrity": [],
+    "claimMismatch": [],
+    "pr": "clean"
+  },
+  "comparison": {
+    "requirements": [
+      {
+        "id": "R1",
+        "expected": "done",
+        "actual": "partial",
+        "ok": false
+      },
+      {
+        "id": "R2",
+        "expected": "done",
+        "actual": "partial",
+        "ok": false
+      },
+      {
+        "id": "R3",
+        "expected": "done",
+        "actual": "partial",
+        "ok": false
+      },
+      {
+        "id": "R4",
+        "expected": "done",
+        "actual": "done",
+        "ok": true
+      }
+    ],
+    "units": [
+      {
+        "file": "client/retry.py",
+        "symbol": "backoff_delay",
+        "expected": "implements",
+        "actual": "implements",
+        "ok": true
+      },
+      {
+        "file": "client/retry.py",
+        "symbol": "call_with_retry",
+        "expected": "implements",
+        "actual": "implements",
+        "ok": true
+      },
+      {
+        "file": "tests/test_retry.py",
+        "symbol": "test_backoff_doubles_each_attempt",
+        "expected": "implements",
+        "actual": "implements",
+        "ok": true
+      },
+      {
+        "file": "tests/test_retry.py",
+        "symbol": "test_backoff_is_capped",
+        "expected": "implements",
+        "actual": "implements",
+        "ok": true
+      },
+      {
+        "file": "tests/test_retry.py",
+        "symbol": "test_sleeps_grow_between_attempts",
+        "expected": "implements",
+        "actual": "unexplained_behavioral",
+        "ok": false
+      },
+      {
+        "file": "client/retry.py",
+        "symbol": "is_retryable",
+        "expected": "implements",
+        "actual": "implements",
+        "ok": true
+      },
+      {
+        "file": "tests/test_retry.py",
+        "symbol": "test_retryable_statuses",
+        "expected": "implements",
+        "actual": "unexplained_behavioral",
+        "ok": false
+      },
+      {
+        "file": "tests/test_retry.py",
+        "symbol": "test_other_statuses_are_not_retried",
+        "expected": "implements",
+        "actual": "unexplained_behavioral",
+        "ok": false
+      },
+      {
+        "file": "client/retry.py",
+        "symbol": "RetryExhausted",
+        "expected": "implements",
+        "actual": "unexplained_behavioral",
+        "ok": false
+      },
+      {
+        "file": "tests/test_retry.py",
+        "symbol": "test_gives_up_after_max_attempts",
+        "expected": "implements",
+        "actual": "unexplained_behavioral",
+        "ok": false
+      },
+      {
+        "file": "tests/test_retry.py",
+        "symbol": "test_logs_each_retry",
+        "expected": "implements",
+        "actual": "unexplained_behavioral",
+        "ok": false
+      }
+    ],
+    "facts": [],
+    "testIntegrity": [],
+    "claimMismatch": [],
+    "pr": {
+      "expected": "clean",
+      "predictedProblem": false
+    },
+    "p0p1": 10,
+    "passed": false
+  },
+  "result": {
+    "schemaVersion": "1.0.0",
+    "product": {
+      "name": "Remit",
+      "version": "0.1.0"
+    },
+    "input": {
+      "mode": "local",
+      "baseSha": "base",
+      "headSha": "head",
+      "issues": [
+        {
+          "owner": "fieldkit",
+          "repo": "api-client",
+          "number": 58
+        }
+      ],
+      "linkStrength": "closing"
+    },
+    "versions": {
+      "questionSet": "qs-0.1.0",
+      "extractionPrompt": "xp-0.1.0",
+      "jevModel": "simulated-jev"
+    },
+    "requirements": [
+      {
+        "id": "R1",
+        "issue": {
+          "owner": "fieldkit",
+          "repo": "api-client",
+          "number": 58
+        },
+        "text": "Delays between attempts start at `base_delay` and double each time, capped at `max_delay` (with a base of 0.5s: 0.5, 1, 2, 4)",
+        "quote": "Delays between attempts start at `base_delay` and double each time, capped at `max_delay` (with a base of 0.5s: 0.5, 1, 2, 4)",
+        "source": {
+          "kind": "tasklist"
+        },
+        "kind": "behavior",
+        "explicitness": "explicit",
+        "priority": "must",
+        "examples": [],
+        "checkableInCode": true,
+        "signals": {
+          "ambiguous": 0.3,
+          "checkable": 0.85
+        }
+      },
+      {
+        "id": "R2",
+        "issue": {
+          "owner": "fieldkit",
+          "repo": "api-client",
+          "number": 58
+        },
+        "text": "Only status 429 and the gateway errors 502, 503 and 504 are retried; any other status is raised on the first failure",
+        "quote": "Only status 429 and the gateway errors 502, 503 and 504 are retried; any other status is raised on the first failure",
+        "source": {
+          "kind": "tasklist"
+        },
+        "kind": "behavior",
+        "explicitness": "explicit",
+        "priority": "must",
+        "examples": [],
+        "checkableInCode": true,
+        "signals": {
+          "ambiguous": 0.3,
+          "checkable": 0.85
+        }
+      },
+      {
+        "id": "R3",
+        "issue": {
+          "owner": "fieldkit",
+          "repo": "api-client",
+          "number": 58
+        },
+        "text": "When the last attempt fails, raise `RetryExhausted` with the number of attempts and the last HTTP error as its cause",
+        "quote": "When the last attempt fails, raise `RetryExhausted` with the number of attempts and the last HTTP error as its cause",
+        "source": {
+          "kind": "tasklist"
+        },
+        "kind": "behavior",
+        "explicitness": "explicit",
+        "priority": "must",
+        "examples": [],
+        "checkableInCode": true,
+        "signals": {
+          "ambiguous": 0.3,
+          "checkable": 0.85
+        }
+      },
+      {
+        "id": "R4",
+        "issue": {
+          "owner": "fieldkit",
+          "repo": "api-client",
+          "number": 58
+        },
+        "text": "Each retry logs a warning such as `retry 2/4 in 0.5s` (next attempt, max attempts, delay)",
+        "quote": "Each retry logs a warning such as `retry 2/4 in 0.5s` (next attempt, max attempts, delay)",
+        "source": {
+          "kind": "tasklist"
+        },
+        "kind": "behavior",
+        "explicitness": "explicit",
+        "priority": "must",
+        "examples": [],
+        "checkableInCode": true,
+        "signals": {
+          "ambiguous": 0.3,
+          "checkable": 0.85
+        }
+      }
+    ],
+    "units": [
+      {
+        "id": "U1",
+        "file": "client/retry.py",
+        "language": "py",
+        "kind": "source",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              17,
+              17
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/client/retry.py\n+++ b/client/retry.py\n@@ -14,3 +14,4 @@\n         self.status = status\n \n \n+class RetryExhausted(Exception):\n",
+        "judgeView": "--- a/client/retry.py\n+++ b/client/retry.py\n@@ -14,3 +14,4 @@\n         self.status = status\n \n \n+class RetryExhausted(Exception):\n",
+        "contentHash": "df26bf7d181b8f07bd92a8e1d58897ad87c3f5be97353a1b0bdb7dc2871ccb7a",
+        "tokenEstimate": 44,
+        "facts": [],
+        "symbol": {
+          "name": "RetryExhausted",
+          "kind": "class",
+          "startLine": 17,
+          "endLine": 20
+        },
+        "after": "class RetryExhausted(Exception):\n    def __init__(self, attempts):\n        super().__init__(f\"gave up after {attempts} attempts\")\n        self.attempts = attempts"
+      },
+      {
+        "id": "U2",
+        "file": "client/retry.py",
+        "language": "py",
+        "kind": "source",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              18,
+              22
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/client/retry.py\n+++ b/client/retry.py\n@@ -16,0 +18,5 @@\n+    def __init__(self, attempts):\n+        super().__init__(f\"gave up after {attempts} attempts\")\n+        self.attempts = attempts\n+\n+\n",
+        "judgeView": "--- a/client/retry.py\n+++ b/client/retry.py\n@@ -16,0 +18,5 @@\n+    def __init__(self, attempts):\n+        super().__init__(f\"gave up after {attempts} attempts\")\n+        self.attempts = attempts\n+\n+\n",
+        "contentHash": "a50c3d2b17e67737b11f054578b216690e0277dfe62ab75615b9f769ee9d8062",
+        "tokenEstimate": 67,
+        "facts": [],
+        "symbol": {
+          "name": "__init__",
+          "kind": "method",
+          "startLine": 18,
+          "endLine": 20
+        },
+        "after": "    def __init__(self, attempts):\n        super().__init__(f\"gave up after {attempts} attempts\")\n        self.attempts = attempts"
+      },
+      {
+        "id": "U3",
+        "file": "client/retry.py",
+        "language": "py",
+        "kind": "source",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              23,
+              30
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/client/retry.py\n+++ b/client/retry.py\n@@ -16,0 +23,8 @@\n+def is_retryable(error):\n+    if error.status == 429:\n+        return True\n+    if error.status in (502, 503, 504):\n+        return True\n+    return False\n+\n+\n",
+        "judgeView": "--- a/client/retry.py\n+++ b/client/retry.py\n@@ -16,0 +23,8 @@\n+def is_retryable(error):\n+    if error.status == 429:\n+        return True\n+    if error.status in (502, 503, 504):\n+        return True\n+    return False\n+\n+\n",
+        "contentHash": "68339780d595b0c6083bf0dca4e2da6de3b37b1b35a1c6b4cd428d7633db1b03",
+        "tokenEstimate": 74,
+        "facts": [],
+        "symbol": {
+          "name": "is_retryable",
+          "kind": "function",
+          "startLine": 23,
+          "endLine": 28
+        },
+        "after": "def is_retryable(error):\n    if error.status == 429:\n        return True\n    if error.status in (502, 503, 504):\n        return True\n    return False"
+      },
+      {
+        "id": "U4",
+        "file": "client/retry.py",
+        "language": "py",
+        "kind": "source",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              31,
+              34
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/client/retry.py\n+++ b/client/retry.py\n@@ -17,3 +31,7 @@\n+def backoff_delay(attempt, base_delay, max_delay):\n+    return min(base_delay * 2 ** (attempt - 1), max_delay)\n+\n+\n def call_with_retry(fn, sleep=time.sleep):\n     settings = retry_settings()\n     attempts = settings[\"max_attempts\"]\n",
+        "judgeView": "--- a/client/retry.py\n+++ b/client/retry.py\n@@ -17,3 +31,7 @@\n+def backoff_delay(attempt, base_delay, max_delay):\n+    return min(base_delay * 2 ** (attempt - 1), max_delay)\n+\n+\n def call_with_retry(fn, sleep=time.sleep):\n     settings = retry_settings()\n     attempts = settings[\"max_attempts\"]\n",
+        "contentHash": "949a763e8d1367419996ca42468bdab6ddc691cb998ef6ddd3e3e72aff5bbd78",
+        "tokenEstimate": 99,
+        "facts": [],
+        "symbol": {
+          "name": "backoff_delay",
+          "kind": "function",
+          "startLine": 31,
+          "endLine": 32
+        },
+        "after": "def backoff_delay(attempt, base_delay, max_delay):\n    return min(base_delay * 2 ** (attempt - 1), max_delay)"
+      },
+      {
+        "id": "U5",
+        "file": "client/retry.py",
+        "language": "py",
+        "kind": "source",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              43,
+              43
+            ],
+            [
+              45,
+              49
+            ]
+          ],
+          "old": [
+            [
+              25,
+              25
+            ],
+            [
+              27,
+              27
+            ]
+          ]
+        },
+        "patch": "--- a/client/retry.py\n+++ b/client/retry.py\n@@ -22,6 +40,10 @@\n             return fn()\n         except HttpError as error:\n             log.debug(\"attempt %d failed: %s\", attempt, error)\n-            if attempt == attempts:\n+            if not is_retryable(error):\n                 raise\n-            sleep(settings[\"base_delay\"])\n+            if attempt == attempts:\n+                raise RetryExhausted(attempts) from error\n+            delay = backoff_delay(attempt, settings[\"base_delay\"], settings[\"max_delay\"])\n+            log.warning(\"retry %d/%d in %.1fs\", attempt + 1, attempts, delay)\n+            sleep(delay)\n",
+        "judgeView": "--- a/client/retry.py\n+++ b/client/retry.py\n@@ -22,6 +40,10 @@\n             return fn()\n         except HttpError as error:\n             log.debug(\"attempt %d failed: %s\", attempt, error)\n-            if attempt == attempts:\n+            if not is_retryable(error):\n                 raise\n-            sleep(settings[\"base_delay\"])\n+            if attempt == attempts:\n+                raise RetryExhausted(attempts) from error\n+            delay = backoff_delay(attempt, settings[\"base_delay\"], settings[\"max_delay\"])\n+            log.warning(\"retry %d/%d in %.1fs\", attempt + 1, attempts, delay)\n+            sleep(delay)\n",
+        "contentHash": "aaba93d19c7c9a577a26efe071723e6b0da4db7ec2db6b100db6f58896d87e15",
+        "tokenEstimate": 208,
+        "facts": [],
+        "symbol": {
+          "name": "call_with_retry",
+          "kind": "function",
+          "startLine": 35,
+          "endLine": 49
+        },
+        "before": "def call_with_retry(fn, sleep=time.sleep):\n    settings = retry_settings()\n    attempts = settings[\"max_attempts\"]\n    for attempt in range(1, attempts + 1):\n        try:\n            return fn()\n        except HttpError as error:\n            log.debug(\"attempt %d failed: %s\", attempt, error)\n            if attempt == attempts:\n                raise\n            sleep(settings[\"base_delay\"])",
+        "after": "def call_with_retry(fn, sleep=time.sleep):\n    settings = retry_settings()\n    attempts = settings[\"max_attempts\"]\n    for attempt in range(1, attempts + 1):\n        try:\n            return fn()\n        except HttpError as error:\n            log.debug(\"attempt %d failed: %s\", attempt, error)\n            if not is_retryable(error):\n                raise\n            if attempt == attempts:\n                raise RetryExhausted(attempts) from error\n            delay = backoff_delay(attempt, settings[\"base_delay\"], settings[\"max_delay\"])\n            log.warning(\"retry %d/%d in %.1fs\", attempt + 1, attempts, delay)\n            sleep(delay)"
+      },
+      {
+        "id": "U6",
+        "file": "tests/test_retry.py",
+        "language": "py",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              1,
+              2
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/tests/test_retry.py\n+++ b/tests/test_retry.py\n@@ -1,3 +1,5 @@\n+import logging\n+\n import pytest\n \n from client import retry\n",
+        "judgeView": "--- a/tests/test_retry.py\n+++ b/tests/test_retry.py\n@@ -1,3 +1,5 @@\n+import logging\n+\n import pytest\n \n from client import retry\n",
+        "contentHash": "fc0a228e5ff04ec22e70b7807e00a02144b37987babeea46c13fe2752cc7d037",
+        "tokenEstimate": 43,
+        "facts": []
+      },
+      {
+        "id": "U7",
+        "file": "tests/test_retry.py",
+        "language": "py",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              31,
+              31
+            ],
+            [
+              33,
+              36
+            ]
+          ],
+          "old": [
+            [
+              29,
+              29
+            ]
+          ]
+        },
+        "patch": "--- a/tests/test_retry.py\n+++ b/tests/test_retry.py\n@@ -26,5 +28,9 @@\n \n \n def test_gives_up_after_max_attempts():\n-    with pytest.raises(retry.HttpError):\n+    with pytest.raises(retry.RetryExhausted) as info:\n         retry.call_with_retry(flaky([503] * 5), sleep=lambda s: None)\n+    assert info.value.attempts == 4\n+    assert isinstance(info.value.__cause__, retry.HttpError)\n+\n+\n",
+        "judgeView": "--- a/tests/test_retry.py\n+++ b/tests/test_retry.py\n@@ -26,5 +28,9 @@\n \n \n def test_gives_up_after_max_attempts():\n-    with pytest.raises(retry.HttpError):\n+    with pytest.raises(retry.RetryExhausted) as info:\n         retry.call_with_retry(flaky([503] * 5), sleep=lambda s: None)\n+    assert info.value.attempts == 4\n+    assert isinstance(info.value.__cause__, retry.HttpError)\n+\n+\n",
+        "contentHash": "d03bea175d5ce2ca48659f5949cb86ce6757045657c90a2b68f38257d6bfbfa5",
+        "tokenEstimate": 129,
+        "facts": [],
+        "symbol": {
+          "name": "test_gives_up_after_max_attempts",
+          "kind": "test",
+          "startLine": 30,
+          "endLine": 34
+        },
+        "before": "def test_gives_up_after_max_attempts():\n    with pytest.raises(retry.HttpError):\n        retry.call_with_retry(flaky([503] * 5), sleep=lambda s: None)",
+        "after": "def test_gives_up_after_max_attempts():\n    with pytest.raises(retry.RetryExhausted) as info:\n        retry.call_with_retry(flaky([503] * 5), sleep=lambda s: None)\n    assert info.value.attempts == 4\n    assert isinstance(info.value.__cause__, retry.HttpError)",
+        "testTitles": [
+          "test_gives_up_after_max_attempts"
+        ]
+      },
+      {
+        "id": "U8",
+        "file": "tests/test_retry.py",
+        "language": "py",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              37,
+              41
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/tests/test_retry.py\n+++ b/tests/test_retry.py\n@@ -30,0 +37,5 @@\n+def test_backoff_doubles_each_attempt():\n+    assert retry.backoff_delay(1, 0.5, 30.0) == 0.5\n+    assert retry.backoff_delay(4, 0.5, 30.0) == 4.0\n+\n+\n",
+        "judgeView": "--- a/tests/test_retry.py\n+++ b/tests/test_retry.py\n@@ -30,0 +37,5 @@\n+def test_backoff_doubles_each_attempt():\n+    assert retry.backoff_delay(1, 0.5, 30.0) == 0.5\n+    assert retry.backoff_delay(4, 0.5, 30.0) == 4.0\n+\n+\n",
+        "contentHash": "beee7b0982bcf1ae11a4603fe530511aa54aa2be15649cb1e5a463aa5e8c1f2b",
+        "tokenEstimate": 74,
+        "facts": [],
+        "symbol": {
+          "name": "test_backoff_doubles_each_attempt",
+          "kind": "test",
+          "startLine": 37,
+          "endLine": 39
+        },
+        "after": "def test_backoff_doubles_each_attempt():\n    assert retry.backoff_delay(1, 0.5, 30.0) == 0.5\n    assert retry.backoff_delay(4, 0.5, 30.0) == 4.0",
+        "testTitles": [
+          "test_backoff_doubles_each_attempt"
+        ]
+      },
+      {
+        "id": "U9",
+        "file": "tests/test_retry.py",
+        "language": "py",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              42,
+              45
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/tests/test_retry.py\n+++ b/tests/test_retry.py\n@@ -30,0 +42,4 @@\n+def test_backoff_is_capped():\n+    assert retry.backoff_delay(10, 0.5, 8.0) == 8.0\n+\n+\n",
+        "judgeView": "--- a/tests/test_retry.py\n+++ b/tests/test_retry.py\n@@ -30,0 +42,4 @@\n+def test_backoff_is_capped():\n+    assert retry.backoff_delay(10, 0.5, 8.0) == 8.0\n+\n+\n",
+        "contentHash": "da6720253ab1f63033a643977e938015ce1294695d3dffcfbbd5a4d2837006f5",
+        "tokenEstimate": 53,
+        "facts": [],
+        "symbol": {
+          "name": "test_backoff_is_capped",
+          "kind": "test",
+          "startLine": 42,
+          "endLine": 43
+        },
+        "after": "def test_backoff_is_capped():\n    assert retry.backoff_delay(10, 0.5, 8.0) == 8.0",
+        "testTitles": [
+          "test_backoff_is_capped"
+        ]
+      },
+      {
+        "id": "U10",
+        "file": "tests/test_retry.py",
+        "language": "py",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              46,
+              52
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/tests/test_retry.py\n+++ b/tests/test_retry.py\n@@ -30,0 +46,7 @@\n+def test_sleeps_grow_between_attempts():\n+    sleeps = []\n+    retry.call_with_retry(flaky([503, 503, 503]), sleep=sleeps.append)\n+    assert sleeps[0] == 0.5\n+    assert sleeps[0] < sleeps[1] < sleeps[2]\n+\n+\n",
+        "judgeView": "--- a/tests/test_retry.py\n+++ b/tests/test_retry.py\n@@ -30,0 +46,7 @@\n+def test_sleeps_grow_between_attempts():\n+    sleeps = []\n+    retry.call_with_retry(flaky([503, 503, 503]), sleep=sleeps.append)\n+    assert sleeps[0] == 0.5\n+    assert sleeps[0] < sleeps[1] < sleeps[2]\n+\n+\n",
+        "contentHash": "3a75ad58a95e99e6952f76d2d3b4668c963e99c677f89c184281b1984d1e5328",
+        "tokenEstimate": 94,
+        "facts": [],
+        "symbol": {
+          "name": "test_sleeps_grow_between_attempts",
+          "kind": "test",
+          "startLine": 46,
+          "endLine": 50
+        },
+        "after": "def test_sleeps_grow_between_attempts():\n    sleeps = []\n    retry.call_with_retry(flaky([503, 503, 503]), sleep=sleeps.append)\n    assert sleeps[0] == 0.5\n    assert sleeps[0] < sleeps[1] < sleeps[2]",
+        "testTitles": [
+          "test_sleeps_grow_between_attempts"
+        ]
+      },
+      {
+        "id": "U11",
+        "file": "tests/test_retry.py",
+        "language": "py",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              53,
+              59
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/tests/test_retry.py\n+++ b/tests/test_retry.py\n@@ -30,0 +53,7 @@\n+def test_retryable_statuses():\n+    assert retry.is_retryable(retry.HttpError(429))\n+    assert retry.is_retryable(retry.HttpError(503))\n+    assert not retry.is_retryable(retry.HttpError(500))\n+    assert not retry.is_retryable(retry.HttpError(404))\n+\n+\n",
+        "judgeView": "--- a/tests/test_retry.py\n+++ b/tests/test_retry.py\n@@ -30,0 +53,7 @@\n+def test_retryable_statuses():\n+    assert retry.is_retryable(retry.HttpError(429))\n+    assert retry.is_retryable(retry.HttpError(503))\n+    assert not retry.is_retryable(retry.HttpError(500))\n+    assert not retry.is_retryable(retry.HttpError(404))\n+\n+\n",
+        "contentHash": "ffe7672b96c4fbd81ad7a342adce9361aa1fe4ff9ba28f038d086148113043da",
+        "tokenEstimate": 109,
+        "facts": [],
+        "symbol": {
+          "name": "test_retryable_statuses",
+          "kind": "test",
+          "startLine": 53,
+          "endLine": 57
+        },
+        "after": "def test_retryable_statuses():\n    assert retry.is_retryable(retry.HttpError(429))\n    assert retry.is_retryable(retry.HttpError(503))\n    assert not retry.is_retryable(retry.HttpError(500))\n    assert not retry.is_retryable(retry.HttpError(404))",
+        "testTitles": [
+          "test_retryable_statuses"
+        ]
+      },
+      {
+        "id": "U12",
+        "file": "tests/test_retry.py",
+        "language": "py",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              60,
+              66
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/tests/test_retry.py\n+++ b/tests/test_retry.py\n@@ -30,0 +60,7 @@\n+def test_other_statuses_are_not_retried():\n+    sleeps = []\n+    with pytest.raises(retry.HttpError):\n+        retry.call_with_retry(flaky([404]), sleep=sleeps.append)\n+    assert sleeps == []\n+\n+\n",
+        "judgeView": "--- a/tests/test_retry.py\n+++ b/tests/test_retry.py\n@@ -30,0 +60,7 @@\n+def test_other_statuses_are_not_retried():\n+    sleeps = []\n+    with pytest.raises(retry.HttpError):\n+        retry.call_with_retry(flaky([404]), sleep=sleeps.append)\n+    assert sleeps == []\n+\n+\n",
+        "contentHash": "2642918ad8e473d0afc78a644dfb6ef8fa76e074e58c0250815533593c79f04f",
+        "tokenEstimate": 90,
+        "facts": [],
+        "symbol": {
+          "name": "test_other_statuses_are_not_retried",
+          "kind": "test",
+          "startLine": 60,
+          "endLine": 64
+        },
+        "after": "def test_other_statuses_are_not_retried():\n    sleeps = []\n    with pytest.raises(retry.HttpError):\n        retry.call_with_retry(flaky([404]), sleep=sleeps.append)\n    assert sleeps == []",
+        "testTitles": [
+          "test_other_statuses_are_not_retried"
+        ]
+      },
+      {
+        "id": "U13",
+        "file": "tests/test_retry.py",
+        "language": "py",
+        "kind": "test",
+        "changeType": "modified",
+        "lines": {
+          "new": [
+            [
+              67,
+              70
+            ]
+          ],
+          "old": []
+        },
+        "patch": "--- a/tests/test_retry.py\n+++ b/tests/test_retry.py\n@@ -30,0 +67,4 @@\n+def test_logs_each_retry(caplog):\n+    caplog.set_level(logging.WARNING, logger=\"client.retry\")\n+    retry.call_with_retry(flaky([503]), sleep=lambda s: None)\n+    assert caplog.messages == [\"retry 2/4 in 0.5s\"]\n",
+        "judgeView": "--- a/tests/test_retry.py\n+++ b/tests/test_retry.py\n@@ -30,0 +67,4 @@\n+def test_logs_each_retry(caplog):\n+    caplog.set_level(logging.WARNING, logger=\"client.retry\")\n+    retry.call_with_retry(flaky([503]), sleep=lambda s: None)\n+    assert caplog.messages == [\"retry 2/4 in 0.5s\"]\n",
+        "contentHash": "2e32d1373c9206f1b322da4b0d51b3c976a30a12c08471d111e73afeb63454d1",
+        "tokenEstimate": 95,
+        "facts": [],
+        "symbol": {
+          "name": "test_logs_each_retry",
+          "kind": "test",
+          "startLine": 67,
+          "endLine": 70
+        },
+        "after": "def test_logs_each_retry(caplog):\n    caplog.set_level(logging.WARNING, logger=\"client.retry\")\n    retry.call_with_retry(flaky([503]), sleep=lambda s: None)\n    assert caplog.messages == [\"retry 2/4 in 0.5s\"]",
+        "testTitles": [
+          "test_logs_each_retry"
+        ]
+      }
+    ],
+    "requirementVerdicts": [
+      {
+        "requirementId": "R1",
+        "status": "partial",
+        "confidence": 0.5,
+        "calibrated": false,
+        "tested": "untested",
+        "evidence": [
+          {
+            "unitId": "U5",
+            "file": "client/retry.py",
+            "lines": [
+              [
+                43,
+                43
+              ],
+              [
+                45,
+                49
+              ]
+            ],
+            "probability": 0.8
+          }
+        ],
+        "testEvidence": [],
+        "answers": [
+          {
+            "call": "issue.v0",
+            "question": "ambiguous",
+            "type": "noul",
+            "value": 0.3
+          },
+          {
+            "call": "issue.v0",
+            "question": "checkable_in_code",
+            "type": "noul",
+            "value": 0.85
+          },
+          {
+            "call": "forward.v0",
+            "question": "coverage",
+            "type": "score",
+            "value": 1.8,
+            "probabilities": {
+              "0": 0.1,
+              "1": 0.2,
+              "2": 0.5,
+              "3": 0.2
+            },
+            "confidence": 0.5
+          },
+          {
+            "call": "forward.v0",
+            "question": "conflict",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "forward.v0",
+            "question": "evidence",
+            "type": "choice",
+            "value": "U5",
+            "probabilities": {
+              "U4": 0.039999999999999994,
+              "U5": 0.8,
+              "U2": 0.039999999999999994,
+              "U1": 0.039999999999999994,
+              "U3": 0.039999999999999994,
+              "none": 0.039999999999999994
+            },
+            "confidence": 0.8
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_as_stated",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_differently",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "tests.v0",
+            "question": "test_evidence",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "U10": 0.03125,
+              "U7": 0.03125,
+              "U9": 0.03125,
+              "U13": 0.03125,
+              "U8": 0.03125,
+              "U6": 0.03125,
+              "U11": 0.03125,
+              "U12": 0.03125,
+              "none": 0.75
+            },
+            "confidence": 0.75
+          }
+        ],
+        "reasons": [
+          {
+            "template": "req.partial",
+            "text": "Mostly implemented, but at least one stated case, value or condition is not (`0.50`)."
+          }
+        ]
+      },
+      {
+        "requirementId": "R2",
+        "status": "partial",
+        "confidence": 0.5,
+        "calibrated": false,
+        "tested": "untested",
+        "evidence": [
+          {
+            "unitId": "U3",
+            "file": "client/retry.py",
+            "lines": [
+              [
+                23,
+                30
+              ]
+            ],
+            "probability": 0.8
+          }
+        ],
+        "testEvidence": [],
+        "answers": [
+          {
+            "call": "issue.v0",
+            "question": "ambiguous",
+            "type": "noul",
+            "value": 0.3
+          },
+          {
+            "call": "issue.v0",
+            "question": "checkable_in_code",
+            "type": "noul",
+            "value": 0.85
+          },
+          {
+            "call": "forward.v0",
+            "question": "coverage",
+            "type": "score",
+            "value": 1.8,
+            "probabilities": {
+              "0": 0.1,
+              "1": 0.2,
+              "2": 0.5,
+              "3": 0.2
+            },
+            "confidence": 0.5
+          },
+          {
+            "call": "forward.v0",
+            "question": "conflict",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "forward.v0",
+            "question": "evidence",
+            "type": "choice",
+            "value": "U3",
+            "probabilities": {
+              "U3": 0.8,
+              "U1": 0.039999999999999994,
+              "U2": 0.039999999999999994,
+              "U4": 0.039999999999999994,
+              "U5": 0.039999999999999994,
+              "none": 0.039999999999999994
+            },
+            "confidence": 0.8
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_as_stated",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_differently",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "tests.v0",
+            "question": "test_evidence",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "U12": 0.03125,
+              "U11": 0.03125,
+              "U10": 0.03125,
+              "U13": 0.03125,
+              "U7": 0.03125,
+              "U6": 0.03125,
+              "U8": 0.03125,
+              "U9": 0.03125,
+              "none": 0.75
+            },
+            "confidence": 0.75
+          }
+        ],
+        "reasons": [
+          {
+            "template": "req.partial",
+            "text": "Mostly implemented, but at least one stated case, value or condition is not (`0.50`)."
+          }
+        ]
+      },
+      {
+        "requirementId": "R3",
+        "status": "partial",
+        "confidence": 0.5,
+        "calibrated": false,
+        "tested": "untested",
+        "evidence": [
+          {
+            "unitId": "U5",
+            "file": "client/retry.py",
+            "lines": [
+              [
+                43,
+                43
+              ],
+              [
+                45,
+                49
+              ]
+            ],
+            "probability": 0.8
+          }
+        ],
+        "testEvidence": [],
+        "answers": [
+          {
+            "call": "issue.v0",
+            "question": "ambiguous",
+            "type": "noul",
+            "value": 0.3
+          },
+          {
+            "call": "issue.v0",
+            "question": "checkable_in_code",
+            "type": "noul",
+            "value": 0.85
+          },
+          {
+            "call": "forward.v0",
+            "question": "coverage",
+            "type": "score",
+            "value": 1.8,
+            "probabilities": {
+              "0": 0.1,
+              "1": 0.2,
+              "2": 0.5,
+              "3": 0.2
+            },
+            "confidence": 0.5
+          },
+          {
+            "call": "forward.v0",
+            "question": "conflict",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "forward.v0",
+            "question": "evidence",
+            "type": "choice",
+            "value": "U5",
+            "probabilities": {
+              "U5": 0.8,
+              "U1": 0.039999999999999994,
+              "U4": 0.039999999999999994,
+              "U3": 0.039999999999999994,
+              "U2": 0.039999999999999994,
+              "none": 0.039999999999999994
+            },
+            "confidence": 0.8
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_as_stated",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_differently",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "tests.v0",
+            "question": "test_evidence",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "U7": 0.03125,
+              "U11": 0.03125,
+              "U8": 0.03125,
+              "U10": 0.03125,
+              "U12": 0.03125,
+              "U13": 0.03125,
+              "U6": 0.03125,
+              "U9": 0.03125,
+              "none": 0.75
+            },
+            "confidence": 0.75
+          }
+        ],
+        "reasons": [
+          {
+            "template": "req.partial",
+            "text": "Mostly implemented, but at least one stated case, value or condition is not (`0.50`)."
+          }
+        ]
+      },
+      {
+        "requirementId": "R4",
+        "status": "done",
+        "confidence": 0.7,
+        "calibrated": false,
+        "tested": "as_stated",
+        "evidence": [
+          {
+            "unitId": "U5",
+            "file": "client/retry.py",
+            "lines": [
+              [
+                43,
+                43
+              ],
+              [
+                45,
+                49
+              ]
+            ],
+            "probability": 0.8
+          }
+        ],
+        "testEvidence": [
+          {
+            "unitId": "U13",
+            "file": "tests/test_retry.py",
+            "lines": [
+              [
+                67,
+                70
+              ]
+            ],
+            "probability": 0.75
+          }
+        ],
+        "answers": [
+          {
+            "call": "issue.v0",
+            "question": "ambiguous",
+            "type": "noul",
+            "value": 0.3
+          },
+          {
+            "call": "issue.v0",
+            "question": "checkable_in_code",
+            "type": "noul",
+            "value": 0.85
+          },
+          {
+            "call": "forward.v0",
+            "question": "coverage",
+            "type": "score",
+            "value": 2.55,
+            "probabilities": {
+              "0": 0.05,
+              "1": 0.05,
+              "2": 0.2,
+              "3": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "forward.v0",
+            "question": "conflict",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "forward.v0",
+            "question": "evidence",
+            "type": "choice",
+            "value": "U5",
+            "probabilities": {
+              "U5": 0.8,
+              "U4": 0.039999999999999994,
+              "U2": 0.039999999999999994,
+              "U1": 0.039999999999999994,
+              "U3": 0.039999999999999994,
+              "none": 0.039999999999999994
+            },
+            "confidence": 0.8
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_as_stated",
+            "type": "noul",
+            "value": 0.7
+          },
+          {
+            "call": "tests.v0",
+            "question": "asserts_differently",
+            "type": "noul",
+            "value": 0.1
+          },
+          {
+            "call": "tests.v0",
+            "question": "test_evidence",
+            "type": "choice",
+            "value": "U13",
+            "probabilities": {
+              "U13": 0.75,
+              "U7": 0.03125,
+              "U8": 0.03125,
+              "U10": 0.03125,
+              "U9": 0.03125,
+              "U11": 0.03125,
+              "U6": 0.03125,
+              "U12": 0.03125,
+              "none": 0.03125
+            },
+            "confidence": 0.75
+          }
+        ],
+        "reasons": [
+          {
+            "template": "req.done",
+            "text": "Implemented (`0.70`)."
+          }
+        ]
+      }
+    ],
+    "unitVerdicts": [
+      {
+        "unitId": "U1",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      },
+      {
+        "unitId": "U2",
+        "role": "implements",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "R4",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.7,
+              "none": 0.07500000000000001
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.implements",
+            "text": "Implements R4."
+          }
+        ],
+        "servesRequirementId": "R4"
+      },
+      {
+        "unitId": "U3",
+        "role": "implements",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "R2",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.7,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.07500000000000001
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.implements",
+            "text": "Implements R2."
+          }
+        ],
+        "servesRequirementId": "R2"
+      },
+      {
+        "unitId": "U4",
+        "role": "implements",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "R4",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.7,
+              "none": 0.07500000000000001
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.implements",
+            "text": "Implements R4."
+          }
+        ],
+        "servesRequirementId": "R4"
+      },
+      {
+        "unitId": "U5",
+        "role": "implements",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "R4",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.7,
+              "none": 0.07500000000000001
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.implements",
+            "text": "Implements R4."
+          }
+        ],
+        "servesRequirementId": "R4"
+      },
+      {
+        "unitId": "U6",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      },
+      {
+        "unitId": "U7",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      },
+      {
+        "unitId": "U8",
+        "role": "implements",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "R4",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.7,
+              "none": 0.07500000000000001
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.implements",
+            "text": "Implements R4."
+          }
+        ],
+        "servesRequirementId": "R4"
+      },
+      {
+        "unitId": "U9",
+        "role": "implements",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "R1",
+            "probabilities": {
+              "R1": 0.7,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.07500000000000001
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.implements",
+            "text": "Implements R1."
+          }
+        ],
+        "servesRequirementId": "R1"
+      },
+      {
+        "unitId": "U10",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      },
+      {
+        "unitId": "U11",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      },
+      {
+        "unitId": "U12",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      },
+      {
+        "unitId": "U13",
+        "role": "unexplained_behavioral",
+        "answers": [
+          {
+            "call": "reverse.v0",
+            "question": "serves",
+            "type": "choice",
+            "value": "none",
+            "probabilities": {
+              "R1": 0.07500000000000001,
+              "R2": 0.07500000000000001,
+              "R3": 0.07500000000000001,
+              "R4": 0.07500000000000001,
+              "none": 0.7
+            },
+            "confidence": 0.7
+          },
+          {
+            "call": "reverse.v0",
+            "question": "plumbing",
+            "type": "noul",
+            "value": 0.2
+          },
+          {
+            "call": "reverse.v0",
+            "question": "behavior_change",
+            "type": "noul",
+            "value": 0.65
+          },
+          {
+            "call": "reverse.v0",
+            "question": "loosens_test",
+            "type": "noul",
+            "value": 0.1
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ]
+      }
+    ],
+    "claims": [
+      {
+        "sentence": "Exponential backoff and selective retries",
+        "claimsDone": 0.2,
+        "claimsDeferred": 0.1
+      },
+      {
+        "sentence": "call_with_retry now waits backoff_delay(attempt) between attempts, which doubles from base_delay up to max_delay. is_retryable limits retries to 429, 502, 503 and 504.",
+        "claimsDone": 0.2,
+        "claimsDeferred": 0.1
+      },
+      {
+        "sentence": "After the last attempt the helper raises RetryExhausted chained to the last HttpError, and every retry logs a warning with the attempt and delay.",
+        "requirementId": "R4",
+        "claimsDone": 0.2,
+        "claimsDeferred": 0.1
+      },
+      {
+        "sentence": "The existing give-up test now expects RetryExhausted.",
+        "claimsDone": 0.2,
+        "claimsDeferred": 0.1
+      }
+    ],
+    "findings": [
+      {
+        "id": "F-R1",
+        "type": "requirement",
+        "targetId": "R1",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.5,
+        "locations": [
+          {
+            "file": "client/retry.py",
+            "lines": [
+              43,
+              43
+            ]
+          },
+          {
+            "file": "client/retry.py",
+            "lines": [
+              45,
+              49
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "req.partial",
+            "text": "Mostly implemented, but at least one stated case, value or condition is not (`0.50`)."
+          }
+        ],
+        "contentKey": "req:fedcd2a054889cd2a3ccccc3a8060819"
+      },
+      {
+        "id": "F-R2",
+        "type": "requirement",
+        "targetId": "R2",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.5,
+        "locations": [
+          {
+            "file": "client/retry.py",
+            "lines": [
+              23,
+              30
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "req.partial",
+            "text": "Mostly implemented, but at least one stated case, value or condition is not (`0.50`)."
+          }
+        ],
+        "contentKey": "req:5d8cafb07c3e1780f7bf0d11174308f6"
+      },
+      {
+        "id": "F-R3",
+        "type": "requirement",
+        "targetId": "R3",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.5,
+        "locations": [
+          {
+            "file": "client/retry.py",
+            "lines": [
+              43,
+              43
+            ]
+          },
+          {
+            "file": "client/retry.py",
+            "lines": [
+              45,
+              49
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "req.partial",
+            "text": "Mostly implemented, but at least one stated case, value or condition is not (`0.50`)."
+          }
+        ],
+        "contentKey": "req:7f094c8b77c10d673e5aaed7a7145172"
+      },
+      {
+        "id": "F-U1",
+        "type": "unit",
+        "targetId": "U1",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.65,
+        "locations": [
+          {
+            "file": "client/retry.py",
+            "lines": [
+              17,
+              17
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ],
+        "contentKey": "unit:df26bf7d181b8f07bd92a8e1d58897ad"
+      },
+      {
+        "id": "F-U6",
+        "type": "unit",
+        "targetId": "U6",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.65,
+        "locations": [
+          {
+            "file": "tests/test_retry.py",
+            "lines": [
+              1,
+              2
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ],
+        "contentKey": "unit:fc0a228e5ff04ec22e70b7807e00a021"
+      },
+      {
+        "id": "F-U7",
+        "type": "unit",
+        "targetId": "U7",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.65,
+        "locations": [
+          {
+            "file": "tests/test_retry.py",
+            "lines": [
+              31,
+              31
+            ]
+          },
+          {
+            "file": "tests/test_retry.py",
+            "lines": [
+              33,
+              36
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ],
+        "contentKey": "unit:d03bea175d5ce2ca48659f5949cb86ce"
+      },
+      {
+        "id": "F-U10",
+        "type": "unit",
+        "targetId": "U10",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.65,
+        "locations": [
+          {
+            "file": "tests/test_retry.py",
+            "lines": [
+              46,
+              52
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ],
+        "contentKey": "unit:3a75ad58a95e99e6952f76d2d3b4668c"
+      },
+      {
+        "id": "F-U11",
+        "type": "unit",
+        "targetId": "U11",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.65,
+        "locations": [
+          {
+            "file": "tests/test_retry.py",
+            "lines": [
+              53,
+              59
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ],
+        "contentKey": "unit:ffe7672b96c4fbd81ad7a342adce9361"
+      },
+      {
+        "id": "F-U12",
+        "type": "unit",
+        "targetId": "U12",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.65,
+        "locations": [
+          {
+            "file": "tests/test_retry.py",
+            "lines": [
+              60,
+              66
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ],
+        "contentKey": "unit:2642918ad8e473d0afc78a644dfb6ef8"
+      },
+      {
+        "id": "F-U13",
+        "type": "unit",
+        "targetId": "U13",
+        "priority": "P1",
+        "route": "reviewer_attention",
+        "confidence": 0.65,
+        "locations": [
+          {
+            "file": "tests/test_retry.py",
+            "lines": [
+              67,
+              70
+            ]
+          }
+        ],
+        "reasons": [
+          {
+            "template": "unit.unexplained_behavioral",
+            "text": "Changes observable behavior that no requirement mentions (`0.65`)."
+          }
+        ],
+        "contentKey": "unit:2e32d1373c9206f1b322da4b0d51b3c9"
+      }
+    ],
+    "summary": {
+      "counts": {
+        "partial": 3,
+        "done": 1,
+        "unexplained_behavioral": 7,
+        "implements": 6,
+        "P1": 10
+      },
+      "mode": "comment_only"
+    },
+    "warnings": [],
+    "usage": {
+      "jevInputTokens": 0,
+      "llmInputTokens": 0,
+      "llmOutputTokens": 0,
+      "costUsd": 0,
+      "latencyMs": 0,
+      "calls": 0
+    }
+  }
+}

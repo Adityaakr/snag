@@ -34,7 +34,7 @@ describe('single_pass baseline', () => {
       ],
       [`single_pass_remit_requirements:${drop.id}`]: [
         {
-          requirements: [req('R1', 'missing'), req('R2', 'done'), req('R3', 'done'), req('R4', 'done')],
+          requirements: [req('R1', 'missing'), req('R2', 'missing'), req('R3', 'done'), req('R4', 'done')],
           unexplained: [],
         },
       ],

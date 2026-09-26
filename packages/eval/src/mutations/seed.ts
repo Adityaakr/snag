@@ -5,6 +5,7 @@
  */
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
+import { REQUIREMENT_STATUSES } from '@remit/core';
 import { z } from 'zod';
 
 const Ref = z.object({ file: z.string(), symbol: z.string().optional() });
@@ -32,6 +33,9 @@ export const SeedRequirementSchema = z.object({
   flip: z.object({ impl: Edit, test: Edit }).optional(),
   /** partial_requirement: one case of a multi-case requirement and its test case. */
   partial: z.object({ impl: Removal, test: Removal }).optional(),
+  /** Other requirements that stop holding when this one is dropped, with their true status (for example, an error
+   * type that only the dropped code threw). */
+  dropLabels: z.record(z.string(), z.enum(REQUIREMENT_STATUSES)).optional(),
   /** unwire: the call site of the requirement's new function; the call is replaced by its first argument. */
   unwire: z.object({ file: z.string(), symbol: z.string(), callee: z.string() }).optional(),
 });
