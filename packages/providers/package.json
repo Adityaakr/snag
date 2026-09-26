@@ -16,9 +16,16 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "0.128.0",
+    "@octokit/graphql": "9.0.5",
+    "@octokit/rest": "22.0.1",
     "@remit/core": "workspace:*",
     "@typesafe-ai/sdk": "0.6.0",
+    "diff": "9.0.0",
     "openai": "7.23.0",
     "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@remit/analysis": "workspace:*",
+    "msw": "2.15.0"
   }
 }

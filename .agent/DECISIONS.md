@@ -89,3 +89,10 @@ Append-only. Each entry: date, decision, alternatives, why. Deviations from BUIL
 - A `refusal` or `max_tokens` stop is a typed error with a fix hint. Server-side refusal fallbacks are not enabled; extraction on refusal falls back to the task-list fast path in the pipeline (M3).
 - SDK retries are off (`maxRetries: 0`) for Anthropic and OpenAI-compatible; Remit's shared backoff handles 429/529/5xx/timeouts.
 - Pricing lives in config: `claude-opus-5-5` is `$4` input and `$20` output per million tokens.
+
+## 2026-09-26 D14 GitHub adapter details
+- A comment by the issue opener is role `author` even when the opener is also an OWNER or MEMBER; both roles may amend requirements, so the order only affects labels.
+- Remit's own comments are recognized by the hidden `<!-- remit:... -->` marker, not by login, so a renamed app is still skipped.
+- The PR diff is rebuilt from the files API: GitHub patches get `diff --git`/`---`/`+++` headers; files without a patch are diffed locally from base and head contents (head read from the fork for fork PRs); binary or over-`1 MB` files become binary markers and are listed as ignored.
+- Rate limits: an exhausted primary limit waits until `x-ratelimit-reset` plus one second (capped at 60 s per wait by the shared backoff, up to 5 attempts); secondary limits honor `retry-after`.
+- Linked-issue parsing ignores code spans, fenced code and HTML comments, and parses issue URLs as text only (no fetching, 9 rule 7).
