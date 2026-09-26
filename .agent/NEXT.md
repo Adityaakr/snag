@@ -1,9 +1,9 @@
 # Next
 
-Milestone: M4 Retrieval, Jev question sets, verdicts, routing
-Task: M4 gate.
+Milestone: M5 CLI end to end, renderers, demo
+Task: renderers.
 
 Next action:
-1. Run the `milestone-verifier` subagent on .agent/milestones/M4.md; fix every gap and rerun until VERDICT: PASS.
-2. Set M4 DONE and M5 IN_PROGRESS, log it, commit, `git tag m4-done`.
-3. Start M5: renderers in packages/core/src/render (terminal, sticky comment E.1, check-run summary and annotations, rework E.2, issue checklist E.3, JSON, SARIF 2.1.0) with sanitization per 6.10, then `remit review` (GitHub and local modes, all flags, exit codes), `remit init`, `remit demo` (scenarios 1 and 2 offline, under 10 s), README quickstart verified in a clean clone, first dogfood run (3.5).
+1. packages/core/src/render/: sanitize (6.10: escape markdown, neutralize @mentions with a zero-width joiner, strip HTML and images, URLs as inline code, strip bidi/invisible, truncate quotes to 200), then sticky comment (E.1, hidden marker), check-run title/summary/annotations model (50 per batch), rework comment (E.2 with JSON block), issue checklist (E.3), terminal table (icons and words, never color alone), JSON, SARIF 2.1.0 (unit and fact findings). Snapshot tests with the golden results.
+2. `remit review` (local and GitHub modes, all 10.1 flags, exit codes 0 to 4), `remit init`, `remit demo` (scenarios 1 and 2 offline, under 10 s).
+3. README quickstart verified in a clean clone; first dogfood run logged in EXPERIMENTS.md (3.5).

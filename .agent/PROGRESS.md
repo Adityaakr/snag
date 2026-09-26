@@ -50,7 +50,7 @@ Status: DONE
 - [x] `remit extract <issue-url|file>`. (evidence: cli/src/commands/extract.test.ts; `pnpm remit extract fixtures/extraction/checklist/issue.md`, b918cf4)
 
 ## M4 Retrieval, Jev question sets, verdicts, routing
-Status: IN_PROGRESS
+Status: DONE
 - [x] Retrieval per 6.5: the all-in shortcut; BM25 with boosts; `rerank.v0` over budget; the widen pass; test retrieval; base-code retrieval. (evidence: analysis/src/retrieval/retrieval.test.ts + golden large_diff (rerank path, widen finds R2), 2c15d50)
 - [x] The question sets `issue.v0`, `forward.v0`, `tests.v0`, `reverse.v0`, `preexisting.v0`, `claims.v0` and `rerank.v0`, implemented exactly as in Appendix C, as `qs-0.1.0`. (evidence: packages/core/src/questions/questions.test.ts + issue.test.ts (verbatim against Appendix C), fe96bde)
 - [x] The verdict engine and unit rules from 6.7 as pure functions. Table-driven tests cover every branch and every threshold edge. (evidence: packages/core/src/verdicts/verdicts.test.ts (every branch and threshold edge), 6725d8c)
@@ -60,7 +60,7 @@ Status: IN_PROGRESS
 - [x] Golden scenarios 1 to 18 (Appendix D) pass with scripted Jev answers, including the state assertions for blindness and comment stripping. (evidence: pipeline/src/golden/golden.test.ts (18 scenarios, blindness and comment-stripping state assertions), 2c15d50)
 
 ## M5 CLI end to end, renderers, demo
-Status: TODO
+Status: IN_PROGRESS
 - [ ] `remit review` in GitHub and local modes, with every flag in 10.1.
 - [ ] `remit init`, `remit doctor` and `remit demo`. The demo runs offline on scenarios 1 and 2 in under `10 s`.
 - [ ] Renderers, with snapshot tests: terminal; sticky comment (Appendix E.1); check-run summary and annotations model; rework comment (E.2); issue checklist (E.3); JSON; SARIF 2.1.0.
