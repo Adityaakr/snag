@@ -41,11 +41,11 @@ Status: BLOCKED-HUMAN
 
 ## M3 Blind requirement extraction
 Status: IN_PROGRESS
-- [ ] Extraction prompt v0 (Appendix B.1) is versioned `xp-0.1.0`. The extractor accepts only `IssueSnapshot`.; The architecture test and the pipeline blindness test from 6.2 pass..
-- [ ] Quote validation with normalization and one repair call. Unanchored items are dropped with warnings.
-- [ ] The task-list fast path and all three `extraction.mode` values.
-- [ ] Amendments, non-goals, examples, open questions with readings, and `checkableInCode`.
-- [ ] The `issue.v0` Jev call for each requirement (ambiguity and checkability).
+- [x] Extraction prompt v0 (Appendix B.1) is versioned `xp-0.1.0`. The extractor accepts only `IssueSnapshot`.; The architecture test and the pipeline blindness test from 6.2 pass.. (evidence: core/src/extract/extract.test.ts (spec-verbatim prompt, architecture test) + pipeline/src/extract.test.ts "never sends PR title, body or diff text", 0637168)
+- [x] Quote validation with normalization and one repair call. Unanchored items are dropped with warnings. (evidence: core extract.test.ts quote anchoring + pipeline extract.test.ts repair and drop tests, 0637168)
+- [x] The task-list fast path and all three `extraction.mode` values. (evidence: pipeline extract.test.ts modes tests + core tasklist tests, 0637168)
+- [x] Amendments, non-goals, examples, open questions with readings, and `checkableInCode`. (evidence: fixtures amended, non_goals, examples, two_issues (readings), prose; checkableInCode refinement test, 0637168)
+- [x] The `issue.v0` Jev call for each requirement (ambiguity and checkability). (evidence: core questions/issue.test.ts (spec wording) + pipeline issue.v0 tests, 0637168)
 - [ ] At least 12 extraction fixtures, with scripted LLM outputs and expected validated results: a checklist issue; a prose issue; an issue amended by a later comment; explicit non-goals; input and output examples; a non-English issue; a requirement that only appears in an image; a very long issue; prompt injection in the issue text; duplicate requirements; a vague issue; two linked issues. With keys, live cassettes are recorded and any differences are noted.
 - [ ] `remit extract <issue-url|file>`.
 
