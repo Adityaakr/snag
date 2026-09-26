@@ -10,7 +10,7 @@ import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import { getCookie, setCookie } from 'hono/cookie';
 import type { DeliveryStore } from './deliveries.js';
-import { type AppDeps, handleEvent } from './events.js';
+import { type AppDeps, handleEvent, runJob } from './events.js';
 import type { Metrics } from './metrics.js';
 import type { SecretStore } from './secrets.js';
 import { errorPage, setupDonePage, setupPage } from './setup.js';
@@ -53,6 +53,7 @@ const SETUP_HEADERS: Record<string, string> = {
 export function createApp(deps: ServerDeps): Hono {
   const app = new Hono();
   const log = deps.log ?? (() => {});
+  deps.queue.setHandler((job, signal) => runJob(job, deps, signal));
 
   app.get('/healthz', (c) => c.text('ok'));
   app.get('/readyz', async (c) =>

@@ -3,6 +3,7 @@
  * and installations. In memory for M7; the Postgres tables replace this in M8 behind the same interface.
  */
 import type { Requirement, ReviewResult } from '@remit/core';
+import type { ReviewInput } from '@remit/pipeline';
 
 export interface ReviewRecord {
   id: string;
@@ -12,6 +13,9 @@ export interface ReviewRecord {
   headSha: string;
   result: ReviewResult;
   createdAt: string;
+  /** The review input (issue snapshots and diff), stored only when payloads are retained. */
+  input?: ReviewInput;
+  retention?: { retainPayloads: boolean; retentionDays: number };
 }
 
 export interface ChecklistRecord {

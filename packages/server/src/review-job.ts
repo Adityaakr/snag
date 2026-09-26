@@ -27,6 +27,7 @@ import { upsertSticky, withMarker } from '@remit/providers';
 import type { Metrics } from './metrics.js';
 import { CONFIG_PATH, loadRepoConfig } from './repo-config.js';
 import type { ReviewRecord, Store } from './store.js';
+import { weakLabels } from './weak-labels.js';
 
 export interface JobDeps {
   /** Jev and LLM providers for a repository's config (keys come from env). */
@@ -114,6 +115,8 @@ export async function reviewPullRequest(
     });
     result.warnings.unshift(...notes);
     check(signal);
+    // Another process may have started a review of a newer push: the latest head wins (10.2).
+    if ((await gh.getPull(ref)).headSha !== pull.headSha) throw new Superseded();
     await publish(gh, ref, result, config, reviewId, run?.id, deps.botLogin);
     const record: ReviewRecord = {
       id: reviewId,
@@ -123,8 +126,23 @@ export async function reviewPullRequest(
       headSha: pull.headSha,
       result,
       createdAt: new Date().toISOString(),
+      input: ingest.input,
+      retention: {
+        retainPayloads: config.retention.retain_payloads,
+        retentionDays: config.retention.retention_days,
+      },
     };
+    const previous = await deps.store.latestReview(repo, ref.number);
     await deps.store.saveReview(record);
+    if (previous) {
+      const existing = new Set(
+        (await deps.store.feedback(repo, ref.number))
+          .filter((f) => f.source === 'implicit')
+          .map((f) => f.contentKey),
+      );
+      for (const label of weakLabels(previous.result, result, { repo, pr: ref.number, at: record.createdAt }))
+        if (!existing.has(label.contentKey)) await deps.store.addFeedback(label);
+    }
     deps.metrics?.observeReview('done', (Date.now() - started) / 1000, result.usage.costUsd, result.findings);
     return { status: 'done', record };
   } catch (e) {

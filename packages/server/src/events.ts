@@ -6,7 +6,7 @@ import { BRAND, sanitize } from '@remit/core';
 import type { GitHubWriter } from '@remit/providers';
 import { z } from 'zod';
 import { confirmChecklist, invalidateChecklist, postChecklist } from './checklist.js';
-import type { JobQueue } from './queue.js';
+import type { JobQueue, JobSpec } from './queue.js';
 import { loadRepoConfig } from './repo-config.js';
 import { type JobDeps, reviewPullRequest } from './review-job.js';
 import { explainMarkdown, HELP, isBotLogin, parseSlash, WRITE_ROLES } from './slash.js';
@@ -17,6 +17,8 @@ export interface AppDeps extends JobDeps {
   queue: JobQueue;
   /** Burst window for `synchronize` events (default 30 s). */
   debounceMs?: number;
+  /** Nightly jobs: retention cleanup and recalibration from feedback (M8). */
+  maintenance?: (kind: 'cleanup' | 'recalibrate') => Promise<void>;
 }
 
 const Repo = z.object({ name: z.string(), owner: z.object({ login: z.string() }) });
@@ -74,14 +76,54 @@ function enqueueReview(
   pr: number,
   debounceMs = 0,
 ) {
-  deps.queue.enqueue(
+  return deps.queue.enqueue(
     `review:${owner}/${repo}#${pr}`,
-    async (signal) => {
-      const gh = await deps.github(installationId, repo);
-      await reviewPullRequest(gh, installationId, { owner, repo, number: pr }, deps, signal);
-    },
+    { kind: 'review', installationId, owner, repo, pr },
     { debounceMs },
   );
+}
+
+/** Runs one queued job (the queue's handler). */
+export async function runJob(job: JobSpec, deps: AppDeps, signal: AbortSignal): Promise<void> {
+  switch (job.kind) {
+    case 'review': {
+      const gh = await deps.github(job.installationId, job.repo);
+      await reviewPullRequest(
+        gh,
+        job.installationId,
+        { owner: job.owner, repo: job.repo, number: job.pr },
+        deps,
+        signal,
+      );
+      return;
+    }
+    case 'slash': {
+      const e = CommentEvent.parse(job.event);
+      const cmd = parseSlash(e.comment.body ?? '');
+      if (cmd) await runSlash(e, cmd, deps);
+      return;
+    }
+    case 'issue': {
+      const ref = { owner: job.owner, repo: job.repo, number: job.number };
+      const gh = await deps.github(job.installationId, job.repo);
+      if (job.action === 'edited') {
+        await invalidateChecklist(gh, ref, deps);
+        return;
+      }
+      const { config } = await loadRepoConfig(gh, ref.owner, ref.repo);
+      const wanted =
+        (job.action === 'labeled' &&
+          config.issue_checklist === 'on_label' &&
+          job.label === config.issue_checklist_label) ||
+        (job.action === 'assigned' && config.issue_checklist === 'on_assign');
+      if (wanted) await postChecklist(gh, ref, deps);
+      return;
+    }
+    case 'cleanup':
+    case 'recalibrate':
+      await deps.maintenance?.(job.kind);
+      return;
+  }
 }
 
 export async function handleEvent(name: string, payload: unknown, deps: AppDeps): Promise<Handled> {
@@ -93,7 +135,7 @@ export async function handleEvent(name: string, payload: unknown, deps: AppDeps)
       if (e.action === 'edited' && !e.changes?.title && !e.changes?.body)
         return { ignored: 'pull_request.edited (no title or body change)' };
       const debounce = e.action === 'synchronize' || e.action === 'edited' ? (deps.debounceMs ?? 30_000) : 0;
-      enqueueReview(
+      await enqueueReview(
         deps,
         e.installation.id,
         e.repository.owner.login,
@@ -108,7 +150,7 @@ export async function handleEvent(name: string, payload: unknown, deps: AppDeps)
       if (e.action !== 'rerequested' || e.check_run.name !== BRAND.checkName)
         return { ignored: `check_run.${e.action}` };
       for (const p of e.check_run.pull_requests)
-        enqueueReview(deps, e.installation.id, e.repository.owner.login, e.repository.name, p.number);
+        await enqueueReview(deps, e.installation.id, e.repository.owner.login, e.repository.name, p.number);
       return { handled: 'check_run.rerequested' };
     }
     case 'issue_comment': {
@@ -117,9 +159,12 @@ export async function handleEvent(name: string, payload: unknown, deps: AppDeps)
       if (isBotLogin(e.comment.user.login, e.comment.user.type)) return { ignored: 'bot comment' };
       const cmd = parseSlash(e.comment.body ?? '');
       if (!cmd) return { ignored: 'no command' };
-      deps.queue.enqueue(
+      await deps.queue.enqueue(
         `slash:${e.repository.owner.login}/${e.repository.name}#${e.issue.number}:${e.comment.id}`,
-        () => runSlash(e, cmd, deps),
+        {
+          kind: 'slash',
+          event: payload,
+        },
       );
       return { handled: `slash.${cmd.name}` };
     }
@@ -127,19 +172,12 @@ export async function handleEvent(name: string, payload: unknown, deps: AppDeps)
       const e = IssueEvent.parse(payload);
       if (!['labeled', 'assigned', 'edited'].includes(e.action)) return { ignored: `issues.${e.action}` };
       const ref = { owner: e.repository.owner.login, repo: e.repository.name, number: e.issue.number };
-      deps.queue.enqueue(`issue:${ref.owner}/${ref.repo}#${ref.number}`, async () => {
-        const gh = await deps.github(e.installation.id, e.repository.name);
-        if (e.action === 'edited') {
-          await invalidateChecklist(gh, ref, deps);
-          return;
-        }
-        const { config } = await loadRepoConfig(gh, ref.owner, ref.repo);
-        const wanted =
-          (e.action === 'labeled' &&
-            config.issue_checklist === 'on_label' &&
-            e.label?.name === config.issue_checklist_label) ||
-          (e.action === 'assigned' && config.issue_checklist === 'on_assign');
-        if (wanted) await postChecklist(gh, ref, deps);
+      await deps.queue.enqueue(`issue:${ref.owner}/${ref.repo}#${ref.number}`, {
+        kind: 'issue',
+        installationId: e.installation.id,
+        ...ref,
+        action: e.action,
+        ...(e.label ? { label: e.label.name } : {}),
       });
       return { handled: `issues.${e.action}` };
     }
@@ -193,7 +231,7 @@ async function runSlash(
       await reply(HELP);
       return;
     case 'review':
-      if (isPr) enqueueReview(deps, e.installation.id, owner, repo, e.issue.number);
+      if (isPr) await enqueueReview(deps, e.installation.id, owner, repo, e.issue.number);
       return;
     case 'confirm': {
       if (isPr) {
