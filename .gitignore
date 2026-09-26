@@ -17,3 +17,7 @@ eval/reports/*
 !eval/reports/.gitkeep
 
 eval/corpora/swebench/raw/
+# The Action ships its bundle (BUILD_PROMPT 10.3).
+!packages/action/dist/
+!packages/action/dist/**
+packages/action/lib/

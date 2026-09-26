@@ -28,7 +28,9 @@
     "eval:test": "tsx --conditions=source packages/cli/src/bin.ts eval mutations --split test",
     "eval:fetch-a": "tsx --conditions=source scripts/eval/fetch-corpus-a.ts",
     "eval:freeze": "node scripts/eval-freeze.mjs",
-    "eval:mine-seeds": "tsx --env-file-if-exists=.env --conditions=source scripts/eval/mine-seeds.ts"
+    "eval:mine-seeds": "tsx --env-file-if-exists=.env --conditions=source scripts/eval/mine-seeds.ts",
+    "server": "tsx --conditions=source packages/server/src/main.ts",
+    "build:action": "pnpm --filter @remit/action build"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.14",

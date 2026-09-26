@@ -7,16 +7,24 @@
   "exports": {
     ".": {
       "source": "./src/index.ts",
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
     }
   },
   "scripts": {
-    "test": "vitest run --root ../.. --project action"
+    "test": "vitest run --root ../.. --project action",
+    "build": "node build.mjs"
   },
   "dependencies": {
+    "@remit/analysis": "workspace:*",
     "@remit/core": "workspace:*",
+    "@remit/pipeline": "workspace:*",
     "@remit/providers": "workspace:*",
-    "@remit/pipeline": "workspace:*"
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@hono/node-server": "2.1.1",
+    "@remit/server": "workspace:*",
+    "esbuild": "0.28.2"
   }
 }

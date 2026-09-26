@@ -1,6 +1,6 @@
 /** Sticky comments (BUILD_PROMPT 6.10, 10.2): one comment per kind and target, found again by a hidden marker. */
 import { BRAND } from '@remit/core';
-import type { GitHubWriter } from '@remit/providers';
+import type { GitHubWriter } from './types.js';
 
 export type StickyKind = 'summary' | 'rework' | 'checklist';
 

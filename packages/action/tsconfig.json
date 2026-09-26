@@ -2,11 +2,14 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "rootDir": "src",
-    "outDir": "dist",
+    "outDir": "lib",
     "customConditions": ["source"]
   },
   "include": ["src"],
   "references": [
+    {
+      "path": "../analysis"
+    },
     {
       "path": "../core"
     },

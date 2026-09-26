@@ -1,0 +1,36 @@
+name: Remit
+description: Checks whether a pull request does what its linked issue asked, and nothing it didn't.
+author: Remit
+branding:
+  icon: check-square
+  color: gray-dark
+inputs:
+  typesafe-api-key:
+    description: TypeSafe key for the Jev judgment model. Without it, questions are skipped and verdicts are uncertain.
+    required: false
+  anthropic-api-key:
+    description: Anthropic key for requirement extraction. Without it, only issue task lists are read.
+    required: false
+  openai-compatible-api-key:
+    description: Key for an OpenAI-compatible extraction model (with extraction.provider openai_compatible in the config).
+    required: false
+  openai-compatible-base-url:
+    description: Base URL for the OpenAI-compatible extraction model.
+    required: false
+  github-token:
+    description: Token for the GitHub API (needs pull-requests write for the comment; contents read).
+    required: false
+    default: ${{ github.token }}
+  mode:
+    description: comment_only, rework or gate. Overrides the config file.
+    required: false
+  config-path:
+    description: Config file on the default branch.
+    required: false
+    default: .remit.yml
+  budget-usd:
+    description: Maximum provider spend for one review, in USD.
+    required: false
+runs:
+  using: node24
+  main: dist/index.js
