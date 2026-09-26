@@ -17,6 +17,7 @@
       "!fixtures/cassettes",
       "!**/__tests__/fixtures",
       "!.claude/settings.json",
+      "!.claude/settings.local.json",
       "!fixtures/golden",
       "!fixtures/extraction",
       "!fixtures/snapshots"
