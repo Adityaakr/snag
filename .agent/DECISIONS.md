@@ -115,3 +115,4 @@ Append-only. Each entry: date, decision, alternatives, why. Deviations from BUIL
 - `issue.v0` refines `checkableInCode` to `checkable >= thresholds.checkable` unless the answer is in the 0.4 to 0.6 no-answer band.
 - CLI caches live in `~/.cache/remit` (or `REMIT_CACHE_DIR`), content-free; `--offline` means replay-only.
 - Live extraction cassettes for the 12 fixtures need keys (B1); the fixtures run on scripted LLM output as the M3 criterion allows.
+- Update 2026-09-26 (M3 gate follow-ups): amendments are enforced in code (a replacement quoted from an "other" commenter is ignored with a warning); a task-list item shorter than 12 characters no longer swallows a longer LLM requirement that contains it; the architecture test checks every module specifier; live cassette recording is a `pending:` live test with blocker B3.
