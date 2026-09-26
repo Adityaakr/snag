@@ -12,6 +12,8 @@ export function redactResult(r: ReviewResult): ReviewResult {
     q.text = NOT_RETAINED;
     q.quote = NOT_RETAINED;
     q.examples = [];
+    // Readings are short rewordings of the issue, so they count as issue text.
+    if (q.openQuestion) q.openQuestion.readings = q.openQuestion.readings.map(() => NOT_RETAINED);
   }
   const clean = (reasons: { template: string; text: string }[]) => {
     for (const x of reasons) x.text = x.template;

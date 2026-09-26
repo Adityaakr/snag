@@ -278,3 +278,36 @@ describe('DbStore data minimization and records', () => {
     expect((await store.evalRuns())[0]).toMatchObject({ id: 'run-a', corpus: 'mutations', costUsd: 0.5 });
   });
 });
+
+describe('redaction and export edges', () => {
+  it('redacts open-question readings', async () => {
+    const r = await reviewed(new MemoryStore());
+    const withQuestion = structuredClone(r.result);
+    const q = withQuestion.requirements[0];
+    if (q) q.openQuestion = { readings: ['before the header', 'after the header'] };
+    expect(redactResult(withQuestion).requirements[0]?.openQuestion?.readings).toEqual([
+      NOT_RETAINED,
+      NOT_RETAINED,
+    ]);
+  });
+
+  it('never exports a payload past its expiry, even before cleanup runs', async () => {
+    const { store, d } = await dbStore();
+    const r = await reviewed(store, 'retention:\n  retain_payloads: true\n');
+    const f = r.result.findings[0] as NonNullable<(typeof r.result.findings)[0]>;
+    await store.addFeedback({
+      repo: 'acme/reports',
+      pr: 77,
+      findingId: f.id,
+      contentKey: f.contentKey,
+      login: 'dev',
+      label: 'agree',
+      source: 'slash',
+      createdAt: new Date().toISOString(),
+    });
+    expect(await store.exportable()).toHaveLength(1);
+    const { payloads } = await import('./schema.js');
+    await d.db.update(payloads).set({ expiresAt: new Date(Date.now() - 1000) });
+    expect(await store.exportable()).toEqual([]);
+  });
+});

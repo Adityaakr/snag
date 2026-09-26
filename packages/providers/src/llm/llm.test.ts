@@ -129,6 +129,16 @@ describe('AnthropicLlm', () => {
     const res = await llm.structured(Schema, MSGS, OPTS);
     expect(res.costUsd).toBeCloseTo((1000 * 4 + 500 * 20) / 1e6, 10);
     expect(costs.usage).toMatchObject({ llmInputTokens: 1000, llmOutputTokens: 500, calls: 1 });
+    expect(costs.log).toEqual([
+      expect.objectContaining({
+        provider: 'anthropic',
+        inputTokens: 1000,
+        outputTokens: 500,
+        status: 'ok',
+        requestHash: expect.stringMatching(/^[0-9a-f]{64}$/),
+      }),
+    ]);
+    expect(costs.log[0]?.latencyMs).toBeGreaterThanOrEqual(0);
   });
 
   it('retries 429 and 529, and treats refusals and truncation as errors', async () => {

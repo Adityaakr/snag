@@ -27,3 +27,7 @@
 - Built the GitHub writer and App auth in providers; a Hono server with signed webhooks, dedupe, a debounced and cancellable queue, the review flow, slash commands, the issue checklist, rework and gate modes, setup and metrics; a node24 Action bundle; docs/github-app.md and docs/github-action.md; integration tests (recorded payloads against FakeGitHub) and an HTTP end-to-end test.
 - security-reviewer: FAIL, then PASS (D30). milestone-verifier: FAIL (the Action never loaded a calibration), then PASS.
 - Dogfood run 3 fixed a false-positive `secret_like` on GitHub node ids.
+
+## 2026-09-27 M8 closed (DONE)
+- Built the Postgres schema and migrations (Drizzle, PGlite in tests) with data minimization, pg-boss queues with retries and dead letters, feedback from slash commands, the dashboard and implicit weak labels, the React dashboard with GitHub OAuth and accessibility tests, corpus C exports, and the M8 end-to-end test.
+- milestone-verifier: FAIL (code stored by default; dead letters across installations), then PASS (D31 addendum). Dogfood run 4 surfaced swallowed queue errors (fixed).

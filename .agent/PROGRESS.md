@@ -95,7 +95,7 @@ Status: DONE
 - [x] `docs/github-app.md` exists, and the `security-reviewer` subagent returns `VERDICT: PASS`. (evidence: docs/github-app.md; security-reviewer second run VERDICT: PASS at e5095cf (first run FAIL, fixed per D30), 6e3eed1)
 
 ## M8 Persistence, feedback, dashboard
-Status: TODO
+Status: DONE
 - [x] The Postgres schema and migrations from 10.4, with PGlite in tests. (evidence: packages/server/src/db/schema.ts (every 10.4 table) and drizzle/0000_init.sql; openPglite/openPostgres apply migrations; DbStore passes the shared Store contract on PGlite (db/store.test.ts, including a check that every table exists, data minimization and retention cleanup), ff6a8b4)
 - [x] pg-boss queues with retries and a dead-letter list. (evidence: packages/server/src/pg-queue.ts: review, reextract, command, cleanup and recalibrate queues with retryLimit and backoff, a dead-letter queue, sendDebounced, per-key cancellation, nightly schedules; pg-queue.test.ts runs real pg-boss on PGlite over the Postgres protocol (retries, dead letters, debounce); dashboard lists dead letters, ff6a8b4)
 - [x] Feedback from slash commands and the dashboard, plus implicit weak labels. (evidence: slash agree/disagree (events.ts), dashboard POST /api/reviews/:id/findings/:fid/feedback and the labeling queue (dashboard-api.ts, Queue.tsx), implicit weak_agree labels on changed evidence lines (weak-labels.ts, weak-labels.test.ts), stored apart by source; recalibration job reads strong labels, ff6a8b4)
