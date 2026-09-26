@@ -5,6 +5,7 @@ import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { checkProtected } from './guards/protected.mjs';
 import { checkSecrets } from './guards/secrets.mjs';
+import { checkSplit } from './guards/split.mjs';
 
 const root = process.cwd();
 const guards = [
@@ -14,6 +15,8 @@ const guards = [
     () => checkSecrets(root).map((f) => `${f.file}:${f.line} looks like a ${f.kind} (value not shown)`),
   ],
 ];
+
+guards.push(['guard:split', () => checkSplit(root)]);
 
 guards.push([
   'guard:tests',

@@ -1,0 +1,163 @@
+{
+  "id": "rs-cli-args",
+  "language": "rs",
+  "annotated_by": "claude-code",
+  "split": "dev",
+  "summary": "CLI argument parser: short flag aliases, jobs range check, double-dash terminator, duplicate file removal.",
+  "requirements": [
+    {
+      "id": "R1",
+      "text": "`-v` is a short alias for `--verbose` and `-j` for `--jobs` (for example `-j 8`)",
+      "implementing": [
+        {
+          "file": "src/args.rs",
+          "symbol": "expand_alias"
+        },
+        {
+          "file": "src/args.rs",
+          "symbol": "parse_args",
+          "replace": [
+            {
+              "from": "expand_alias(arg)",
+              "to": "arg"
+            }
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "file": "tests/cli.rs",
+          "symbol": "accepts_short_aliases"
+        }
+      ],
+      "flip": {
+        "impl": {
+          "file": "src/args.rs",
+          "symbol": "expand_alias",
+          "from": "\"-j\"",
+          "to": "\"-J\""
+        },
+        "test": {
+          "file": "tests/cli.rs",
+          "symbol": "accepts_short_aliases",
+          "from": "\"-j\"",
+          "to": "\"-J\""
+        }
+      },
+      "partial": {
+        "impl": {
+          "file": "src/args.rs",
+          "symbol": "expand_alias",
+          "contains": "\"-j\" => \"--jobs\""
+        },
+        "test": {
+          "file": "tests/cli.rs",
+          "symbol": "accepts_short_aliases",
+          "contains": "parse_args(&[\"-j\""
+        }
+      },
+      "unwire": {
+        "file": "src/args.rs",
+        "symbol": "parse_args",
+        "callee": "expand_alias"
+      }
+    },
+    {
+      "id": "R2",
+      "text": "`--jobs` only accepts values from 1 to 64; anything else fails with `ArgError::JobsOutOfRange`",
+      "implementing": [
+        {
+          "file": "src/args.rs",
+          "symbol": "ArgError"
+        },
+        {
+          "file": "src/args.rs",
+          "symbol": "parse_jobs"
+        }
+      ],
+      "tests": [
+        {
+          "file": "tests/cli.rs",
+          "symbol": "rejects_jobs_outside_one_to_sixty_four"
+        }
+      ],
+      "flip": {
+        "impl": {
+          "file": "src/args.rs",
+          "symbol": "parse_jobs",
+          "from": "64",
+          "to": "65"
+        },
+        "test": {
+          "file": "tests/cli.rs",
+          "symbol": "rejects_jobs_outside_one_to_sixty_four",
+          "from": "true",
+          "to": "false"
+        }
+      }
+    },
+    {
+      "id": "R3",
+      "text": "A bare `--` ends flag parsing: every later argument is treated as a file, even if it starts with `-`",
+      "implementing": [
+        {
+          "file": "src/args.rs",
+          "symbol": "parse_args",
+          "remove": [
+            "let mut only_files = false",
+            "if only_files",
+            "\"--\" => only_files = true"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "file": "tests/cli.rs",
+          "symbol": "double_dash_ends_flag_parsing"
+        }
+      ]
+    },
+    {
+      "id": "R4",
+      "text": "Duplicate files are dropped, keeping the first occurrence (for example `a b a` gives `a b`)",
+      "implementing": [
+        {
+          "file": "src/args.rs",
+          "symbol": "dedup_files"
+        },
+        {
+          "file": "src/args.rs",
+          "symbol": "parse_args",
+          "remove": [
+            "args.files = dedup_files(args.files)"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "file": "tests/cli.rs",
+          "symbol": "drops_duplicate_files"
+        }
+      ]
+    }
+  ],
+  "incidental": [],
+  "config": {
+    "file": "src/defaults.rs",
+    "symbol": "DEFAULT_JOBS",
+    "from": "4",
+    "to": "1"
+  },
+  "unrelatedTest": {
+    "file": "tests/cli.rs",
+    "symbol": "rejects_unknown_flags"
+  },
+  "unrelatedCode": {
+    "file": "src/help.rs",
+    "symbol": "usage",
+    "rename": {
+      "from": "name",
+      "to": "base_name"
+    }
+  }
+}

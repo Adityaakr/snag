@@ -1,0 +1,140 @@
+{
+ "id": "gold:django__django-16315",
+ "corpus": "swebench",
+ "seedId": "django__django-16315",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "7d5329852f19c6ae78c6f6f3d3e41835377bf295",
+  "headSha": "gold-django__django-16315",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 16315
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 16315
+    },
+    "title": "QuerySet.bulk_create() crashes on mixed case columns in unique_fields/update_fields.",
+    "body": "Description\n\t\nNot sure exactly how to phrase this, but when I I'm calling bulk_update on the manager for a class with db_column set on fields the SQL is invalid. Ellipses indicate other fields excluded for clarity.\nclass ActivityBlackListed(models.Model):\n\t\"\"\"\n\tOriginally sourced from Activity_BlackListed in /home/josh/PNDS_Interim_MIS-Data.accdb (13 records)\n\t\"\"\"\n\tclass Meta:\n\t\tdb_table = \"Activity_BlackListed\"\n\tblacklistid = models.IntegerField(primary_key=True, db_column=\"BlacklistID\")\n\tsectorid = models.IntegerField(null=True, blank=True, db_column=\"SectorID\")\n\t...\nqs.bulk_create(instances, update_conflicts=True, update_fields=[\"sectorid\", ...], unique_fields=[\"blacklistid\"])\nThe \"INSERT\" code does take into account the db_columns\nINSERT INTO \"Activity_BlackListed\" (\"BlacklistID\",...) VALUES (%s, ...),\nThe code which is generated for \"ON CONFLICT\" uses the field name and not the db_column which leads to a syntax error\n'ON CONFLICT(\"blacklistid\") DO UPDATE SET \"sectorid\" = EXCLUDED.\"sectorid\", ...\nPostgreSQL returns ERROR: column \"blacklistid\" does not exist at character 1508\nWhat should be generated is I think:\n'ON CONFLICT(\"BlacklistID\") DO UPDATE SET \"SectorID\" = EXCLUDED.\"SectorID\", ...",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:44d35800f353e8fdb82ef35497aeac86a36bae37ac39d443d3b8a201b1cbccf4"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-16315",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/db/models/query.py b/django/db/models/query.py\n--- a/django/db/models/query.py\n+++ b/django/db/models/query.py\n@@ -720,7 +720,6 @@ def _check_bulk_create_options(\n                     \"Unique fields that can trigger the upsert must be provided.\"\n                 )\n             # Updating primary keys and non-concrete fields is forbidden.\n-            update_fields = [self.model._meta.get_field(name) for name in update_fields]\n             if any(not f.concrete or f.many_to_many for f in update_fields):\n                 raise ValueError(\n                     \"bulk_create() can only be used with concrete fields in \"\n@@ -732,9 +731,6 @@ def _check_bulk_create_options(\n                     \"update_fields.\"\n                 )\n             if unique_fields:\n-                unique_fields = [\n-                    self.model._meta.get_field(name) for name in unique_fields\n-                ]\n                 if any(not f.concrete or f.many_to_many for f in unique_fields):\n                     raise ValueError(\n                         \"bulk_create() can only be used with concrete fields \"\n@@ -786,8 +782,11 @@ def bulk_create(\n         if unique_fields:\n             # Primary key is allowed in unique_fields.\n             unique_fields = [\n-                opts.pk.name if name == \"pk\" else name for name in unique_fields\n+                self.model._meta.get_field(opts.pk.name if name == \"pk\" else name)\n+                for name in unique_fields\n             ]\n+        if update_fields:\n+            update_fields = [self.model._meta.get_field(name) for name in update_fields]\n         on_conflict = self._check_bulk_create_options(\n             ignore_conflicts,\n             update_conflicts,\ndiff --git a/django/db/models/sql/compiler.py b/django/db/models/sql/compiler.py\n--- a/django/db/models/sql/compiler.py\n+++ b/django/db/models/sql/compiler.py\n@@ -1725,8 +1725,8 @@ def as_sql(self):\n         on_conflict_suffix_sql = self.connection.ops.on_conflict_suffix_sql(\n             fields,\n             self.query.on_conflict,\n-            self.query.update_fields,\n-            self.query.unique_fields,\n+            (f.column for f in self.query.update_fields),\n+            (f.column for f in self.query.unique_fields),\n         )\n         if (\n             self.returning_fields\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "gold",
+  "source": "gold",
+  "strength": "strong"
+ },
+ "annotatedBy": "study"
+}

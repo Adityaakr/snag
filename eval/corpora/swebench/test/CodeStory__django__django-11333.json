@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:django__django-11333",
+ "corpus": "swebench",
+ "seedId": "django__django-11333",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "55b68de643b5c2d5f0a8ea7587ab3b2966021ccc",
+  "headSha": "CodeStory-django__django-11333",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 11333
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 11333
+    },
+    "title": "Optimization: Multiple URLResolvers may be unintentionally be constructed by calls to `django.urls.resolvers.get_resolver`",
+    "body": "Description\n\t\nMultiple URLResolvers may be constructed by django.urls.resolvers.get_resolver if django.urls.base.set_urlconf has not yet been called, resulting in multiple expensive calls to URLResolver._populate.\n​`get_resolver` constructs a new URLResolver, and caches it using functools.lru_cache.\nURLResolver instances can pre-compute a large amount of information about routes in ​`URLResolver._populate`, and they store those caches as instance variables.\n​`set_urlconf` is called with when ​we first handle a request in `BaseHandler.get_response`.\nget_resolver has a number of call-sites. Most notably, ​`reverse`. Like the other call-sites, reverse calls get_resolver with the result of get_urlconf.\nIf reverse (or anything else using get_resolver) is called both before (e.g. at import time) and after a request is handled, get_resolver will be called with different values. Initially it will be called with None, and later if will be called with settings.ROOT_URLCONF, because request handling calls set_urlconf.\nIn an application with a large number of routes, URLResolver._populate can be expensive, so calling it twice and storing those caches twice is wasteful.\nMy proposed solution is just to modify ​`get_resolver` to look up settings.ROOT_URLCONF before the memoized function call.\nI'm planning to contribute a fix, as soon as I can get the CLA signed.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:a7ae2adc0a4897bba5d8d33fcdf8b30139932e42f358730546d3b8c6e76b1517"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-11333",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/urls/base.py b/django/urls/base.py\nindex 0e1c3d909c..f4bb88f283 100644\n--- a/django/urls/base.py\n+++ b/django/urls/base.py\n@@ -7,7 +7,7 @@ from django.utils.functional import lazy\n from django.utils.translation import override\n \n from .exceptions import NoReverseMatch, Resolver404\n-from .resolvers import get_ns_resolver, get_resolver\n+from .resolvers import get_ns_resolver, get_resolver, _get_resolver_internal\n from .utils import get_callable\n \n # SCRIPT_NAME prefixes for each thread are stored here. If there's no entry for\n@@ -92,7 +92,7 @@ reverse_lazy = lazy(reverse, str)\n \n def clear_url_caches():\n     get_callable.cache_clear()\n-    get_resolver.cache_clear()\n+    _get_resolver_internal.cache_clear()\n     get_ns_resolver.cache_clear()\n \n \ndiff --git a/django/urls/resolvers.py b/django/urls/resolvers.py\nindex 247e3680c0..cbce0c4eb9 100644\n--- a/django/urls/resolvers.py\n+++ b/django/urls/resolvers.py\n@@ -63,10 +63,13 @@ class ResolverMatch:\n         )\n \n \n-@functools.lru_cache(maxsize=None)\n def get_resolver(urlconf=None):\n     if urlconf is None:\n         urlconf = settings.ROOT_URLCONF\n+    return _get_resolver_internal(urlconf)\n+\n+@functools.lru_cache(maxsize=None)\n+def _get_resolver_internal(urlconf):\n     return URLResolver(RegexPattern(r'^/'), urlconf)\n \n \ndiff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..522c1462cb\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,84 @@\n+import os\n+import sys\n+import time\n+import gc\n+import resource\n+\n+# Add Django to Python path\n+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))\n+\n+from django.conf import settings\n+from django.urls import get_resolver, set_urlconf\n+from django.urls.base import clear_url_caches\n+\n+# Configure minimal Django settings with a complex URL structure\n+settings.configure(\n+    DEBUG=True,\n+    ROOT_URLCONF='django.urls',\n+    SECRET_KEY='dummy-key-for-test',\n+    MIDDLEWARE=[\n+        'django.middleware.common.CommonMiddleware',\n+        'django.middleware.csrf.CsrfViewMiddleware',\n+        'django.contrib.sessions.middleware.SessionMiddleware',\n+        'django.contrib.auth.middleware.AuthenticationMiddleware',\n+        'django.contrib.messages.middleware.MessageMiddleware',\n+    ],\n+    INSTALLED_APPS=[\n+        'django.contrib.admin',\n+        'django.contrib.auth',\n+        'django.contrib.contenttypes',\n+        'django.contrib.sessions',\n+        'django.contrib.messages',\n+        'django.contrib.staticfiles',\n+    ],\n+)\n+\n+def get_memory_usage():\n+    \"\"\"Return memory usage in MB\"\"\"\n+    return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024\n+\n+def measure_resolver_creation(iterations=5):\n+    total_time1 = 0\n+    total_time2 = 0\n+    \n+    for i in range(iterations):\n+        # Clear URL caches to start fresh\n+        clear_url_caches()\n+        gc.collect()\n+        \n+        initial_memory = get_memory_usage()\n+        \n+        print(f\"\\nIteration {i+1}:\")\n+        print(\"Step 1: First call to get_resolver (simulating import time)\")\n+        start_time = time.time()\n+        resolver1 = get_resolver()\n+        time1 = time.time() - start_time\n+        total_time1 += time1\n+        memory1 = get_memory_usage() - initial_memory\n+        print(f\"Time taken: {time1:.4f} seconds\")\n+        print(f\"Memory used: {memory1:.2f} MB\")\n+        print(f\"Resolver1 id: {id(resolver1)}\")\n+        \n+        print(\"\\nStep 2: Setting urlconf (simulating request handling)\")\n+        set_urlconf(settings.ROOT_URLCONF)\n+        \n+        print(\"\\nStep 3: Second call to get_resolver (after set_urlconf)\")\n+        start_time = time.time()\n+        resolver2 = get_resolver()\n+        time2 = time.time() - start_time\n+        total_time2 += time2\n+        memory2 = get_memory_usage() - initial_memory\n+        print(f\"Time taken: {time2:.4f} seconds\")\n+        print(f\"Memory used: {memory2:.2f} MB\")\n+        print(f\"Resolver2 id: {id(resolver2)}\")\n+        \n+        print(\"\\nResults for this iteration:\")\n+        print(f\"Are resolvers the same object? {resolver1 is resolver2}\")\n+        print(f\"Memory difference: {abs(memory2 - memory1):.2f} MB\")\n+    \n+    print(\"\\nAverage Results:\")\n+    print(f\"Average time for first resolver: {total_time1/iterations:.4f} seconds\")\n+    print(f\"Average time for second resolver: {total_time2/iterations:.4f} seconds\")\n+\n+if __name__ == '__main__':\n+    measure_resolver_creation()\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

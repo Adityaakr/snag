@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:django__django-11149",
+ "corpus": "swebench",
+ "seedId": "django__django-11149",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "e245046bb6e8b32360aa48b8a41fb7050f0fc730",
+  "headSha": "CodeStory-django__django-11149",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 11149
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 11149
+    },
+    "title": "Admin inlines for auto-created ManyToManyFields are editable if the user only has the view permission",
+    "body": "Description\n\t\nFrom https://code.djangoproject.com/ticket/8060#comment:34\nReplying to Will Gordon:\nThis seems to have regressed in (at least) 2.1. I have 2 view only permissions. I have a ManyToManyField represented in my main model as a TabularInline. But, my user with view only permissions can now add or remove these items at will!\nI am having the same issue, so I assume this is a bug. I did not find Will had created a separate ticket.\nmodels.py:\nclass Photo(models.Model):\n\tpass\nclass Report(models.Model):\n\tphotos = models.ManyToManyField(Photo)\nadmin.py:\n\t\tclass ReportPhotoInlineModelAdmin(admin.TabularInline):\n\t\t\tmodel = Report.photos.through\n\t\t\tshow_change_link = True",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:2a7253f5eaf3b2bf5db7dc44a7d0cc98e53d50cd08754d6457c900ea882859dd"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-11149",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/contrib/admin/options.py b/django/contrib/admin/options.py\nindex 880a2cc17b..0e586364fb 100644\n--- a/django/contrib/admin/options.py\n+++ b/django/contrib/admin/options.py\n@@ -2030,6 +2030,8 @@ class InlineModelAdmin(BaseModelAdmin):\n         # default.\n         exclude = exclude or None\n         can_delete = self.can_delete and self.has_delete_permission(request, obj)\n+        # Set extra=0 if user doesn't have add permission\n+        extra = 0 if not self.has_add_permission(request, obj) else self.get_extra(request, obj, **kwargs)\n         defaults = {\n             'form': self.form,\n             'formset': self.formset,\n@@ -2037,7 +2039,7 @@ class InlineModelAdmin(BaseModelAdmin):\n             'fields': fields,\n             'exclude': exclude,\n             'formfield_callback': partial(self.formfield_for_dbfield, request=request),\n-            'extra': self.get_extra(request, obj, **kwargs),\n+            'extra': extra,\n             'min_num': self.get_min_num(request, obj, **kwargs),\n             'max_num': self.get_max_num(request, obj, **kwargs),\n             'can_delete': can_delete,\n@@ -2113,29 +2115,47 @@ class InlineModelAdmin(BaseModelAdmin):\n \n     def has_add_permission(self, request, obj):\n         if self.opts.auto_created:\n-            # We're checking the rights to an auto-created intermediate model,\n-            # which doesn't have its own individual permissions. The user needs\n-            # to have the view permission for the related model in order to\n-            # be able to do anything with the intermediate model.\n-            return self.has_view_permission(request, obj)\n+            # For auto-created models (like m2m through models), check if user has change\n+            # permission on both related models\n+            opts = self.opts\n+            # Find the target model (the one that's not the parent model)\n+            for field in opts.fields:\n+                if field.remote_field and field.remote_field.model != self.parent_model:\n+                    target_opts = field.remote_field.model._meta\n+                    return (\n+                        request.user.has_perm('%s.%s' % (target_opts.app_label, get_permission_codename('change', target_opts))) and\n+                        request.user.has_perm('%s.%s' % (self.parent_model._meta.app_label, get_permission_codename('change', self.parent_model._meta)))\n+                    )\n         return super().has_add_permission(request)\n \n     def has_change_permission(self, request, obj=None):\n         if self.opts.auto_created:\n-            # We're checking the rights to an auto-created intermediate model,\n-            # which doesn't have its own individual permissions. The user needs\n-            # to have the view permission for the related model in order to\n-            # be able to do anything with the intermediate model.\n-            return self.has_view_permission(request, obj)\n+            # For auto-created models (like m2m through models), check if user has change\n+            # permission on both related models\n+            opts = self.opts\n+            # Find the target model (the one that's not the parent model)\n+            for field in opts.fields:\n+                if field.remote_field and field.remote_field.model != self.parent_model:\n+                    target_opts = field.remote_field.model._meta\n+                    return (\n+                        request.user.has_perm('%s.%s' % (target_opts.app_label, get_permission_codename('change', target_opts))) and\n+                        request.user.has_perm('%s.%s' % (self.parent_model._meta.app_label, get_permission_codename('change', self.parent_model._meta)))\n+                    )\n         return super().has_change_permission(request)\n \n     def has_delete_permission(self, request, obj=None):\n         if self.opts.auto_created:\n-            # We're checking the rights to an auto-created intermediate model,\n-            # which doesn't have its own individual permissions. The user needs\n-            # to have the view permission for the related model in order to\n-            # be able to do anything with the intermediate model.\n-            return self.has_view_permission(request, obj)\n+            # For auto-created models (like m2m through models), check if user has change\n+            # permission on both related models\n+            opts = self.opts\n+            # Find the target model (the one that's not the parent model)\n+            for field in opts.fields:\n+                if field.remote_field and field.remote_field.model != self.parent_model:\n+                    target_opts = field.remote_field.model._meta\n+                    return (\n+                        request.user.has_perm('%s.%s' % (target_opts.app_label, get_permission_codename('change', target_opts))) and\n+                        request.user.has_perm('%s.%s' % (self.parent_model._meta.app_label, get_permission_codename('change', self.parent_model._meta)))\n+                    )\n         return super().has_delete_permission(request, obj)\n \n     def has_view_permission(self, request, obj=None):\ndiff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..c4d82def21\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,154 @@\n+import os\n+import django\n+from django.conf import settings\n+\n+# Configure Django settings\n+settings.configure(\n+    DEBUG=True,\n+    DATABASES={\n+        'default': {\n+            'ENGINE': 'django.db.backends.sqlite3',\n+            'NAME': ':memory:',\n+        }\n+    },\n+    INSTALLED_APPS=[\n+        'django.contrib.admin',\n+        'django.contrib.auth',\n+        'django.contrib.contenttypes',\n+        'django.contrib.sessions',\n+        'django.contrib.messages',\n+        'django.contrib.staticfiles',\n+    ],\n+    MIDDLEWARE=[\n+        'django.contrib.sessions.middleware.SessionMiddleware',\n+        'django.contrib.auth.middleware.AuthenticationMiddleware',\n+        'django.contrib.messages.middleware.MessageMiddleware',\n+    ],\n+    ROOT_URLCONF='reproduce_error',\n+    TEMPLATES=[{\n+        'BACKEND': 'django.template.backends.django.DjangoTemplates',\n+        'APP_DIRS': True,\n+        'OPTIONS': {\n+            'context_processors': [\n+                'django.contrib.auth.context_processors.auth',\n+                'django.contrib.messages.context_processors.messages',\n+            ]\n+        },\n+    }],\n+    SECRET_KEY='dummy-key-for-tests',\n+)\n+\n+django.setup()\n+\n+from django.contrib import admin\n+from django.contrib.auth.models import User, Permission\n+from django.contrib.contenttypes.models import ContentType\n+from django.db import models, connection\n+from django.test import TestCase, RequestFactory\n+from django.test.utils import setup_test_environment, teardown_test_environment\n+from django.core.management import call_command\n+\n+# Create test models\n+class Photo(models.Model):\n+    title = models.CharField(max_length=100, default='Photo')\n+    class Meta:\n+        app_label = 'admin'\n+\n+class Report(models.Model):\n+    title = models.CharField(max_length=100, default='Report')\n+    photos = models.ManyToManyField(Photo)\n+    class Meta:\n+        app_label = 'admin'\n+\n+# Admin configuration\n+class ReportPhotoInline(admin.TabularInline):\n+    model = Report.photos.through\n+    show_change_link = True\n+\n+class ReportAdmin(admin.ModelAdmin):\n+    inlines = [ReportPhotoInline]\n+\n+# Register models\n+admin.site.register(Report, ReportAdmin)\n+admin.site.register(Photo)\n+\n+def main():\n+    # Create necessary tables\n+    with connection.cursor() as cursor:\n+        cursor.execute(\"\"\"\n+            CREATE TABLE IF NOT EXISTS admin_photo (\n+                id INTEGER PRIMARY KEY AUTOINCREMENT,\n+                title VARCHAR(100) NOT NULL DEFAULT 'Photo'\n+            )\n+        \"\"\")\n+        cursor.execute(\"\"\"\n+            CREATE TABLE IF NOT EXISTS admin_report (\n+                id INTEGER PRIMARY KEY AUTOINCREMENT,\n+                title VARCHAR(100) NOT NULL DEFAULT 'Report'\n+            )\n+        \"\"\")\n+        cursor.execute(\"\"\"\n+            CREATE TABLE IF NOT EXISTS admin_report_photos (\n+                id INTEGER PRIMARY KEY AUTOINCREMENT,\n+                report_id INTEGER NOT NULL REFERENCES admin_report(id),\n+                photo_id INTEGER NOT NULL REFERENCES admin_photo(id)\n+            )\n+        \"\"\")\n+    \n+    # Create test data\n+    photo = Photo.objects.create(title='Test Photo')\n+    report = Report.objects.create(title='Test Report')\n+    \n+    # Create a user with view-only permissions\n+    user = User.objects.create_user(\n+        username='viewonly',\n+        password='password',\n+        is_staff=True\n+    )\n+    \n+    # Get content types\n+    report_ct = ContentType.objects.get_for_model(Report)\n+    photo_ct = ContentType.objects.get_for_model(Photo)\n+    \n+    # Assign view permissions only\n+    view_report = Permission.objects.get_or_create(\n+        codename='view_report',\n+        name='Can view report',\n+        content_type=report_ct\n+    )[0]\n+    view_photo = Permission.objects.get_or_create(\n+        codename='view_photo',\n+        name='Can view photo',\n+        content_type=photo_ct\n+    )[0]\n+    \n+    user.user_permissions.add(view_report, view_photo)\n+    \n+    # Create a request factory\n+    factory = RequestFactory()\n+    request = factory.get('/')\n+    request.user = user\n+    \n+    # Get the inline admin instance\n+    report_admin = ReportAdmin(Report, admin.site)\n+    inline_admin = report_admin.inlines[0](Report, admin.site)\n+    \n+    # Check permissions\n+    print(\"\\nChecking permissions for user with view-only access:\")\n+    print(f\"Has view permission: {inline_admin.has_view_permission(request)}\")\n+    print(f\"Has change permission: {inline_admin.has_change_permission(request)}\")\n+    print(f\"Has add permission: {inline_admin.has_add_permission(request, None)}\")\n+    print(f\"Has delete permission: {inline_admin.has_delete_permission(request)}\")\n+    \n+    # Get formset to check if it's editable\n+    formset = inline_admin.get_formset(request)\n+    print(\"\\nChecking formset properties:\")\n+    print(f\"Formset can_delete: {formset.can_delete}\")\n+    print(f\"Formset max_num: {formset.max_num}\")\n+    print(f\"Formset extra: {formset.extra}\")\n+\n+if __name__ == '__main__':\n+    # Run migrations for auth and contenttypes\n+    call_command('migrate', 'auth', interactive=False, verbosity=0)\n+    call_command('migrate', 'contenttypes', interactive=False, verbosity=0)\n+    main()\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq1_devtests",
+  "strength": "medium"
+ },
+ "annotatedBy": "study"
+}

@@ -1,0 +1,159 @@
+{
+ "id": "py-order-date-ranges.flip_condition.R4",
+ "corpus": "mutations",
+ "seedId": "py-order-date-ranges",
+ "operator": "flip_condition",
+ "target": "R4",
+ "input": {
+  "mode": "local",
+  "baseSha": "base",
+  "headSha": "head-flip_condition-R4",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "ledgerly",
+    "repo": "reports",
+    "number": 77
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "ledgerly",
+     "repo": "reports",
+     "number": 77
+    },
+    "title": "Flexible date ranges in the orders report",
+    "body": "The orders report only takes a closed `start..end` range and silently drops orders placed during the last day. Finance wants open-ended and named ranges.\n\n- [ ] A range may leave out either side to be open-ended: `..2024-03-31` has no start and `2024-03-01..` has no end\n- [ ] The end date is inclusive: an order placed at 23:00 on 2024-03-08 is inside `2024-03-01..2024-03-08`\n- [ ] A range whose start is after its end raises `ValueError` with the message `start after end`\n- [ ] `resolve_range` understands the named ranges `today`, `last-7-days` and `this-month`, counted back from a given day and including it (`last-7-days` on 2024-03-10 is 2024-03-04 to 2024-03-10)",
+    "author": "local",
+    "state": "open",
+    "comments": [],
+    "contentHash": "sha256:c9ff8fd2ab88a4be2c3e0d25b6eef87af5dd31f0d51147f903b758870533e7a6"
+   }
+  ],
+  "pr": {
+   "title": "Open-ended, inclusive and named report ranges",
+   "body": "`parse_range` now accepts a missing start or end and rejects ranges whose start is after the end. `orders_between` treats a missing bound as open and includes the whole end day by comparing against the start of the next day. The new `resolve_range` maps `today`, `last-7-days` and `this-month` to concrete ranges ending on the given day and falls back to `parse_range` for anything else."
+  },
+  "diffText": "diff --git a/reports/ranges.py b/reports/ranges.py\n--- a/reports/ranges.py\n+++ b/reports/ranges.py\n@@ -1,23 +1,49 @@\n \"\"\"Date-range filters for the orders report.\"\"\"\n \n-from datetime import datetime\n+from datetime import datetime, timedelta\n \n \n def parse_day(text):\n     return datetime.strptime(text, \"%Y-%m-%d\")\n \n \n+def next_day(moment):\n+    return moment + timedelta(days=1)\n+\n+\n def parse_range(text):\n     left, sep, right = text.partition(\"..\")\n     if not sep:\n         raise ValueError(f\"not a range: {text}\")\n-    return parse_day(left), parse_day(right)\n+    start = parse_day(left) if left else None\n+    end = parse_day(right) if right else None\n+    if start and end and start > end:\n+        raise ValueError(\"start after end\")\n+    return start, end\n \n \n+def named_range(name, today):\n+    start = datetime(today.year, today.month, today.day)\n+    if name == \"today\":\n+        return start, start\n+    if name == \"last-7-days\":\n+        return start - timedelta(days=7), start\n+    if name == \"this-month\":\n+        return start.replace(day=1), start\n+    return None\n+\n+\n+def resolve_range(text, today):\n+    named = named_range(text, today)\n+    return named if named else parse_range(text)\n+\n+\n def orders_between(orders, start, end):\n     selected = []\n     for order in orders:\n-        if order.placed_at < start or order.placed_at > end:\n+        if start is not None and order.placed_at < start:\n             continue\n+        if end is not None and order.placed_at >= next_day(end):\n+            continue\n         selected.append(order)\n     return selected\ndiff --git a/tests/test_ranges.py b/tests/test_ranges.py\n--- a/tests/test_ranges.py\n+++ b/tests/test_ranges.py\n@@ -1,4 +1,4 @@\n-from datetime import datetime\n+from datetime import date, datetime\n \n import pytest\n \n@@ -22,3 +22,41 @@\n def test_filters_orders_in_range():\n     orders = [order(1), order(5), order(9)]\n     assert ranges.orders_between(orders, datetime(2024, 3, 2), datetime(2024, 3, 8)) == [orders[1]]\n+\n+\n+def test_parses_open_ended_ranges():\n+    assert ranges.parse_range(\"..2024-03-31\") == (None, datetime(2024, 3, 31))\n+    assert ranges.parse_range(\"2024-03-01..\") == (datetime(2024, 3, 1), None)\n+\n+\n+def test_filters_open_ended_ranges():\n+    orders = [order(1), order(20)]\n+    assert ranges.orders_between(orders, None, datetime(2024, 3, 10)) == [orders[0]]\n+    assert ranges.orders_between(orders, datetime(2024, 3, 10), None) == [orders[1]]\n+\n+\n+def test_end_date_is_inclusive():\n+    orders = [order(8, 23), order(9, 0)]\n+    assert ranges.orders_between(orders, datetime(2024, 3, 1), datetime(2024, 3, 8)) == [orders[0]]\n+\n+\n+def test_rejects_start_after_end():\n+    with pytest.raises(ValueError, match=\"start after end\"):\n+        ranges.parse_range(\"2024-03-06..2024-03-05\")\n+\n+\n+def test_named_ranges():\n+    today = date(2024, 3, 10)\n+    assert ranges.resolve_range(\"today\", today) == (datetime(2024, 3, 10), datetime(2024, 3, 10))\n+    assert ranges.resolve_range(\"this-month\", today) == (datetime(2024, 3, 1), datetime(2024, 3, 10))\n+\n+\n+def test_last_seven_days():\n+    assert ranges.resolve_range(\"last-7-days\", date(2024, 3, 10)) == (datetime(2024, 3, 3), datetime(2024, 3, 10))\n+\n+\n+def test_resolve_falls_back_to_explicit_range():\n+    assert ranges.resolve_range(\"2024-03-01..2024-03-02\", date(2024, 3, 10)) == (\n+        datetime(2024, 3, 1),\n+        datetime(2024, 3, 2),\n+    )\n"
+ },
+ "trees": {
+  "base": {
+   "reports/config.py": "\"\"\"Defaults for the orders report.\"\"\"\n\n\ndef report_defaults():\n    return {\"timezone\": \"UTC\", \"page_size\": 50, \"currency\": \"USD\"}\n",
+   "reports/models.py": "\"\"\"Report data types.\"\"\"\n\nfrom dataclasses import dataclass\nfrom datetime import datetime\n\n\n@dataclass\nclass Order:\n    id: str\n    placed_at: datetime\n    total_cents: int\n",
+   "reports/money.py": "\"\"\"Money formatting for report cells.\"\"\"\n\nfrom reports.config import report_defaults\n\n\ndef format_cents(cents, currency=None):\n    code = currency or report_defaults()[\"currency\"]\n    sign = \"-\" if cents < 0 else \"\"\n    whole, rest = divmod(abs(cents), 100)\n    return f\"{sign}{code} {whole:,}.{rest:02d}\"\n",
+   "reports/ranges.py": "\"\"\"Date-range filters for the orders report.\"\"\"\n\nfrom datetime import datetime\n\n\ndef parse_day(text):\n    return datetime.strptime(text, \"%Y-%m-%d\")\n\n\ndef parse_range(text):\n    left, sep, right = text.partition(\"..\")\n    if not sep:\n        raise ValueError(f\"not a range: {text}\")\n    return parse_day(left), parse_day(right)\n\n\ndef orders_between(orders, start, end):\n    selected = []\n    for order in orders:\n        if order.placed_at < start or order.placed_at > end:\n            continue\n        selected.append(order)\n    return selected\n",
+   "tests/test_money.py": "import pytest\n\nfrom reports.money import format_cents\n\n\ndef test_formats_thousands():\n    assert format_cents(123456) == \"USD 1,234.56\"\n\n\ndef test_formats_negative_amounts():\n    assert format_cents(-5, \"EUR\") == \"-EUR 0.05\"\n",
+   "tests/test_ranges.py": "from datetime import datetime\n\nimport pytest\n\nfrom reports import ranges\nfrom reports.models import Order\n\n\ndef order(day, hour=12):\n    return Order(id=f\"o-{day}-{hour}\", placed_at=datetime(2024, 3, day, hour), total_cents=1000)\n\n\ndef test_parses_closed_range():\n    assert ranges.parse_range(\"2024-03-01..2024-03-31\") == (datetime(2024, 3, 1), datetime(2024, 3, 31))\n\n\ndef test_rejects_text_without_separator():\n    with pytest.raises(ValueError):\n        ranges.parse_range(\"2024-03-01\")\n\n\ndef test_filters_orders_in_range():\n    orders = [order(1), order(5), order(9)]\n    assert ranges.orders_between(orders, datetime(2024, 3, 2), datetime(2024, 3, 8)) == [orders[1]]\n"
+  },
+  "head": {
+   "reports/config.py": "\"\"\"Defaults for the orders report.\"\"\"\n\n\ndef report_defaults():\n    return {\"timezone\": \"UTC\", \"page_size\": 50, \"currency\": \"USD\"}\n",
+   "reports/models.py": "\"\"\"Report data types.\"\"\"\n\nfrom dataclasses import dataclass\nfrom datetime import datetime\n\n\n@dataclass\nclass Order:\n    id: str\n    placed_at: datetime\n    total_cents: int\n",
+   "reports/money.py": "\"\"\"Money formatting for report cells.\"\"\"\n\nfrom reports.config import report_defaults\n\n\ndef format_cents(cents, currency=None):\n    code = currency or report_defaults()[\"currency\"]\n    sign = \"-\" if cents < 0 else \"\"\n    whole, rest = divmod(abs(cents), 100)\n    return f\"{sign}{code} {whole:,}.{rest:02d}\"\n",
+   "reports/ranges.py": "\"\"\"Date-range filters for the orders report.\"\"\"\n\nfrom datetime import datetime, timedelta\n\n\ndef parse_day(text):\n    return datetime.strptime(text, \"%Y-%m-%d\")\n\n\ndef next_day(moment):\n    return moment + timedelta(days=1)\n\n\ndef parse_range(text):\n    left, sep, right = text.partition(\"..\")\n    if not sep:\n        raise ValueError(f\"not a range: {text}\")\n    start = parse_day(left) if left else None\n    end = parse_day(right) if right else None\n    if start and end and start > end:\n        raise ValueError(\"start after end\")\n    return start, end\n\n\ndef named_range(name, today):\n    start = datetime(today.year, today.month, today.day)\n    if name == \"today\":\n        return start, start\n    if name == \"last-7-days\":\n        return start - timedelta(days=7), start\n    if name == \"this-month\":\n        return start.replace(day=1), start\n    return None\n\n\ndef resolve_range(text, today):\n    named = named_range(text, today)\n    return named if named else parse_range(text)\n\n\ndef orders_between(orders, start, end):\n    selected = []\n    for order in orders:\n        if start is not None and order.placed_at < start:\n            continue\n        if end is not None and order.placed_at >= next_day(end):\n            continue\n        selected.append(order)\n    return selected\n",
+   "tests/test_money.py": "import pytest\n\nfrom reports.money import format_cents\n\n\ndef test_formats_thousands():\n    assert format_cents(123456) == \"USD 1,234.56\"\n\n\ndef test_formats_negative_amounts():\n    assert format_cents(-5, \"EUR\") == \"-EUR 0.05\"\n",
+   "tests/test_ranges.py": "from datetime import date, datetime\n\nimport pytest\n\nfrom reports import ranges\nfrom reports.models import Order\n\n\ndef order(day, hour=12):\n    return Order(id=f\"o-{day}-{hour}\", placed_at=datetime(2024, 3, day, hour), total_cents=1000)\n\n\ndef test_parses_closed_range():\n    assert ranges.parse_range(\"2024-03-01..2024-03-31\") == (datetime(2024, 3, 1), datetime(2024, 3, 31))\n\n\ndef test_rejects_text_without_separator():\n    with pytest.raises(ValueError):\n        ranges.parse_range(\"2024-03-01\")\n\n\ndef test_filters_orders_in_range():\n    orders = [order(1), order(5), order(9)]\n    assert ranges.orders_between(orders, datetime(2024, 3, 2), datetime(2024, 3, 8)) == [orders[1]]\n\n\ndef test_parses_open_ended_ranges():\n    assert ranges.parse_range(\"..2024-03-31\") == (None, datetime(2024, 3, 31))\n    assert ranges.parse_range(\"2024-03-01..\") == (datetime(2024, 3, 1), None)\n\n\ndef test_filters_open_ended_ranges():\n    orders = [order(1), order(20)]\n    assert ranges.orders_between(orders, None, datetime(2024, 3, 10)) == [orders[0]]\n    assert ranges.orders_between(orders, datetime(2024, 3, 10), None) == [orders[1]]\n\n\ndef test_end_date_is_inclusive():\n    orders = [order(8, 23), order(9, 0)]\n    assert ranges.orders_between(orders, datetime(2024, 3, 1), datetime(2024, 3, 8)) == [orders[0]]\n\n\ndef test_rejects_start_after_end():\n    with pytest.raises(ValueError, match=\"start after end\"):\n        ranges.parse_range(\"2024-03-06..2024-03-05\")\n\n\ndef test_named_ranges():\n    today = date(2024, 3, 10)\n    assert ranges.resolve_range(\"today\", today) == (datetime(2024, 3, 10), datetime(2024, 3, 10))\n    assert ranges.resolve_range(\"this-month\", today) == (datetime(2024, 3, 1), datetime(2024, 3, 10))\n\n\ndef test_last_seven_days():\n    assert ranges.resolve_range(\"last-7-days\", date(2024, 3, 10)) == (datetime(2024, 3, 3), datetime(2024, 3, 10))\n\n\ndef test_resolve_falls_back_to_explicit_range():\n    assert ranges.resolve_range(\"2024-03-01..2024-03-02\", date(2024, 3, 10)) == (\n        datetime(2024, 3, 1),\n        datetime(2024, 3, 2),\n    )\n"
+  }
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "tasklist_only",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {
+   "R1": "done",
+   "R2": "done",
+   "R3": "done",
+   "R4": "contradicted"
+  },
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "annotatedBy": "claude-code"
+}

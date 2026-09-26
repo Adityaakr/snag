@@ -1,0 +1,157 @@
+{
+ "id": "py-csv-import.flip_condition.R4",
+ "corpus": "mutations",
+ "seedId": "py-csv-import",
+ "operator": "flip_condition",
+ "target": "R4",
+ "input": {
+  "mode": "local",
+  "baseSha": "base",
+  "headSha": "head-flip_condition-R4",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "northwind",
+    "repo": "contacts",
+    "number": 112
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "northwind",
+     "repo": "contacts",
+     "number": 112
+    },
+    "title": "Validate rows in the CSV contact import",
+    "body": "The contact importer takes every row as is, so bad rows end up in the address book. Each bad row should be reported with its line number (the header is line 1) and skipped, while good rows are still imported.\n\n- [ ] Rows with an empty `name` or `email` are skipped and reported as `missing name` or `missing email`\n- [ ] Emails must contain exactly one `@` and a dot in the domain (`ann@example.com` is valid, `ann@example` is not); other rows are reported as `invalid email`\n- [ ] The optional `signup_date` column accepts `2024-03-05`, `05/03/2024` (day first, so 5 March) and `5 Mar 2024`; any other value is reported as `bad signup_date`\n- [ ] Names longer than 80 characters are rejected with a `name too long` error",
+    "author": "local",
+    "state": "open",
+    "comments": [],
+    "contentHash": "sha256:242dc27ccbe332cb3e688e70ac4b6979f236015c6a38cb6d72a3c20de849e6ba"
+   }
+  ],
+  "pr": {
+   "title": "Validate contact rows during CSV import",
+   "body": "Adds row validation to `import_rows`. Rows with an empty name or email, a malformed email, a name over 80 characters, or an unreadable `signup_date` are skipped and reported with their line number. `is_valid_email` checks for exactly one `@` and a dot in the domain, and `parse_signup_date` reads ISO dates, day-first `DD/MM/YYYY` dates and `5 Mar 2024` style dates. Tests cover each rule."
+  },
+  "diffText": "diff --git a/importer/csv_import.py b/importer/csv_import.py\n--- a/importer/csv_import.py\n+++ b/importer/csv_import.py\n@@ -2,6 +2,8 @@\n \n import csv\n import io\n+import re\n+from datetime import datetime\n \n from importer.config import import_limits\n \n@@ -15,6 +17,24 @@\n         self.errors.append((line, message))\n \n \n+def is_valid_email(value):\n+    if value.count(\"@\") != 1:\n+        return False\n+    local, domain = value.split(\"@\")\n+    return bool(local) and \".\" in domain.strip(\".\")\n+\n+\n+def parse_signup_date(value):\n+    text = value.strip()\n+    if re.fullmatch(r\"\\d{4}-\\d{2}-\\d{2}\", text):\n+        return datetime.strptime(text, \"%Y-%m-%d\").date()\n+    if re.fullmatch(r\"\\d{2}/\\d{2}/\\d{4}\", text):\n+        return datetime.strptime(text, \"%d/%m/%Y\").date()\n+    if re.fullmatch(r\"\\d{1,2} [A-Za-z]{3} \\d{4}\", text):\n+        return datetime.strptime(text, \"%d %b %Y\").date()\n+    return None\n+\n+\n def import_rows(text):\n     limits = import_limits()\n     reader = csv.DictReader(io.StringIO(text), delimiter=limits[\"delimiter\"])\n@@ -25,5 +45,22 @@\n             break\n         name = (row.get(\"name\") or \"\").strip()\n         email = (row.get(\"email\") or \"\").strip()\n-        result.contacts.append({\"name\": name, \"email\": email})\n+        missing = [col for col, value in ((\"name\", name), (\"email\", email)) if not value]\n+        if missing:\n+            result.fail(line, \"missing \" + missing[0])\n+            continue\n+        if not is_valid_email(email):\n+            result.fail(line, \"invalid email\")\n+            continue\n+        if len(name) > 100:\n+            result.fail(line, \"name too long\")\n+            continue\n+        contact = {\"name\": name, \"email\": email}\n+        if row.get(\"signup_date\"):\n+            signup = parse_signup_date(row[\"signup_date\"])\n+            if signup is None:\n+                result.fail(line, \"bad signup_date\")\n+                continue\n+            contact[\"signup_date\"] = signup\n+        result.contacts.append(contact)\n     return result\ndiff --git a/tests/test_csv_import.py b/tests/test_csv_import.py\n--- a/tests/test_csv_import.py\n+++ b/tests/test_csv_import.py\n@@ -1,3 +1,5 @@\n+from datetime import date\n+\n import pytest\n \n from importer import csv_import\n@@ -9,3 +11,45 @@\n     result = csv_import.import_rows(HEADER + \" Ann ,ann@example.com,\\n\")\n     assert result.contacts == [{\"name\": \"Ann\", \"email\": \"ann@example.com\"}]\n     assert result.errors == []\n+\n+\n+def test_reports_missing_name_and_email():\n+    result = csv_import.import_rows(HEADER + \",ann@example.com,\\nBob,,\\n\")\n+    assert result.contacts == []\n+    assert result.errors == [(2, \"missing name\"), (3, \"missing email\")]\n+\n+\n+def test_is_valid_email():\n+    assert csv_import.is_valid_email(\"ann@example.com\")\n+    assert not csv_import.is_valid_email(\"ann@example\")\n+    assert not csv_import.is_valid_email(\"ann@x@example.com\")\n+\n+\n+def test_rejects_malformed_emails():\n+    result = csv_import.import_rows(HEADER + \"Ann,ann@example,\\nBob,bob@@example.com,\\n\")\n+    assert result.contacts == []\n+    assert result.errors == [(2, \"invalid email\"), (3, \"invalid email\")]\n+\n+\n+def test_parses_signup_dates():\n+    assert csv_import.parse_signup_date(\"2024-03-05\") == date(2024, 3, 5)\n+    assert csv_import.parse_signup_date(\"05/03/2024\") == date(2024, 3, 5)\n+    assert csv_import.parse_signup_date(\"5 Mar 2024\") == date(2024, 3, 5)\n+\n+\n+def test_stores_signup_date():\n+    result = csv_import.import_rows(HEADER + \"Ann,ann@example.com,2024-03-05\\n\")\n+    assert result.contacts[0][\"signup_date\"] == date(2024, 3, 5)\n+\n+\n+def test_reports_bad_signup_date():\n+    result = csv_import.import_rows(HEADER + \"Ann,ann@example.com,March 5th\\n\")\n+    assert result.contacts == []\n+    assert result.errors == [(2, \"bad signup_date\")]\n+\n+\n+def test_rejects_long_names():\n+    accepted = csv_import.import_rows(HEADER + \"x\" * 80 + \",a@example.com,\\n\")\n+    rejected = csv_import.import_rows(HEADER + \"x\" * 101 + \",b@example.com,\\n\")\n+    assert len(accepted.contacts) == 1\n+    assert rejected.errors == [(2, \"name too long\")]\n"
+ },
+ "trees": {
+  "base": {
+   "importer/config.py": "\"\"\"Runtime limits for the contact importer.\"\"\"\n\n\ndef import_limits():\n    return {\"max_rows\": 5000, \"delimiter\": \",\"}\n",
+   "importer/csv_import.py": "\"\"\"Import contacts from CSV text.\"\"\"\n\nimport csv\nimport io\n\nfrom importer.config import import_limits\n\n\nclass ImportResult:\n    def __init__(self):\n        self.contacts = []\n        self.errors = []\n\n    def fail(self, line, message):\n        self.errors.append((line, message))\n\n\ndef import_rows(text):\n    limits = import_limits()\n    reader = csv.DictReader(io.StringIO(text), delimiter=limits[\"delimiter\"])\n    result = ImportResult()\n    for line, row in enumerate(reader, start=2):\n        if len(result.contacts) >= limits[\"max_rows\"]:\n            result.fail(line, \"too many rows\")\n            break\n        name = (row.get(\"name\") or \"\").strip()\n        email = (row.get(\"email\") or \"\").strip()\n        result.contacts.append({\"name\": name, \"email\": email})\n    return result\n",
+   "importer/phone.py": "\"\"\"Phone number helpers.\"\"\"\n\n\ndef normalize_phone(raw):\n    digits = \"\".join(ch for ch in raw if ch.isdigit())\n    if len(digits) == 10:\n        digits = \"1\" + digits\n    return \"+\" + digits\n",
+   "tests/test_csv_import.py": "import pytest\n\nfrom importer import csv_import\n\nHEADER = \"name,email,signup_date\\n\"\n\n\ndef test_imports_contacts():\n    result = csv_import.import_rows(HEADER + \" Ann ,ann@example.com,\\n\")\n    assert result.contacts == [{\"name\": \"Ann\", \"email\": \"ann@example.com\"}]\n    assert result.errors == []\n",
+   "tests/test_phone.py": "import pytest\n\nfrom importer.phone import normalize_phone\n\n\ndef test_adds_country_code():\n    assert normalize_phone(\"(555) 123-4567\") == \"+15551234567\"\n\n\ndef test_keeps_existing_country_code():\n    assert normalize_phone(\"+44 20 7946 0958\") == \"+442079460958\"\n"
+  },
+  "head": {
+   "importer/config.py": "\"\"\"Runtime limits for the contact importer.\"\"\"\n\n\ndef import_limits():\n    return {\"max_rows\": 5000, \"delimiter\": \",\"}\n",
+   "importer/csv_import.py": "\"\"\"Import contacts from CSV text.\"\"\"\n\nimport csv\nimport io\nimport re\nfrom datetime import datetime\n\nfrom importer.config import import_limits\n\n\nclass ImportResult:\n    def __init__(self):\n        self.contacts = []\n        self.errors = []\n\n    def fail(self, line, message):\n        self.errors.append((line, message))\n\n\ndef is_valid_email(value):\n    if value.count(\"@\") != 1:\n        return False\n    local, domain = value.split(\"@\")\n    return bool(local) and \".\" in domain.strip(\".\")\n\n\ndef parse_signup_date(value):\n    text = value.strip()\n    if re.fullmatch(r\"\\d{4}-\\d{2}-\\d{2}\", text):\n        return datetime.strptime(text, \"%Y-%m-%d\").date()\n    if re.fullmatch(r\"\\d{2}/\\d{2}/\\d{4}\", text):\n        return datetime.strptime(text, \"%d/%m/%Y\").date()\n    if re.fullmatch(r\"\\d{1,2} [A-Za-z]{3} \\d{4}\", text):\n        return datetime.strptime(text, \"%d %b %Y\").date()\n    return None\n\n\ndef import_rows(text):\n    limits = import_limits()\n    reader = csv.DictReader(io.StringIO(text), delimiter=limits[\"delimiter\"])\n    result = ImportResult()\n    for line, row in enumerate(reader, start=2):\n        if len(result.contacts) >= limits[\"max_rows\"]:\n            result.fail(line, \"too many rows\")\n            break\n        name = (row.get(\"name\") or \"\").strip()\n        email = (row.get(\"email\") or \"\").strip()\n        missing = [col for col, value in ((\"name\", name), (\"email\", email)) if not value]\n        if missing:\n            result.fail(line, \"missing \" + missing[0])\n            continue\n        if not is_valid_email(email):\n            result.fail(line, \"invalid email\")\n            continue\n        if len(name) > 100:\n            result.fail(line, \"name too long\")\n            continue\n        contact = {\"name\": name, \"email\": email}\n        if row.get(\"signup_date\"):\n            signup = parse_signup_date(row[\"signup_date\"])\n            if signup is None:\n                result.fail(line, \"bad signup_date\")\n                continue\n            contact[\"signup_date\"] = signup\n        result.contacts.append(contact)\n    return result\n",
+   "importer/phone.py": "\"\"\"Phone number helpers.\"\"\"\n\n\ndef normalize_phone(raw):\n    digits = \"\".join(ch for ch in raw if ch.isdigit())\n    if len(digits) == 10:\n        digits = \"1\" + digits\n    return \"+\" + digits\n",
+   "tests/test_csv_import.py": "from datetime import date\n\nimport pytest\n\nfrom importer import csv_import\n\nHEADER = \"name,email,signup_date\\n\"\n\n\ndef test_imports_contacts():\n    result = csv_import.import_rows(HEADER + \" Ann ,ann@example.com,\\n\")\n    assert result.contacts == [{\"name\": \"Ann\", \"email\": \"ann@example.com\"}]\n    assert result.errors == []\n\n\ndef test_reports_missing_name_and_email():\n    result = csv_import.import_rows(HEADER + \",ann@example.com,\\nBob,,\\n\")\n    assert result.contacts == []\n    assert result.errors == [(2, \"missing name\"), (3, \"missing email\")]\n\n\ndef test_is_valid_email():\n    assert csv_import.is_valid_email(\"ann@example.com\")\n    assert not csv_import.is_valid_email(\"ann@example\")\n    assert not csv_import.is_valid_email(\"ann@x@example.com\")\n\n\ndef test_rejects_malformed_emails():\n    result = csv_import.import_rows(HEADER + \"Ann,ann@example,\\nBob,bob@@example.com,\\n\")\n    assert result.contacts == []\n    assert result.errors == [(2, \"invalid email\"), (3, \"invalid email\")]\n\n\ndef test_parses_signup_dates():\n    assert csv_import.parse_signup_date(\"2024-03-05\") == date(2024, 3, 5)\n    assert csv_import.parse_signup_date(\"05/03/2024\") == date(2024, 3, 5)\n    assert csv_import.parse_signup_date(\"5 Mar 2024\") == date(2024, 3, 5)\n\n\ndef test_stores_signup_date():\n    result = csv_import.import_rows(HEADER + \"Ann,ann@example.com,2024-03-05\\n\")\n    assert result.contacts[0][\"signup_date\"] == date(2024, 3, 5)\n\n\ndef test_reports_bad_signup_date():\n    result = csv_import.import_rows(HEADER + \"Ann,ann@example.com,March 5th\\n\")\n    assert result.contacts == []\n    assert result.errors == [(2, \"bad signup_date\")]\n\n\ndef test_rejects_long_names():\n    accepted = csv_import.import_rows(HEADER + \"x\" * 80 + \",a@example.com,\\n\")\n    rejected = csv_import.import_rows(HEADER + \"x\" * 101 + \",b@example.com,\\n\")\n    assert len(accepted.contacts) == 1\n    assert rejected.errors == [(2, \"name too long\")]\n",
+   "tests/test_phone.py": "import pytest\n\nfrom importer.phone import normalize_phone\n\n\ndef test_adds_country_code():\n    assert normalize_phone(\"(555) 123-4567\") == \"+15551234567\"\n\n\ndef test_keeps_existing_country_code():\n    assert normalize_phone(\"+44 20 7946 0958\") == \"+442079460958\"\n"
+  }
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "tasklist_only",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {
+   "R1": "done",
+   "R2": "done",
+   "R3": "done",
+   "R4": "contradicted"
+  },
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "annotatedBy": "claude-code"
+}

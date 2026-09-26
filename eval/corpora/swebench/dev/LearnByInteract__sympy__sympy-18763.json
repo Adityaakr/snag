@@ -1,0 +1,140 @@
+{
+ "id": "LearnByInteract:sympy__sympy-18763",
+ "corpus": "swebench",
+ "seedId": "sympy__sympy-18763",
+ "input": {
+  "mode": "local",
+  "repo": "sympy/sympy",
+  "baseSha": "70381f282f2d9d039da860e391fe51649df2779d",
+  "headSha": "LearnByInteract-sympy__sympy-18763",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "sympy",
+    "repo": "sympy",
+    "number": 18763
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "sympy",
+     "repo": "sympy",
+     "number": 18763
+    },
+    "title": "Incorrect parenthesizing of Subs",
+    "body": "Here is an example.\r\n```python\r\n>>> from sympy import Subs\r\n>>> from sympy.abc import x,y\r\n>>> 3*Subs(-x+y, (x,),(1,))\r\n```\r\nLaTeX printing of this gives:  \r\n```python\r\n'3 \\\\left. - x + y \\\\right|_{\\\\substack{ x=1 }}'\r\n```\r\n\r\n![image](https://quicklatex.com/cache3/76/ql_9672fd7e62c909ff3d9ac8543c2e2576_l3.png)\r\n\r\n\r\nIt would be better to be parenthesized to:  \r\n```python\r\n'3 \\\\left. \\\\left(- x + y\\\\right) \\\\right|_{\\\\substack{ x=1 }}'\r\n```\r\n\r\n![image](https://quicklatex.com/cache3/bf/ql_936ffdb876e784206d4c54bb93d28dbf_l3.png)",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:628b783401e483b46d93d18ed46a88223e4bc5380ff3589c18f8df65d0b8e042"
+   }
+  ],
+  "pr": {
+   "title": "Fix sympy__sympy-18763",
+   "body": ""
+  },
+  "diffText": "diff --git a/reproduce_subs.py b/reproduce_subs.py\nnew file mode 100644\nindex 0000000000..e7253f61bf\n--- /dev/null\n+++ b/reproduce_subs.py\n@@ -0,0 +1,25 @@\n+from sympy import Subs, sin, exp\n+from sympy.abc import x, y\n+from sympy.printing import latex\n+\n+# Original test case\n+expr = 3*Subs(-x+y, (x,), (1,))\n+print(\"Original expression:\", expr)\n+print(\"\\nLaTeX output:\", latex(expr))\n+\n+# Test edge cases\n+# Case 1: Single term (shouldn't need parentheses)\n+expr1 = Subs(x, x, 1)\n+print(\"\\nCase 1 - Single term:\")\n+print(latex(expr1))\n+\n+# Case 2: Function (should keep its own parentheses)\n+expr2 = Subs(sin(x), x, 1)\n+print(\"\\nCase 2 - Function:\")\n+print(latex(expr2))\n+\n+# Case 3: Complex expression\n+expr3 = Subs(sin(x) + exp(y), x, 1)\n+print(\"\\nCase 3 - Complex expression:\")\n+print(latex(expr3))\n+\ndiff --git a/sympy/printing/latex.py b/sympy/printing/latex.py\nindex 8743723ea0..e8c54ff091 100644\n--- a/sympy/printing/latex.py\n+++ b/sympy/printing/latex.py\n@@ -703,8 +703,12 @@ def _print_Subs(self, subs):\n         latex_new = (self._print(e) for e in new)\n         latex_subs = r'\\\\ '.join(\n             e[0] + '=' + e[1] for e in zip(latex_old, latex_new))\n-        return r'\\left. %s \\right|_{\\substack{ %s }}' % (latex_expr,\n-                                                         latex_subs)\n+        \n+        # Check if the expression needs to be parenthesized\n+        if self._needs_brackets(expr):\n+            latex_expr = r\"\\left(%s\\right)\" % latex_expr\n+            \n+        return r'\\left. %s \\right|_{\\substack{ %s }}' % (latex_expr, latex_subs)\n \n     def _print_Integral(self, expr):\n         tex, symbols = \"\", []\n@@ -2841,3 +2845,4 @@ def multiline_latex(lhs, rhs, terms_per_line=1, environment=\"align*\", use_dots=F\n         term_count += 1\n     result += end_term\n     return result\n+\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "LearnByInteract",
+  "source": "rq2_divergent",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

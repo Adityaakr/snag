@@ -1,0 +1,140 @@
+{
+ "id": "OpenHands:matplotlib__matplotlib-25775",
+ "corpus": "swebench",
+ "seedId": "matplotlib__matplotlib-25775",
+ "input": {
+  "mode": "local",
+  "repo": "matplotlib/matplotlib",
+  "baseSha": "26224d96066b5c60882296c551f54ca7732c0af0",
+  "headSha": "OpenHands-matplotlib__matplotlib-25775",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "matplotlib",
+    "repo": "matplotlib",
+    "number": 25775
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "matplotlib",
+     "repo": "matplotlib",
+     "number": 25775
+    },
+    "title": "[ENH]: Add get/set_antialiased to Text objects",
+    "body": "### Problem\n\nCurrently, Text objects always retrieve their antialiasing state via the global rcParams[\"text.antialias\"], unlike other artists for which this can be configured on a per-artist basis via `set_antialiased` (and read via `set_antialiased`).\n\n### Proposed solution\n\nAdd similar getters/setters on Text objects (also adjusting Annotations accordingly, if needed) and use that info in the drawing stage.\r\n\r\nShould be relatively easy to implement, except that the slight fiddling needed with backends requires some understanding of backend code (I think we need to replace the access to `rcParams[\"text.antialiased\"]` by going through the GraphicsContext state).",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:797823efbab63e497ce25c26c2128d9c0d023abca58fb6f5fd14a154e9b775a1"
+   }
+  ],
+  "pr": {
+   "title": "Fix matplotlib__matplotlib-25775",
+   "body": ""
+  },
+  "diffText": "diff --git a/lib/matplotlib/backends/backend_agg.py b/lib/matplotlib/backends/backend_agg.py\nindex 7d038a998f..dce08702e0 100644\n--- a/lib/matplotlib/backends/backend_agg.py\n+++ b/lib/matplotlib/backends/backend_agg.py\n@@ -206,7 +206,7 @@ class RendererAgg(RendererBase):\n         # space) in the following call to draw_text_image).\n         font.set_text(s, 0, flags=get_hinting_flag())\n         font.draw_glyphs_to_bitmap(\n-            antialiased=mpl.rcParams['text.antialiased'])\n+            antialiased=mtext.get_antialiased() if mtext is not None else mpl.rcParams['text.antialiased'])\n         d = font.get_descent() / 64.0\n         # The descent needs to be adjusted for the angle.\n         xo, yo = font.get_bitmap_offset()\ndiff --git a/lib/matplotlib/text.py b/lib/matplotlib/text.py\nindex 4591316cf9..b8b1d31339 100644\n--- a/lib/matplotlib/text.py\n+++ b/lib/matplotlib/text.py\n@@ -115,6 +115,7 @@ class Text(Artist):\n                  wrap=False,\n                  transform_rotates_text=False,\n                  parse_math=None,    # defaults to rcParams['text.parse_math']\n+                 antialiased=None,   # defaults to rcParams['text.antialiased']\n                  **kwargs\n                  ):\n         \"\"\"\n@@ -149,6 +150,7 @@ class Text(Artist):\n             transform_rotates_text=transform_rotates_text,\n             linespacing=linespacing,\n             rotation_mode=rotation_mode,\n+            antialiased=antialiased,\n         )\n         self.update(kwargs)\n \n@@ -167,6 +169,7 @@ class Text(Artist):\n         transform_rotates_text=False,\n         linespacing=None,\n         rotation_mode=None,\n+        antialiased=None,\n     ):\n         self.set_text(text)\n         self.set_color(\n@@ -187,6 +190,7 @@ class Text(Artist):\n             linespacing = 1.2  # Maybe use rcParam later.\n         self.set_linespacing(linespacing)\n         self.set_rotation_mode(rotation_mode)\n+        self._antialiased = antialiased if antialiased is not None else mpl.rcParams['text.antialiased']\n \n     def update(self, kwargs):\n         # docstring inherited\n@@ -309,6 +313,22 @@ class Text(Artist):\n         \"\"\"Return the text rotation mode.\"\"\"\n         return self._rotation_mode\n \n+    def get_antialiased(self):\n+        \"\"\"Return whether text is antialiased.\"\"\"\n+        return self._antialiased\n+\n+    def set_antialiased(self, b):\n+        \"\"\"\n+        Set whether to use antialiased rendering.\n+\n+        Parameters\n+        ----------\n+        b : bool\n+            If True, the text will be antialiased.\n+        \"\"\"\n+        self._antialiased = b\n+        self.stale = True\n+\n     def update_from(self, other):\n         # docstring inherited\n         super().update_from(other)\n@@ -322,6 +342,7 @@ class Text(Artist):\n         self._transform_rotates_text = other._transform_rotates_text\n         self._picker = other._picker\n         self._linespacing = other._linespacing\n+        self._antialiased = other._antialiased\n         self.stale = True\n \n     def _get_layout(self, renderer):\ndiff --git a/test_text_antialiasing.py b/test_text_antialiasing.py\nnew file mode 100644\nindex 0000000000..ff0443ad78\n--- /dev/null\n+++ b/test_text_antialiasing.py\n@@ -0,0 +1,24 @@\n+import matplotlib.pyplot as plt\n+import numpy as np\n+\n+# Create a figure and axis\n+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))\n+\n+# Add text with antialiasing enabled (default)\n+text1 = ax1.text(0.5, 0.5, 'Antialiased Text', ha='center', va='center')\n+ax1.set_title('Antialiased Text (Default)')\n+\n+# Add text with antialiasing disabled\n+text2 = ax2.text(0.5, 0.5, 'Non-antialiased Text', ha='center', va='center')\n+text2.set_antialiased(False)  # Test the new method\n+ax2.set_title('Non-antialiased Text')\n+\n+# Set axis limits\n+ax1.set_xlim(0, 1)\n+ax1.set_ylim(0, 1)\n+ax2.set_xlim(0, 1)\n+ax2.set_ylim(0, 1)\n+\n+# Save the figure\n+plt.savefig('text_antialiasing_test.png', dpi=300)\n+plt.close()\n\\ No newline at end of file\ndiff --git a/text_antialiasing_test.png b/text_antialiasing_test.png\nnew file mode 100644\nindex 0000000000..3b97777a5c\nBinary files /dev/null and b/text_antialiasing_test.png differ\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "OpenHands",
+  "source": "rq2_divergent",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

@@ -1,0 +1,140 @@
+{
+ "id": "LearnByInteract:django__django-12708",
+ "corpus": "swebench",
+ "seedId": "django__django-12708",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "447980e72ac01da1594dd3373a03ba40b7ee6f80",
+  "headSha": "LearnByInteract-django__django-12708",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 12708
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 12708
+    },
+    "title": "Migration crashes deleting an index_together if there is a unique_together on the same fields",
+    "body": "Description\n\t\nHappens with Django 1.11.10\nSteps to reproduce:\n1) Create models with 2 fields, add 2 same fields to unique_together and to index_together\n2) Delete index_together -> Fail\nIt will fail at django/db/backends/base/schema.py, line 378, in _delete_composed_index(), ValueError: Found wrong number (2) of constraints for as this one will find two constraints, the _uniq and the _idx one. No way to get out of this...\nThe worst in my case is that happened as I wanted to refactor my code to use the \"new\" (Dj 1.11) Options.indexes feature. I am actually not deleting the index, just the way it is declared in my code.\nI think there are 2 different points here:\n1) The deletion of index_together should be possible alone or made coherent (migrations side?) with unique_together\n2) Moving the declaration of an index should not result in an index re-creation",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:1cbc3baec575525ad705367b60aa2e5ca5e051a8c9af41c216ac7371913d7d99"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-12708",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/db/backends/base/schema.py b/django/db/backends/base/schema.py\nindex 61f88401ab..39ab614c01 100644\n--- a/django/db/backends/base/schema.py\n+++ b/django/db/backends/base/schema.py\n@@ -407,6 +407,9 @@ class BaseDatabaseSchemaEditor:\n             model, columns, exclude=meta_constraint_names | meta_index_names,\n             **constraint_kwargs\n         )\n+        # Filter for index-type constraints only when deleting an index\n+        if constraint_kwargs.get('index'):\n+            constraint_names = [name for name in constraint_names if name.endswith('_idx')]\n         if len(constraint_names) != 1:\n             raise ValueError(\"Found wrong number (%s) of constraints for %s(%s)\" % (\n                 len(constraint_names),\n@@ -1198,3 +1201,4 @@ class BaseDatabaseSchemaEditor:\n             'param_types': ','.join(param_types),\n         }\n         self.execute(sql)\n+\ndiff --git a/reproduce_issue.py b/reproduce_issue.py\nnew file mode 100644\nindex 0000000000..196d4a06dc\n--- /dev/null\n+++ b/reproduce_issue.py\n@@ -0,0 +1,82 @@\n+from django.db import models\n+from django.db import migrations\n+from django.db.backends.base.schema import BaseDatabaseSchemaEditor\n+from django.db.migrations.state import ProjectState\n+from django.db.backends.sqlite3.base import DatabaseWrapper\n+from django.conf import settings\n+import django\n+\n+# Configure Django settings\n+if not settings.configured:\n+    settings.configure(\n+        DATABASES={\n+            'default': {\n+                'ENGINE': 'django.db.backends.sqlite3',\n+                'NAME': ':memory:',\n+                'TIME_ZONE': None,\n+                'CONN_MAX_AGE': 0,\n+                'OPTIONS': {},\n+                'AUTOCOMMIT': True,\n+            }\n+        },\n+        INSTALLED_APPS=['django.contrib.contenttypes'],\n+        DEFAULT_AUTO_FIELD='django.db.models.AutoField',\n+        TIME_ZONE=None,\n+        USE_TZ=False,\n+    )\n+    django.setup()\n+\n+# Create a test model class\n+class TestModel(models.Model):\n+    field1 = models.CharField(max_length=100)\n+    field2 = models.CharField(max_length=100)\n+\n+    class Meta:\n+        app_label = 'testapp'\n+        db_table = 'test_model'\n+\n+# Create schema editor\n+connection = DatabaseWrapper({\n+    'NAME': ':memory:',\n+    'TIME_ZONE': None,\n+    'CONN_MAX_AGE': 0,\n+    'OPTIONS': {},\n+    'AUTOCOMMIT': True,\n+    'ENGINE': 'django.db.backends.sqlite3',\n+})\n+schema_editor = BaseDatabaseSchemaEditor(connection)\n+\n+# Create tables\n+schema_editor.execute(\"\"\"\n+CREATE TABLE test_model (\n+    id INTEGER PRIMARY KEY AUTOINCREMENT,\n+    field1 varchar(100) NOT NULL,\n+    field2 varchar(100) NOT NULL\n+)\n+\"\"\")\n+\n+# Create unique constraint\n+schema_editor.execute(\"\"\"\n+CREATE UNIQUE INDEX test_model_field1_field2_uniq \n+ON test_model(field1, field2)\n+\"\"\")\n+\n+# Create index\n+schema_editor.execute(\"\"\"\n+CREATE INDEX test_model_field1_field2_idx \n+ON test_model(field1, field2)\n+\"\"\")\n+\n+# Now try to delete just the index\n+try:\n+    # This should trigger the bug because _delete_composed_index will find both\n+    # the unique constraint and the index\n+    schema_editor._delete_composed_index(\n+        TestModel,\n+        ('field1', 'field2'),\n+        {'index': True},\n+        schema_editor.sql_delete_index\n+    )\n+except ValueError as e:\n+    print(f\"Error occurred: {e}\")\n+\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "LearnByInteract",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

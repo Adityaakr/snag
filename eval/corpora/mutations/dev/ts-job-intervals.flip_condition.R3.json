@@ -1,0 +1,157 @@
+{
+ "id": "ts-job-intervals.flip_condition.R3",
+ "corpus": "mutations",
+ "seedId": "ts-job-intervals",
+ "operator": "flip_condition",
+ "target": "R3",
+ "input": {
+  "mode": "local",
+  "baseSha": "base",
+  "headSha": "head-flip_condition-R3",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "acme",
+    "repo": "scheduler",
+    "number": 41
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "acme",
+     "repo": "scheduler",
+     "number": 41
+    },
+    "title": "Human-readable job intervals",
+    "body": "Job intervals are raw millisecond strings today, which is easy to get wrong. We want units.\n\n- [ ] Job intervals accept a number with a unit suffix: s, m or h (for example `90s`, `5m`, `2h`)\n- [ ] An interval that cannot be parsed throws a `DurationError` that names the bad value\n- [ ] Intervals shorter than 1 second are rejected with a `RangeError`\n- [ ] Job names are trimmed and lowercased when a job is scheduled",
+    "author": "local",
+    "state": "open",
+    "comments": [],
+    "contentHash": "sha256:537756558661dfe726bfd324eb528ca027a9ddb47987ec8f6269ace8f027fe67"
+   }
+  ],
+  "pr": {
+   "title": "Parse job intervals with units",
+   "body": "Adds `parseDuration` for `s`, `m` and `h` suffixes and uses it in `scheduleJob`. Bad input throws `DurationError`, intervals under a second throw `RangeError`, and job names are normalized. Tests cover each case."
+  },
+  "diffText": "diff --git a/src/schedule.test.ts b/src/schedule.test.ts\n--- a/src/schedule.test.ts\n+++ b/src/schedule.test.ts\n@@ -1,8 +1,31 @@\n import { describe, expect, it } from 'vitest';\n-import { scheduleJob } from './schedule.js';\n+import { DurationError, parseDuration, scheduleJob } from './schedule.js';\n \n describe('scheduleJob', () => {\n   it('keeps the job name', () => {\n-    expect(scheduleJob({ name: 'sync', every: '1000' }).name).toBe('sync');\n+    expect(scheduleJob({ name: 'sync', every: '1s' }).name).toBe('sync');\n   });\n+\n+  it('parses seconds, minutes and hours', () => {\n+    expect(parseDuration('90s')).toBe(90_000);\n+    expect(parseDuration('5m')).toBe(300_000);\n+    expect(parseDuration('2h')).toBe(7_200_000);\n+  });\n+\n+  it('schedules jobs with unit intervals', () => {\n+    expect(scheduleJob({ name: 'sync', every: '5m' }).intervalMs).toBe(300_000);\n+  });\n+\n+  it('throws a DurationError naming the bad value', () => {\n+    expect(() => parseDuration('soon')).toThrow(DurationError);\n+    expect(() => parseDuration('soon')).toThrow('cannot parse duration \"soon\"');\n+  });\n+\n+  it('rejects intervals shorter than one second', () => {\n+    expect(() => scheduleJob({ name: 'spin', every: '1s' })).toThrow(RangeError);\n+  });\n+\n+  it('normalizes job names', () => {\n+    expect(scheduleJob({ name: ' Nightly Sync ', every: '1h' }).name).toBe('nightly sync');\n+  });\n });\ndiff --git a/src/schedule.ts b/src/schedule.ts\n--- a/src/schedule.ts\n+++ b/src/schedule.ts\n@@ -11,7 +11,33 @@\n   timeoutMs: number;\n }\n \n+export class DurationError extends Error {\n+  constructor(readonly input: string) {\n+    super(`cannot parse duration \"${input}\"`);\n+    this.name = 'DurationError';\n+  }\n+}\n+\n+export function parseDuration(text: string): number {\n+  const match = /^(\\d+)([smh])$/.exec(text.trim());\n+  if (!match) throw new DurationError(text);\n+  const amount = Number(match[1]);\n+  switch (match[2]) {\n+    case 's':\n+      return amount * 1000;\n+    case 'm':\n+      return amount * 60_000;\n+    case 'h':\n+      return amount * 3_600_000;\n+  }\n+  throw new DurationError(text);\n+}\n+\n export function scheduleJob(job: Job): ScheduledJob {\n-  const intervalMs = Number(job.every);\n-  return { name: job.name, intervalMs, timeoutMs: jobDefaults().timeoutMs };\n+  const intervalMs = parseDuration(job.every);\n+  if (intervalMs <= 1000) {\n+    throw new RangeError(`interval for ${job.name} is shorter than 1 second`);\n+  }\n+  const name = job.name.trim().toLowerCase();\n+  return { name, intervalMs, timeoutMs: jobDefaults().timeoutMs };\n }\n"
+ },
+ "trees": {
+  "base": {
+   "src/config.ts": "export const DEFAULTS = {\n  maxRetries: 3,\n  timeoutMs: 5000,\n  queueName: 'default',\n};\n\nexport function jobDefaults() {\n  return { retries: DEFAULTS.maxRetries, timeoutMs: DEFAULTS.timeoutMs, queue: DEFAULTS.queueName };\n}\n",
+   "src/format.test.ts": "import { describe, expect, it } from 'vitest';\nimport { formatBytes } from './format.js';\n\ndescribe('formatBytes', () => {\n  it('formats kilobytes', () => {\n    expect(formatBytes(2048)).toBe('2.0 KB');\n  });\n\n  it('keeps small values in bytes', () => {\n    expect(formatBytes(12)).toBe('12.0 B');\n  });\n});\n",
+   "src/format.ts": "export function formatBytes(bytes: number): string {\n  const units = ['B', 'KB', 'MB', 'GB'];\n  let value = bytes;\n  let unit = 0;\n  while (value >= 1024 && unit < units.length - 1) {\n    value /= 1024;\n    unit++;\n  }\n  return `${value.toFixed(1)} ${units[unit]}`;\n}\n",
+   "src/schedule.test.ts": "import { describe, expect, it } from 'vitest';\nimport { scheduleJob } from './schedule.js';\n\ndescribe('scheduleJob', () => {\n  it('keeps the job name', () => {\n    expect(scheduleJob({ name: 'sync', every: '1000' }).name).toBe('sync');\n  });\n});\n",
+   "src/schedule.ts": "import { jobDefaults } from './config.js';\n\nexport interface Job {\n  name: string;\n  every: string;\n}\n\nexport interface ScheduledJob {\n  name: string;\n  intervalMs: number;\n  timeoutMs: number;\n}\n\nexport function scheduleJob(job: Job): ScheduledJob {\n  const intervalMs = Number(job.every);\n  return { name: job.name, intervalMs, timeoutMs: jobDefaults().timeoutMs };\n}\n"
+  },
+  "head": {
+   "src/config.ts": "export const DEFAULTS = {\n  maxRetries: 3,\n  timeoutMs: 5000,\n  queueName: 'default',\n};\n\nexport function jobDefaults() {\n  return { retries: DEFAULTS.maxRetries, timeoutMs: DEFAULTS.timeoutMs, queue: DEFAULTS.queueName };\n}\n",
+   "src/format.test.ts": "import { describe, expect, it } from 'vitest';\nimport { formatBytes } from './format.js';\n\ndescribe('formatBytes', () => {\n  it('formats kilobytes', () => {\n    expect(formatBytes(2048)).toBe('2.0 KB');\n  });\n\n  it('keeps small values in bytes', () => {\n    expect(formatBytes(12)).toBe('12.0 B');\n  });\n});\n",
+   "src/format.ts": "export function formatBytes(bytes: number): string {\n  const units = ['B', 'KB', 'MB', 'GB'];\n  let value = bytes;\n  let unit = 0;\n  while (value >= 1024 && unit < units.length - 1) {\n    value /= 1024;\n    unit++;\n  }\n  return `${value.toFixed(1)} ${units[unit]}`;\n}\n",
+   "src/schedule.test.ts": "import { describe, expect, it } from 'vitest';\nimport { DurationError, parseDuration, scheduleJob } from './schedule.js';\n\ndescribe('scheduleJob', () => {\n  it('keeps the job name', () => {\n    expect(scheduleJob({ name: 'sync', every: '1s' }).name).toBe('sync');\n  });\n\n  it('parses seconds, minutes and hours', () => {\n    expect(parseDuration('90s')).toBe(90_000);\n    expect(parseDuration('5m')).toBe(300_000);\n    expect(parseDuration('2h')).toBe(7_200_000);\n  });\n\n  it('schedules jobs with unit intervals', () => {\n    expect(scheduleJob({ name: 'sync', every: '5m' }).intervalMs).toBe(300_000);\n  });\n\n  it('throws a DurationError naming the bad value', () => {\n    expect(() => parseDuration('soon')).toThrow(DurationError);\n    expect(() => parseDuration('soon')).toThrow('cannot parse duration \"soon\"');\n  });\n\n  it('rejects intervals shorter than one second', () => {\n    expect(() => scheduleJob({ name: 'spin', every: '1s' })).toThrow(RangeError);\n  });\n\n  it('normalizes job names', () => {\n    expect(scheduleJob({ name: ' Nightly Sync ', every: '1h' }).name).toBe('nightly sync');\n  });\n});\n",
+   "src/schedule.ts": "import { jobDefaults } from './config.js';\n\nexport interface Job {\n  name: string;\n  every: string;\n}\n\nexport interface ScheduledJob {\n  name: string;\n  intervalMs: number;\n  timeoutMs: number;\n}\n\nexport class DurationError extends Error {\n  constructor(readonly input: string) {\n    super(`cannot parse duration \"${input}\"`);\n    this.name = 'DurationError';\n  }\n}\n\nexport function parseDuration(text: string): number {\n  const match = /^(\\d+)([smh])$/.exec(text.trim());\n  if (!match) throw new DurationError(text);\n  const amount = Number(match[1]);\n  switch (match[2]) {\n    case 's':\n      return amount * 1000;\n    case 'm':\n      return amount * 60_000;\n    case 'h':\n      return amount * 3_600_000;\n  }\n  throw new DurationError(text);\n}\n\nexport function scheduleJob(job: Job): ScheduledJob {\n  const intervalMs = parseDuration(job.every);\n  if (intervalMs <= 1000) {\n    throw new RangeError(`interval for ${job.name} is shorter than 1 second`);\n  }\n  const name = job.name.trim().toLowerCase();\n  return { name, intervalMs, timeoutMs: jobDefaults().timeoutMs };\n}\n"
+  }
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "tasklist_only",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {
+   "R1": "done",
+   "R2": "done",
+   "R3": "contradicted",
+   "R4": "done"
+  },
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "annotatedBy": "claude-code"
+}

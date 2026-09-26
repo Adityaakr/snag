@@ -1,0 +1,140 @@
+{
+ "id": "gold:sympy__sympy-13647",
+ "corpus": "swebench",
+ "seedId": "sympy__sympy-13647",
+ "input": {
+  "mode": "local",
+  "repo": "sympy/sympy",
+  "baseSha": "67e3c956083d0128a621f65ee86a7dacd4f9f19f",
+  "headSha": "gold-sympy__sympy-13647",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "sympy",
+    "repo": "sympy",
+    "number": 13647
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "sympy",
+     "repo": "sympy",
+     "number": 13647
+    },
+    "title": "Matrix.col_insert() no longer seems to work correctly.",
+    "body": "Example:\r\n\r\n```\r\nIn [28]: import sympy as sm\r\n\r\nIn [29]: M = sm.eye(6)\r\n\r\nIn [30]: M\r\nOut[30]: \r\n⎡1  0  0  0  0  0⎤\r\n⎢                ⎥\r\n⎢0  1  0  0  0  0⎥\r\n⎢                ⎥\r\n⎢0  0  1  0  0  0⎥\r\n⎢                ⎥\r\n⎢0  0  0  1  0  0⎥\r\n⎢                ⎥\r\n⎢0  0  0  0  1  0⎥\r\n⎢                ⎥\r\n⎣0  0  0  0  0  1⎦\r\n\r\nIn [31]: V = 2 * sm.ones(6, 2)\r\n\r\nIn [32]: V\r\nOut[32]: \r\n⎡2  2⎤\r\n⎢    ⎥\r\n⎢2  2⎥\r\n⎢    ⎥\r\n⎢2  2⎥\r\n⎢    ⎥\r\n⎢2  2⎥\r\n⎢    ⎥\r\n⎢2  2⎥\r\n⎢    ⎥\r\n⎣2  2⎦\r\n\r\nIn [33]: M.col_insert(3, V)\r\nOut[33]: \r\n⎡1  0  0  2  2  1  0  0⎤\r\n⎢                      ⎥\r\n⎢0  1  0  2  2  0  1  0⎥\r\n⎢                      ⎥\r\n⎢0  0  1  2  2  0  0  1⎥\r\n⎢                      ⎥\r\n⎢0  0  0  2  2  0  0  0⎥\r\n⎢                      ⎥\r\n⎢0  0  0  2  2  0  0  0⎥\r\n⎢                      ⎥\r\n⎣0  0  0  2  2  0  0  0⎦\r\nIn [34]: sm.__version__\r\nOut[34]: '1.1.1'\r\n```\r\n\r\nThe 3 x 3 identify matrix to the right of the columns of twos is shifted from the bottom three rows to the top three rows.\r\n\r\n@siefkenj Do you think this has to do with your matrix refactor?",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:a931bd1639370f7c9572e107ef8f22370e72a6af1ee60b4fa97a7c96e13ee086"
+   }
+  ],
+  "pr": {
+   "title": "Fix sympy__sympy-13647",
+   "body": ""
+  },
+  "diffText": "diff --git a/sympy/matrices/common.py b/sympy/matrices/common.py\n--- a/sympy/matrices/common.py\n+++ b/sympy/matrices/common.py\n@@ -86,7 +86,7 @@ def entry(i, j):\n                 return self[i, j]\n             elif pos <= j < pos + other.cols:\n                 return other[i, j - pos]\n-            return self[i, j - pos - other.cols]\n+            return self[i, j - other.cols]\n \n         return self._new(self.rows, self.cols + other.cols,\n                          lambda i, j: entry(i, j))\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "gold",
+  "source": "gold",
+  "strength": "strong"
+ },
+ "annotatedBy": "study"
+}

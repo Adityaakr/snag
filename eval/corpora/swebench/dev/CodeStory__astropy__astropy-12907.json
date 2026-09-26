@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:astropy__astropy-12907",
+ "corpus": "swebench",
+ "seedId": "astropy__astropy-12907",
+ "input": {
+  "mode": "local",
+  "repo": "astropy/astropy",
+  "baseSha": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+  "headSha": "CodeStory-astropy__astropy-12907",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "astropy",
+    "repo": "astropy",
+    "number": 12907
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "astropy",
+     "repo": "astropy",
+     "number": 12907
+    },
+    "title": "Modeling's `separability_matrix` does not compute separability correctly for nested CompoundModels",
+    "body": "Consider the following model:\r\n\r\n```python\r\nfrom astropy.modeling import models as m\r\nfrom astropy.modeling.separable import separability_matrix\r\n\r\ncm = m.Linear1D(10) & m.Linear1D(5)\r\n```\r\n\r\nIt's separability matrix as you might expect is a diagonal:\r\n\r\n```python\r\n>>> separability_matrix(cm)\r\narray([[ True, False],\r\n       [False,  True]])\r\n```\r\n\r\nIf I make the model more complex:\r\n```python\r\n>>> separability_matrix(m.Pix2Sky_TAN() & m.Linear1D(10) & m.Linear1D(5))\r\narray([[ True,  True, False, False],\r\n       [ True,  True, False, False],\r\n       [False, False,  True, False],\r\n       [False, False, False,  True]])\r\n```\r\n\r\nThe output matrix is again, as expected, the outputs and inputs to the linear models are separable and independent of each other.\r\n\r\nIf however, I nest these compound models:\r\n```python\r\n>>> separability_matrix(m.Pix2Sky_TAN() & cm)\r\narray([[ True,  True, False, False],\r\n       [ True,  True, False, False],\r\n       [False, False,  True,  True],\r\n       [False, False,  True,  True]])\r\n```\r\nSuddenly the inputs and outputs are no longer separable?\r\n\r\nThis feels like a bug to me, but I might be missing something?",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:9f0dba8a3d49d3e6cc1101e71b34f9bb343c8223ac74a1a31fa7d2c05ef43bbc"
+   }
+  ],
+  "pr": {
+   "title": "Fix astropy__astropy-12907",
+   "body": ""
+  },
+  "diffText": "diff --git a/astropy/modeling/separable.py b/astropy/modeling/separable.py\nindex a308e27297..55882681bc 100644\n--- a/astropy/modeling/separable.py\n+++ b/astropy/modeling/separable.py\n@@ -234,15 +234,25 @@ def _cstack(left, right):\n     noutp = _compute_n_outputs(left, right)\n \n     if isinstance(left, Model):\n-        cleft = _coord_matrix(left, 'left', noutp)\n+        if isinstance(left, CompoundModel) and left.op == '&':\n+            cleft = _separable(left)\n+        else:\n+            cleft = _coord_matrix(left, 'left', noutp)\n     else:\n         cleft = np.zeros((noutp, left.shape[1]))\n         cleft[: left.shape[0], : left.shape[1]] = left\n+\n     if isinstance(right, Model):\n-        cright = _coord_matrix(right, 'right', noutp)\n+        if isinstance(right, CompoundModel) and right.op == '&':\n+            cright = _separable(right)\n+            cright_padded = np.zeros((noutp, right.n_inputs))\n+            cright_padded[-right.n_outputs:, -right.n_inputs:] = cright\n+            cright = cright_padded\n+        else:\n+            cright = _coord_matrix(right, 'right', noutp)\n     else:\n         cright = np.zeros((noutp, right.shape[1]))\n-        cright[-right.shape[0]:, -right.shape[1]:] = 1\n+        cright[-right.shape[0]:, -right.shape[1]:] = right\n \n     return np.hstack([cleft, cright])\n \ndiff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..42291e8c42\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,17 @@\n+from astropy.modeling import models as m\n+from astropy.modeling.separable import separability_matrix\n+\n+# Test case 1: Simple compound model\n+print(\"\\nTest case 1: Simple compound model\")\n+cm = m.Linear1D(10) & m.Linear1D(5)\n+print(separability_matrix(cm))\n+\n+# Test case 2: More complex compound model\n+print(\"\\nTest case 2: Complex compound model\")\n+complex_model = m.Pix2Sky_TAN() & m.Linear1D(10) & m.Linear1D(5)\n+print(separability_matrix(complex_model))\n+\n+# Test case 3: Nested compound model (showing the bug)\n+print(\"\\nTest case 3: Nested compound model\")\n+nested_model = m.Pix2Sky_TAN() & cm\n+print(separability_matrix(nested_model))\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq2_divergent",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

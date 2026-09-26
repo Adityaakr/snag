@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:django__django-15278",
+ "corpus": "swebench",
+ "seedId": "django__django-15278",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "0ab58c120939093fea90822f376e1866fc714d1f",
+  "headSha": "CodeStory-django__django-15278",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 15278
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 15278
+    },
+    "title": "Adding nullable OneToOneField crashes on SQLite.",
+    "body": "Description\n\t\nThis new sqlite3 error has cropped up between building django-oauth-toolkit between Django 4.0 and main branch for migrations.AddField of a OneToOneField (see ​https://github.com/jazzband/django-oauth-toolkit/issues/1064):\nself = <django.db.backends.sqlite3.base.SQLiteCursorWrapper object at 0x10b8038b0>\nquery = 'ALTER TABLE \"oauth2_provider_accesstoken\" ADD COLUMN \"source_refresh_token_id\" bigint NULL UNIQUE REFERENCES \"oauth2_provider_refreshtoken\" (\"id\") DEFERRABLE INITIALLY DEFERRED'\nparams = []\n\tdef execute(self, query, params=None):\n\t\tif params is None:\n\t\t\treturn Database.Cursor.execute(self, query)\n\t\tquery = self.convert_query(query)\n>\t return Database.Cursor.execute(self, query, params)\nE\t django.db.utils.OperationalError: Cannot add a UNIQUE column\nHere's the relevant migration snippet: \n\t\tmigrations.AddField(\n\t\t\tmodel_name='AccessToken',\n\t\t\tname='source_refresh_token',\n\t\t\tfield=models.OneToOneField(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to=oauth2_settings.REFRESH_TOKEN_MODEL, related_name=\"refreshed_access_token\"),\n\t\t),\nI see there have been a lot of sqlite3 changes in #33355 since the 4.0 release....",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:04c431c3d6171d07397878f4adc15baa2a447fb90f9f4764cef2f15b2fc5ead0"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-15278",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/db/backends/sqlite3/schema.py b/django/db/backends/sqlite3/schema.py\nindex 6752a8e3c0..74eed44e48 100644\n--- a/django/db/backends/sqlite3/schema.py\n+++ b/django/db/backends/sqlite3/schema.py\n@@ -326,8 +326,9 @@ class DatabaseSchemaEditor(BaseDatabaseSchemaEditor):\n         \"\"\"Create a field on a model.\"\"\"\n         # Fields with default values cannot by handled by ALTER TABLE ADD\n         # COLUMN statement because DROP DEFAULT is not supported in\n-        # ALTER TABLE.\n-        if not field.null or self.effective_default(field) is not None:\n+        # ALTER TABLE. The same applies to unique fields since SQLite\n+        # doesn't support adding unique columns with ALTER TABLE.\n+        if not field.null or self.effective_default(field) is not None or field.unique:\n             self._remake_table(model, create_field=field)\n         else:\n             super().add_field(model, field)\ndiff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..1299e9db6a\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,84 @@\n+import os\n+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'test_sqlite_settings')\n+\n+from django.conf import settings\n+from django.db import models, migrations\n+from django.db.migrations.state import ProjectState\n+from django.db.migrations.executor import MigrationExecutor\n+from django.db import connections\n+\n+# Create test settings\n+DATABASES = {\n+    'default': {\n+        'ENGINE': 'django.db.backends.sqlite3',\n+        'NAME': ':memory:',\n+    }\n+}\n+\n+settings.configure(\n+    DEBUG=True,\n+    DATABASES=DATABASES,\n+    INSTALLED_APPS=[],\n+    USE_TZ=False,\n+)\n+\n+import django\n+django.setup()\n+\n+# Create test models\n+class RefreshToken(models.Model):\n+    class Meta:\n+        app_label = 'test_app'\n+\n+class AccessToken(models.Model):\n+    class Meta:\n+        app_label = 'test_app'\n+    source_refresh_token = models.OneToOneField(\n+        RefreshToken,\n+        on_delete=models.SET_NULL,\n+        null=True,\n+        blank=True,\n+        related_name='refreshed_access_token'\n+    )\n+\n+# Create and run the migration\n+class TestMigration(migrations.Migration):\n+    dependencies = []\n+\n+    operations = [\n+        migrations.CreateModel(\n+            name='RefreshToken',\n+            fields=[\n+                ('id', models.AutoField(primary_key=True)),\n+            ],\n+        ),\n+        migrations.CreateModel(\n+            name='AccessToken',\n+            fields=[\n+                ('id', models.AutoField(primary_key=True)),\n+            ],\n+        ),\n+        migrations.AddField(\n+            model_name='AccessToken',\n+            name='source_refresh_token',\n+            field=models.OneToOneField(\n+                blank=True,\n+                null=True,\n+                on_delete=models.SET_NULL,\n+                to='RefreshToken',\n+                related_name='refreshed_access_token'\n+            ),\n+        ),\n+    ]\n+\n+# Run the migration\n+connection = connections['default']\n+executor = MigrationExecutor(connection)\n+project_state = ProjectState()\n+migration = TestMigration('test_migration', 'test_app')\n+\n+try:\n+    executor.apply_migration(project_state, migration)\n+    print(\"Migration succeeded - this is unexpected!\")\n+except Exception as e:\n+    print(f\"Migration failed as expected with: {str(e)}\")\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

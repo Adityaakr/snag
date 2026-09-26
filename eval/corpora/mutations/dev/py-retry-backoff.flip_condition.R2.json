@@ -1,0 +1,157 @@
+{
+ "id": "py-retry-backoff.flip_condition.R2",
+ "corpus": "mutations",
+ "seedId": "py-retry-backoff",
+ "operator": "flip_condition",
+ "target": "R2",
+ "input": {
+  "mode": "local",
+  "baseSha": "base",
+  "headSha": "head-flip_condition-R2",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "fieldkit",
+    "repo": "api-client",
+    "number": 58
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "fieldkit",
+     "repo": "api-client",
+     "number": 58
+    },
+    "title": "Smarter retries for outbound HTTP calls",
+    "body": "`call_with_retry` retries every HTTP error with the same fixed delay, which hammers upstreams that are already struggling and retries errors that will never succeed.\n\n- [ ] Delays between attempts start at `base_delay` and double each time, capped at `max_delay` (with a base of 0.5s: 0.5, 1, 2, 4)\n- [ ] Only status 429 and the gateway errors 502, 503 and 504 are retried; any other status is raised on the first failure\n- [ ] When the last attempt fails, raise `RetryExhausted` with the number of attempts and the last HTTP error as its cause\n- [ ] Each retry logs a warning such as `retry 2/4 in 0.5s` (next attempt, max attempts, delay)",
+    "author": "local",
+    "state": "open",
+    "comments": [],
+    "contentHash": "sha256:7ba9efb905addc265f9e5e4c7115330b5102120496e3864049d34dfecc9a6856"
+   }
+  ],
+  "pr": {
+   "title": "Exponential backoff and selective retries",
+   "body": "`call_with_retry` now waits `backoff_delay(attempt)` between attempts, which doubles from `base_delay` up to `max_delay`. `is_retryable` limits retries to 429, 502, 503 and 504. After the last attempt the helper raises `RetryExhausted` chained to the last `HttpError`, and every retry logs a warning with the attempt and delay. The existing give-up test now expects `RetryExhausted`."
+  },
+  "diffText": "diff --git a/client/retry.py b/client/retry.py\n--- a/client/retry.py\n+++ b/client/retry.py\n@@ -14,6 +14,24 @@\n         self.status = status\n \n \n+class RetryExhausted(Exception):\n+    def __init__(self, attempts):\n+        super().__init__(f\"gave up after {attempts} attempts\")\n+        self.attempts = attempts\n+\n+\n+def is_retryable(error):\n+    if error.status == 428:\n+        return True\n+    if error.status in (502, 503, 504):\n+        return True\n+    return False\n+\n+\n+def backoff_delay(attempt, base_delay, max_delay):\n+    return min(base_delay * 2 ** (attempt - 1), max_delay)\n+\n+\n def call_with_retry(fn, sleep=time.sleep):\n     settings = retry_settings()\n     attempts = settings[\"max_attempts\"]\n@@ -22,6 +40,10 @@\n             return fn()\n         except HttpError as error:\n             log.debug(\"attempt %d failed: %s\", attempt, error)\n-            if attempt == attempts:\n+            if not is_retryable(error):\n                 raise\n-            sleep(settings[\"base_delay\"])\n+            if attempt == attempts:\n+                raise RetryExhausted(attempts) from error\n+            delay = backoff_delay(attempt, settings[\"base_delay\"], settings[\"max_delay\"])\n+            log.warning(\"retry %d/%d in %.1fs\", attempt + 1, attempts, delay)\n+            sleep(delay)\ndiff --git a/tests/test_retry.py b/tests/test_retry.py\n--- a/tests/test_retry.py\n+++ b/tests/test_retry.py\n@@ -1,3 +1,5 @@\n+import logging\n+\n import pytest\n \n from client import retry\n@@ -26,5 +28,43 @@\n \n \n def test_gives_up_after_max_attempts():\n-    with pytest.raises(retry.HttpError):\n+    with pytest.raises(retry.RetryExhausted) as info:\n         retry.call_with_retry(flaky([503] * 5), sleep=lambda s: None)\n+    assert info.value.attempts == 4\n+    assert isinstance(info.value.__cause__, retry.HttpError)\n+\n+\n+def test_backoff_doubles_each_attempt():\n+    assert retry.backoff_delay(1, 0.5, 30.0) == 0.5\n+    assert retry.backoff_delay(4, 0.5, 30.0) == 4.0\n+\n+\n+def test_backoff_is_capped():\n+    assert retry.backoff_delay(10, 0.5, 8.0) == 8.0\n+\n+\n+def test_sleeps_grow_between_attempts():\n+    sleeps = []\n+    retry.call_with_retry(flaky([503, 503, 503]), sleep=sleeps.append)\n+    assert sleeps[0] == 0.5\n+    assert sleeps[0] < sleeps[1] < sleeps[2]\n+\n+\n+def test_retryable_statuses():\n+    assert retry.is_retryable(retry.HttpError(428))\n+    assert retry.is_retryable(retry.HttpError(503))\n+    assert not retry.is_retryable(retry.HttpError(500))\n+    assert not retry.is_retryable(retry.HttpError(404))\n+\n+\n+def test_other_statuses_are_not_retried():\n+    sleeps = []\n+    with pytest.raises(retry.HttpError):\n+        retry.call_with_retry(flaky([404]), sleep=sleeps.append)\n+    assert sleeps == []\n+\n+\n+def test_logs_each_retry(caplog):\n+    caplog.set_level(logging.WARNING, logger=\"client.retry\")\n+    retry.call_with_retry(flaky([503]), sleep=lambda s: None)\n+    assert caplog.messages == [\"retry 2/4 in 0.5s\"]\n"
+ },
+ "trees": {
+  "base": {
+   "client/config.py": "\"\"\"Runtime settings for the HTTP client.\"\"\"\n\n\ndef retry_settings():\n    return {\"max_attempts\": 4, \"base_delay\": 0.5, \"max_delay\": 8.0}\n",
+   "client/retry.py": "\"\"\"Retry helper for outbound HTTP calls.\"\"\"\n\nimport logging\nimport time\n\nfrom client.config import retry_settings\n\nlog = logging.getLogger(\"client.retry\")\n\n\nclass HttpError(Exception):\n    def __init__(self, status):\n        super().__init__(f\"HTTP {status}\")\n        self.status = status\n\n\ndef call_with_retry(fn, sleep=time.sleep):\n    settings = retry_settings()\n    attempts = settings[\"max_attempts\"]\n    for attempt in range(1, attempts + 1):\n        try:\n            return fn()\n        except HttpError as error:\n            log.debug(\"attempt %d failed: %s\", attempt, error)\n            if attempt == attempts:\n                raise\n            sleep(settings[\"base_delay\"])\n",
+   "client/urls.py": "\"\"\"URL helpers.\"\"\"\n\n\ndef join_url(base, path):\n    trimmed = base.rstrip(\"/\")\n    return trimmed + \"/\" + path.lstrip(\"/\")\n",
+   "tests/test_retry.py": "import pytest\n\nfrom client import retry\n\n\ndef flaky(statuses):\n    calls = []\n\n    def fn():\n        calls.append(1)\n        if len(calls) <= len(statuses):\n            raise retry.HttpError(statuses[len(calls) - 1])\n        return \"ok\"\n\n    return fn\n\n\ndef test_returns_first_success():\n    assert retry.call_with_retry(lambda: \"ok\", sleep=lambda s: None) == \"ok\"\n\n\ndef test_retries_until_success():\n    sleeps = []\n    assert retry.call_with_retry(flaky([503, 503]), sleep=sleeps.append) == \"ok\"\n    assert len(sleeps) == 2\n\n\ndef test_gives_up_after_max_attempts():\n    with pytest.raises(retry.HttpError):\n        retry.call_with_retry(flaky([503] * 5), sleep=lambda s: None)\n",
+   "tests/test_urls.py": "import pytest\n\nfrom client.urls import join_url\n\n\ndef test_joins_without_double_slash():\n    assert join_url(\"https://api.example.com/\", \"/v1/users\") == \"https://api.example.com/v1/users\"\n\n\ndef test_adds_missing_slash():\n    assert join_url(\"https://api.example.com\", \"v1\") == \"https://api.example.com/v1\"\n"
+  },
+  "head": {
+   "client/config.py": "\"\"\"Runtime settings for the HTTP client.\"\"\"\n\n\ndef retry_settings():\n    return {\"max_attempts\": 4, \"base_delay\": 0.5, \"max_delay\": 8.0}\n",
+   "client/retry.py": "\"\"\"Retry helper for outbound HTTP calls.\"\"\"\n\nimport logging\nimport time\n\nfrom client.config import retry_settings\n\nlog = logging.getLogger(\"client.retry\")\n\n\nclass HttpError(Exception):\n    def __init__(self, status):\n        super().__init__(f\"HTTP {status}\")\n        self.status = status\n\n\nclass RetryExhausted(Exception):\n    def __init__(self, attempts):\n        super().__init__(f\"gave up after {attempts} attempts\")\n        self.attempts = attempts\n\n\ndef is_retryable(error):\n    if error.status == 428:\n        return True\n    if error.status in (502, 503, 504):\n        return True\n    return False\n\n\ndef backoff_delay(attempt, base_delay, max_delay):\n    return min(base_delay * 2 ** (attempt - 1), max_delay)\n\n\ndef call_with_retry(fn, sleep=time.sleep):\n    settings = retry_settings()\n    attempts = settings[\"max_attempts\"]\n    for attempt in range(1, attempts + 1):\n        try:\n            return fn()\n        except HttpError as error:\n            log.debug(\"attempt %d failed: %s\", attempt, error)\n            if not is_retryable(error):\n                raise\n            if attempt == attempts:\n                raise RetryExhausted(attempts) from error\n            delay = backoff_delay(attempt, settings[\"base_delay\"], settings[\"max_delay\"])\n            log.warning(\"retry %d/%d in %.1fs\", attempt + 1, attempts, delay)\n            sleep(delay)\n",
+   "client/urls.py": "\"\"\"URL helpers.\"\"\"\n\n\ndef join_url(base, path):\n    trimmed = base.rstrip(\"/\")\n    return trimmed + \"/\" + path.lstrip(\"/\")\n",
+   "tests/test_retry.py": "import logging\n\nimport pytest\n\nfrom client import retry\n\n\ndef flaky(statuses):\n    calls = []\n\n    def fn():\n        calls.append(1)\n        if len(calls) <= len(statuses):\n            raise retry.HttpError(statuses[len(calls) - 1])\n        return \"ok\"\n\n    return fn\n\n\ndef test_returns_first_success():\n    assert retry.call_with_retry(lambda: \"ok\", sleep=lambda s: None) == \"ok\"\n\n\ndef test_retries_until_success():\n    sleeps = []\n    assert retry.call_with_retry(flaky([503, 503]), sleep=sleeps.append) == \"ok\"\n    assert len(sleeps) == 2\n\n\ndef test_gives_up_after_max_attempts():\n    with pytest.raises(retry.RetryExhausted) as info:\n        retry.call_with_retry(flaky([503] * 5), sleep=lambda s: None)\n    assert info.value.attempts == 4\n    assert isinstance(info.value.__cause__, retry.HttpError)\n\n\ndef test_backoff_doubles_each_attempt():\n    assert retry.backoff_delay(1, 0.5, 30.0) == 0.5\n    assert retry.backoff_delay(4, 0.5, 30.0) == 4.0\n\n\ndef test_backoff_is_capped():\n    assert retry.backoff_delay(10, 0.5, 8.0) == 8.0\n\n\ndef test_sleeps_grow_between_attempts():\n    sleeps = []\n    retry.call_with_retry(flaky([503, 503, 503]), sleep=sleeps.append)\n    assert sleeps[0] == 0.5\n    assert sleeps[0] < sleeps[1] < sleeps[2]\n\n\ndef test_retryable_statuses():\n    assert retry.is_retryable(retry.HttpError(428))\n    assert retry.is_retryable(retry.HttpError(503))\n    assert not retry.is_retryable(retry.HttpError(500))\n    assert not retry.is_retryable(retry.HttpError(404))\n\n\ndef test_other_statuses_are_not_retried():\n    sleeps = []\n    with pytest.raises(retry.HttpError):\n        retry.call_with_retry(flaky([404]), sleep=sleeps.append)\n    assert sleeps == []\n\n\ndef test_logs_each_retry(caplog):\n    caplog.set_level(logging.WARNING, logger=\"client.retry\")\n    retry.call_with_retry(flaky([503]), sleep=lambda s: None)\n    assert caplog.messages == [\"retry 2/4 in 0.5s\"]\n",
+   "tests/test_urls.py": "import pytest\n\nfrom client.urls import join_url\n\n\ndef test_joins_without_double_slash():\n    assert join_url(\"https://api.example.com/\", \"/v1/users\") == \"https://api.example.com/v1/users\"\n\n\ndef test_adds_missing_slash():\n    assert join_url(\"https://api.example.com\", \"v1\") == \"https://api.example.com/v1\"\n"
+  }
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "tasklist_only",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {
+   "R1": "done",
+   "R2": "contradicted",
+   "R3": "done",
+   "R4": "done"
+  },
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "annotatedBy": "claude-code"
+}

@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:django__django-15161",
+ "corpus": "swebench",
+ "seedId": "django__django-15161",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "96e7ff5e9ff6362d9a886545869ce4496ca4b0fb",
+  "headSha": "CodeStory-django__django-15161",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 15161
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 15161
+    },
+    "title": "Use simplified paths for deconstruct of expressions",
+    "body": "Description\n\t\nPreviously F() deconstructed to: django.db.models.expressions.F(). But since it can also be imported from django.db.models, ​PR #14047 changed it to deconstruct to django.db.models.F(). This simplifies generated migration code where it will be referenced only as from django.db import models / models.F().\nAs Mariusz pointed out on the PR, the same technique can be applied to other expressions, further simplifying generated migrations.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:0b26cfb4a1b992171725aefb5d0286aae4cd9fe9c1205a38fe099edc83ad529c"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-15161",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/db/models/expressions.py b/django/db/models/expressions.py\nindex 8642e1f151..27d182afd3 100644\n--- a/django/db/models/expressions.py\n+++ b/django/db/models/expressions.py\n@@ -651,6 +651,7 @@ class OuterRef(F):\n         return self\n \n \n+@deconstructible(path='django.db.models.Func')\n class Func(SQLiteNumericMixin, Expression):\n     \"\"\"An SQL function call.\"\"\"\n     function = None\n@@ -731,6 +732,7 @@ class Func(SQLiteNumericMixin, Expression):\n         return copy\n \n \n+@deconstructible(path='django.db.models.Value')\n class Value(SQLiteNumericMixin, Expression):\n     \"\"\"Represent a wrapped value as a node within an expression.\"\"\"\n     # Provide a default value for `for_save` in order to allow unresolved\n@@ -912,6 +914,7 @@ class Ref(Expression):\n         return [self]\n \n \n+@deconstructible(path='django.db.models.ExpressionList')\n class ExpressionList(Func):\n     \"\"\"\n     An expression containing multiple expressions. Can be used to provide a\n@@ -953,6 +956,7 @@ class OrderByList(Func):\n         return super().as_sql(*args, **kwargs)\n \n \n+@deconstructible(path='django.db.models.ExpressionWrapper')\n class ExpressionWrapper(SQLiteNumericMixin, Expression):\n     \"\"\"\n     An expression that can wrap another expression so that it can provide\n@@ -985,6 +989,7 @@ class ExpressionWrapper(SQLiteNumericMixin, Expression):\n         return \"{}({})\".format(self.__class__.__name__, self.expression)\n \n \n+@deconstructible(path='django.db.models.When')\n class When(Expression):\n     template = 'WHEN %(condition)s THEN %(result)s'\n     # This isn't a complete conditional expression, must be used in Case().\n@@ -1052,6 +1057,7 @@ class When(Expression):\n         return cols\n \n \n+@deconstructible(path='django.db.models.Case')\n class Case(SQLiteNumericMixin, Expression):\n     \"\"\"\n     An SQL searched CASE expression:\n@@ -1133,6 +1139,7 @@ class Case(SQLiteNumericMixin, Expression):\n         return super().get_group_by_cols(alias)\n \n \n+@deconstructible(path='django.db.models.Subquery')\n class Subquery(BaseExpression, Combinable):\n     \"\"\"\n     An explicit subquery. It may contain OuterRef() references to the outer\n@@ -1190,6 +1197,7 @@ class Subquery(BaseExpression, Combinable):\n         return self.query.get_group_by_cols()\n \n \n+@deconstructible(path='django.db.models.Exists')\n class Exists(Subquery):\n     template = 'EXISTS(%(subquery)s)'\n     output_field = fields.BooleanField()\n@@ -1225,6 +1233,7 @@ class Exists(Subquery):\n         return sql, params\n \n \n+@deconstructible(path='django.db.models.OrderBy')\n class OrderBy(Expression):\n     template = '%(expression)s %(ordering)s'\n     conditional = False\n@@ -1307,6 +1316,7 @@ class OrderBy(Expression):\n         self.descending = True\n \n \n+@deconstructible(path='django.db.models.Window')\n class Window(SQLiteNumericMixin, Expression):\n     template = '%(expression)s OVER (%(window)s)'\n     # Although the main expression may either be an aggregate or an\n@@ -1412,6 +1422,7 @@ class Window(SQLiteNumericMixin, Expression):\n         return []\n \n \n+@deconstructible(path='django.db.models.WindowFrame')\n class WindowFrame(Expression):\n     \"\"\"\n     Model the frame clause in window expressions. There are two types of frame\ndiff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..3581c53007\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,65 @@\n+from django.db.models import (\n+    F, Value, When, Case, Q, Exists, Func,\n+    ExpressionList, ExpressionWrapper, OrderBy, Subquery, Window, WindowFrame,\n+    Avg\n+)\n+from django.db.models.expressions import (\n+    F as F2, Value as Value2, When as When2, Case as Case2,\n+    Exists as Exists2, Func as Func2,\n+    ExpressionList as ExpressionList2, ExpressionWrapper as ExpressionWrapper2,\n+    OrderBy as OrderBy2, Subquery as Subquery2, Window as Window2, WindowFrame as WindowFrame2\n+)\n+from django.db.models import QuerySet\n+from django.db.models.fields import IntegerField\n+\n+# Create some expressions\n+f1 = F('name')\n+f2 = F2('name')\n+v1 = Value('test')\n+v2 = Value2('test')\n+w1 = When(Q(age__gt=18), then=Value('adult'))\n+w2 = When2(Q(age__gt=18), then=Value2('adult'))\n+c1 = Case(When(Q(age__gt=18), then=Value('adult')), default=Value('child'))\n+c2 = Case2(When2(Q(age__gt=18), then=Value2('adult')), default=Value2('child'))\n+e1 = Exists(QuerySet())\n+e2 = Exists2(QuerySet())\n+func1 = Func(F('age'))\n+func2 = Func2(F2('age'))\n+el1 = ExpressionList(F('age'), F('name'))\n+el2 = ExpressionList2(F2('age'), F2('name'))\n+ew1 = ExpressionWrapper(F('age'), output_field=IntegerField())\n+ew2 = ExpressionWrapper2(F2('age'), output_field=IntegerField())\n+ob1 = OrderBy(F('age'))\n+ob2 = OrderBy2(F2('age'))\n+sq1 = Subquery(QuerySet())\n+sq2 = Subquery2(QuerySet())\n+win1 = Window(expression=Avg('age'))\n+win2 = Window2(expression=Avg('age'))\n+wf1 = WindowFrame()\n+wf2 = WindowFrame2()\n+\n+# Print their deconstruct paths\n+print(\"F() deconstruct path:\", f1.deconstruct()[0])\n+print(\"F2() deconstruct path:\", f2.deconstruct()[0])\n+print(\"Value() deconstruct path:\", v1.deconstruct()[0])\n+print(\"Value2() deconstruct path:\", v2.deconstruct()[0])\n+print(\"When() deconstruct path:\", w1.deconstruct()[0])\n+print(\"When2() deconstruct path:\", w2.deconstruct()[0])\n+print(\"Case() deconstruct path:\", c1.deconstruct()[0])\n+print(\"Case2() deconstruct path:\", c2.deconstruct()[0])\n+print(\"Exists() deconstruct path:\", e1.deconstruct()[0])\n+print(\"Exists2() deconstruct path:\", e2.deconstruct()[0])\n+print(\"Func() deconstruct path:\", func1.deconstruct()[0])\n+print(\"Func2() deconstruct path:\", func2.deconstruct()[0])\n+print(\"ExpressionList() deconstruct path:\", el1.deconstruct()[0])\n+print(\"ExpressionList2() deconstruct path:\", el2.deconstruct()[0])\n+print(\"ExpressionWrapper() deconstruct path:\", ew1.deconstruct()[0])\n+print(\"ExpressionWrapper2() deconstruct path:\", ew2.deconstruct()[0])\n+print(\"OrderBy() deconstruct path:\", ob1.deconstruct()[0])\n+print(\"OrderBy2() deconstruct path:\", ob2.deconstruct()[0])\n+print(\"Subquery() deconstruct path:\", sq1.deconstruct()[0])\n+print(\"Subquery2() deconstruct path:\", sq2.deconstruct()[0])\n+print(\"Window() deconstruct path:\", win1.deconstruct()[0])\n+print(\"Window2() deconstruct path:\", win2.deconstruct()[0])\n+print(\"WindowFrame() deconstruct path:\", wf1.deconstruct()[0])\n+print(\"WindowFrame2() deconstruct path:\", wf2.deconstruct()[0])\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq1_devtests",
+  "strength": "medium"
+ },
+ "annotatedBy": "study"
+}

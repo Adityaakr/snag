@@ -1,0 +1,179 @@
+{
+  "id": "py-retry-backoff",
+  "language": "py",
+  "annotated_by": "claude-code",
+  "split": "dev",
+  "summary": "HTTP retry helper: exponential capped backoff, retryable statuses, RetryExhausted, retry logging.",
+  "requirements": [
+    {
+      "id": "R1",
+      "text": "Delays between attempts start at `base_delay` and double each time, capped at `max_delay` (with a base of 0.5s: 0.5, 1, 2, 4)",
+      "implementing": [
+        {
+          "file": "client/retry.py",
+          "symbol": "backoff_delay"
+        },
+        {
+          "file": "client/retry.py",
+          "symbol": "call_with_retry",
+          "replace": [
+            {
+              "from": "backoff_delay(attempt, settings[\"base_delay\"], settings[\"max_delay\"])",
+              "to": "settings[\"base_delay\"]"
+            }
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "file": "tests/test_retry.py",
+          "symbol": "test_backoff_doubles_each_attempt"
+        },
+        {
+          "file": "tests/test_retry.py",
+          "symbol": "test_backoff_is_capped"
+        },
+        {
+          "file": "tests/test_retry.py",
+          "symbol": "test_sleeps_grow_between_attempts"
+        }
+      ],
+      "flip": {
+        "impl": {
+          "file": "client/retry.py",
+          "symbol": "backoff_delay",
+          "from": "2",
+          "to": "3"
+        },
+        "test": {
+          "file": "tests/test_retry.py",
+          "symbol": "test_backoff_doubles_each_attempt",
+          "from": "4.0",
+          "to": "13.5"
+        }
+      },
+      "unwire": {
+        "file": "client/retry.py",
+        "symbol": "call_with_retry",
+        "callee": "backoff_delay"
+      }
+    },
+    {
+      "id": "R2",
+      "text": "Only status 429 and the gateway errors 502, 503 and 504 are retried; any other status is raised on the first failure",
+      "implementing": [
+        {
+          "file": "client/retry.py",
+          "symbol": "is_retryable"
+        },
+        {
+          "file": "client/retry.py",
+          "symbol": "call_with_retry",
+          "remove": [
+            "if not is_retryable(error):"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "file": "tests/test_retry.py",
+          "symbol": "test_retryable_statuses"
+        },
+        {
+          "file": "tests/test_retry.py",
+          "symbol": "test_other_statuses_are_not_retried"
+        }
+      ],
+      "flip": {
+        "impl": {
+          "file": "client/retry.py",
+          "symbol": "is_retryable",
+          "from": "429",
+          "to": "428"
+        },
+        "test": {
+          "file": "tests/test_retry.py",
+          "symbol": "test_retryable_statuses",
+          "from": "429",
+          "to": "428"
+        }
+      },
+      "partial": {
+        "impl": {
+          "file": "client/retry.py",
+          "symbol": "is_retryable",
+          "contains": "error.status == 429"
+        },
+        "test": {
+          "file": "tests/test_retry.py",
+          "symbol": "test_retryable_statuses",
+          "contains": "retry.HttpError(429)"
+        }
+      }
+    },
+    {
+      "id": "R3",
+      "text": "When the last attempt fails, raise `RetryExhausted` with the number of attempts and the last HTTP error as its cause",
+      "implementing": [
+        {
+          "file": "client/retry.py",
+          "symbol": "RetryExhausted"
+        },
+        {
+          "file": "client/retry.py",
+          "symbol": "call_with_retry",
+          "replace": [
+            {
+              "from": "raise RetryExhausted(attempts) from error",
+              "to": "raise"
+            }
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "file": "tests/test_retry.py",
+          "symbol": "test_gives_up_after_max_attempts"
+        }
+      ]
+    },
+    {
+      "id": "R4",
+      "text": "Each retry logs a warning such as `retry 2/4 in 0.5s` (next attempt, max attempts, delay)",
+      "implementing": [
+        {
+          "file": "client/retry.py",
+          "symbol": "call_with_retry",
+          "remove": [
+            "log.warning("
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "file": "tests/test_retry.py",
+          "symbol": "test_logs_each_retry"
+        }
+      ]
+    }
+  ],
+  "incidental": [],
+  "config": {
+    "file": "client/config.py",
+    "symbol": "retry_settings",
+    "from": "4",
+    "to": "10"
+  },
+  "unrelatedTest": {
+    "file": "tests/test_urls.py",
+    "symbol": "test_joins_without_double_slash"
+  },
+  "unrelatedCode": {
+    "file": "client/urls.py",
+    "symbol": "join_url",
+    "rename": {
+      "from": "trimmed",
+      "to": "root"
+    }
+  }
+}

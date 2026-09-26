@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:scikit-learn__scikit-learn-13496",
+ "corpus": "swebench",
+ "seedId": "scikit-learn__scikit-learn-13496",
+ "input": {
+  "mode": "local",
+  "repo": "scikit-learn/scikit-learn",
+  "baseSha": "3aefc834dce72e850bff48689bea3c7dff5f3fad",
+  "headSha": "CodeStory-scikit-learn__scikit-learn-13496",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "scikit-learn",
+    "repo": "scikit-learn",
+    "number": 13496
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "scikit-learn",
+     "repo": "scikit-learn",
+     "number": 13496
+    },
+    "title": "Expose warm_start in Isolation forest",
+    "body": "It seems to me that `sklearn.ensemble.IsolationForest` supports incremental addition of new trees with the `warm_start` parameter of its parent class, `sklearn.ensemble.BaseBagging`.\r\n\r\nEven though this parameter is not exposed in `__init__()` , it gets inherited from `BaseBagging` and one can use it by changing it to `True` after initialization. To make it work, you have to also increment `n_estimators` on every iteration. \r\n\r\nIt took me a while to notice that it actually works, and I had to inspect the source code of both `IsolationForest` and `BaseBagging`. Also, it looks to me that the behavior is in-line with `sklearn.ensemble.BaseForest` that is behind e.g. `sklearn.ensemble.RandomForestClassifier`.\r\n\r\nTo make it more easier to use, I'd suggest to:\r\n* expose `warm_start` in `IsolationForest.__init__()`, default `False`;\r\n* document it in the same way as it is documented for `RandomForestClassifier`, i.e. say:\r\n```py\r\n    warm_start : bool, optional (default=False)\r\n        When set to ``True``, reuse the solution of the previous call to fit\r\n        and add more estimators to the ensemble, otherwise, just fit a whole\r\n        new forest. See :term:`the Glossary <warm_start>`.\r\n```\r\n* add a test to make sure it works properly;\r\n* possibly also mention in the \"IsolationForest example\" documentation entry;",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:42a1ae9bf607c5c2af3d89164764b8f12e2765446afe3d4af364bb8be29bae06"
+   }
+  ],
+  "pr": {
+   "title": "Fix scikit-learn__scikit-learn-13496",
+   "body": ""
+  },
+  "diffText": "diff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 000000000..85a0c9722\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,26 @@\n+from sklearn.ensemble import IsolationForest\n+import numpy as np\n+\n+# Generate sample data\n+rng = np.random.RandomState(42)\n+X = rng.randn(100, 2)\n+\n+# Initialize IsolationForest with 10 estimators\n+iforest = IsolationForest(n_estimators=10, random_state=42)\n+\n+# First fit\n+iforest.fit(X)\n+n_estimators_before = len(iforest.estimators_)\n+print(f\"Number of estimators after first fit: {n_estimators_before}\")\n+\n+# Try to use warm_start by setting it after initialization\n+iforest.warm_start = True\n+iforest.n_estimators = 15\n+\n+# Second fit - should add 5 more estimators\n+iforest.fit(X)\n+n_estimators_after = len(iforest.estimators_)\n+print(f\"Number of estimators after second fit: {n_estimators_after}\")\n+\n+# Verify that warm_start worked\n+print(f\"Added {n_estimators_after - n_estimators_before} new estimators\")\n\\ No newline at end of file\ndiff --git a/sklearn/ensemble/iforest.py b/sklearn/ensemble/iforest.py\nindex 8a1bd3625..f42c80532 100644\n--- a/sklearn/ensemble/iforest.py\n+++ b/sklearn/ensemble/iforest.py\n@@ -120,6 +120,11 @@ class IsolationForest(BaseBagging, OutlierMixin):\n     verbose : int, optional (default=0)\n         Controls the verbosity of the tree building process.\n \n+    warm_start : bool, optional (default=False)\n+        When set to ``True``, reuse the solution of the previous call to fit\n+        and add more estimators to the ensemble, otherwise, just fit a whole\n+        new forest. See :term:`the Glossary <warm_start>`.\n+\n \n     Attributes\n     ----------\n@@ -173,7 +178,8 @@ class IsolationForest(BaseBagging, OutlierMixin):\n                  n_jobs=None,\n                  behaviour='old',\n                  random_state=None,\n-                 verbose=0):\n+                 verbose=0,\n+                 warm_start=False):\n         super().__init__(\n             base_estimator=ExtraTreeRegressor(\n                 max_features=1,\n@@ -187,7 +193,8 @@ class IsolationForest(BaseBagging, OutlierMixin):\n             max_features=max_features,\n             n_jobs=n_jobs,\n             random_state=random_state,\n-            verbose=verbose)\n+            verbose=verbose,\n+            warm_start=warm_start)\n \n         self.behaviour = behaviour\n         self.contamination = contamination\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:django__django-11099",
+ "corpus": "swebench",
+ "seedId": "django__django-11099",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "d26b2424437dabeeca94d7900b37d2df4410da0c",
+  "headSha": "CodeStory-django__django-11099",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 11099
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 11099
+    },
+    "title": "UsernameValidator allows trailing newline in usernames",
+    "body": "Description\n\t\nASCIIUsernameValidator and UnicodeUsernameValidator use the regex \nr'^[\\w.@+-]+$'\nThe intent is to only allow alphanumeric characters as well as ., @, +, and -. However, a little known quirk of Python regexes is that $ will also match a trailing newline. Therefore, the user name validators will accept usernames which end with a newline. You can avoid this behavior by instead using \\A and \\Z to terminate regexes. For example, the validator regex could be changed to\nr'\\A[\\w.@+-]+\\Z'\nin order to reject usernames that end with a newline.\nI am not sure how to officially post a patch, but the required change is trivial - using the regex above in the two validators in contrib.auth.validators.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:2dcd763a2b729eb991fd03a725cf0f835d0fbd204bf2cbba9cd018596090fce6"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-11099",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/contrib/auth/validators.py b/django/contrib/auth/validators.py\nindex b4878cfd45..1304f20a60 100644\n--- a/django/contrib/auth/validators.py\n+++ b/django/contrib/auth/validators.py\n@@ -7,7 +7,7 @@ from django.utils.translation import gettext_lazy as _\n \n @deconstructible\n class ASCIIUsernameValidator(validators.RegexValidator):\n-    regex = r'^[\\w.@+-]+$'\n+    regex = r'\\A[\\w.@+-]+\\Z'\n     message = _(\n         'Enter a valid username. This value may contain only English letters, '\n         'numbers, and @/./+/-/_ characters.'\n@@ -17,7 +17,7 @@ class ASCIIUsernameValidator(validators.RegexValidator):\n \n @deconstructible\n class UnicodeUsernameValidator(validators.RegexValidator):\n-    regex = r'^[\\w.@+-]+$'\n+    regex = r'\\A[\\w.@+-]+\\Z'\n     message = _(\n         'Enter a valid username. This value may contain only letters, '\n         'numbers, and @/./+/-/_ characters.'\ndiff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..40960dc2f1\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,57 @@\n+from django.contrib.auth.validators import ASCIIUsernameValidator, UnicodeUsernameValidator\n+\n+def test_validators():\n+    ascii_validator = ASCIIUsernameValidator()\n+    unicode_validator = UnicodeUsernameValidator()\n+\n+    # Test cases with trailing newlines (should be rejected)\n+    invalid_cases = [\n+        \"user1\\n\",\n+        \"test.user\\n\",\n+        \"admin@example\\n\",\n+    ]\n+\n+    # Test cases without trailing newlines (should be accepted)\n+    valid_cases = [\n+        \"user1\",\n+        \"test.user\",\n+        \"admin@example\",\n+        \"user_123\",\n+        \"user+name\",\n+        \"user-name\",\n+    ]\n+\n+    print(\"Testing ASCIIUsernameValidator with invalid cases:\")\n+    for username in invalid_cases:\n+        try:\n+            ascii_validator(username)\n+            print(f\"❌ ASCIIUsernameValidator accepted invalid username: {repr(username)}\")\n+        except:\n+            print(f\"✓ ASCIIUsernameValidator correctly rejected: {repr(username)}\")\n+\n+    print(\"\\nTesting ASCIIUsernameValidator with valid cases:\")\n+    for username in valid_cases:\n+        try:\n+            ascii_validator(username)\n+            print(f\"✓ ASCIIUsernameValidator correctly accepted: {repr(username)}\")\n+        except:\n+            print(f\"❌ ASCIIUsernameValidator incorrectly rejected: {repr(username)}\")\n+\n+    print(\"\\nTesting UnicodeUsernameValidator with invalid cases:\")\n+    for username in invalid_cases:\n+        try:\n+            unicode_validator(username)\n+            print(f\"❌ UnicodeUsernameValidator accepted invalid username: {repr(username)}\")\n+        except:\n+            print(f\"✓ UnicodeUsernameValidator correctly rejected: {repr(username)}\")\n+\n+    print(\"\\nTesting UnicodeUsernameValidator with valid cases:\")\n+    for username in valid_cases:\n+        try:\n+            unicode_validator(username)\n+            print(f\"✓ UnicodeUsernameValidator correctly accepted: {repr(username)}\")\n+        except:\n+            print(f\"❌ UnicodeUsernameValidator incorrectly rejected: {repr(username)}\")\n+\n+if __name__ == \"__main__\":\n+    test_validators()\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

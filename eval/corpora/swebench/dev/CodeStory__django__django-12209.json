@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:django__django-12209",
+ "corpus": "swebench",
+ "seedId": "django__django-12209",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "5a68f024987e6d16c2626a31bf653a2edddea579",
+  "headSha": "CodeStory-django__django-12209",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 12209
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 12209
+    },
+    "title": "Change in behaviour when saving a model instance with an explcit pk value if the pk field has a default",
+    "body": "Description\n\t \n\t\t(last modified by Reupen Shah)\n\t \nConsider the following model:\nfrom uuid import uuid4\nfrom django.db import models\nclass Sample(models.Model):\n\tid = models.UUIDField(primary_key=True, default=uuid4)\n\tname = models.CharField(blank=True, max_length=100)\nIn Django 2.2 and earlier, the following commands would result in an INSERT followed by an UPDATE:\ns0 = Sample.objects.create()\ns1 = Sample(pk=s0.pk, name='Test 1')\ns1.save()\nHowever, in Django 3.0, this results in two INSERTs (naturally the second one fails). The behaviour also changes if default=uuid4 is removed from the id field.\nThis seems related to https://code.djangoproject.com/ticket/29260.\nThe change in behaviour also has the side effect of changing the behaviour of the loaddata management command when the fixture contains explicit pk values and the objects already exist (e.g. when loading the fixture multiple times).\nPerhaps the intention was to only change the behaviour if an explicit pk value was not set on the model instance being saved? (At least, that would be more backwards-compatible behaviour...)",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:3f55255fe173a322886b9d9c7ec4c1b72c3075fb752dce06b0960d1b693c1c5b"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-12209",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/db/models/base.py b/django/db/models/base.py\nindex e3b14a41a0..b91ebc5e3a 100644\n--- a/django/db/models/base.py\n+++ b/django/db/models/base.py\n@@ -847,12 +847,14 @@ class Model(metaclass=ModelBase):\n         if not pk_set and (force_update or update_fields):\n             raise ValueError(\"Cannot force an update in save() with no primary key.\")\n         updated = False\n-        # Skip an UPDATE when adding an instance and primary key has a default.\n+        # Skip an UPDATE when adding an instance and primary key has a default,\n+        # but only if the primary key was not explicitly set\n         if (\n             not force_insert and\n             self._state.adding and\n             self._meta.pk.default and\n-            self._meta.pk.default is not NOT_PROVIDED\n+            self._meta.pk.default is not NOT_PROVIDED and\n+            getattr(self, self._meta.pk.attname) == self._meta.pk.get_default()\n         ):\n             force_insert = True\n         # If possible, try an UPDATE. If that doesn't update anything, do an INSERT.\ndiff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..f779d68311\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,58 @@\n+import os\n+import django\n+from uuid import uuid4\n+from django.db import models\n+from django.conf import settings\n+\n+if not settings.configured:\n+    settings.configure(\n+        DATABASES={\n+            'default': {\n+                'ENGINE': 'django.db.backends.sqlite3',\n+                'NAME': ':memory:',\n+            }\n+        },\n+        INSTALLED_APPS=['django.contrib.auth', 'django.contrib.contenttypes'],\n+        SECRET_KEY='dummy-key-for-test',\n+    )\n+    django.setup()\n+\n+# Define the test model\n+class Sample(models.Model):\n+    id = models.UUIDField(primary_key=True, default=uuid4)\n+    name = models.CharField(blank=True, max_length=100)\n+    \n+    class Meta:\n+        # Use an app_label that's in INSTALLED_APPS\n+        app_label = 'auth'\n+\n+# Create the table\n+from django.db import connection\n+with connection.schema_editor() as schema_editor:\n+    schema_editor.create_model(Sample)\n+\n+print(\"Test Case 1: Create instance with auto-generated UUID\")\n+s1 = Sample.objects.create(name=\"Test 1\")\n+print(f\"Created instance with auto-generated id: {s1.pk}\")\n+\n+print(\"\\nTest Case 2: Create instance with explicit new UUID\")\n+new_uuid = uuid4()\n+s2 = Sample(pk=new_uuid, name=\"Test 2\")\n+s2.save()\n+print(f\"Created instance with explicit new id: {s2.pk}\")\n+\n+print(\"\\nTest Case 3: Update existing instance by setting its UUID\")\n+s3 = Sample(pk=s1.pk, name=\"Updated Test 1\")\n+s3.save()\n+print(f\"Updated instance {s1.pk} with new name\")\n+\n+# Verify the update worked\n+updated = Sample.objects.get(pk=s1.pk)\n+print(f\"Verified name change: {updated.name}\")\n+\n+print(\"\\nTest Case 4: Total number of records should be 2\")\n+print(f\"Total records: {Sample.objects.count()}\")\n+\n+# Clean up\n+with connection.schema_editor() as schema_editor:\n+    schema_editor.delete_model(Sample)\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq1_devtests",
+  "strength": "medium"
+ },
+ "annotatedBy": "study"
+}

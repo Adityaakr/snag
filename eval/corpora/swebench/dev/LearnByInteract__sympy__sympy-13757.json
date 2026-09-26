@@ -1,0 +1,142 @@
+{
+ "id": "LearnByInteract:sympy__sympy-13757",
+ "corpus": "swebench",
+ "seedId": "sympy__sympy-13757",
+ "input": {
+  "mode": "local",
+  "repo": "sympy/sympy",
+  "baseSha": "a5e6a101869e027e7930e694f8b1cfb082603453",
+  "headSha": "LearnByInteract-sympy__sympy-13757",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "sympy",
+    "repo": "sympy",
+    "number": 13757
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "sympy",
+     "repo": "sympy",
+     "number": 13757
+    },
+    "title": "Multiplying an expression by a Poly does not evaluate when the expression is on the left side of the multiplication",
+    "body": "Tested in Python 3.4 64-bit and 3.6 64-bit\r\nVersion: 1.1.2.dev0\r\n```\r\n>>> Poly(x)*x\r\nPoly(x**2, x, domain='ZZ')\r\n\r\n>>> x*Poly(x)\r\nx*Poly(x, x, domain='ZZ')\r\n\r\n>>> -2*Poly(x)\r\nPoly(-2*x, x, domain='ZZ')\r\n\r\n>>> S(-2)*Poly(x)\r\n-2*Poly(x, x, domain='ZZ')\r\n\r\n>>> Poly(x)*S(-2)\r\nPoly(-2*x, x, domain='ZZ')\r\n```",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:8c8f46b9094a76bcded8f36e35241e61187876c4410554a6c0d756ddd9817587"
+   }
+  ],
+  "pr": {
+   "title": "Fix sympy__sympy-13757",
+   "body": ""
+  },
+  "diffText": "diff --git a/reproduce.py b/reproduce.py\nnew file mode 100644\nindex 0000000000..a3b3e4c8f0\n--- /dev/null\n+++ b/reproduce.py\n@@ -0,0 +1,18 @@\n+from sympy import Poly, Symbol, S\n+\n+x = Symbol('x')\n+y = Symbol('y')\n+\n+print(\"Test 1: Poly(x)*x\")\n+print(Poly(x)*x)\n+print(\"\\nTest 2: x*Poly(x)\")\n+print(x*Poly(x))\n+print(\"\\nTest 3: -2*Poly(x)\")\n+print(-2*Poly(x))\n+print(\"\\nTest 4: S(-2)*Poly(x)\")\n+print(S(-2)*Poly(x))\n+print(\"\\nTest 5: Poly(x)*S(-2)\")\n+print(Poly(x)*S(-2))\n+print(\"\\nEdge case - multivariate: y*Poly(x + y)\")\n+print(y*Poly(x + y, x, y))\n+\ndiff --git a/sympy/core/expr.py b/sympy/core/expr.py\nindex 72728c44ef..aa753e4c25 100644\n--- a/sympy/core/expr.py\n+++ b/sympy/core/expr.py\n@@ -137,8 +137,12 @@ def __rsub__(self, other):\n     @_sympifyit('other', NotImplemented)\n     @call_highest_priority('__rmul__')\n     def __mul__(self, other):\n+        from sympy.polys.polytools import Poly\n+        if isinstance(other, Poly):\n+            return other * Poly(self, *other.gens)\n         return Mul(self, other)\n \n+\n     @_sympifyit('other', NotImplemented)\n     @call_highest_priority('__mul__')\n     def __rmul__(self, other):\n@@ -3446,3 +3450,4 @@ def _n2(a, b):\n from .mod import Mod\n from .exprtools import factor_terms\n from .numbers import Integer, Rational\n+\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "LearnByInteract",
+  "source": "rq34_manual",
+  "strength": "strong",
+  "diffPattern": "noalignment",
+  "correctness": "incorrect_partial"
+ },
+ "annotatedBy": "study"
+}

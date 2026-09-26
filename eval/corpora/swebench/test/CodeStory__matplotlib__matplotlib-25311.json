@@ -1,0 +1,142 @@
+{
+ "id": "CodeStory:matplotlib__matplotlib-25311",
+ "corpus": "swebench",
+ "seedId": "matplotlib__matplotlib-25311",
+ "input": {
+  "mode": "local",
+  "repo": "matplotlib/matplotlib",
+  "baseSha": "430fb1db88843300fb4baae3edc499bbfe073b0c",
+  "headSha": "CodeStory-matplotlib__matplotlib-25311",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "matplotlib",
+    "repo": "matplotlib",
+    "number": 25311
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "matplotlib",
+     "repo": "matplotlib",
+     "number": 25311
+    },
+    "title": "[Bug]: Unable to pickle figure with draggable legend",
+    "body": "### Bug summary\r\n\r\nI am unable to pickle figure with draggable legend. Same error comes for draggable annotations.\r\n\r\n\r\n\r\n\r\n\r\n### Code for reproduction\r\n\r\n```python\r\nimport matplotlib.pyplot as plt\r\nimport pickle\r\n\r\nfig = plt.figure()\r\nax = fig.add_subplot(111)\r\n\r\ntime=[0,1,2,3,4]\r\nspeed=[40,43,45,47,48]\r\n\r\nax.plot(time,speed,label=\"speed\")\r\n\r\nleg=ax.legend()\r\nleg.set_draggable(True) #pickling works after removing this line \r\n\r\npickle.dumps(fig)\r\nplt.show()\r\n```\r\n\r\n\r\n### Actual outcome\r\n\r\n`TypeError: cannot pickle 'FigureCanvasQTAgg' object`\r\n\r\n### Expected outcome\r\n\r\nPickling successful\r\n\r\n### Additional information\r\n\r\n_No response_\r\n\r\n### Operating system\r\n\r\nWindows 10\r\n\r\n### Matplotlib Version\r\n\r\n3.7.0\r\n\r\n### Matplotlib Backend\r\n\r\n_No response_\r\n\r\n### Python version\r\n\r\n3.10\r\n\r\n### Jupyter version\r\n\r\n_No response_\r\n\r\n### Installation\r\n\r\npip",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:396602cce60d502994862eedb949cfefd0f74d6ba30c9fb7fc2ca315c59d6cd6"
+   }
+  ],
+  "pr": {
+   "title": "Fix matplotlib__matplotlib-25311",
+   "body": ""
+  },
+  "diffText": "diff --git a/lib/matplotlib/legend.py b/lib/matplotlib/legend.py\nindex ff6abdb958..1ec49d49f0 100644\n--- a/lib/matplotlib/legend.py\n+++ b/lib/matplotlib/legend.py\n@@ -72,6 +72,25 @@ class DraggableLegend(DraggableOffsetBox):\n         self._update = update\n \n         super().__init__(legend, legend._legend_box, use_blit=use_blit)\n+        \n+    def __getstate__(self):\n+        \"\"\"Get state information for pickling.\"\"\"\n+        state = self.__dict__.copy()\n+        # Remove unpicklable canvas reference\n+        state.pop('canvas', None)\n+        state.pop('cids', None)  # Remove event connection ids\n+        state.pop('ref_artist', None)  # Remove artist reference\n+        state.pop('got_artist', None)  # Remove artist flag\n+        return state\n+\n+    def __setstate__(self, state):\n+        \"\"\"Set state information for unpickling.\"\"\"\n+        self.__dict__ = state.copy()\n+        # Initialize canvas-related attributes as None\n+        self.canvas = None\n+        self.cids = []\n+        self.ref_artist = None\n+        self.got_artist = False\n \n     def finalize_offset(self):\n         if self._update == \"loc\":\ndiff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..376fea5eeb\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,44 @@\n+import matplotlib.pyplot as plt\n+import pickle\n+\n+def test_pickle_draggable_legend():\n+    # Test 1: Basic draggable legend\n+    fig1 = plt.figure()\n+    ax1 = fig1.add_subplot(111)\n+    time = [0, 1, 2, 3, 4]\n+    speed = [40, 43, 45, 47, 48]\n+    ax1.plot(time, speed, label=\"speed\")\n+    leg1 = ax1.legend()\n+    leg1.set_draggable(True)\n+    \n+    try:\n+        pickle_data = pickle.dumps(fig1)\n+        print(\"Test 1 (Basic draggable legend): Success\")\n+    except Exception as e:\n+        print(f\"Test 1 (Basic draggable legend) failed: {str(e)}\")\n+    \n+    # Test 2: Multiple draggable legends\n+    fig2 = plt.figure()\n+    ax2 = fig2.add_subplot(111)\n+    ax2.plot(time, speed, label=\"speed 1\")\n+    ax2.plot([x * 2 for x in speed], label=\"speed 2\")\n+    leg2 = ax2.legend()\n+    leg2.set_draggable(True)\n+    \n+    try:\n+        pickle_data = pickle.dumps(fig2)\n+        print(\"Test 2 (Multiple plots with draggable legend): Success\")\n+    except Exception as e:\n+        print(f\"Test 2 (Multiple plots with draggable legend) failed: {str(e)}\")\n+    \n+    # Test 3: Unpickle and verify legend is still draggable\n+    try:\n+        fig_unpickled = pickle.loads(pickle_data)\n+        legend = fig_unpickled.axes[0].get_legend()\n+        assert legend.get_draggable() == True\n+        print(\"Test 3 (Unpickle and verify draggable state): Success\")\n+    except Exception as e:\n+        print(f\"Test 3 (Unpickle and verify draggable state) failed: {str(e)}\")\n+\n+if __name__ == \"__main__\":\n+    test_pickle_draggable_legend()\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq34_manual",
+  "strength": "weak",
+  "diffPattern": "noalignment",
+  "correctness": "uncertain"
+ },
+ "annotatedBy": "study"
+}

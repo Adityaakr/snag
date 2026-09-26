@@ -1,0 +1,140 @@
+{
+ "id": "gold:sphinx-doc__sphinx-8551",
+ "corpus": "swebench",
+ "seedId": "sphinx-doc__sphinx-8551",
+ "input": {
+  "mode": "local",
+  "repo": "sphinx-doc/sphinx",
+  "baseSha": "57ed10c68057c96491acbd3e62254ccfaf9e3861",
+  "headSha": "gold-sphinx-doc__sphinx-8551",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "sphinx-doc",
+    "repo": "sphinx",
+    "number": 8551
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "sphinx-doc",
+     "repo": "sphinx",
+     "number": 8551
+    },
+    "title": ":type: and :rtype: gives false ambiguous class lookup warnings",
+    "body": "**Describe the bug**\r\nThe implicit xrefs created by the info fields ``:type:`` and ``:rtype:`` seems to do lookup differently than explicit xref roles. For unqualified names it seems like they search for the name in every (sub)module instead of in the current module and then parent modules.\r\n\r\n**To Reproduce**\r\n```rst\r\n.. py:class:: mod.A\r\n.. py:class:: mod.submod.A\r\n\r\n.. py:function:: f()\r\n\r\n\t- :py:class:`mod.A`\r\n\t- :py:class:`mod.submod.A`\r\n\r\n\t:param mod.A a:\r\n\t:param mod.submod.A b:\r\n\t:rtype: mod.A\r\n\t:rtype: mod.submod.A\r\n\r\n.. py:currentmodule:: mod\r\n\r\n.. py:function:: f()\r\n\r\n\t- :py:class:`A`\r\n\t- :py:class:`mod.A`\r\n\t- :py:class:`mod.submod.A`\r\n\r\n\t:param A a:\r\n\t:param mod.A b:\r\n\t:param mod.submod.A c:\r\n\t:rtype: A\r\n\t:rtype: mod.A\r\n\t:rtype: mod.submod.A\r\n\r\n.. py:currentmodule:: mod.submod\r\n\r\n.. py:function:: f()\r\n\r\n\t- :py:class:`A`\r\n\t- :py:class:`mod.A`\r\n\t- :py:class:`mod.submod.A`\r\n\r\n\t:param A a: BUG: links to mod.A instead of mod.submod.A\r\n\t:param mod.A b:\r\n\t:param mod.submod.A c:\r\n\t:rtype: A\r\n\t:rtype: mod.A\r\n\t:rtype: mod.submod.A\r\n```\r\ngives the warnings\r\n```\r\nindex.rst:28: WARNING: more than one target found for cross-reference 'A': mod.A, mod.submod.A\r\nindex.rst:28: WARNING: more than one target found for cross-reference 'A': mod.A, mod.submod.A\r\nindex.rst:43: WARNING: more than one target found for cross-reference 'A': mod.A, mod.submod.A\r\nindex.rst:43: WARNING: more than one target found for cross-reference 'A': mod.A, mod.submod.A\r\n```\r\nwhich refer to the 4 unqualified type names ``A``.\r\nThe ``:param:`` annotated with ``BUG`` as well as the corresponding ``rtype`` gets resolved to ``mod.A``.\r\n\r\n**Expected behavior**\r\nNo warnings, and the two mentioned types should resolve to ``mod.submod.A``.\r\n\r\n**Environment info**\r\n- Sphinx version: tested both with v3.3 and with master",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:018360239ce03ad1fe14d790046a139c49bf5be768b6d847ceee6e9cd9f14189"
+   }
+  ],
+  "pr": {
+   "title": "Fix sphinx-doc__sphinx-8551",
+   "body": ""
+  },
+  "diffText": "diff --git a/sphinx/domains/python.py b/sphinx/domains/python.py\n--- a/sphinx/domains/python.py\n+++ b/sphinx/domains/python.py\n@@ -272,6 +272,8 @@ def make_xref(self, rolename: str, domain: str, target: str,\n         result = super().make_xref(rolename, domain, target,  # type: ignore\n                                    innernode, contnode, env)\n         result['refspecific'] = True\n+        result['py:module'] = env.ref_context.get('py:module')\n+        result['py:class'] = env.ref_context.get('py:class')\n         if target.startswith(('.', '~')):\n             prefix, result['reftarget'] = target[0], target[1:]\n             if prefix == '.':\ndiff --git a/sphinx/util/docfields.py b/sphinx/util/docfields.py\n--- a/sphinx/util/docfields.py\n+++ b/sphinx/util/docfields.py\n@@ -295,6 +295,7 @@ def transform(self, node: nodes.field_list) -> None:\n                         self.directive.domain,\n                         target,\n                         contnode=content[0],\n+                        env=self.directive.state.document.settings.env\n                     )\n                     if _is_single_paragraph(field_body):\n                         paragraph = cast(nodes.paragraph, field_body[0])\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "gold",
+  "source": "gold",
+  "strength": "strong"
+ },
+ "annotatedBy": "study"
+}

@@ -1,0 +1,140 @@
+{
+ "id": "OpenHands:django__django-15987",
+ "corpus": "swebench",
+ "seedId": "django__django-15987",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "7e6b537f5b92be152779fc492bb908d27fe7c52a",
+  "headSha": "OpenHands-django__django-15987",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 15987
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 15987
+    },
+    "title": "Fixture dirs duplicates undetected if dir is Path instance",
+    "body": "Description\n\t\nWhen FIXTURE_DIRS contains Path instances, the duplicate check in loaddata does not detect duplicates.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:1f40a24365a2671c7e2fa7ebd28f3cce630ffaa4ecc71af29e8b839c7f15f276"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-15987",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/core/management/commands/loaddata.py b/django/core/management/commands/loaddata.py\nindex ac97f13161..aed955e259 100644\n--- a/django/core/management/commands/loaddata.py\n+++ b/django/core/management/commands/loaddata.py\n@@ -362,12 +362,16 @@ class Command(BaseCommand):\n         \"\"\"\n         dirs = []\n         fixture_dirs = settings.FIXTURE_DIRS\n-        if len(fixture_dirs) != len(set(fixture_dirs)):\n+        # Convert all paths to resolved strings for duplicate detection\n+        resolved_fixture_dirs = [os.path.realpath(str(d)) for d in fixture_dirs]\n+        if len(resolved_fixture_dirs) != len(set(resolved_fixture_dirs)):\n             raise ImproperlyConfigured(\"settings.FIXTURE_DIRS contains duplicates.\")\n         for app_config in apps.get_app_configs():\n             app_label = app_config.label\n             app_dir = os.path.join(app_config.path, \"fixtures\")\n-            if app_dir in fixture_dirs:\n+            # Also convert app_dir to resolved path for comparison\n+            resolved_app_dir = os.path.realpath(app_dir)\n+            if resolved_app_dir in resolved_fixture_dirs:\n                 raise ImproperlyConfigured(\n                     \"'%s' is a default fixture directory for the '%s' app \"\n                     \"and cannot be listed in settings.FIXTURE_DIRS.\"\n@@ -380,7 +384,7 @@ class Command(BaseCommand):\n                 dirs.append(app_dir)\n         dirs.extend(fixture_dirs)\n         dirs.append(\"\")\n-        return [os.path.realpath(d) for d in dirs]\n+        return [os.path.realpath(str(d)) for d in dirs]\n \n     def parse_name(self, fixture_name):\n         \"\"\"\ndiff --git a/reproduce_issue.py b/reproduce_issue.py\nnew file mode 100644\nindex 0000000000..4f2c15f59a\n--- /dev/null\n+++ b/reproduce_issue.py\n@@ -0,0 +1,64 @@\n+from pathlib import Path\n+from django.conf import settings\n+from django.core.management import call_command\n+from django.test import TestCase, override_settings\n+\n+# Configure Django settings\n+settings.configure(\n+    DATABASES={\n+        'default': {\n+            'ENGINE': 'django.db.backends.sqlite3',\n+            'NAME': ':memory:',\n+        }\n+    },\n+    INSTALLED_APPS=[\n+        'django.contrib.contenttypes',\n+        'django.contrib.auth',\n+    ],\n+)\n+\n+# Create test case\n+class FixtureDirsTest(TestCase):\n+    def test_duplicate_path_instances(self):\n+        \"\"\"Test that duplicate Path instances in FIXTURE_DIRS are detected.\"\"\"\n+        # Test case 1: Exact same paths\n+        with self.assertRaises(Exception) as cm:\n+            with override_settings(FIXTURE_DIRS=[\n+                Path('/tmp/fixtures'),\n+                Path('/tmp/fixtures'),\n+            ]):\n+                call_command('loaddata', 'nonexistent_fixture')\n+        print(\"Test 1 passed: Detected duplicate identical paths\")\n+\n+        # Test case 2: Same paths with different representations\n+        with self.assertRaises(Exception) as cm:\n+            with override_settings(FIXTURE_DIRS=[\n+                Path('/tmp/fixtures'),\n+                Path('/tmp/fixtures/subdir/../'),\n+            ]):\n+                call_command('loaddata', 'nonexistent_fixture')\n+        print(\"Test 2 passed: Detected duplicate paths with different representations\")\n+\n+        # Test case 3: Different paths should work\n+        try:\n+            with override_settings(FIXTURE_DIRS=[\n+                Path('/tmp/fixtures'),\n+                Path('/tmp/other_fixtures'),\n+            ]):\n+                call_command('loaddata', 'nonexistent_fixture')\n+        except Exception as e:\n+            if \"contains duplicates\" in str(e):\n+                print(\"ERROR: Different paths were incorrectly detected as duplicates!\")\n+                return\n+            print(\"Test 3 passed: Different paths work as expected\")\n+        print(\"All tests passed!\")\n+\n+if __name__ == '__main__':\n+    import django\n+    django.setup()\n+    \n+    # Run the test\n+    test = FixtureDirsTest('test_duplicate_path_instances')\n+    test.setUp()\n+    test.test_duplicate_path_instances()\n+    test.tearDown()\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "OpenHands",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

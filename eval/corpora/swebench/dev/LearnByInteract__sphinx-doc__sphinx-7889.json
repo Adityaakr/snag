@@ -1,0 +1,142 @@
+{
+ "id": "LearnByInteract:sphinx-doc__sphinx-7889",
+ "corpus": "swebench",
+ "seedId": "sphinx-doc__sphinx-7889",
+ "input": {
+  "mode": "local",
+  "repo": "sphinx-doc/sphinx",
+  "baseSha": "ec9af606c6cfa515f946d74da9b51574f2f9b16f",
+  "headSha": "LearnByInteract-sphinx-doc__sphinx-7889",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "sphinx-doc",
+    "repo": "sphinx",
+    "number": 7889
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "sphinx-doc",
+     "repo": "sphinx",
+     "number": 7889
+    },
+    "title": "Autodoc extension's mock file throws TypeError for generic-typed classes.",
+    "body": "**Describe the bug**\r\nWhen building the docs for a generically-typed class, a TypeError is thrown as Autodoc's `mock._make_subclass` attempts to concatenate a `str` to a `TypeVar`. See the attached log: [sphinx-err-325ndteh.log](https://github.com/sphinx-doc/sphinx/files/4842672/sphinx-err-325ndteh.log)\r\n\r\n\r\n**To Reproduce**\r\n```\r\n$ git https://github.com/perrygoy/screenpy.git\r\n$ cd screenpy/docs\r\n$ python -m venv env\r\n$ source env/bin/activate\r\n$ pip install sphinx pyhamcrest selenium typing_extensions\r\n$ make html\r\n```\r\nObserve the docs command fails with a TypeError.\r\n\r\n**Expected behavior**\r\nDocs can still be built when generics are involved.\r\n\r\n**Your project**\r\nhttps://github.com/perrygoy/screenpy.git\r\n\r\n**Environment info**\r\n- OS: Mac 10.15.5 (19F101)\r\n- Python version: 3.7.7\r\n- Sphinx version: 3.1.1\r\n- Sphinx extensions:  sphinx.ext.autodoc, sphinx.ext.intersphinx, sphinx.ext.coverage, sphinx.ext.ifconfig, sphinx.ext.napoleon\r\n\r\n**Additional context**\r\nThis might just be me not knowing how to make Sphinx-friendly generic typing, if that's the case please let me know!",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:8ac4007d2ea153b26897d90056b513672b10bbfae1b693803eef7736ffa45a74"
+   }
+  ],
+  "pr": {
+   "title": "Fix sphinx-doc__sphinx-7889",
+   "body": ""
+  },
+  "diffText": "diff --git a/sphinx/ext/autodoc/mock.py b/sphinx/ext/autodoc/mock.py\nindex 98a3a3a96..31bf0729e 100644\n--- a/sphinx/ext/autodoc/mock.py\n+++ b/sphinx/ext/autodoc/mock.py\n@@ -70,10 +70,10 @@ class _MockObject:\n \n def _make_subclass(name: str, module: str, superclass: Any = _MockObject,\n                    attributes: Any = None) -> Any:\n-    attrs = {'__module__': module, '__display_name__': module + '.' + name}\n+    attrs = {'__module__': module, '__display_name__': module + '.' + str(name)}\n     attrs.update(attributes or {})\n \n-    return type(name, (superclass,), attrs)\n+    return type(str(name), (superclass,), attrs)\n \n \n class _MockModule(ModuleType):\n@@ -147,3 +147,4 @@ def mock(modnames: List[str]) -> Generator[None, None, None]:\n     finally:\n         sys.meta_path.remove(finder)\n         finder.invalidate_caches()\n+\ndiff --git a/test_generic.py b/test_generic.py\nnew file mode 100644\nindex 000000000..4bd99d12d\n--- /dev/null\n+++ b/test_generic.py\n@@ -0,0 +1,21 @@\n+from typing import TypeVar, Generic\n+from sphinx.ext.autodoc.mock import _make_subclass\n+\n+T = TypeVar('T')\n+S = TypeVar('S')\n+\n+class MyGeneric(Generic[T, S]):\n+    pass\n+\n+# Test TypeVar\n+result1 = _make_subclass(T, \"test_module\")\n+print(\"Test 1 (TypeVar):\", result1)\n+\n+# Test Generic with multiple type params\n+result2 = _make_subclass(MyGeneric[T, S], \"test_module\")\n+print(\"Test 2 (Generic):\", result2)\n+\n+# Test regular string (ensure backwards compatibility)\n+result3 = _make_subclass(\"MyClass\", \"test_module\")\n+print(\"Test 3 (string):\", result3)\n+\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "LearnByInteract",
+  "source": "rq34_manual",
+  "strength": "weak",
+  "diffPattern": "divergent",
+  "correctness": "uncertain"
+ },
+ "annotatedBy": "study"
+}

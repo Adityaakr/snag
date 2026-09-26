@@ -1,0 +1,171 @@
+{
+  "id": "py-blog-slugs",
+  "language": "py",
+  "annotated_by": "claude-code",
+  "split": "dev",
+  "summary": "Blog post slugs: ASCII transliteration, separator collapsing, word-boundary truncation, unique suffixes.",
+  "requirements": [
+    {
+      "id": "R1",
+      "text": "Accented letters become plain ASCII (an e with an acute accent becomes `e`), and sharp s, the ae ligature and o with a stroke become `ss`, `ae` and `o`",
+      "implementing": [
+        {
+          "file": "blog/slugs.py",
+          "symbol": "to_ascii"
+        },
+        {
+          "file": "blog/slugs.py",
+          "symbol": "slugify",
+          "replace": [
+            {
+              "from": "to_ascii(title)",
+              "to": "title"
+            }
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "file": "tests/test_slugs.py",
+          "symbol": "test_transliterates_accents"
+        }
+      ],
+      "flip": {
+        "impl": {
+          "file": "blog/slugs.py",
+          "symbol": "to_ascii",
+          "from": "\"ss\"",
+          "to": "\"s\""
+        },
+        "test": {
+          "file": "tests/test_slugs.py",
+          "symbol": "test_transliterates_accents",
+          "from": "\"Strasse\"",
+          "to": "\"Strase\""
+        }
+      },
+      "partial": {
+        "impl": {
+          "file": "blog/slugs.py",
+          "symbol": "to_ascii",
+          "contains": "\"\\u00e6\": \"ae\""
+        },
+        "test": {
+          "file": "tests/test_slugs.py",
+          "symbol": "test_transliterates_accents",
+          "contains": "to_ascii(\"\\u00e6ble\")"
+        }
+      }
+    },
+    {
+      "id": "R2",
+      "text": "Runs of spaces, underscores and punctuation collapse into one hyphen, with no leading or trailing hyphen (`  Hello,  World! ` becomes `hello-world`)",
+      "implementing": [
+        {
+          "file": "blog/slugs.py",
+          "symbol": "slugify",
+          "replace": [
+            {
+              "from": "re.sub(r\"[^a-z0-9]+\", \"-\", text).strip(\"-\")",
+              "to": "text.strip().replace(\" \", \"-\")"
+            }
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "file": "tests/test_slugs.py",
+          "symbol": "test_collapses_separators"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "text": "Slugs longer than 60 characters are cut at the last word boundary within 60 characters, never mid-word (only a single word longer than 60 is cut at 60)",
+      "implementing": [
+        {
+          "file": "blog/slugs.py",
+          "symbol": "truncate"
+        },
+        {
+          "file": "blog/slugs.py",
+          "symbol": "slugify",
+          "replace": [
+            {
+              "from": "truncate(text, 60)",
+              "to": "text"
+            }
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "file": "tests/test_slugs.py",
+          "symbol": "test_truncates_on_word_boundary"
+        },
+        {
+          "file": "tests/test_slugs.py",
+          "symbol": "test_short_slugs_are_not_truncated"
+        }
+      ],
+      "flip": {
+        "impl": {
+          "file": "blog/slugs.py",
+          "symbol": "slugify",
+          "from": "60",
+          "to": "80"
+        },
+        "test": {
+          "file": "tests/test_slugs.py",
+          "symbol": "test_truncates_on_word_boundary",
+          "from": "12",
+          "to": "16"
+        }
+      },
+      "unwire": {
+        "file": "blog/slugs.py",
+        "symbol": "slugify",
+        "callee": "truncate"
+      }
+    },
+    {
+      "id": "R4",
+      "text": "`unique_slug` appends `-2`, `-3` and so on when the slug is already taken (`hello` taken gives `hello-2`)",
+      "implementing": [
+        {
+          "file": "blog/slugs.py",
+          "symbol": "unique_slug"
+        }
+      ],
+      "tests": [
+        {
+          "file": "tests/test_slugs.py",
+          "symbol": "test_unique_slug_keeps_free_slug"
+        },
+        {
+          "file": "tests/test_slugs.py",
+          "symbol": "test_unique_slug_appends_counter"
+        }
+      ]
+    }
+  ],
+  "incidental": [],
+  "config": {
+    "file": "blog/config.py",
+    "symbol": "site_settings",
+    "from": "200",
+    "to": "250"
+  },
+  "unrelatedTest": {
+    "file": "tests/test_reading_time.py",
+    "symbol": "test_rounds_to_nearest_minute"
+  },
+  "unrelatedCode": {
+    "file": "blog/reading_time.py",
+    "symbol": "reading_minutes",
+    "rename": {
+      "from": "words",
+      "to": "count"
+    }
+  }
+}

@@ -1,0 +1,140 @@
+{
+ "id": "LearnByInteract:sympy__sympy-18698",
+ "corpus": "swebench",
+ "seedId": "sympy__sympy-18698",
+ "input": {
+  "mode": "local",
+  "repo": "sympy/sympy",
+  "baseSha": "3dff1b98a78f28c953ae2140b69356b8391e399c",
+  "headSha": "LearnByInteract-sympy__sympy-18698",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "sympy",
+    "repo": "sympy",
+    "number": 18698
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "sympy",
+     "repo": "sympy",
+     "number": 18698
+    },
+    "title": "sqf and sqf_list output is not consistant",
+    "body": "The example below is wrong in the sense that we should have (x*_2 - 5_x + 6, 3) and not 2 factors of multiplicity 3.\n\n```\n>  sqf_list(  (x**2 + 1)  * (x - 1)**2 * (x - 2)**3 * (x - 3)**3  )\n\n>  (1, [(x**2 + 1, 1), (x - 1, 2), (x - 3, 3), (x - 2, 3)])\n```\n\nwhereas below is correct --- one factor of multiplicity 2\n\n```\n>  sqf_list( x**5 - 2*x**4 - 2*x**3 + 4*x**2 + x - 2 )\n\n>  (1, [(x - 2, 1), (x**2 - 1, 2)])\n```",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:82ec10c7e79341c05dbc3988a87c204d73eb45979e88f7ed8349f56724a0b247"
+   }
+  ],
+  "pr": {
+   "title": "Fix sympy__sympy-18698",
+   "body": ""
+  },
+  "diffText": "diff --git a/reproduce.py b/reproduce.py\nnew file mode 100644\nindex 0000000000..2154a5984b\n--- /dev/null\n+++ b/reproduce.py\n@@ -0,0 +1,31 @@\n+from sympy import symbols, sqf_list\n+\n+x = symbols('x')\n+\n+# Test case 1 - Should combine factors with same multiplicity\n+expr1 = (x**2 + 1) * (x - 1)**2 * (x - 2)**3 * (x - 3)**3\n+result1 = sqf_list(expr1)\n+print(\"Test 1:\")\n+print(result1)\n+print()\n+\n+# Test case 2 - Already working correctly\n+expr2 = x**5 - 2*x**4 - 2*x**3 + 4*x**2 + x - 2\n+result2 = sqf_list(expr2)\n+print(\"Test 2:\")\n+print(result2)\n+print()\n+\n+# Test case 3 - Edge case: no factors with same multiplicity\n+expr3 = (x - 1) * (x - 2)**2 * (x - 3)**3\n+result3 = sqf_list(expr3)\n+print(\"Test 3:\")\n+print(result3)\n+print()\n+\n+# Test case 4 - Edge case: three factors with same multiplicity\n+expr4 = (x - 1)**2 * (x - 2)**2 * (x - 3)**2\n+result4 = sqf_list(expr4)\n+print(\"Test 4:\")\n+print(result4)\n+\ndiff --git a/sympy/polys/polytools.py b/sympy/polys/polytools.py\nindex c9e77a901f..2e745dea36 100644\n--- a/sympy/polys/polytools.py\n+++ b/sympy/polys/polytools.py\n@@ -5875,19 +5875,54 @@ def sqf_part(f, *gens, **args):\n \n \n def _sorted_factors(factors, method):\n-    \"\"\"Sort a list of ``(expr, exp)`` pairs. \"\"\"\n+    \"\"\"Sort a list of ``(expr, exp)`` pairs and combine factors with equal exponents. \"\"\"\n+    if not factors:\n+        return factors\n+\n     if method == 'sqf':\n         def key(obj):\n             poly, exp = obj\n             rep = poly.rep.rep\n             return (exp, len(rep), len(poly.gens), rep)\n+\n+        # First sort by exponent and other criteria\n+        sorted_factors = sorted(factors, key=key)\n+\n+        # Group factors by exponent and combine them\n+        combined = []\n+        current_exp = None\n+        current_factors = []\n+\n+        for factor in sorted_factors:\n+            poly, exp = factor\n+            if exp != current_exp:\n+                # Process the previous group if it exists\n+                if current_factors:\n+                    product = current_factors[0]\n+                    for f in current_factors[1:]:\n+                        product = product.mul(f)\n+                    combined.append((product, current_exp))\n+                # Start a new group\n+                current_exp = exp\n+                current_factors = [poly]\n+            else:\n+                current_factors.append(poly)\n+\n+        # Process the last group\n+        if current_factors:\n+            product = current_factors[0]\n+            for f in current_factors[1:]:\n+                product = product.mul(f)\n+            combined.append((product, current_exp))\n+\n+        return combined\n     else:\n         def key(obj):\n             poly, exp = obj\n             rep = poly.rep.rep\n             return (len(rep), len(poly.gens), exp, rep)\n \n-    return sorted(factors, key=key)\n+        return sorted(factors, key=key)\n \n \n def _factors_product(factors):\n@@ -7149,3 +7184,4 @@ def _poly(expr, opt):\n     opt = options.build_options(gens, args)\n \n     return _poly(expr, opt)\n+\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "LearnByInteract",
+  "source": "rq2_divergent",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

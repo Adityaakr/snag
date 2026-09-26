@@ -1,0 +1,140 @@
+{
+ "id": "gold:sphinx-doc__sphinx-9711",
+ "corpus": "swebench",
+ "seedId": "sphinx-doc__sphinx-9711",
+ "input": {
+  "mode": "local",
+  "repo": "sphinx-doc/sphinx",
+  "baseSha": "81a4fd973d4cfcb25d01a7b0be62cdb28f82406d",
+  "headSha": "gold-sphinx-doc__sphinx-9711",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "sphinx-doc",
+    "repo": "sphinx",
+    "number": 9711
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "sphinx-doc",
+     "repo": "sphinx",
+     "number": 9711
+    },
+    "title": "needs_extensions checks versions using strings",
+    "body": "### Describe the bug\r\n\r\nThe `needs_extensions` check is handy for verifying minimum extension versions, but it only checks versions in a 'string-like' manner. This means any version >9 is not allowed for any check of something >1. That is, treated as string '0.6' > '0.10', but treated as versions '0.6' < '0.10'. Since Sphinx does the former, some extension versions may not be allowed when they should be.\r\n\r\n### How to Reproduce\r\n\r\n```\r\n$ git clone https://github.com/anntzer/mplcursors\r\n$ cd mplcursors\r\n$ pip install -r .doc-requirements.txt\r\n$ pip install -e .\r\n$ make -C doc html\r\n```\r\nThis passes just fine, because the requirements pin sphinx-gallery to 0.9. But if you then update to the current 0.10 release:\r\n\r\n```\r\n$ pip install sphinx-gallery==0.10\r\n$ make -C doc html\r\n```\r\nresults in a failure due to a \"not new enough\" version:\r\n```\r\nRunning Sphinx v4.1.2\r\nloading translations [en]... done\r\nmaking output directory... done\r\n\r\nSphinx version error:\r\nThis project needs the extension sphinx_gallery.gen_gallery at least in version 0.6.0 and therefore cannot be built with the loaded version (0.10.0).\r\n```\r\n\r\n### Expected behavior\r\n\r\nsphinx-gallery 0.10.0 should be accepted if 0.6 is the minimum specified.\r\n\r\n### Your project\r\n\r\nhttps://github.com/anntzer/mplcursors\r\n\r\n### Screenshots\r\n\r\n_No response_\r\n\r\n### OS\r\n\r\nFedora\r\n\r\n### Python version\r\n\r\n3.9.6\r\n\r\n### Sphinx version\r\n\r\n4.1.2\r\n\r\n### Sphinx extensions\r\n\r\n_No response_\r\n\r\n### Extra tools\r\n\r\n_No response_\r\n\r\n### Additional context\r\n\r\n_No response_",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:6adce894c7fab10db753f197b8173b328880eb59314cc89b3f1236e4352a9ac2"
+   }
+  ],
+  "pr": {
+   "title": "Fix sphinx-doc__sphinx-9711",
+   "body": ""
+  },
+  "diffText": "diff --git a/sphinx/extension.py b/sphinx/extension.py\n--- a/sphinx/extension.py\n+++ b/sphinx/extension.py\n@@ -10,6 +10,8 @@\n \n from typing import TYPE_CHECKING, Any, Dict\n \n+from packaging.version import InvalidVersion, Version\n+\n from sphinx.config import Config\n from sphinx.errors import VersionRequirementError\n from sphinx.locale import __\n@@ -51,7 +53,18 @@ def verify_needs_extensions(app: \"Sphinx\", config: Config) -> None:\n                               'but it is not loaded.'), extname)\n             continue\n \n-        if extension.version == 'unknown version' or reqversion > extension.version:\n+        fulfilled = True\n+        if extension.version == 'unknown version':\n+            fulfilled = False\n+        else:\n+            try:\n+                if Version(reqversion) > Version(extension.version):\n+                    fulfilled = False\n+            except InvalidVersion:\n+                if reqversion > extension.version:\n+                    fulfilled = False\n+\n+        if not fulfilled:\n             raise VersionRequirementError(__('This project needs the extension %s at least in '\n                                              'version %s and therefore cannot be built with '\n                                              'the loaded version (%s).') %\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "gold",
+  "source": "gold",
+  "strength": "strong"
+ },
+ "annotatedBy": "study"
+}

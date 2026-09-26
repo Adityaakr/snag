@@ -1,0 +1,140 @@
+{
+ "id": "LearnByInteract:scikit-learn__scikit-learn-25973",
+ "corpus": "swebench",
+ "seedId": "scikit-learn__scikit-learn-25973",
+ "input": {
+  "mode": "local",
+  "repo": "scikit-learn/scikit-learn",
+  "baseSha": "10dbc142bd17ccf7bd38eec2ac04b52ce0d1009e",
+  "headSha": "LearnByInteract-scikit-learn__scikit-learn-25973",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "scikit-learn",
+    "repo": "scikit-learn",
+    "number": 25973
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "scikit-learn",
+     "repo": "scikit-learn",
+     "number": 25973
+    },
+    "title": "Unable to pass splits to SequentialFeatureSelector",
+    "body": "### Describe the bug\n\nThis runs fine with e.g. `cv=5`, but according to the documentation, it should also be able to take an iterable of splits.\r\nHowever, passing splits from the cross validator fails\r\n\r\nIm fairly certain I have done similar things in the past to other classes in scikit-learn requiring a `cv` parameter.\r\n\r\nIf somebody could confirm wether this is a bug, or I'm doing something wrong, that would great. Sorry if this is unneeded noise in the feed.\n\n### Steps/Code to Reproduce\n\n```\r\nfrom sklearn.datasets import make_classification\r\nfrom sklearn.feature_selection import SequentialFeatureSelector\r\nfrom sklearn.neighbors import KNeighborsClassifier\r\nfrom sklearn.model_selection import LeaveOneGroupOut\r\n\r\nimport numpy as np\r\n\r\nX, y = make_classification()\r\n\r\n\r\ngroups = np.zeros_like(y, dtype=int)\r\ngroups[y.size//2:] = 1\r\n\r\ncv = LeaveOneGroupOut()\r\nsplits = cv.split(X, y, groups=groups)\r\n\r\nclf = KNeighborsClassifier(n_neighbors=5)\r\n\r\nseq = SequentialFeatureSelector(clf, n_features_to_select=5, scoring='accuracy', cv=splits)\r\nseq.fit(X, y)\r\n```\n\n### Expected Results\n\nExpected to run without errors\n\n### Actual Results\n\n```\r\n---------------------------------------------------------------------------\r\n\r\nIndexError                                Traceback (most recent call last)\r\n\r\n[<ipython-input-18-d4c8f5222560>](https://localhost:8080/#) in <module>\r\n     19 \r\n     20 seq = SequentialFeatureSelector(clf, n_features_to_select=5, scoring='accuracy', cv=splits)\r\n---> 21 seq.fit(X, y)\r\n\r\n4 frames\r\n\r\n[/usr/local/lib/python3.9/dist-packages/sklearn/model_selection/_validation.py](https://localhost:8080/#) in _aggregate_score_dicts(scores)\r\n   1928         if isinstance(scores[0][key], numbers.Number)\r\n   1929         else [score[key] for score in scores]\r\n-> 1930         for key in scores[0]\r\n   1931     }\r\n\r\nIndexError: list index out of range\r\n```\n\n### Versions\n\n```shell\n1.2.2\n```",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:a6363c3ad5e4baf920c4697707c33fef55594998234ab683351d9b7fc7acf1e9"
+   }
+  ],
+  "pr": {
+   "title": "Fix scikit-learn__scikit-learn-25973",
+   "body": ""
+  },
+  "diffText": "diff --git a/reproduce.py b/reproduce.py\nnew file mode 100644\nindex 000000000..0c827cf8d\n--- /dev/null\n+++ b/reproduce.py\n@@ -0,0 +1,44 @@\n+from sklearn.datasets import make_classification\n+from sklearn.feature_selection import SequentialFeatureSelector\n+from sklearn.neighbors import KNeighborsClassifier\n+from sklearn.model_selection import (\n+    LeaveOneGroupOut, KFold, LeaveOneOut, ShuffleSplit\n+)\n+\n+import numpy as np\n+\n+X, y = make_classification()\n+\n+# Test 1: Original case - LeaveOneGroupOut\n+print(\"Testing LeaveOneGroupOut...\")\n+groups = np.zeros_like(y, dtype=int)\n+groups[y.size//2:] = 1\n+cv1 = LeaveOneGroupOut()\n+splits1 = cv1.split(X, y, groups=groups)\n+clf = KNeighborsClassifier(n_neighbors=5)\n+seq1 = SequentialFeatureSelector(clf, n_features_to_select=5, scoring='accuracy', cv=splits1)\n+seq1.fit(X, y)\n+\n+# Test 2: KFold iterator\n+print(\"\\nTesting KFold...\")\n+cv2 = KFold(n_splits=5)\n+splits2 = cv2.split(X)\n+seq2 = SequentialFeatureSelector(clf, n_features_to_select=5, scoring='accuracy', cv=splits2)\n+seq2.fit(X, y)\n+\n+# Test 3: LeaveOneOut\n+print(\"\\nTesting LeaveOneOut...\")\n+cv3 = LeaveOneOut()\n+splits3 = cv3.split(X)\n+seq3 = SequentialFeatureSelector(clf, n_features_to_select=5, scoring='accuracy', cv=splits3)\n+seq3.fit(X, y)\n+\n+# Test 4: ShuffleSplit\n+print(\"\\nTesting ShuffleSplit...\")\n+cv4 = ShuffleSplit(n_splits=5, test_size=0.2)\n+splits4 = cv4.split(X)\n+seq4 = SequentialFeatureSelector(clf, n_features_to_select=5, scoring='accuracy', cv=splits4)\n+seq4.fit(X, y)\n+\n+print(\"\\nAll tests completed successfully!\")\n+\ndiff --git a/sklearn/feature_selection/_sequential.py b/sklearn/feature_selection/_sequential.py\nindex e983c55de..b54257b98 100644\n--- a/sklearn/feature_selection/_sequential.py\n+++ b/sklearn/feature_selection/_sequential.py\n@@ -299,6 +299,9 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator\n         # than tol when n_feature is auto,\n         candidate_feature_indices = np.flatnonzero(~current_mask)\n         scores = {}\n+        if not hasattr(self, '_cv'):\n+            from sklearn.model_selection import check_cv\n+            self._cv = check_cv(self.cv)\n         for feature_idx in candidate_feature_indices:\n             candidate_mask = current_mask.copy()\n             candidate_mask[feature_idx] = True\n@@ -309,13 +312,14 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator\n                 estimator,\n                 X_new,\n                 y,\n-                cv=self.cv,\n+                cv=self._cv,\n                 scoring=self.scoring,\n                 n_jobs=self.n_jobs,\n             ).mean()\n         new_feature_idx = max(scores, key=lambda feature_idx: scores[feature_idx])\n         return new_feature_idx, scores[new_feature_idx]\n \n+\n     def _get_support_mask(self):\n         check_is_fitted(self)\n         return self.support_\n@@ -324,3 +328,4 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator\n         return {\n             \"allow_nan\": _safe_tags(self.estimator, key=\"allow_nan\"),\n         }\n+\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "LearnByInteract",
+  "source": "rq2_divergent",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

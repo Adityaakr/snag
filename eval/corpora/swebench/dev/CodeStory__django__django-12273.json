@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:django__django-12273",
+ "corpus": "swebench",
+ "seedId": "django__django-12273",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "927c903f3cd25c817c21738328b53991c035b415",
+  "headSha": "CodeStory-django__django-12273",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 12273
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 12273
+    },
+    "title": "Resetting primary key for a child model doesn't work.",
+    "body": "Description\n\t\nIn the attached example code setting the primary key to None does not work (so that the existing object is overwritten on save()).\nThe most important code fragments of the bug example:\nfrom django.db import models\nclass Item(models.Model):\n\t# uid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)\n\tuid = models.AutoField(primary_key=True, editable=False)\n\tf = models.BooleanField(default=False)\n\tdef reset(self):\n\t\tself.uid = None\n\t\tself.f = False\nclass Derived(Item):\n\tpass\nclass SaveTestCase(TestCase):\n\tdef setUp(self):\n\t\tself.derived = Derived.objects.create(f=True) # create the first object\n\t\titem = Item.objects.get(pk=self.derived.pk)\n\t\tobj1 = item.derived\n\t\tobj1.reset()\n\t\tobj1.save() # the first object is overwritten\n\tdef test_f_true(self):\n\t\tobj = Item.objects.get(pk=self.derived.pk)\n\t\tself.assertTrue(obj.f)\nDjango 2.1.2",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:d0c076e3e9169776b74dc11c41548dcd3bfbe082f3d09b147f52c71076bb629d"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-12273",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/db/models/base.py b/django/db/models/base.py\nindex 844c01e95e..0ea0bf6b52 100644\n--- a/django/db/models/base.py\n+++ b/django/db/models/base.py\n@@ -804,10 +804,20 @@ class Model(metaclass=ModelBase):\n         inserted = False\n         for parent, field in meta.parents.items():\n             # Make sure the link fields are synced between parent and self.\n-            if (field and getattr(self, parent._meta.pk.attname) is None and\n-                    getattr(self, field.attname) is not None):\n-                setattr(self, parent._meta.pk.attname, getattr(self, field.attname))\n-            parent_inserted = self._save_parents(cls=parent, using=using, update_fields=update_fields)\n+            if field:\n+                # If child PK is None, we want to force this to be treated as an insert\n+                if getattr(self, parent._meta.pk.attname) is None:\n+                    # Ensure parent PK is also None for consistent insert behavior\n+                    setattr(self, field.attname, None)\n+                    parent_inserted = True\n+                else:\n+                    # Normal case - sync parent and child PKs\n+                    if getattr(self, field.attname) is not None:\n+                        setattr(self, parent._meta.pk.attname, getattr(self, field.attname))\n+                    parent_inserted = self._save_parents(cls=parent, using=using, update_fields=update_fields)\n+            else:\n+                parent_inserted = self._save_parents(cls=parent, using=using, update_fields=update_fields)\n+            \n             updated = self._save_table(\n                 cls=parent, using=using, update_fields=update_fields,\n                 force_insert=parent_inserted,\ndiff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..296dcc5262\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,69 @@\n+from django.db import models, connection\n+from django.test import TestCase\n+import os\n+import django\n+from django.conf import settings\n+from django.core.management import call_command\n+\n+if not settings.configured:\n+    settings.configure(\n+        DATABASES={\n+            'default': {\n+                'ENGINE': 'django.db.backends.sqlite3',\n+                'NAME': ':memory:'\n+            }\n+        },\n+        INSTALLED_APPS=['django.contrib.contenttypes'],\n+        SECRET_KEY='dummy-key-for-tests',\n+        MIDDLEWARE_CLASSES=[],\n+        MIDDLEWARE=[]\n+    )\n+    django.setup()\n+\n+class Item(models.Model):\n+    uid = models.AutoField(primary_key=True, editable=False)\n+    f = models.BooleanField(default=False)\n+    \n+    def reset(self):\n+        self.uid = None\n+        self.f = False\n+    \n+    class Meta:\n+        app_label = 'django_db_models_base'\n+\n+class Derived(Item):\n+    class Meta:\n+        app_label = 'django_db_models_base'\n+\n+class SaveTestCase(TestCase):\n+    @classmethod\n+    def setUpClass(cls):\n+        super().setUpClass()\n+        # Create tables\n+        with connection.schema_editor() as schema_editor:\n+            schema_editor.create_model(Item)\n+            schema_editor.create_model(Derived)\n+\n+    def setUp(self):\n+        self.derived = Derived.objects.create(f=True)\n+        item = Item.objects.get(pk=self.derived.pk)\n+        obj1 = item.derived\n+        obj1.reset()\n+        obj1.save()\n+    \n+    def test_f_true(self):\n+        obj = Item.objects.get(pk=self.derived.pk)\n+        self.assertTrue(obj.f)\n+\n+if __name__ == '__main__':\n+    from django.test.utils import setup_test_environment, teardown_test_environment\n+    \n+    setup_test_environment()\n+    connection.creation.create_test_db(verbosity=2)\n+    \n+    import unittest\n+    suite = unittest.TestLoader().loadTestsFromTestCase(SaveTestCase)\n+    result = unittest.TextTestRunner(verbosity=2).run(suite)\n+    \n+    connection.creation.destroy_test_db(':memory:', verbosity=2)\n+    teardown_test_environment()\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq1_devtests",
+  "strength": "medium"
+ },
+ "annotatedBy": "study"
+}

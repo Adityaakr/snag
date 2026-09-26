@@ -1,0 +1,188 @@
+{
+  "id": "ts-money-format",
+  "language": "ts",
+  "annotated_by": "claude-code",
+  "split": "dev",
+  "summary": "Money formatting: USD, EUR and JPY, half-away-from-zero rounding, minus sign before the symbol, thousands grouping.",
+  "requirements": [
+    {
+      "id": "R1",
+      "text": "`formatMoney(amount, currency)` supports USD, EUR and JPY, with USD as the default (for example `$12.50`, `12.50 EUR`, `980 JPY`)",
+      "implementing": [
+        {
+          "file": "src/money.ts",
+          "symbol": "Currency"
+        },
+        {
+          "file": "src/money.ts",
+          "symbol": "CURRENCIES"
+        },
+        {
+          "file": "src/money.ts",
+          "symbol": "formatMoney",
+          "replace": [
+            {
+              "from": "(amount: number, currency: Currency = 'USD')",
+              "to": "(amount: number)"
+            },
+            {
+              "from": "CURRENCIES[currency]",
+              "to": "{ prefix: '$', suffix: '', digits: 2 }"
+            }
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "file": "src/money.test.ts",
+          "symbol": "formats USD, EUR and JPY"
+        }
+      ],
+      "flip": {
+        "impl": {
+          "file": "src/money.ts",
+          "symbol": "CURRENCIES",
+          "from": "0",
+          "to": "2"
+        },
+        "test": {
+          "file": "src/money.test.ts",
+          "symbol": "formats USD, EUR and JPY",
+          "from": "'980 JPY'",
+          "to": "'980.00 JPY'"
+        }
+      },
+      "partial": {
+        "impl": {
+          "file": "src/money.ts",
+          "symbol": "CURRENCIES",
+          "contains": "EUR: {"
+        },
+        "test": {
+          "file": "src/money.test.ts",
+          "symbol": "formats USD, EUR and JPY",
+          "contains": "formatMoney(12.5, 'EUR')"
+        }
+      }
+    },
+    {
+      "id": "R2",
+      "text": "Amounts are rounded half away from zero to the currency's decimal places (for example `1.005` USD is `$1.01`, and `-2.5` rounds to `-3` with no decimals)",
+      "implementing": [
+        {
+          "file": "src/money.ts",
+          "symbol": "roundHalfAway"
+        },
+        {
+          "file": "src/money.ts",
+          "symbol": "formatMoney",
+          "replace": [
+            {
+              "from": "roundHalfAway(amount, c.digits)",
+              "to": "amount"
+            }
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "file": "src/money.test.ts",
+          "symbol": "rounds half away from zero"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "text": "Negative amounts put the minus sign before the currency symbol (`-$4.20`, not `$-4.20`)",
+      "implementing": [
+        {
+          "file": "src/money.ts",
+          "symbol": "formatMoney",
+          "remove": [
+            "const sign ="
+          ],
+          "replace": [
+            {
+              "from": "Math.abs(rounded)",
+              "to": "rounded"
+            },
+            {
+              "from": "`${sign}${c.prefix}${body}${c.suffix}`",
+              "to": "`${c.prefix}${body}${c.suffix}`"
+            }
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "file": "src/money.test.ts",
+          "symbol": "puts the minus sign before the symbol"
+        }
+      ],
+      "flip": {
+        "impl": {
+          "file": "src/money.ts",
+          "symbol": "formatMoney",
+          "from": "'-'",
+          "to": "''"
+        },
+        "test": {
+          "file": "src/money.test.ts",
+          "symbol": "puts the minus sign before the symbol",
+          "from": "'-$4.20'",
+          "to": "'$4.20'"
+        }
+      }
+    },
+    {
+      "id": "R4",
+      "text": "The whole part is grouped in thousands with commas (for example `$1,234,567.89`)",
+      "implementing": [
+        {
+          "file": "src/money.ts",
+          "symbol": "groupThousands"
+        },
+        {
+          "file": "src/money.ts",
+          "symbol": "formatMoney",
+          "replace": [
+            {
+              "from": "groupThousands(whole)",
+              "to": "whole"
+            }
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "file": "src/money.test.ts",
+          "symbol": "groups thousands with commas"
+        }
+      ],
+      "unwire": {
+        "file": "src/money.ts",
+        "symbol": "formatMoney",
+        "callee": "groupThousands"
+      }
+    }
+  ],
+  "incidental": [],
+  "config": {
+    "file": "src/config.ts",
+    "symbol": "INVOICE_DEFAULTS",
+    "from": "30",
+    "to": "3"
+  },
+  "unrelatedTest": {
+    "file": "src/invoice.test.ts",
+    "symbol": "adds tax to the subtotal"
+  },
+  "unrelatedCode": {
+    "file": "src/invoice.ts",
+    "symbol": "invoiceTotal",
+    "rename": {
+      "from": "subtotal",
+      "to": "sum"
+    }
+  }
+}

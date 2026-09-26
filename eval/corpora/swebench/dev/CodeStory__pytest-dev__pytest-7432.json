@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:pytest-dev__pytest-7432",
+ "corpus": "swebench",
+ "seedId": "pytest-dev__pytest-7432",
+ "input": {
+  "mode": "local",
+  "repo": "pytest-dev/pytest",
+  "baseSha": "e6e300e729dd33956e5448d8be9a0b1540b4e53a",
+  "headSha": "CodeStory-pytest-dev__pytest-7432",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "pytest-dev",
+    "repo": "pytest",
+    "number": 7432
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "pytest-dev",
+     "repo": "pytest",
+     "number": 7432
+    },
+    "title": "skipping: --runxfail breaks pytest.mark.skip location reporting",
+    "body": "pytest versions: 5.4.x, current master\r\n\r\nWhen `@pytest.mark.skip`/`skipif` marks are used to skip a test, for example\r\n\r\n```py\r\nimport pytest\r\n@pytest.mark.skip\r\ndef test_skip_location() -> None:\r\n    assert 0\r\n```\r\n\r\nthe expected skip location reported should point to the item itself, and this is indeed what happens when running with `pytest -rs`:\r\n\r\n```\r\nSKIPPED [1] test_it.py:3: unconditional skip\r\n```\r\n\r\nHowever, adding `pytest -rs --runxfail` breaks this:\r\n\r\n```\r\nSKIPPED [1] src/_pytest/skipping.py:238: unconditional skip\r\n```\r\n\r\nThe `--runxfail` is only about xfail and should not affect this at all.\r\n\r\n---\r\n\r\nHint: the bug is in `src/_pytest/skipping.py`, the `pytest_runtest_makereport` hook.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:b0b1281cd117c301eed5ce432ddcb8df0a5f1956e51663605e017374279a68f6"
+   }
+  ],
+  "pr": {
+   "title": "Fix pytest-dev__pytest-7432",
+   "body": ""
+  },
+  "diffText": "diff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 000000000..c9f8706b1\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,5 @@\n+import pytest\n+\n+@pytest.mark.skip\n+def test_skip_location() -> None:\n+    assert 0\n\\ No newline at end of file\ndiff --git a/src/_pytest/skipping.py b/src/_pytest/skipping.py\nindex 7bd975e5a..8140299dd 100644\n--- a/src/_pytest/skipping.py\n+++ b/src/_pytest/skipping.py\n@@ -270,13 +270,11 @@ def pytest_runtest_makereport(item: Item, call: CallInfo[None]):\n         else:\n             rep.longrepr = \"Unexpected success\"\n         rep.outcome = \"failed\"\n-    elif item.config.option.runxfail:\n-        pass  # don't interfere\n-    elif call.excinfo and isinstance(call.excinfo.value, xfail.Exception):\n+    elif not item.config.option.runxfail and call.excinfo and isinstance(call.excinfo.value, xfail.Exception):\n         assert call.excinfo.value.msg is not None\n         rep.wasxfail = \"reason: \" + call.excinfo.value.msg\n         rep.outcome = \"skipped\"\n-    elif not rep.skipped and xfailed:\n+    elif not item.config.option.runxfail and not rep.skipped and xfailed:\n         if call.excinfo:\n             raises = xfailed.raises\n             if raises is not None and not isinstance(call.excinfo.value, raises):\n@@ -291,7 +289,9 @@ def pytest_runtest_makereport(item: Item, call: CallInfo[None]):\n             else:\n                 rep.outcome = \"passed\"\n                 rep.wasxfail = xfailed.reason\n-    elif (\n+\n+    # Handle skip location reporting regardless of runxfail\n+    if (\n         item._store.get(skipped_by_mark_key, True)\n         and rep.skipped\n         and type(rep.longrepr) is tuple\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

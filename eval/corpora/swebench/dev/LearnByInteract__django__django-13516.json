@@ -1,0 +1,140 @@
+{
+ "id": "LearnByInteract:django__django-13516",
+ "corpus": "swebench",
+ "seedId": "django__django-13516",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "b7da588e883e12b8ac3bb8a486e654e30fc1c6c8",
+  "headSha": "LearnByInteract-django__django-13516",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 13516
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 13516
+    },
+    "title": "flush() on self.stdout/stderr management commands doesn't work.",
+    "body": "Description\n\t\nflush() is notably called during migrate command; it doesn't work, and a long migration effectively prints to stderr no relevant information up until the end:\nOperations to perform:\n Apply all migrations: myapp\nRunning migrations:\nThen nothing more, but the migration is being done.\nThen at the end of the real migration, the rest is flushed:\n Applying myapp.0002_auto_20200817_1030... OK\nExpected behavior:\nOperations to perform:\n Apply all migrations: myapp\nRunning migrations:\n Applying myapp.0002_auto_20200817_1030...\nthen work\nthen OK",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:92f3abc7badfcbc57f631bdb9897a80dd22094c4484f5fae75dfd3eb17d3b6dc"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-13516",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/core/management/base.py b/django/core/management/base.py\nindex e6cbf8c64f..e34116c30e 100644\n--- a/django/core/management/base.py\n+++ b/django/core/management/base.py\n@@ -149,6 +149,8 @@ class OutputWrapper(TextIOBase):\n             msg += ending\n         style_func = style_func or self.style_func\n         self._out.write(style_func(msg))\n+        self._out.flush()\n+\n \n \n class BaseCommand:\n@@ -575,3 +577,4 @@ class LabelCommand(BaseCommand):\n         string as given on the command line.\n         \"\"\"\n         raise NotImplementedError('subclasses of LabelCommand must provide a handle_label() method')\n+\ndiff --git a/test_flush.py b/test_flush.py\nnew file mode 100644\nindex 0000000000..4ff04f7ef2\n--- /dev/null\n+++ b/test_flush.py\n@@ -0,0 +1,13 @@\n+from django.core.management.base import OutputWrapper\n+import sys\n+import time\n+\n+# Create an OutputWrapper instance\n+wrapper = OutputWrapper(sys.stdout)\n+\n+# Write some output\n+wrapper.write(\"First line\")\n+time.sleep(2)  # Simulate work\n+wrapper.write(\"Second line\")\n+time.sleep(2)  # Simulate work\n+wrapper.write(\"Third line\")\ndiff --git a/test_migration.py b/test_migration.py\nnew file mode 100644\nindex 0000000000..3f336e634c\n--- /dev/null\n+++ b/test_migration.py\n@@ -0,0 +1,16 @@\n+import sys\n+import time\n+from django.core.management.base import OutputWrapper\n+\n+def simulate_migration():\n+    wrapper = OutputWrapper(sys.stdout)\n+    \n+    wrapper.write(\"Operations to perform:\")\n+    wrapper.write(\" Apply all migrations: myapp\")\n+    wrapper.write(\"Running migrations:\")\n+    wrapper.write(\" Applying myapp.0002_auto_20200817_1030...\", ending='')\n+    time.sleep(2)  # Simulate migration work\n+    wrapper.write(\" OK\")\n+\n+if __name__ == '__main__':\n+    simulate_migration()\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "LearnByInteract",
+  "source": "rq2_divergent",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

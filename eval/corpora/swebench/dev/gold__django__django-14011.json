@@ -1,0 +1,140 @@
+{
+ "id": "gold:django__django-14011",
+ "corpus": "swebench",
+ "seedId": "django__django-14011",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "e4430f22c8e3d29ce5d9d0263fba57121938d06d",
+  "headSha": "gold-django__django-14011",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 14011
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 14011
+    },
+    "title": "LiveServerTestCase's ThreadedWSGIServer doesn't close database connections after each thread",
+    "body": "Description\n\t\nIn Django 2.2.17, I'm seeing the reappearance of #22414 after it was fixed in 1.11. #22414 is the issue where the following error will occur at the conclusion of a test run when destroy_test_db() is called:\nOperationalError: database \"test_myapp\" is being accessed by other users\nThis error happens when not all of the database connections are closed. In my case today, I'm seeing this when running a single test that is a LiveServerTestCase. I see it in approximately half of my test runs, so it's not wholly deterministic (it's a race condition).\nThere weren't a whole lot of changes in the LiveServerTestCase-related code between 1.11 and 2.2, so I looked at them individually.\nIssue #20238 added threading support to LiveServerTestCase. One of the changes it made ​was changing LiveServerThread to use ThreadedWSGIServer instead of WSGIServer. LiveServerThread is used by LiveServerTestCase.\nWhen I tried modifying LiveServerThread to use the old WSGIServer, I could no longer reproduce the above error. My changes were as follows:\nclass NonThreadedLiveServerThread(LiveServerThread):\n\tdef _create_server(self):\n\t\treturn WSGIServer((self.host, self.port), QuietWSGIRequestHandler, allow_reuse_address=False)\nclass MyTest(LiveServerTestCase):\n\tserver_thread_class = NonThreadedLiveServerThread\nThe CPython docs ​describe ThreadingMixIn as defining an attribute \"which indicates whether or not the server should wait for thread termination.\"\nConsistent with what I described above, Aymeric said the following on ticket #20238, seeming to foreshadow issues like this one:\nmore threading will certainly create more race conditions on shutdown, especially when it comes to the database connections — it's taken months to eliminate most from LiveServerTestCase, and I'm sure there are still some left,",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:593e69b11a39888300017da22972133a13a7d4a1ba8ac2666bb79ecec98af156"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-14011",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/core/servers/basehttp.py b/django/core/servers/basehttp.py\n--- a/django/core/servers/basehttp.py\n+++ b/django/core/servers/basehttp.py\n@@ -16,6 +16,7 @@\n from django.core.exceptions import ImproperlyConfigured\n from django.core.handlers.wsgi import LimitedStream\n from django.core.wsgi import get_wsgi_application\n+from django.db import connections\n from django.utils.module_loading import import_string\n \n __all__ = ('WSGIServer', 'WSGIRequestHandler')\n@@ -81,6 +82,28 @@ class ThreadedWSGIServer(socketserver.ThreadingMixIn, WSGIServer):\n     \"\"\"A threaded version of the WSGIServer\"\"\"\n     daemon_threads = True\n \n+    def __init__(self, *args, connections_override=None, **kwargs):\n+        super().__init__(*args, **kwargs)\n+        self.connections_override = connections_override\n+\n+    # socketserver.ThreadingMixIn.process_request() passes this method as\n+    # the target to a new Thread object.\n+    def process_request_thread(self, request, client_address):\n+        if self.connections_override:\n+            # Override this thread's database connections with the ones\n+            # provided by the parent thread.\n+            for alias, conn in self.connections_override.items():\n+                connections[alias] = conn\n+        super().process_request_thread(request, client_address)\n+\n+    def _close_connections(self):\n+        # Used for mocking in tests.\n+        connections.close_all()\n+\n+    def close_request(self, request):\n+        self._close_connections()\n+        super().close_request(request)\n+\n \n class ServerHandler(simple_server.ServerHandler):\n     http_version = '1.1'\ndiff --git a/django/db/backends/sqlite3/features.py b/django/db/backends/sqlite3/features.py\n--- a/django/db/backends/sqlite3/features.py\n+++ b/django/db/backends/sqlite3/features.py\n@@ -83,6 +83,7 @@ def django_test_skips(self):\n                 \"the sqlite backend's close() method is a no-op when using an \"\n                 \"in-memory database\": {\n                     'servers.test_liveserverthread.LiveServerThreadTest.test_closes_connections',\n+                    'servers.tests.LiveServerTestCloseConnectionTest.test_closes_connections',\n                 },\n             })\n         return skips\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "gold",
+  "source": "gold",
+  "strength": "strong"
+ },
+ "annotatedBy": "study"
+}

@@ -1,0 +1,140 @@
+{
+ "id": "gold:sympy__sympy-19040",
+ "corpus": "swebench",
+ "seedId": "sympy__sympy-19040",
+ "input": {
+  "mode": "local",
+  "repo": "sympy/sympy",
+  "baseSha": "b9179e80d2daa1bb6cba1ffe35ca9e6612e115c9",
+  "headSha": "gold-sympy__sympy-19040",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "sympy",
+    "repo": "sympy",
+    "number": 19040
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "sympy",
+     "repo": "sympy",
+     "number": 19040
+    },
+    "title": "Factor with extension=True drops a factor of y-1",
+    "body": "I guess this related (or a duplicate of?) #5786\r\n\r\nThis is from stackoverflow:\r\nhttps://stackoverflow.com/questions/60682765/python-sympy-factoring-polynomial-over-complex-numbers\r\n```julia\r\nIn [9]: z = expand((x-1)*(y-1))                                                                                                                \r\n\r\nIn [10]: z                                                                                                                                     \r\nOut[10]: x⋅y - x - y + 1\r\n\r\nIn [11]: factor(z)                                                                                                                             \r\nOut[11]: (x - 1)⋅(y - 1)\r\n\r\nIn [12]: factor(z, extension=[I])                                                                                                              \r\nOut[12]: x - 1\r\n```\nFactor with extension=True drops a factor of y-1\n<!-- Your title above should be a short description of what\r\nwas changed. Do not include the issue number in the title. -->\r\nFactor with extension=True drops a factor of y-1\r\n#### References to other Issues or PRs\r\n<!-- If this pull request fixes an issue, write \"Fixes #NNNN\" in that exact\r\nformat, e.g. \"Fixes #1234\" (see\r\nhttps://tinyurl.com/auto-closing for more information). Also, please\r\nwrite a comment on that issue linking back to this pull request once it is\r\nopen. -->\r\nFixes #18895 \r\n\r\n#### Brief description of what is fixed or changed\r\n\r\n\r\n#### Other comments\r\n\r\n\r\n#### Release Notes\r\n\r\n<!-- Write the release notes for this release below. See\r\nhttps://github.com/sympy/sympy/wiki/Writing-Release-Notes for more information\r\non how to write release notes. The bot will check your release notes\r\nautomatically to see if they are formatted correctly. -->\r\n\r\n<!-- BEGIN RELEASE NOTES -->\r\nNO ENTRY\r\n<!-- END RELEASE NOTES -->",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:2dd537efafc948dd96153311159aed1f4920e2ccee809ef445d22f84fbc2a2a0"
+   }
+  ],
+  "pr": {
+   "title": "Fix sympy__sympy-19040",
+   "body": ""
+  },
+  "diffText": "diff --git a/sympy/polys/factortools.py b/sympy/polys/factortools.py\n--- a/sympy/polys/factortools.py\n+++ b/sympy/polys/factortools.py\n@@ -1147,7 +1147,7 @@ def dmp_ext_factor(f, u, K):\n         return lc, []\n \n     f, F = dmp_sqf_part(f, u, K), f\n-    s, g, r = dmp_sqf_norm(f, u, K)\n+    s, g, r = dmp_sqf_norm(F, u, K)\n \n     factors = dmp_factor_list_include(r, u, K.dom)\n \n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "gold",
+  "source": "gold",
+  "strength": "strong"
+ },
+ "annotatedBy": "study"
+}

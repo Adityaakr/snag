@@ -1,0 +1,140 @@
+{
+ "id": "gold:pytest-dev__pytest-7324",
+ "corpus": "swebench",
+ "seedId": "pytest-dev__pytest-7324",
+ "input": {
+  "mode": "local",
+  "repo": "pytest-dev/pytest",
+  "baseSha": "19ad5889353c7f5f2b65cc2acd346b7a9e95dfcd",
+  "headSha": "gold-pytest-dev__pytest-7324",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "pytest-dev",
+    "repo": "pytest",
+    "number": 7324
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "pytest-dev",
+     "repo": "pytest",
+     "number": 7324
+    },
+    "title": "Pytest crashes the interpreter on debug build for 3.8+",
+    "body": "Short reproducer\r\n```py\r\n>>> Expression.compile(\"False\")\r\npython: Python/compile.c:3559: compiler_nameop: Assertion `!_PyUnicode_EqualToASCIIString(name, \"None\") && !_PyUnicode_EqualToASCIIString(name, \"True\") && !_PyUnicode_EqualToASCIIString(name, \"False\")' failed.\r\n[1]    29440 abort (core dumped)  python\r\n```\r\n\r\nRelated issue for improvement of this behavior: [bpo-40870](https://bugs.python.org/issue40870)",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:700eb1a8894ec3132fc7f0390be28bc554be8d5b6e2cf3cc9e707c35348badc0"
+   }
+  ],
+  "pr": {
+   "title": "Fix pytest-dev__pytest-7324",
+   "body": ""
+  },
+  "diffText": "diff --git a/src/_pytest/mark/expression.py b/src/_pytest/mark/expression.py\n--- a/src/_pytest/mark/expression.py\n+++ b/src/_pytest/mark/expression.py\n@@ -127,6 +127,12 @@ def reject(self, expected: Sequence[TokenType]) -> \"NoReturn\":\n         )\n \n \n+# True, False and None are legal match expression identifiers,\n+# but illegal as Python identifiers. To fix this, this prefix\n+# is added to identifiers in the conversion to Python AST.\n+IDENT_PREFIX = \"$\"\n+\n+\n def expression(s: Scanner) -> ast.Expression:\n     if s.accept(TokenType.EOF):\n         ret = ast.NameConstant(False)  # type: ast.expr\n@@ -161,7 +167,7 @@ def not_expr(s: Scanner) -> ast.expr:\n         return ret\n     ident = s.accept(TokenType.IDENT)\n     if ident:\n-        return ast.Name(ident.value, ast.Load())\n+        return ast.Name(IDENT_PREFIX + ident.value, ast.Load())\n     s.reject((TokenType.NOT, TokenType.LPAREN, TokenType.IDENT))\n \n \n@@ -172,7 +178,7 @@ def __init__(self, matcher: Callable[[str], bool]) -> None:\n         self.matcher = matcher\n \n     def __getitem__(self, key: str) -> bool:\n-        return self.matcher(key)\n+        return self.matcher(key[len(IDENT_PREFIX) :])\n \n     def __iter__(self) -> Iterator[str]:\n         raise NotImplementedError()\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "gold",
+  "source": "gold",
+  "strength": "strong"
+ },
+ "annotatedBy": "study"
+}

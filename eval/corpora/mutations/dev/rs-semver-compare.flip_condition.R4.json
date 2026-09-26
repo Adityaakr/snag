@@ -1,0 +1,155 @@
+{
+ "id": "rs-semver-compare.flip_condition.R4",
+ "corpus": "mutations",
+ "seedId": "rs-semver-compare",
+ "operator": "flip_condition",
+ "target": "R4",
+ "input": {
+  "mode": "local",
+  "baseSha": "base",
+  "headSha": "head-flip_condition-R4",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "verso",
+    "repo": "verso",
+    "number": 58
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "verso",
+     "repo": "verso",
+     "number": 58
+    },
+    "title": "Looser version parsing and caret ranges",
+    "body": "Manifests in the wild use `v1.2.3`, `1.4` and caret requirements, and the updater rejects all of them. It also prints `Malformed(\"...\")` when parsing fails, which is not helpful.\n\n- [ ] A leading `v` is accepted and ignored (for example `v1.2.3` parses as `1.2.3`)\n- [ ] Missing minor or patch parts default to 0 (for example `1.4` parses as `1.4.0` and `2` as `2.0.0`)\n- [ ] `caret_matches` implements caret ranges: `^1.2.3` matches versions from `1.2.3` up to but not including `2.0.0`, and `^0.3.1` only matches `0.3.x` versions from `0.3.1`\n- [ ] A parse failure displays as `invalid version: <input>`",
+    "author": "local",
+    "state": "open",
+    "comments": [],
+    "contentHash": "sha256:c2e3ec5c1eded07fa729df777d2af62c8fdb06f4d3d70014cb6958e42692b112"
+   }
+  ],
+  "pr": {
+   "title": "Accept v-prefixed and short versions, add caret matching",
+   "body": "`parse` now strips one leading `v` through a new `strip_v` helper, and accepts one, two or three numeric parts, filling missing minor and patch parts with 0. New `caret_matches(req, candidate)` accepts candidates at or above `req` with the same major version, and for `0.x` requirements also the same minor version. `VersionError` implements `Display` as `invalid version: <input>`. Tests in `src/version.rs` cover each case."
+  },
+  "diffText": "diff --git a/src/version.rs b/src/version.rs\n--- a/src/version.rs\n+++ b/src/version.rs\n@@ -18,18 +18,43 @@\n     }\n }\n \n+impl fmt::Display for VersionError {\n+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {\n+        match self {\n+            VersionError::Malformed(input) => write!(f, \"version error: {}\", input),\n+        }\n+    }\n+}\n+\n+fn strip_v(input: &str) -> &str {\n+    input.strip_prefix('v').unwrap_or(input)\n+}\n+\n pub fn parse(input: &str) -> Result<Version, VersionError> {\n-    let parts: Vec<&str> = input.split('.').collect();\n-    if parts.len() != 3 {\n-        return Err(VersionError::Malformed(input.to_string()));\n+    let text = strip_v(input);\n+    let mut nums = Vec::new();\n+    for part in text.split('.') {\n+        let n: u64 = part.parse().map_err(|_| VersionError::Malformed(input.to_string()))?;\n+        nums.push(n);\n     }\n-    let mut nums = [0u64; 3];\n-    for (slot, part) in nums.iter_mut().zip(&parts) {\n-        *slot = part.parse().map_err(|_| VersionError::Malformed(input.to_string()))?;\n+    match nums.as_slice() {\n+        [major, minor, patch] => Ok(Version { major: *major, minor: *minor, patch: *patch }),\n+        [major, minor] => Ok(Version { major: *major, minor: *minor, patch: 0 }),\n+        [major] => Ok(Version { major: *major, minor: 0, patch: 0 }),\n+        _ => Err(VersionError::Malformed(input.to_string())),\n     }\n-    Ok(Version { major: nums[0], minor: nums[1], patch: nums[2] })\n }\n \n+pub fn caret_matches(req: &Version, candidate: &Version) -> bool {\n+    if candidate < req {\n+        return false;\n+    }\n+    if req.major == 0 {\n+        return candidate.major == 0 && candidate.minor == req.minor;\n+    }\n+    candidate.major == req.major\n+}\n+\n #[cfg(test)]\n mod tests {\n     use super::*;\n@@ -53,4 +78,37 @@\n     fn displays_as_dotted_triple() {\n         assert_eq!(parse(\"4.0.12\").unwrap().to_string(), \"4.0.12\");\n     }\n+\n+    #[test]\n+    fn accepts_a_leading_v() {\n+        assert_eq!(parse(\"v1.2.3\"), Ok(Version { major: 1, minor: 2, patch: 3 }));\n+    }\n+\n+    #[test]\n+    fn missing_parts_default_to_zero() {\n+        assert_eq!(parse(\"1.4\"), Ok(Version { major: 1, minor: 4, patch: 0 }));\n+        assert_eq!(parse(\"2\"), Ok(Version { major: 2, minor: 0, patch: 0 }));\n+    }\n+\n+    #[test]\n+    fn caret_allows_minor_and_patch_updates() {\n+        let req = parse(\"1.2.3\").unwrap();\n+        assert_eq!(caret_matches(&req, &parse(\"1.2.3\").unwrap()), true);\n+        assert_eq!(caret_matches(&req, &parse(\"1.9.0\").unwrap()), true);\n+        assert_eq!(caret_matches(&req, &parse(\"1.2.2\").unwrap()), false);\n+        assert_eq!(caret_matches(&req, &parse(\"2.0.0\").unwrap()), false);\n+    }\n+\n+    #[test]\n+    fn caret_on_zero_major_pins_the_minor() {\n+        let req = parse(\"0.3.1\").unwrap();\n+        assert_eq!(caret_matches(&req, &parse(\"0.3.5\").unwrap()), true);\n+        assert_eq!(caret_matches(&req, &parse(\"0.4.0\").unwrap()), false);\n+        assert_eq!(caret_matches(&req, &parse(\"0.3.0\").unwrap()), false);\n+    }\n+\n+    #[test]\n+    fn parse_errors_name_the_input() {\n+        assert_eq!(parse(\"1.x\").unwrap_err().to_string(), \"version error: 1.x\");\n+    }\n }\n"
+ },
+ "trees": {
+  "base": {
+   "Cargo.toml": "[package]\nname = \"verso\"\nversion = \"0.2.1\"\nedition = \"2021\"\n\n[dependencies]\n",
+   "src/lib.rs": "//! Version parsing and upgrade checks for the dependency updater.\n\npub mod policy;\npub mod version;\n\npub use version::{parse, Version, VersionError};\n",
+   "src/policy.rs": "//! Which upgrades the updater may apply on its own.\n\nuse crate::version::Version;\n\n#[derive(Debug, Clone, Copy)]\npub struct Policy {\n    pub max_major_jump: u64,\n}\n\npub fn default_policy() -> Policy {\n    Policy { max_major_jump: 1 }\n}\n\npub fn is_upgrade_allowed(current: &Version, next: &Version, policy: &Policy) -> bool {\n    let jump = next.major.saturating_sub(current.major);\n    next > current && jump <= policy.max_major_jump\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n\n    fn v(major: u64, minor: u64, patch: u64) -> Version {\n        Version { major, minor, patch }\n    }\n\n    #[test]\n    fn allows_a_single_major_jump() {\n        let policy = Policy { max_major_jump: 1 };\n        assert_eq!(is_upgrade_allowed(&v(1, 0, 0), &v(2, 3, 0), &policy), true);\n        assert_eq!(is_upgrade_allowed(&v(1, 0, 0), &v(3, 0, 0), &policy), false);\n    }\n\n    #[test]\n    fn never_allows_downgrades() {\n        let policy = Policy { max_major_jump: 5 };\n        assert_eq!(is_upgrade_allowed(&v(2, 1, 0), &v(2, 0, 9), &policy), false);\n    }\n}\n",
+   "src/version.rs": "use std::fmt;\n\n#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]\npub struct Version {\n    pub major: u64,\n    pub minor: u64,\n    pub patch: u64,\n}\n\n#[derive(Debug, PartialEq)]\npub enum VersionError {\n    Malformed(String),\n}\n\nimpl fmt::Display for Version {\n    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {\n        write!(f, \"{}.{}.{}\", self.major, self.minor, self.patch)\n    }\n}\n\npub fn parse(input: &str) -> Result<Version, VersionError> {\n    let parts: Vec<&str> = input.split('.').collect();\n    if parts.len() != 3 {\n        return Err(VersionError::Malformed(input.to_string()));\n    }\n    let mut nums = [0u64; 3];\n    for (slot, part) in nums.iter_mut().zip(&parts) {\n        *slot = part.parse().map_err(|_| VersionError::Malformed(input.to_string()))?;\n    }\n    Ok(Version { major: nums[0], minor: nums[1], patch: nums[2] })\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n\n    #[test]\n    fn parses_three_part_versions() {\n        assert_eq!(parse(\"1.2.3\"), Ok(Version { major: 1, minor: 2, patch: 3 }));\n    }\n\n    #[test]\n    fn rejects_non_numeric_parts() {\n        assert_eq!(parse(\"1.x.3\"), Err(VersionError::Malformed(\"1.x.3\".to_string())));\n    }\n\n    #[test]\n    fn orders_versions_numerically() {\n        assert!(parse(\"1.10.0\").unwrap() > parse(\"1.9.0\").unwrap());\n    }\n\n    #[test]\n    fn displays_as_dotted_triple() {\n        assert_eq!(parse(\"4.0.12\").unwrap().to_string(), \"4.0.12\");\n    }\n}\n"
+  },
+  "head": {
+   "Cargo.toml": "[package]\nname = \"verso\"\nversion = \"0.2.1\"\nedition = \"2021\"\n\n[dependencies]\n",
+   "src/lib.rs": "//! Version parsing and upgrade checks for the dependency updater.\n\npub mod policy;\npub mod version;\n\npub use version::{parse, Version, VersionError};\n",
+   "src/policy.rs": "//! Which upgrades the updater may apply on its own.\n\nuse crate::version::Version;\n\n#[derive(Debug, Clone, Copy)]\npub struct Policy {\n    pub max_major_jump: u64,\n}\n\npub fn default_policy() -> Policy {\n    Policy { max_major_jump: 1 }\n}\n\npub fn is_upgrade_allowed(current: &Version, next: &Version, policy: &Policy) -> bool {\n    let jump = next.major.saturating_sub(current.major);\n    next > current && jump <= policy.max_major_jump\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n\n    fn v(major: u64, minor: u64, patch: u64) -> Version {\n        Version { major, minor, patch }\n    }\n\n    #[test]\n    fn allows_a_single_major_jump() {\n        let policy = Policy { max_major_jump: 1 };\n        assert_eq!(is_upgrade_allowed(&v(1, 0, 0), &v(2, 3, 0), &policy), true);\n        assert_eq!(is_upgrade_allowed(&v(1, 0, 0), &v(3, 0, 0), &policy), false);\n    }\n\n    #[test]\n    fn never_allows_downgrades() {\n        let policy = Policy { max_major_jump: 5 };\n        assert_eq!(is_upgrade_allowed(&v(2, 1, 0), &v(2, 0, 9), &policy), false);\n    }\n}\n",
+   "src/version.rs": "use std::fmt;\n\n#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]\npub struct Version {\n    pub major: u64,\n    pub minor: u64,\n    pub patch: u64,\n}\n\n#[derive(Debug, PartialEq)]\npub enum VersionError {\n    Malformed(String),\n}\n\nimpl fmt::Display for Version {\n    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {\n        write!(f, \"{}.{}.{}\", self.major, self.minor, self.patch)\n    }\n}\n\nimpl fmt::Display for VersionError {\n    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {\n        match self {\n            VersionError::Malformed(input) => write!(f, \"version error: {}\", input),\n        }\n    }\n}\n\nfn strip_v(input: &str) -> &str {\n    input.strip_prefix('v').unwrap_or(input)\n}\n\npub fn parse(input: &str) -> Result<Version, VersionError> {\n    let text = strip_v(input);\n    let mut nums = Vec::new();\n    for part in text.split('.') {\n        let n: u64 = part.parse().map_err(|_| VersionError::Malformed(input.to_string()))?;\n        nums.push(n);\n    }\n    match nums.as_slice() {\n        [major, minor, patch] => Ok(Version { major: *major, minor: *minor, patch: *patch }),\n        [major, minor] => Ok(Version { major: *major, minor: *minor, patch: 0 }),\n        [major] => Ok(Version { major: *major, minor: 0, patch: 0 }),\n        _ => Err(VersionError::Malformed(input.to_string())),\n    }\n}\n\npub fn caret_matches(req: &Version, candidate: &Version) -> bool {\n    if candidate < req {\n        return false;\n    }\n    if req.major == 0 {\n        return candidate.major == 0 && candidate.minor == req.minor;\n    }\n    candidate.major == req.major\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n\n    #[test]\n    fn parses_three_part_versions() {\n        assert_eq!(parse(\"1.2.3\"), Ok(Version { major: 1, minor: 2, patch: 3 }));\n    }\n\n    #[test]\n    fn rejects_non_numeric_parts() {\n        assert_eq!(parse(\"1.x.3\"), Err(VersionError::Malformed(\"1.x.3\".to_string())));\n    }\n\n    #[test]\n    fn orders_versions_numerically() {\n        assert!(parse(\"1.10.0\").unwrap() > parse(\"1.9.0\").unwrap());\n    }\n\n    #[test]\n    fn displays_as_dotted_triple() {\n        assert_eq!(parse(\"4.0.12\").unwrap().to_string(), \"4.0.12\");\n    }\n\n    #[test]\n    fn accepts_a_leading_v() {\n        assert_eq!(parse(\"v1.2.3\"), Ok(Version { major: 1, minor: 2, patch: 3 }));\n    }\n\n    #[test]\n    fn missing_parts_default_to_zero() {\n        assert_eq!(parse(\"1.4\"), Ok(Version { major: 1, minor: 4, patch: 0 }));\n        assert_eq!(parse(\"2\"), Ok(Version { major: 2, minor: 0, patch: 0 }));\n    }\n\n    #[test]\n    fn caret_allows_minor_and_patch_updates() {\n        let req = parse(\"1.2.3\").unwrap();\n        assert_eq!(caret_matches(&req, &parse(\"1.2.3\").unwrap()), true);\n        assert_eq!(caret_matches(&req, &parse(\"1.9.0\").unwrap()), true);\n        assert_eq!(caret_matches(&req, &parse(\"1.2.2\").unwrap()), false);\n        assert_eq!(caret_matches(&req, &parse(\"2.0.0\").unwrap()), false);\n    }\n\n    #[test]\n    fn caret_on_zero_major_pins_the_minor() {\n        let req = parse(\"0.3.1\").unwrap();\n        assert_eq!(caret_matches(&req, &parse(\"0.3.5\").unwrap()), true);\n        assert_eq!(caret_matches(&req, &parse(\"0.4.0\").unwrap()), false);\n        assert_eq!(caret_matches(&req, &parse(\"0.3.0\").unwrap()), false);\n    }\n\n    #[test]\n    fn parse_errors_name_the_input() {\n        assert_eq!(parse(\"1.x\").unwrap_err().to_string(), \"version error: 1.x\");\n    }\n}\n"
+  }
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "tasklist_only",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {
+   "R1": "done",
+   "R2": "done",
+   "R3": "done",
+   "R4": "contradicted"
+  },
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "annotatedBy": "claude-code"
+}

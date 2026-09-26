@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:pylint-dev__pylint-7277",
+ "corpus": "swebench",
+ "seedId": "pylint-dev__pylint-7277",
+ "input": {
+  "mode": "local",
+  "repo": "pylint-dev/pylint",
+  "baseSha": "684a1d6aa0a6791e20078bc524f97c8906332390",
+  "headSha": "CodeStory-pylint-dev__pylint-7277",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "pylint-dev",
+    "repo": "pylint",
+    "number": 7277
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "pylint-dev",
+     "repo": "pylint",
+     "number": 7277
+    },
+    "title": "`pylint` removes first item from `sys.path` when running from `runpy`.",
+    "body": "### Bug description\n\nThis is the line where the first item from sys.path is removed.\r\nhttps://github.com/PyCQA/pylint/blob/ce7cccf96454fb6e286e4a8f38919733a0f28f44/pylint/__init__.py#L99\r\n\r\nI think there should be a check to ensure that the first item is `\"\"`, `\".\"` or `os.getcwd()` before removing.\n\n### Configuration\n\n_No response_\n\n### Command used\n\n```shell\nRun programmatically to repro this, using this code:\r\n\r\nimport sys\r\nimport runpy\r\n\r\nsys.path.insert(0, \"something\")\r\n\r\nrunpy.run_module('pylint', run_name=\"__main__\", alter_sys=True)\n```\n\n\n### Pylint output\n\n```shell\nWhen using pylint extension which bundles the libraries, the extension add them to sys.path depending on user settings. Pylint removes the first entry from sys path causing it to fail to load.\n```\n\n\n### Expected behavior\n\nCheck if  `\"\"`, `\".\"` or `os.getcwd()` before removing the first item from sys.path\n\n### Pylint version\n\n```shell\npylint 2.14.5\n```\n\n\n### OS / Environment\n\n_No response_\n\n### Additional dependencies\n\n_No response_",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:c3a4f0c60150374911d0359b95e79baca2b617fde25de18d6839e72650d78d23"
+   }
+  ],
+  "pr": {
+   "title": "Fix pylint-dev__pylint-7277",
+   "body": ""
+  },
+  "diffText": "diff --git a/pylint/__init__.py b/pylint/__init__.py\nindex 9f3dd74e6..0ae6676f4 100644\n--- a/pylint/__init__.py\n+++ b/pylint/__init__.py\n@@ -96,7 +96,10 @@ def modify_sys_path() -> None:\n       if pylint is installed in an editable configuration (as the last item).\n       https://github.com/PyCQA/pylint/issues/4161\n     \"\"\"\n-    sys.path.pop(0)\n+    # Only remove the first entry if it's one of the default current directory entries\n+    first_path = sys.path[0]\n+    if first_path in (\"\", \".\", os.getcwd()):\n+        sys.path.pop(0)\n     env_pythonpath = os.environ.get(\"PYTHONPATH\", \"\")\n     cwd = os.getcwd()\n     if env_pythonpath.startswith(\":\") and env_pythonpath not in (f\":{cwd}\", \":.\"):\ndiff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 000000000..d649e2b40\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,13 @@\n+import sys\n+import runpy\n+\n+print(\"Initial sys.path:\", sys.path)\n+sys.path.insert(0, \"something\")\n+print(\"After adding 'something':\", sys.path)\n+\n+try:\n+    runpy.run_module('pylint', run_name=\"__main__\", alter_sys=True)\n+except Exception as e:\n+    print(\"Error occurred:\", str(e))\n+\n+print(\"Final sys.path:\", sys.path)\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

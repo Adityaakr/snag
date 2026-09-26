@@ -1,9 +1,12 @@
 import { BRAND } from '@remit/core';
+import { calibrateCommand } from './commands/calibrate.js';
 import { demoCommand } from './commands/demo.js';
 import { doctorCommand } from './commands/doctor.js';
 import { evalCommand } from './commands/eval.js';
 import { extractCommand } from './commands/extract.js';
 import { initCommand } from './commands/init.js';
+import { mutateCommand } from './commands/mutate.js';
+import { reportCommand } from './commands/report.js';
 import { reviewCommand } from './commands/review.js';
 import { unitsCommand } from './commands/units.js';
 import { CliError, EXIT } from './errors.js';
@@ -64,6 +67,21 @@ Exit codes: 0 ok, 1 gate failure, 2 usage or config error, 3 provider or network
     run: (argv, io) => evalCommand(argv, io),
     summary: 'Run an evaluation corpus and write a report',
     help: `${s} eval <golden|mutations|swebench|shadow> [--split dev|test] [--gate] [--limit n] [--baseline single_pass|pr_agent] [--mode scripted|simulated|live]\n\nThe test split runs only with --gate. Reports go to eval/reports/<timestamp>/.`,
+  },
+  calibrate: {
+    run: (argv, io) => calibrateCommand(argv, io),
+    summary: 'Fit and store calibration from labeled dev data',
+    help: `${s} calibrate [--mode simulated|live] [--passes n] [--limit n] [--out <dir>]\n\nFits isotonic maps per question key (identity below 50 samples), tunes thresholds on dev with the cost weights in config \`eval\`, and writes eval/calibration/<jev-model>/<question-set>.json.`,
+  },
+  mutate: {
+    run: (argv, io) => mutateCommand(argv, io),
+    summary: 'Generate mutation items from a seed',
+    help: `${s} mutate --seed <path> | --all [--out <corpora-dir>]\n\nWrites the clean seed and every operator's item to the seed's split (70/30 by seed id).`,
+  },
+  report: {
+    run: (argv, io) => reportCommand(argv, io),
+    summary: 'Render an eval report',
+    help: `${s} report <eval-run>\n\nRe-renders report.md and report.html from the run's metrics.json and item dumps.`,
   },
   units: {
     run: unitsCommand,

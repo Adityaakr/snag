@@ -1,0 +1,140 @@
+{
+ "id": "gold:django__django-16145",
+ "corpus": "swebench",
+ "seedId": "django__django-16145",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "93d4c9ea1de24eb391cb2b3561b6703fd46374df",
+  "headSha": "gold-django__django-16145",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 16145
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 16145
+    },
+    "title": "`runserver 0`'s \"Starting development server at <address>\" doesn't work",
+    "body": "Description\n\t\nAccording to ​tutorial running \npython manage.py runserver 0:8000\nis the same as \npython manage.py runserver 0.0.0.0:8000\nbut it's output \n$ python manage.py runserver 0:8000\t\t\t\t\t\t\t\t\t Watching for file changes with StatReloader\t\t\t\t\t\t \n...\nStarting development server at http://0:8000/ \n...\nSo that you can't use link \"​http://0:8000/\" in your browser. Output should be \"Starting development server at ​http://0.0.0.0:8000/\" when providing \"0:8000\" in command line in order to stay consistent with docs.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:c1ae8406620859be52770b21316670ffe726715077d4ff5e4b856b8ab322be31"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-16145",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/core/management/commands/runserver.py b/django/core/management/commands/runserver.py\n--- a/django/core/management/commands/runserver.py\n+++ b/django/core/management/commands/runserver.py\n@@ -129,6 +129,13 @@ def inner_run(self, *args, **options):\n         shutdown_message = options.get(\"shutdown_message\", \"\")\n         quit_command = \"CTRL-BREAK\" if sys.platform == \"win32\" else \"CONTROL-C\"\n \n+        if self._raw_ipv6:\n+            addr = f\"[{self.addr}]\"\n+        elif self.addr == \"0\":\n+            addr = \"0.0.0.0\"\n+        else:\n+            addr = self.addr\n+\n         if not options[\"skip_checks\"]:\n             self.stdout.write(\"Performing system checks...\\n\\n\")\n             self.check(display_num_errors=True)\n@@ -147,7 +154,7 @@ def inner_run(self, *args, **options):\n                 \"version\": self.get_version(),\n                 \"settings\": settings.SETTINGS_MODULE,\n                 \"protocol\": self.protocol,\n-                \"addr\": \"[%s]\" % self.addr if self._raw_ipv6 else self.addr,\n+                \"addr\": addr,\n                 \"port\": self.port,\n                 \"quit_command\": quit_command,\n             }\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "gold",
+  "source": "gold",
+  "strength": "strong"
+ },
+ "annotatedBy": "study"
+}

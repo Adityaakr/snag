@@ -1,0 +1,140 @@
+{
+ "id": "LearnByInteract:django__django-15382",
+ "corpus": "swebench",
+ "seedId": "django__django-15382",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "770d3e6a4ce8e0a91a9e27156036c1985e74d4a3",
+  "headSha": "LearnByInteract-django__django-15382",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 15382
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 15382
+    },
+    "title": "filter on exists-subquery with empty queryset removes whole WHERE block",
+    "body": "Description\n\t \n\t\t(last modified by Tobias Bengfort)\n\t \n>>> qs = MyModel.objects.filter(~models.Exists(MyModel.objects.none()), name='test')\n>>> qs\n<QuerySet []>\n>>> print(qs.query)\nEmptyResultSet\nWith django-debug-toolbar I can still see the query, but there WHERE block is missing completely.\nThis seems to be very similar to #33018.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:10cfa38d528ba4e28edc3769a2a36c9127e2d6fc2c5736615efdac4e2573ecd8"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-15382",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/db/models/expressions.py b/django/db/models/expressions.py\nindex 81f8f79c71..48b6a5a24f 100644\n--- a/django/db/models/expressions.py\n+++ b/django/db/models/expressions.py\n@@ -1210,17 +1210,28 @@ class Exists(Subquery):\n         return clone\n \n     def as_sql(self, compiler, connection, template=None, **extra_context):\n-        query = self.query.exists(using=connection.alias)\n-        sql, params = super().as_sql(\n-            compiler,\n-            connection,\n-            template=template,\n-            query=query,\n-            **extra_context,\n-        )\n-        if self.negated:\n-            sql = 'NOT {}'.format(sql)\n-        return sql, params\n+        try:\n+            query = self.query.exists(using=connection.alias)\n+            sql, params = super().as_sql(\n+                compiler,\n+                connection,\n+                template=template,\n+                query=query,\n+                **extra_context,\n+            )\n+            if self.negated:\n+                sql = 'NOT {}'.format(sql)\n+            return sql, params\n+        except EmptyResultSet:\n+            # For empty querysets:\n+            # - Exists() should evaluate to FALSE\n+            # - ~Exists() should evaluate to TRUE\n+            if self.negated:\n+                sql = '(1=1)'  # TRUE\n+            else:\n+                sql = '(1=0)'  # FALSE\n+            return sql, []\n+\n \n     def select_format(self, compiler, sql, params):\n         # Wrap EXISTS() with a CASE WHEN expression if a database backend\n@@ -1490,3 +1501,4 @@ class ValueRange(WindowFrame):\n \n     def window_frame_start_end(self, connection, start, end):\n         return connection.ops.window_frame_range_start_end(start, end)\n+\ndiff --git a/reproduce.py b/reproduce.py\nnew file mode 100644\nindex 0000000000..01ae69285b\n--- /dev/null\n+++ b/reproduce.py\n@@ -0,0 +1,33 @@\n+from django.db import models\n+from django.conf import settings\n+\n+# Configure Django settings\n+settings.configure(\n+    DATABASES={\n+        'default': {\n+            'ENGINE': 'django.db.backends.sqlite3',\n+            'NAME': ':memory:',\n+        }\n+    },\n+    INSTALLED_APPS=['django.contrib.contenttypes'],\n+)\n+\n+import django\n+django.setup()\n+\n+# Create test model\n+class MyModel(models.Model):\n+    name = models.CharField(max_length=100)\n+    \n+    class Meta:\n+        app_label = 'myapp'\n+\n+# Set up database\n+from django.db import connection\n+with connection.schema_editor() as schema_editor:\n+    schema_editor.create_model(MyModel)\n+\n+# Reproduce the issue\n+qs = MyModel.objects.filter(~models.Exists(MyModel.objects.none()), name='test')\n+print(\"QuerySet:\", qs)\n+print(\"SQL Query:\", qs.query)\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "LearnByInteract",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

@@ -3,6 +3,7 @@
  * (BUILD_PROMPT 10.1). Exit codes: 0 ok, 1 gate failure, 2 usage or config, 3 provider or network, 4 budget
  * exceeded (partial result written).
  */
+import { CALIBRATION_ROOT, loadCalibration } from '@remit/eval';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { isAbsolute, join } from 'node:path';
 import { parseArgs } from 'node:util';
@@ -198,8 +199,14 @@ export async function reviewCommand(argv: string[], io: Io, providers?: CliProvi
       { mode: prepared.input.mode, issues: prepared.input.issueRefs.length, cacheMode: p.cacheMode },
       'review started',
     );
+    // A calibration fitted for this Jev model and question set replaces the raw probabilities and thresholds (11.5).
+    const calibration = loadCalibration(
+      io.env.REMIT_CALIBRATION_DIR ?? CALIBRATION_ROOT,
+      p.jev?.model ?? config.jev.model,
+    );
     const result = await runReview(prepared.input, {
       ...prepared.deps,
+      ...(calibration ? { calibration } : {}),
       ...(p.jev ? { jev: p.jev } : {}),
       ...(p.llm ? { llm: p.llm } : {}),
       costs: p.costs,

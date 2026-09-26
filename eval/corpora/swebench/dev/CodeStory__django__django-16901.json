@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:django__django-16901",
+ "corpus": "swebench",
+ "seedId": "django__django-16901",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "ee36e101e8f8c0acde4bb148b738ab7034e902a0",
+  "headSha": "CodeStory-django__django-16901",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 16901
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 16901
+    },
+    "title": "On databases lacking XOR, Q(…) ^ Q(…) ^ Q(…) wrongly interpreted as exactly-one rather than parity",
+    "body": "Description\n\t\nOn databases that don’t natively support XOR, such as PostgreSQL, Django generates incorrect fallback SQL for Q(…) ^ Q(…) ^ Q(…) with more than 2 arguments. The ​correct interpretation, and the interpretation of databases natively supporting XOR (e.g. ​MySQL), is that a ^ b ^ c is true when an odd number of the arguments are true. But Django’s fallback interpretation is that a ^ b ^ c is true when exactly one argument is true:\n>>> from django.db.models import Q\n>>> from my_app.models import Client\n>>> Client.objects.filter(Q(id=37)).count()\n1\n>>> Client.objects.filter(Q(id=37) ^ Q(id=37)).count()\n0\n>>> Client.objects.filter(Q(id=37) ^ Q(id=37) ^ Q(id=37)).count()\n0\n>>> Client.objects.filter(Q(id=37) ^ Q(id=37) ^ Q(id=37) ^ Q(id=37)).count()\n0\n>>> Client.objects.filter(Q(id=37) ^ Q(id=37) ^ Q(id=37) ^ Q(id=37) ^ Q(id=37)).count()\n0\n(Expected: 1, 0, 1, 0, 1.)\nThis was introduced in #29865.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:4ccca6e851ebbabd10ebff1d4f01079525614cad09fc1ca863c0fd010af9b48b"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-16901",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/db/models/sql/where.py b/django/db/models/sql/where.py\nindex aaab1730b7..375b20c032 100644\n--- a/django/db/models/sql/where.py\n+++ b/django/db/models/sql/where.py\n@@ -129,13 +129,14 @@ class WhereNode(tree.Node):\n             # Convert if the database doesn't support XOR:\n             #   a XOR b XOR c XOR ...\n             # to:\n-            #   (a OR b OR c OR ...) AND (a + b + c + ...) == 1\n+            #   (a OR b OR c OR ...) AND (a + b + c + ...) % 2 == 1\n             lhs = self.__class__(self.children, OR)\n             rhs_sum = reduce(\n                 operator.add,\n                 (Case(When(c, then=1), default=0) for c in self.children),\n             )\n-            rhs = Exact(1, rhs_sum)\n+            # Use modulo 2 to check for odd number of true conditions\n+            rhs = Exact(1, rhs_sum % 2)\n             return self.__class__([lhs, rhs], AND, self.negated).as_sql(\n                 compiler, connection\n             )\ndiff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..574d17d32e\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,65 @@\n+from django.db import models\n+from django.db.models import Q\n+from django.test import TestCase\n+\n+# Model will be defined after Django setup\n+Client = None\n+\n+class XORTestCase(TestCase):\n+    @classmethod\n+    def setUpClass(cls):\n+        super().setUpClass()\n+        Client.objects.create(id=37, name=\"Test Client\")\n+\n+    def test_xor_behavior(self):\n+        print(\"\\nTesting XOR behavior:\")\n+        print(f\"Q(id=37) count: {Client.objects.filter(Q(id=37)).count()}\")  # Should be 1\n+        print(f\"Q(id=37) ^ Q(id=37) count: {Client.objects.filter(Q(id=37) ^ Q(id=37)).count()}\")  # Should be 0\n+        print(f\"Q(id=37) ^ Q(id=37) ^ Q(id=37) count: {Client.objects.filter(Q(id=37) ^ Q(id=37) ^ Q(id=37)).count()}\")  # Should be 1\n+        print(f\"Q(id=37) ^ Q(id=37) ^ Q(id=37) ^ Q(id=37) count: {Client.objects.filter(Q(id=37) ^ Q(id=37) ^ Q(id=37) ^ Q(id=37)).count()}\")  # Should be 0\n+        print(f\"Q(id=37) ^ Q(id=37) ^ Q(id=37) ^ Q(id=37) ^ Q(id=37) count: {Client.objects.filter(Q(id=37) ^ Q(id=37) ^ Q(id=37) ^ Q(id=37) ^ Q(id=37)).count()}\")  # Should be 1\n+\n+if __name__ == '__main__':\n+    import django\n+    from django.conf import settings\n+    if not settings.configured:\n+        settings.configure(\n+            DEBUG=True,\n+            DATABASES={\n+                'default': {\n+                    'ENGINE': 'django.db.backends.sqlite3',\n+                    'NAME': ':memory:',\n+                }\n+            },\n+            INSTALLED_APPS=[\n+                'django.contrib.contenttypes',\n+                'django.contrib.auth',\n+                '__main__',\n+            ],\n+            USE_TZ=False,\n+        )\n+    django.setup()\n+    \n+    # Define the model after Django setup\n+    class Client(models.Model):\n+        name = models.CharField(max_length=100)\n+    \n+    # Create the test database\n+    from django.core.management import call_command\n+    import django.db\n+    django.db.connection.creation.create_test_db(verbosity=0)\n+    \n+    # Create the tables\n+    with django.db.connection.schema_editor() as schema_editor:\n+        schema_editor.create_model(Client)\n+    \n+    # Create test data\n+    Client.objects.create(id=37, name=\"Test Client\")\n+    \n+    # Run the tests\n+    print(\"\\nTesting XOR behavior:\")\n+    print(f\"Q(id=37) count: {Client.objects.filter(Q(id=37)).count()}\")  # Should be 1\n+    print(f\"Q(id=37) ^ Q(id=37) count: {Client.objects.filter(Q(id=37) ^ Q(id=37)).count()}\")  # Should be 0\n+    print(f\"Q(id=37) ^ Q(id=37) ^ Q(id=37) count: {Client.objects.filter(Q(id=37) ^ Q(id=37) ^ Q(id=37)).count()}\")  # Should be 1\n+    print(f\"Q(id=37) ^ Q(id=37) ^ Q(id=37) ^ Q(id=37) count: {Client.objects.filter(Q(id=37) ^ Q(id=37) ^ Q(id=37) ^ Q(id=37)).count()}\")  # Should be 0\n+    print(f\"Q(id=37) ^ Q(id=37) ^ Q(id=37) ^ Q(id=37) ^ Q(id=37) count: {Client.objects.filter(Q(id=37) ^ Q(id=37) ^ Q(id=37) ^ Q(id=37) ^ Q(id=37)).count()}\")  # Should be 1\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq2_divergent",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

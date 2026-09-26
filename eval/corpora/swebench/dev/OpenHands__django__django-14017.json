@@ -1,0 +1,142 @@
+{
+ "id": "OpenHands:django__django-14017",
+ "corpus": "swebench",
+ "seedId": "django__django-14017",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "466920f6d726eee90d5566e0a9948e92b33a122e",
+  "headSha": "OpenHands-django__django-14017",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 14017
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 14017
+    },
+    "title": "Q(...) & Exists(...) raises a TypeError",
+    "body": "Description\n\t\nExists(...) & Q(...) works, but Q(...) & Exists(...) raise a TypeError\nHere's a minimal example:\nIn [3]: Exists(Product.objects.all()) & Q()\nOut[3]: <Q: (AND: <django.db.models.expressions.Exists object at 0x7fc18dd0ed90>, (AND: ))>\nIn [4]: Q() & Exists(Product.objects.all())\n---------------------------------------------------------------------------\nTypeError\t\t\t\t\t\t\t\t Traceback (most recent call last)\n<ipython-input-4-21d3dea0fcb9> in <module>\n----> 1 Q() & Exists(Product.objects.all())\n~/Code/venv/ecom/lib/python3.8/site-packages/django/db/models/query_utils.py in __and__(self, other)\n\t 90 \n\t 91\t def __and__(self, other):\n---> 92\t\t return self._combine(other, self.AND)\n\t 93 \n\t 94\t def __invert__(self):\n~/Code/venv/ecom/lib/python3.8/site-packages/django/db/models/query_utils.py in _combine(self, other, conn)\n\t 71\t def _combine(self, other, conn):\n\t 72\t\t if not isinstance(other, Q):\n---> 73\t\t\t raise TypeError(other)\n\t 74 \n\t 75\t\t # If the other Q() is empty, ignore it and just use `self`.\nTypeError: <django.db.models.expressions.Exists object at 0x7fc18dd21400>\nThe & (and |) operators should be commutative on Q-Exists pairs, but it's not\nI think there's a missing definition of __rand__ somewhere.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:919bd8c9fd262d4893ba642fdd2567b15e90bdbc3356568f626c94d9bbe6c9bd"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-14017",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/db/models/expressions.py b/django/db/models/expressions.py\nindex ffc3a7fda5..e52dd1ffc3 100644\n--- a/django/db/models/expressions.py\n+++ b/django/db/models/expressions.py\n@@ -1181,6 +1181,50 @@ class Exists(Subquery):\n             sql = 'CASE WHEN {} THEN 1 ELSE 0 END'.format(sql)\n         return sql, params\n \n+    def __and__(self, other):\n+        \"\"\"Support Exists() & Q().\"\"\"\n+        from django.db.models import Q\n+        if isinstance(other, Q):\n+            # Create a new Q object with both operands\n+            q = Q()\n+            q.connector = q.AND\n+            q.children = [self, other]\n+            return q\n+        return super().__and__(other)\n+\n+    def __rand__(self, other):\n+        \"\"\"Support Q() & Exists().\"\"\"\n+        from django.db.models import Q\n+        if isinstance(other, Q):\n+            # Create a new Q object with both operands\n+            q = Q()\n+            q.connector = q.AND\n+            q.children = [other, self]\n+            return q\n+        return NotImplemented\n+\n+    def __or__(self, other):\n+        \"\"\"Support Exists() | Q().\"\"\"\n+        from django.db.models import Q\n+        if isinstance(other, Q):\n+            # Create a new Q object with both operands\n+            q = Q()\n+            q.connector = q.OR\n+            q.children = [self, other]\n+            return q\n+        return super().__or__(other)\n+\n+    def __ror__(self, other):\n+        \"\"\"Support Q() | Exists().\"\"\"\n+        from django.db.models import Q\n+        if isinstance(other, Q):\n+            # Create a new Q object with both operands\n+            q = Q()\n+            q.connector = q.OR\n+            q.children = [other, self]\n+            return q\n+        return NotImplemented\n+\n \n class OrderBy(BaseExpression):\n     template = '%(expression)s %(ordering)s'\ndiff --git a/django/db/models/query_utils.py b/django/db/models/query_utils.py\nindex c957ffa564..2d3ec30e7a 100644\n--- a/django/db/models/query_utils.py\n+++ b/django/db/models/query_utils.py\n@@ -11,6 +11,7 @@ from collections import namedtuple\n \n from django.core.exceptions import FieldError\n from django.db.models.constants import LOOKUP_SEP\n+from django.db.models import fields\n from django.utils import tree\n \n # PathInfo is used when converting lookups (fk__somecol). The contents\n@@ -41,7 +42,14 @@ class Q(tree.Node):\n \n     def _combine(self, other, conn):\n         if not isinstance(other, Q):\n-            raise TypeError(other)\n+            # Handle Exists objects by creating a new Q object with them\n+            if hasattr(other, 'output_field') and isinstance(other.output_field, fields.BooleanField):\n+                q = Q()\n+                q.connector = conn\n+                q.children = [other]\n+                other = q\n+            else:\n+                raise TypeError(other)\n \n         # If the other Q() is empty, ignore it and just use `self`.\n         if not other:\n@@ -85,9 +93,12 @@ class Q(tree.Node):\n         if path.startswith('django.db.models.query_utils'):\n             path = path.replace('django.db.models.query_utils', 'django.db.models')\n         args, kwargs = (), {}\n-        if len(self.children) == 1 and not isinstance(self.children[0], Q):\n+        if len(self.children) == 1:\n             child = self.children[0]\n-            kwargs = {child[0]: child[1]}\n+            if isinstance(child, tuple):\n+                kwargs = {child[0]: child[1]}\n+            else:\n+                args = (child,)\n         else:\n             args = tuple(self.children)\n             if self.connector != self.default:\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "OpenHands",
+  "source": "rq34_manual",
+  "strength": "strong",
+  "diffPattern": "divergent",
+  "correctness": "incorrect_regression"
+ },
+ "annotatedBy": "study"
+}

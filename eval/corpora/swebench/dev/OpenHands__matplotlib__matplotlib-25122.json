@@ -1,0 +1,140 @@
+{
+ "id": "OpenHands:matplotlib__matplotlib-25122",
+ "corpus": "swebench",
+ "seedId": "matplotlib__matplotlib-25122",
+ "input": {
+  "mode": "local",
+  "repo": "matplotlib/matplotlib",
+  "baseSha": "5ec2bd279729ff534719b8bf238dbbca907b93c5",
+  "headSha": "OpenHands-matplotlib__matplotlib-25122",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "matplotlib",
+    "repo": "matplotlib",
+    "number": 25122
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "matplotlib",
+     "repo": "matplotlib",
+     "number": 25122
+    },
+    "title": "[Bug]: Windows correction is not correct in `mlab._spectral_helper`",
+    "body": "### Bug summary\r\n\r\nWindows correction is not correct in `mlab._spectral_helper`:\r\nhttps://github.com/matplotlib/matplotlib/blob/3418bada1c1f44da1f73916c5603e3ae79fe58c1/lib/matplotlib/mlab.py#L423-L430\r\n\r\nThe `np.abs` is not needed, and give wrong result for window with negative value, such as `flattop`.\r\nFor reference, the implementation of scipy can be found here :\r\nhttps://github.com/scipy/scipy/blob/d9f75db82fdffef06187c9d8d2f0f5b36c7a791b/scipy/signal/_spectral_py.py#L1854-L1859\r\n\r\n### Code for reproduction\r\n\r\n```python\r\nimport numpy as np\r\nfrom scipy import signal\r\nwindow = signal.windows.flattop(512)\r\nprint(np.abs(window).sum()**2-window.sum()**2)\r\n```\r\n\r\n\r\n### Actual outcome\r\n\r\n4372.942556173262\r\n\r\n### Expected outcome\r\n\r\n0\r\n\r\n### Additional information\r\n\r\n_No response_\r\n\r\n### Operating system\r\n\r\n_No response_\r\n\r\n### Matplotlib Version\r\n\r\nlatest\r\n\r\n### Matplotlib Backend\r\n\r\n_No response_\r\n\r\n### Python version\r\n\r\n_No response_\r\n\r\n### Jupyter version\r\n\r\n_No response_\r\n\r\n### Installation\r\n\r\nNone",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:4de01f14cad381c9cbf981dcedbb30bdeebe89ef83df49fa267e72fc951f4a54"
+   }
+  ],
+  "pr": {
+   "title": "Fix matplotlib__matplotlib-25122",
+   "body": ""
+  },
+  "diffText": "diff --git a/lib/matplotlib/mlab.py b/lib/matplotlib/mlab.py\nindex 3552904c3d..b90c7ada60 100644\n--- a/lib/matplotlib/mlab.py\n+++ b/lib/matplotlib/mlab.py\n@@ -427,7 +427,7 @@ def _spectral_helper(x, y=None, NFFT=None, Fs=None, detrend_func=None,\n             result /= (np.abs(window)**2).sum()\n         else:\n             # In this case, preserve power in the segment, not amplitude\n-            result /= np.abs(window).sum()**2\n+            result /= window.sum()**2\n \n     t = np.arange(NFFT/2, len(x) - NFFT/2 + 1, NFFT - noverlap)/Fs\n \ndiff --git a/reproduce_bug.py b/reproduce_bug.py\nnew file mode 100644\nindex 0000000000..3848945696\n--- /dev/null\n+++ b/reproduce_bug.py\n@@ -0,0 +1,4 @@\n+import numpy as np\n+from scipy import signal\n+window = signal.windows.flattop(512)\n+print(np.abs(window).sum()**2-window.sum()**2)\n\\ No newline at end of file\ndiff --git a/test_fix.py b/test_fix.py\nnew file mode 100644\nindex 0000000000..ac443d8676\n--- /dev/null\n+++ b/test_fix.py\n@@ -0,0 +1,19 @@\n+import numpy as np\n+from scipy import signal\n+from matplotlib import mlab\n+\n+# Create a flattop window\n+window = signal.windows.flattop(512)\n+\n+# Test the original issue\n+print(\"Original issue (should be 0):\", np.abs(window).sum()**2-window.sum()**2)\n+\n+# Test with matplotlib's _spectral_helper\n+# Create some sample data\n+t = np.linspace(0, 10, 512)\n+x = np.sin(2*np.pi*t)\n+\n+# Call _spectral_helper with flattop window\n+result, freqs, t = mlab._spectral_helper(x, NFFT=512, window=window, mode='psd', scale_by_freq=False)\n+\n+print(\"\\nSpectral helper test completed successfully\")\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "OpenHands",
+  "source": "rq2_divergent",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

@@ -1,0 +1,155 @@
+{
+ "id": "rs-lru-cache.drop_requirement.R3",
+ "corpus": "mutations",
+ "seedId": "rs-lru-cache",
+ "operator": "drop_requirement",
+ "target": "R3",
+ "input": {
+  "mode": "local",
+  "baseSha": "base",
+  "headSha": "head-drop_requirement-R3",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "tinycache",
+    "repo": "tinycache",
+    "number": 12
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "tinycache",
+     "repo": "tinycache",
+     "number": 12
+    },
+    "title": "Make the cache least-recently-used",
+    "body": "Once the cache fills up it silently ignores every new key, so hot entries that arrive late never get cached. We want real LRU behavior and some numbers to tune it with.\n\n- [ ] When the cache is full, inserting a new key evicts the least recently used entry\n- [ ] Reading an entry with `get` makes it the most recently used (for example with capacity 2: insert `a`, insert `b`, get `a`, insert `c` evicts `b`)\n- [ ] `stats()` reports the number of hits, misses and evictions\n- [ ] `Cache::new` clamps capacities above 10000 down to 10000",
+    "author": "local",
+    "state": "open",
+    "comments": [],
+    "contentHash": "sha256:cd33dd58819fb6cc8f241c37b11b855427a2f7fcb558db95e01ed4d1b03b68e3"
+   }
+  ],
+  "pr": {
+   "title": "LRU eviction, cache stats and a capacity ceiling",
+   "body": "`insert` now evicts the front entry of the vector when the cache is full, and `get` moves the entry it reads to the back, so the front is always the least recently used entry. A new `Stats` struct counts hits, misses and evictions and is returned by `Cache::stats()`. `Cache::new` clamps the requested capacity to `MAX_CAPACITY` (10000). Unit tests cover eviction order, recency on `get`, the counters and the clamp."
+  },
+  "diffText": "diff --git a/src/cache.rs b/src/cache.rs\n--- a/src/cache.rs\n+++ b/src/cache.rs\n@@ -1,5 +1,11 @@\n use crate::config::DEFAULT_CAPACITY;\n \n+const MAX_CAPACITY: usize = 10_000;\n+\n+fn clamp_capacity(requested: usize) -> usize {\n+    requested.min(MAX_CAPACITY)\n+}\n+\n /// A small bounded cache backed by a vector of entries.\n pub struct Cache<V> {\n     capacity: usize,\n@@ -8,7 +14,7 @@\n \n impl<V: Clone> Cache<V> {\n     pub fn new(capacity: usize) -> Self {\n-        Cache { capacity, entries: Vec::new() }\n+        Cache { capacity: clamp_capacity(capacity), entries: Vec::new() }\n     }\n \n     pub fn with_default_capacity() -> Self {\n@@ -36,8 +42,16 @@\n     }\n \n     pub fn get(&mut self, key: &str) -> Option<V> {\n-        let index = self.entries.iter().position(|(k, _)| k == key)?;\n-        Some(self.entries[index].1.clone())\n+        let index = match self.entries.iter().position(|(k, _)| k == key) {\n+            Some(index) => index,\n+            None => {\n+                return None;\n+            }\n+        };\n+        let entry = self.entries.remove(index);\n+        let value = entry.1.clone();\n+        self.entries.push(entry);\n+        Some(value)\n     }\n \n     pub fn insert(&mut self, key: &str, value: V) {\n@@ -45,6 +59,9 @@\n             self.entries[index].1 = value;\n             return;\n         }\n+        if self.entries.len() >= self.capacity && !self.entries.is_empty() {\n+            self.entries.remove(0);\n+        }\n         if self.entries.len() < self.capacity {\n             self.entries.push((key.to_string(), value));\n         }\n@@ -77,4 +94,32 @@\n         let mut cache: Cache<u8> = Cache::new(1);\n         assert_eq!(cache.get(\"nope\"), None);\n     }\n+\n+    #[test]\n+    fn evicts_the_least_recently_used_entry_when_full() {\n+        let mut cache = Cache::new(2);\n+        cache.insert(\"a\", 1);\n+        cache.insert(\"b\", 2);\n+        cache.insert(\"c\", 3);\n+        assert_eq!(cache.contains(\"a\"), false);\n+        assert_eq!(cache.len(), 2);\n+    }\n+\n+    #[test]\n+    fn get_marks_an_entry_as_recently_used() {\n+        let mut cache = Cache::new(2);\n+        cache.insert(\"a\", 1);\n+        cache.insert(\"b\", 2);\n+        assert_eq!(cache.get(\"a\"), Some(1));\n+        cache.insert(\"c\", 3);\n+        assert_eq!(cache.keys(), vec![\"a\", \"c\"]);\n+    }\n+\n+    #[test]\n+    fn clamps_capacity_to_the_maximum() {\n+        let big: Cache<u8> = Cache::new(50_000);\n+        assert_eq!(big.capacity(), 10_000);\n+        let small: Cache<u8> = Cache::new(64);\n+        assert_eq!(small.capacity(), 64);\n+    }\n }\n"
+ },
+ "trees": {
+  "base": {
+   "Cargo.toml": "[package]\nname = \"tinycache\"\nversion = \"0.1.4\"\nedition = \"2021\"\n\n[dependencies]\n",
+   "src/cache.rs": "use crate::config::DEFAULT_CAPACITY;\n\n/// A small bounded cache backed by a vector of entries.\npub struct Cache<V> {\n    capacity: usize,\n    entries: Vec<(String, V)>,\n}\n\nimpl<V: Clone> Cache<V> {\n    pub fn new(capacity: usize) -> Self {\n        Cache { capacity, entries: Vec::new() }\n    }\n\n    pub fn with_default_capacity() -> Self {\n        Cache::new(DEFAULT_CAPACITY)\n    }\n\n    pub fn capacity(&self) -> usize {\n        self.capacity\n    }\n\n    pub fn len(&self) -> usize {\n        self.entries.len()\n    }\n\n    pub fn contains(&self, key: &str) -> bool {\n        self.entries.iter().any(|(k, _)| k == key)\n    }\n\n    pub fn keys(&self) -> Vec<&str> {\n        let mut out = Vec::with_capacity(self.entries.len());\n        for (key, _) in &self.entries {\n            out.push(key.as_str());\n        }\n        out\n    }\n\n    pub fn get(&mut self, key: &str) -> Option<V> {\n        let index = self.entries.iter().position(|(k, _)| k == key)?;\n        Some(self.entries[index].1.clone())\n    }\n\n    pub fn insert(&mut self, key: &str, value: V) {\n        if let Some(index) = self.entries.iter().position(|(k, _)| k == key) {\n            self.entries[index].1 = value;\n            return;\n        }\n        if self.entries.len() < self.capacity {\n            self.entries.push((key.to_string(), value));\n        }\n    }\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n\n    #[test]\n    fn replaces_the_value_of_an_existing_key() {\n        let mut cache = Cache::new(2);\n        cache.insert(\"a\", 1);\n        cache.insert(\"a\", 5);\n        assert_eq!(cache.get(\"a\"), Some(5));\n        assert_eq!(cache.len(), 1);\n    }\n\n    #[test]\n    fn lists_keys_in_order() {\n        let mut cache = Cache::new(3);\n        cache.insert(\"x\", 1);\n        cache.insert(\"y\", 2);\n        assert_eq!(cache.keys(), vec![\"x\", \"y\"]);\n    }\n\n    #[test]\n    fn misses_return_none() {\n        let mut cache: Cache<u8> = Cache::new(1);\n        assert_eq!(cache.get(\"nope\"), None);\n    }\n}\n",
+   "src/config.rs": "//! Defaults for caches built without an explicit capacity.\n\n/// Capacity used by `Cache::with_default_capacity`.\npub const DEFAULT_CAPACITY: usize = 128;\n",
+   "src/lib.rs": "//! A small in-memory cache for lookup results.\n\npub mod cache;\npub mod config;\n\npub use cache::Cache;\n"
+  },
+  "head": {
+   "Cargo.toml": "[package]\nname = \"tinycache\"\nversion = \"0.1.4\"\nedition = \"2021\"\n\n[dependencies]\n",
+   "src/cache.rs": "use crate::config::DEFAULT_CAPACITY;\n\nconst MAX_CAPACITY: usize = 10_000;\n\nfn clamp_capacity(requested: usize) -> usize {\n    requested.min(MAX_CAPACITY)\n}\n\n/// A small bounded cache backed by a vector of entries.\npub struct Cache<V> {\n    capacity: usize,\n    entries: Vec<(String, V)>,\n}\n\nimpl<V: Clone> Cache<V> {\n    pub fn new(capacity: usize) -> Self {\n        Cache { capacity: clamp_capacity(capacity), entries: Vec::new() }\n    }\n\n    pub fn with_default_capacity() -> Self {\n        Cache::new(DEFAULT_CAPACITY)\n    }\n\n    pub fn capacity(&self) -> usize {\n        self.capacity\n    }\n\n    pub fn len(&self) -> usize {\n        self.entries.len()\n    }\n\n    pub fn contains(&self, key: &str) -> bool {\n        self.entries.iter().any(|(k, _)| k == key)\n    }\n\n    pub fn keys(&self) -> Vec<&str> {\n        let mut out = Vec::with_capacity(self.entries.len());\n        for (key, _) in &self.entries {\n            out.push(key.as_str());\n        }\n        out\n    }\n\n    pub fn get(&mut self, key: &str) -> Option<V> {\n        let index = match self.entries.iter().position(|(k, _)| k == key) {\n            Some(index) => index,\n            None => {\n                return None;\n            }\n        };\n        let entry = self.entries.remove(index);\n        let value = entry.1.clone();\n        self.entries.push(entry);\n        Some(value)\n    }\n\n    pub fn insert(&mut self, key: &str, value: V) {\n        if let Some(index) = self.entries.iter().position(|(k, _)| k == key) {\n            self.entries[index].1 = value;\n            return;\n        }\n        if self.entries.len() >= self.capacity && !self.entries.is_empty() {\n            self.entries.remove(0);\n        }\n        if self.entries.len() < self.capacity {\n            self.entries.push((key.to_string(), value));\n        }\n    }\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n\n    #[test]\n    fn replaces_the_value_of_an_existing_key() {\n        let mut cache = Cache::new(2);\n        cache.insert(\"a\", 1);\n        cache.insert(\"a\", 5);\n        assert_eq!(cache.get(\"a\"), Some(5));\n        assert_eq!(cache.len(), 1);\n    }\n\n    #[test]\n    fn lists_keys_in_order() {\n        let mut cache = Cache::new(3);\n        cache.insert(\"x\", 1);\n        cache.insert(\"y\", 2);\n        assert_eq!(cache.keys(), vec![\"x\", \"y\"]);\n    }\n\n    #[test]\n    fn misses_return_none() {\n        let mut cache: Cache<u8> = Cache::new(1);\n        assert_eq!(cache.get(\"nope\"), None);\n    }\n\n    #[test]\n    fn evicts_the_least_recently_used_entry_when_full() {\n        let mut cache = Cache::new(2);\n        cache.insert(\"a\", 1);\n        cache.insert(\"b\", 2);\n        cache.insert(\"c\", 3);\n        assert_eq!(cache.contains(\"a\"), false);\n        assert_eq!(cache.len(), 2);\n    }\n\n    #[test]\n    fn get_marks_an_entry_as_recently_used() {\n        let mut cache = Cache::new(2);\n        cache.insert(\"a\", 1);\n        cache.insert(\"b\", 2);\n        assert_eq!(cache.get(\"a\"), Some(1));\n        cache.insert(\"c\", 3);\n        assert_eq!(cache.keys(), vec![\"a\", \"c\"]);\n    }\n\n    #[test]\n    fn clamps_capacity_to_the_maximum() {\n        let big: Cache<u8> = Cache::new(50_000);\n        assert_eq!(big.capacity(), 10_000);\n        let small: Cache<u8> = Cache::new(64);\n        assert_eq!(small.capacity(), 64);\n    }\n}\n",
+   "src/config.rs": "//! Defaults for caches built without an explicit capacity.\n\n/// Capacity used by `Cache::with_default_capacity`.\npub const DEFAULT_CAPACITY: usize = 128;\n",
+   "src/lib.rs": "//! A small in-memory cache for lookup results.\n\npub mod cache;\npub mod config;\n\npub use cache::Cache;\n"
+  }
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "tasklist_only",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {
+   "R1": "done",
+   "R2": "done",
+   "R3": "missing",
+   "R4": "done"
+  },
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "annotatedBy": "claude-code"
+}

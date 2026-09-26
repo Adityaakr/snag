@@ -1,0 +1,140 @@
+{
+ "id": "OpenHands:django__django-15278",
+ "corpus": "swebench",
+ "seedId": "django__django-15278",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "0ab58c120939093fea90822f376e1866fc714d1f",
+  "headSha": "OpenHands-django__django-15278",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 15278
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 15278
+    },
+    "title": "Adding nullable OneToOneField crashes on SQLite.",
+    "body": "Description\n\t\nThis new sqlite3 error has cropped up between building django-oauth-toolkit between Django 4.0 and main branch for migrations.AddField of a OneToOneField (see ​https://github.com/jazzband/django-oauth-toolkit/issues/1064):\nself = <django.db.backends.sqlite3.base.SQLiteCursorWrapper object at 0x10b8038b0>\nquery = 'ALTER TABLE \"oauth2_provider_accesstoken\" ADD COLUMN \"source_refresh_token_id\" bigint NULL UNIQUE REFERENCES \"oauth2_provider_refreshtoken\" (\"id\") DEFERRABLE INITIALLY DEFERRED'\nparams = []\n\tdef execute(self, query, params=None):\n\t\tif params is None:\n\t\t\treturn Database.Cursor.execute(self, query)\n\t\tquery = self.convert_query(query)\n>\t return Database.Cursor.execute(self, query, params)\nE\t django.db.utils.OperationalError: Cannot add a UNIQUE column\nHere's the relevant migration snippet: \n\t\tmigrations.AddField(\n\t\t\tmodel_name='AccessToken',\n\t\t\tname='source_refresh_token',\n\t\t\tfield=models.OneToOneField(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to=oauth2_settings.REFRESH_TOKEN_MODEL, related_name=\"refreshed_access_token\"),\n\t\t),\nI see there have been a lot of sqlite3 changes in #33355 since the 4.0 release....",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:04c431c3d6171d07397878f4adc15baa2a447fb90f9f4764cef2f15b2fc5ead0"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-15278",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/db/backends/sqlite3/schema.py b/django/db/backends/sqlite3/schema.py\nindex 6752a8e3c0..6c12e12195 100644\n--- a/django/db/backends/sqlite3/schema.py\n+++ b/django/db/backends/sqlite3/schema.py\n@@ -326,8 +326,12 @@ class DatabaseSchemaEditor(BaseDatabaseSchemaEditor):\n         \"\"\"Create a field on a model.\"\"\"\n         # Fields with default values cannot by handled by ALTER TABLE ADD\n         # COLUMN statement because DROP DEFAULT is not supported in\n-        # ALTER TABLE.\n-        if not field.null or self.effective_default(field) is not None:\n+        # ALTER TABLE. Also, fields with UNIQUE constraint cannot be\n+        # added with ALTER TABLE on SQLite.\n+        if (not field.null or\n+            self.effective_default(field) is not None or\n+            field.unique or\n+            field.one_to_one):\n             self._remake_table(model, create_field=field)\n         else:\n             super().add_field(model, field)\ndiff --git a/reproduce.py b/reproduce.py\nnew file mode 100644\nindex 0000000000..1e7d1d172f\n--- /dev/null\n+++ b/reproduce.py\n@@ -0,0 +1,70 @@\n+import os\n+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'test_settings')\n+\n+import django\n+from django.conf import settings\n+from django.db import models, migrations, connection\n+from django.db.migrations.executor import MigrationExecutor\n+\n+# Configure test settings\n+if not settings.configured:\n+    settings.configure(\n+        DATABASES={\n+            'default': {\n+                'ENGINE': 'django.db.backends.sqlite3',\n+                'NAME': ':memory:',\n+            }\n+        },\n+\n+    )\n+    django.setup()\n+\n+# Create test models\n+class RefreshToken(models.Model):\n+    class Meta:\n+        app_label = 'testapp'\n+\n+class AccessToken(models.Model):\n+    class Meta:\n+        app_label = 'testapp'\n+    source_refresh_token = models.OneToOneField(\n+        RefreshToken,\n+        on_delete=models.SET_NULL,\n+        null=True,\n+        blank=True,\n+        related_name='refreshed_access_token'\n+    )\n+\n+# Create and run migration\n+class Migration(migrations.Migration):\n+    initial = True\n+    dependencies = []\n+\n+    operations = [\n+        migrations.CreateModel(\n+            name='RefreshToken',\n+            fields=[\n+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),\n+            ],\n+        ),\n+        migrations.CreateModel(\n+            name='AccessToken',\n+            fields=[\n+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),\n+            ],\n+        ),\n+        migrations.AddField(\n+            model_name='AccessToken',\n+            name='source_refresh_token',\n+            field=models.OneToOneField(\n+                blank=True,\n+                null=True,\n+                on_delete=django.db.models.deletion.SET_NULL,\n+                to='__main__.RefreshToken',\n+                related_name='refreshed_access_token'\n+            ),\n+        ),\n+    ]\n+\n+# Run migration\n+executor = MigrationExecutor(connection)\ndiff --git a/reproduce2.py b/reproduce2.py\nnew file mode 100644\nindex 0000000000..7f9663f491\n--- /dev/null\n+++ b/reproduce2.py\n@@ -0,0 +1,40 @@\n+import os\n+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'test_settings')\n+\n+import django\n+from django.conf import settings\n+from django.db import models, connection\n+\n+# Configure test settings\n+if not settings.configured:\n+    settings.configure(\n+        DATABASES={\n+            'default': {\n+                'ENGINE': 'django.db.backends.sqlite3',\n+                'NAME': ':memory:',\n+            }\n+        },\n+    )\n+    django.setup()\n+\n+# Create tables directly using SQL\n+with connection.cursor() as cursor:\n+    # Create tables\n+    cursor.execute('''\n+        CREATE TABLE oauth2_provider_refreshtoken (\n+            id INTEGER PRIMARY KEY AUTOINCREMENT\n+        )\n+    ''')\n+    cursor.execute('''\n+        CREATE TABLE oauth2_provider_accesstoken (\n+            id INTEGER PRIMARY KEY AUTOINCREMENT\n+        )\n+    ''')\n+    \n+    # Try to add the OneToOneField column\n+    cursor.execute('''\n+        ALTER TABLE oauth2_provider_accesstoken \n+        ADD COLUMN source_refresh_token_id bigint NULL UNIQUE \n+        REFERENCES oauth2_provider_refreshtoken (id) \n+        DEFERRABLE INITIALLY DEFERRED\n+    ''')\n\\ No newline at end of file\ndiff --git a/reproduce3.py b/reproduce3.py\nnew file mode 100644\nindex 0000000000..f345ab5ddd\n--- /dev/null\n+++ b/reproduce3.py\n@@ -0,0 +1,73 @@\n+import os\n+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'test_settings')\n+\n+import django\n+from django.conf import settings\n+from django.db import models, migrations, connection\n+from django.db.migrations.executor import MigrationExecutor\n+from django.db.migrations.state import ProjectState\n+\n+# Configure test settings\n+if not settings.configured:\n+    settings.configure(\n+        DATABASES={\n+            'default': {\n+                'ENGINE': 'django.db.backends.sqlite3',\n+                'NAME': ':memory:',\n+            }\n+        },\n+    )\n+    django.setup()\n+\n+# Create initial migration\n+class Migration1(migrations.Migration):\n+    initial = True\n+    operations = [\n+        migrations.CreateModel(\n+            name='RefreshToken',\n+            fields=[\n+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),\n+            ],\n+            options={'db_table': 'oauth2_provider_refreshtoken'},\n+        ),\n+        migrations.CreateModel(\n+            name='AccessToken',\n+            fields=[\n+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),\n+            ],\n+            options={'db_table': 'oauth2_provider_accesstoken'},\n+        ),\n+    ]\n+\n+# Create second migration that adds the OneToOneField\n+class Migration2(migrations.Migration):\n+    dependencies = [('testapp', '0001_initial')]\n+    operations = [\n+        migrations.AddField(\n+            model_name='AccessToken',\n+            name='source_refresh_token',\n+            field=models.OneToOneField(\n+                blank=True,\n+                null=True,\n+                on_delete=django.db.models.deletion.SET_NULL,\n+                to='testapp.RefreshToken',\n+                related_name='refreshed_access_token'\n+            ),\n+        ),\n+    ]\n+\n+# Run migrations\n+executor = MigrationExecutor(connection)\n+executor.loader.project_state = ProjectState()\n+executor.loader.applied_migrations = set()\n+\n+# Add migrations to loader\n+Migration1.app_label = 'testapp'\n+Migration2.app_label = 'testapp'\n+executor.loader.graph.add_node(('testapp', '0001_initial'), Migration1)\n+executor.loader.graph.add_node(('testapp', '0002_add_onetoone'), Migration2)\n+executor.loader.graph.add_dependency(('testapp', '0002_add_onetoone'), ('testapp', '0001_initial'), ('testapp', '0001_initial'))\n+\n+# Run migrations\n+executor.migrate([('testapp', '0002_add_onetoone')])\n+print(\"Migrations completed successfully!\")\n\\ No newline at end of file\ndiff --git a/reproduce4.py b/reproduce4.py\nnew file mode 100644\nindex 0000000000..3d3a145ce9\n--- /dev/null\n+++ b/reproduce4.py\n@@ -0,0 +1,51 @@\n+import os\n+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'test_settings')\n+\n+import django\n+from django.conf import settings\n+from django.db import models, connection\n+from django.db.backends.sqlite3.schema import DatabaseSchemaEditor\n+\n+# Configure test settings\n+if not settings.configured:\n+    settings.configure(\n+        DATABASES={\n+            'default': {\n+                'ENGINE': 'django.db.backends.sqlite3',\n+                'NAME': ':memory:',\n+            }\n+        },\n+    )\n+    django.setup()\n+\n+# Create test models\n+class RefreshToken(models.Model):\n+    class Meta:\n+        app_label = 'testapp'\n+        db_table = 'oauth2_provider_refreshtoken'\n+\n+class AccessToken(models.Model):\n+    source_refresh_token = models.OneToOneField(\n+        RefreshToken,\n+        on_delete=models.SET_NULL,\n+        null=True,\n+        blank=True,\n+        related_name='refreshed_access_token'\n+    )\n+    class Meta:\n+        app_label = 'testapp'\n+        db_table = 'oauth2_provider_accesstoken'\n+\n+# Create tables and add field\n+with connection.schema_editor() as schema_editor:\n+    # Create tables\n+    schema_editor.create_model(RefreshToken)\n+    schema_editor.create_model(AccessToken)\n+\n+print(\"Tables created successfully!\")\n+\n+# Verify schema\n+with connection.cursor() as cursor:\n+    cursor.execute(\"SELECT sql FROM sqlite_master WHERE type='table' AND name='oauth2_provider_accesstoken'\")\n+    print(\"\\nAccessToken table schema:\")\n+    print(cursor.fetchone()[0])\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "OpenHands",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

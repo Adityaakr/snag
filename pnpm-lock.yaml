@@ -17,6 +17,9 @@ importers:
       '@remit/core':
         specifier: workspace:*
         version: link:packages/core
+      '@remit/eval':
+        specifier: workspace:*
+        version: link:packages/eval
       '@remit/pipeline':
         specifier: workspace:*
         version: link:packages/pipeline

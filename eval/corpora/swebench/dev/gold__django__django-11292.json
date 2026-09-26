@@ -1,0 +1,140 @@
+{
+ "id": "gold:django__django-11292",
+ "corpus": "swebench",
+ "seedId": "django__django-11292",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "eb16c7260e573ec513d84cb586d96bdf508f3173",
+  "headSha": "gold-django__django-11292",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 11292
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 11292
+    },
+    "title": "Add --skip-checks option to management commands.",
+    "body": "Description\n\t\nManagement commands already have skip_checks stealth option. I propose exposing this option on the command line. This would allow users to skip checks when running a command from the command line. Sometimes in a development environment, it is nice to move ahead with a task at hand rather than getting side tracked fixing a system check.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:25cc8bc26fe6dfcc6d716db78a126556527d894b22e8090378d9a86b6c3c5ae9"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-11292",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/core/management/base.py b/django/core/management/base.py\n--- a/django/core/management/base.py\n+++ b/django/core/management/base.py\n@@ -95,7 +95,7 @@ class DjangoHelpFormatter(HelpFormatter):\n     \"\"\"\n     show_last = {\n         '--version', '--verbosity', '--traceback', '--settings', '--pythonpath',\n-        '--no-color', '--force-color',\n+        '--no-color', '--force-color', '--skip-checks',\n     }\n \n     def _reordered_actions(self, actions):\n@@ -223,7 +223,7 @@ class BaseCommand:\n     requires_system_checks = True\n     # Arguments, common to all commands, which aren't defined by the argument\n     # parser.\n-    base_stealth_options = ('skip_checks', 'stderr', 'stdout')\n+    base_stealth_options = ('stderr', 'stdout')\n     # Command-specific options not defined by the argument parser.\n     stealth_options = ()\n \n@@ -286,6 +286,11 @@ def create_parser(self, prog_name, subcommand, **kwargs):\n             '--force-color', action='store_true',\n             help='Force colorization of the command output.',\n         )\n+        if self.requires_system_checks:\n+            parser.add_argument(\n+                '--skip-checks', action='store_true',\n+                help='Skip system checks.',\n+            )\n         self.add_arguments(parser)\n         return parser\n \n@@ -357,7 +362,7 @@ def execute(self, *args, **options):\n         if options.get('stderr'):\n             self.stderr = OutputWrapper(options['stderr'])\n \n-        if self.requires_system_checks and not options.get('skip_checks'):\n+        if self.requires_system_checks and not options['skip_checks']:\n             self.check()\n         if self.requires_migrations_checks:\n             self.check_migrations()\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "gold",
+  "source": "gold",
+  "strength": "strong"
+ },
+ "annotatedBy": "study"
+}

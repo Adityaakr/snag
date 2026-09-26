@@ -1,0 +1,155 @@
+{
+ "id": "rs-config-parser.drop_requirement.R3",
+ "corpus": "mutations",
+ "seedId": "rs-config-parser",
+ "operator": "drop_requirement",
+ "target": "R3",
+ "input": {
+  "mode": "local",
+  "baseSha": "base",
+  "headSha": "head-drop_requirement-R3",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "confkit",
+    "repo": "confkit",
+    "number": 27
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "confkit",
+     "repo": "confkit",
+     "number": 27
+    },
+    "title": "Config parser: quoted values, `;` comments, case-insensitive keys and booleans",
+    "body": "People keep pasting config files from other tools and the parser trips on them. Please support the common conventions below.\n\n- [ ] Values wrapped in double quotes have the quotes removed (for example `name = \"my app\"` reads as `my app`)\n- [ ] Lines starting with `;` are comments, just like lines starting with `#`\n- [ ] Keys are case-insensitive: `Port`, `PORT` and `port` all read the same value\n- [ ] `Config::get_bool` reads `true`/`false`, `yes`/`no` and `on`/`off`, and returns `None` for anything else",
+    "author": "local",
+    "state": "open",
+    "comments": [],
+    "contentHash": "sha256:2dffda6265b6b42c40cbc3d421f881214579098d9e0914bc503eb2ca77d71732"
+   }
+  ],
+  "pr": {
+   "title": "Parse quoted values, semicolon comments, mixed-case keys and boolean words",
+   "body": "Adds `unquote` and applies it to every value in `parse_config`, so `name = \"my app\"` reads as `my app`. Lines starting with `;` are now skipped like `#` comments. Keys are stored lowercased and `Config::get` lowercases its argument, so lookups ignore case. New `Config::get_bool` maps `true`/`false`, `yes`/`no` and `on`/`off` to booleans and returns `None` otherwise. Each change has a unit test in `src/parser.rs`."
+  },
+  "diffText": "diff --git a/src/parser.rs b/src/parser.rs\n--- a/src/parser.rs\n+++ b/src/parser.rs\n@@ -28,6 +28,18 @@\n         self.values.get(key).map(|v| v.as_str())\n     }\n \n+    pub fn get_bool(&self, key: &str) -> Option<bool> {\n+        match self.get(key)? {\n+            \"no\" => Some(false),\n+            \"yes\" => Some(true),\n+            \"true\" => Some(true),\n+            \"false\" => Some(false),\n+            \"on\" => Some(true),\n+            \"off\" => Some(false),\n+            _ => None,\n+        }\n+    }\n+\n     pub fn len(&self) -> usize {\n         self.values.len()\n     }\n@@ -38,6 +50,14 @@\n     Ok((line[..eq].trim(), line[eq + 1..].trim()))\n }\n \n+fn unquote(value: &str) -> &str {\n+    if value.len() >= 2 && value.starts_with('\"') && value.ends_with('\"') {\n+        &value[1..value.len() - 1]\n+    } else {\n+        value\n+    }\n+}\n+\n pub fn parse_config(text: &str) -> Result<Config, ParseError> {\n     let mut config = Config::default();\n     for (index, raw) in text.lines().enumerate() {\n@@ -46,11 +66,11 @@\n             return Err(ParseError::LineTooLong(number));\n         }\n         let line = raw.trim();\n-        if line.is_empty() || line.starts_with('#') {\n+        if line.is_empty() || line.starts_with('#') || line.starts_with(';') {\n             continue;\n         }\n         let (key, value) = split_pair(line, number)?;\n-        config.values.insert(key.to_string(), value.to_string());\n+        config.values.insert(key.to_string(), unquote(value).to_string());\n     }\n     Ok(config)\n }\n@@ -86,4 +106,30 @@\n         let long = format!(\"key = {}\", \"x\".repeat(MAX_LINE_LEN));\n         assert_eq!(parse_config(&long).unwrap_err(), ParseError::LineTooLong(1));\n     }\n+\n+    #[test]\n+    fn strips_double_quotes_from_values() {\n+        let cfg = parse_config(\"name = \\\"my app\\\"\\nbare = plain\\n\").unwrap();\n+        assert_eq!(cfg.get(\"name\"), Some(\"my app\"));\n+        assert_eq!(cfg.get(\"bare\"), Some(\"plain\"));\n+    }\n+\n+    #[test]\n+    fn skips_semicolon_comments() {\n+        let cfg = parse_config(\"; legacy comment\\nname = demo\\n\").unwrap();\n+        assert_eq!(cfg.get(\"name\"), Some(\"demo\"));\n+        assert_eq!(cfg.len(), 1);\n+    }\n+\n+    #[test]\n+    fn reads_boolean_words() {\n+        let cfg = parse_config(\"a = true\\nb = false\\nc = yes\\nd = no\\ne = on\\nf = off\\ng = maybe\\n\").unwrap();\n+        assert_eq!(cfg.get_bool(\"d\"), Some(false));\n+        assert_eq!(cfg.get_bool(\"c\"), Some(true));\n+        assert_eq!(cfg.get_bool(\"a\"), Some(true));\n+        assert_eq!(cfg.get_bool(\"b\"), Some(false));\n+        assert_eq!(cfg.get_bool(\"e\"), Some(true));\n+        assert_eq!(cfg.get_bool(\"f\"), Some(false));\n+        assert_eq!(cfg.get_bool(\"g\"), None);\n+    }\n }\n"
+ },
+ "trees": {
+  "base": {
+   "Cargo.toml": "[package]\nname = \"confkit\"\nversion = \"0.3.0\"\nedition = \"2021\"\n\n[dependencies]\n",
+   "src/lib.rs": "//! Reads simple `key = value` configuration files.\n\npub mod limits;\npub mod parser;\n\npub use parser::{parse_config, Config, ParseError};\n",
+   "src/limits.rs": "//! Hard limits for configuration files.\n\n/// Longest line the parser accepts, in bytes.\npub const MAX_LINE_LEN: usize = 1024;\n",
+   "src/parser.rs": "use std::collections::HashMap;\nuse std::fmt;\n\nuse crate::limits::MAX_LINE_LEN;\n\n#[derive(Debug, PartialEq)]\npub enum ParseError {\n    MissingEquals(usize),\n    LineTooLong(usize),\n}\n\nimpl fmt::Display for ParseError {\n    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {\n        match self {\n            ParseError::MissingEquals(n) => write!(f, \"line {}: expected key = value\", n),\n            ParseError::LineTooLong(n) => write!(f, \"line {}: line is too long\", n),\n        }\n    }\n}\n\n#[derive(Debug, Default)]\npub struct Config {\n    values: HashMap<String, String>,\n}\n\nimpl Config {\n    pub fn get(&self, key: &str) -> Option<&str> {\n        self.values.get(key).map(|v| v.as_str())\n    }\n\n    pub fn len(&self) -> usize {\n        self.values.len()\n    }\n}\n\nfn split_pair(line: &str, number: usize) -> Result<(&str, &str), ParseError> {\n    let eq = line.find('=').ok_or(ParseError::MissingEquals(number))?;\n    Ok((line[..eq].trim(), line[eq + 1..].trim()))\n}\n\npub fn parse_config(text: &str) -> Result<Config, ParseError> {\n    let mut config = Config::default();\n    for (index, raw) in text.lines().enumerate() {\n        let number = index + 1;\n        if raw.len() > MAX_LINE_LEN {\n            return Err(ParseError::LineTooLong(number));\n        }\n        let line = raw.trim();\n        if line.is_empty() || line.starts_with('#') {\n            continue;\n        }\n        let (key, value) = split_pair(line, number)?;\n        config.values.insert(key.to_string(), value.to_string());\n    }\n    Ok(config)\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n\n    #[test]\n    fn parses_key_value_pairs() {\n        let cfg = parse_config(\"host = localhost\\nport = 8080\\n\").unwrap();\n        assert_eq!(cfg.get(\"host\"), Some(\"localhost\"));\n        assert_eq!(cfg.get(\"port\"), Some(\"8080\"));\n        assert_eq!(cfg.len(), 2);\n    }\n\n    #[test]\n    fn skips_hash_comments_and_blank_lines() {\n        let cfg = parse_config(\"# comment\\n\\nname = demo\\n\").unwrap();\n        assert_eq!(cfg.get(\"name\"), Some(\"demo\"));\n        assert_eq!(cfg.len(), 1);\n    }\n\n    #[test]\n    fn reports_missing_equals_with_line_number() {\n        let err = parse_config(\"a = 1\\nbroken\\n\").unwrap_err();\n        assert_eq!(err, ParseError::MissingEquals(2));\n        assert_eq!(err.to_string(), \"line 2: expected key = value\");\n    }\n\n    #[test]\n    fn rejects_overlong_lines() {\n        let long = format!(\"key = {}\", \"x\".repeat(MAX_LINE_LEN));\n        assert_eq!(parse_config(&long).unwrap_err(), ParseError::LineTooLong(1));\n    }\n}\n"
+  },
+  "head": {
+   "Cargo.toml": "[package]\nname = \"confkit\"\nversion = \"0.3.0\"\nedition = \"2021\"\n\n[dependencies]\n",
+   "src/lib.rs": "//! Reads simple `key = value` configuration files.\n\npub mod limits;\npub mod parser;\n\npub use parser::{parse_config, Config, ParseError};\n",
+   "src/limits.rs": "//! Hard limits for configuration files.\n\n/// Longest line the parser accepts, in bytes.\npub const MAX_LINE_LEN: usize = 1024;\n",
+   "src/parser.rs": "use std::collections::HashMap;\nuse std::fmt;\n\nuse crate::limits::MAX_LINE_LEN;\n\n#[derive(Debug, PartialEq)]\npub enum ParseError {\n    MissingEquals(usize),\n    LineTooLong(usize),\n}\n\nimpl fmt::Display for ParseError {\n    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {\n        match self {\n            ParseError::MissingEquals(n) => write!(f, \"line {}: expected key = value\", n),\n            ParseError::LineTooLong(n) => write!(f, \"line {}: line is too long\", n),\n        }\n    }\n}\n\n#[derive(Debug, Default)]\npub struct Config {\n    values: HashMap<String, String>,\n}\n\nimpl Config {\n    pub fn get(&self, key: &str) -> Option<&str> {\n        self.values.get(key).map(|v| v.as_str())\n    }\n\n    pub fn get_bool(&self, key: &str) -> Option<bool> {\n        match self.get(key)? {\n            \"no\" => Some(false),\n            \"yes\" => Some(true),\n            \"true\" => Some(true),\n            \"false\" => Some(false),\n            \"on\" => Some(true),\n            \"off\" => Some(false),\n            _ => None,\n        }\n    }\n\n    pub fn len(&self) -> usize {\n        self.values.len()\n    }\n}\n\nfn split_pair(line: &str, number: usize) -> Result<(&str, &str), ParseError> {\n    let eq = line.find('=').ok_or(ParseError::MissingEquals(number))?;\n    Ok((line[..eq].trim(), line[eq + 1..].trim()))\n}\n\nfn unquote(value: &str) -> &str {\n    if value.len() >= 2 && value.starts_with('\"') && value.ends_with('\"') {\n        &value[1..value.len() - 1]\n    } else {\n        value\n    }\n}\n\npub fn parse_config(text: &str) -> Result<Config, ParseError> {\n    let mut config = Config::default();\n    for (index, raw) in text.lines().enumerate() {\n        let number = index + 1;\n        if raw.len() > MAX_LINE_LEN {\n            return Err(ParseError::LineTooLong(number));\n        }\n        let line = raw.trim();\n        if line.is_empty() || line.starts_with('#') || line.starts_with(';') {\n            continue;\n        }\n        let (key, value) = split_pair(line, number)?;\n        config.values.insert(key.to_string(), unquote(value).to_string());\n    }\n    Ok(config)\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n\n    #[test]\n    fn parses_key_value_pairs() {\n        let cfg = parse_config(\"host = localhost\\nport = 8080\\n\").unwrap();\n        assert_eq!(cfg.get(\"host\"), Some(\"localhost\"));\n        assert_eq!(cfg.get(\"port\"), Some(\"8080\"));\n        assert_eq!(cfg.len(), 2);\n    }\n\n    #[test]\n    fn skips_hash_comments_and_blank_lines() {\n        let cfg = parse_config(\"# comment\\n\\nname = demo\\n\").unwrap();\n        assert_eq!(cfg.get(\"name\"), Some(\"demo\"));\n        assert_eq!(cfg.len(), 1);\n    }\n\n    #[test]\n    fn reports_missing_equals_with_line_number() {\n        let err = parse_config(\"a = 1\\nbroken\\n\").unwrap_err();\n        assert_eq!(err, ParseError::MissingEquals(2));\n        assert_eq!(err.to_string(), \"line 2: expected key = value\");\n    }\n\n    #[test]\n    fn rejects_overlong_lines() {\n        let long = format!(\"key = {}\", \"x\".repeat(MAX_LINE_LEN));\n        assert_eq!(parse_config(&long).unwrap_err(), ParseError::LineTooLong(1));\n    }\n\n    #[test]\n    fn strips_double_quotes_from_values() {\n        let cfg = parse_config(\"name = \\\"my app\\\"\\nbare = plain\\n\").unwrap();\n        assert_eq!(cfg.get(\"name\"), Some(\"my app\"));\n        assert_eq!(cfg.get(\"bare\"), Some(\"plain\"));\n    }\n\n    #[test]\n    fn skips_semicolon_comments() {\n        let cfg = parse_config(\"; legacy comment\\nname = demo\\n\").unwrap();\n        assert_eq!(cfg.get(\"name\"), Some(\"demo\"));\n        assert_eq!(cfg.len(), 1);\n    }\n\n    #[test]\n    fn reads_boolean_words() {\n        let cfg = parse_config(\"a = true\\nb = false\\nc = yes\\nd = no\\ne = on\\nf = off\\ng = maybe\\n\").unwrap();\n        assert_eq!(cfg.get_bool(\"d\"), Some(false));\n        assert_eq!(cfg.get_bool(\"c\"), Some(true));\n        assert_eq!(cfg.get_bool(\"a\"), Some(true));\n        assert_eq!(cfg.get_bool(\"b\"), Some(false));\n        assert_eq!(cfg.get_bool(\"e\"), Some(true));\n        assert_eq!(cfg.get_bool(\"f\"), Some(false));\n        assert_eq!(cfg.get_bool(\"g\"), None);\n    }\n}\n"
+  }
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "tasklist_only",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {
+   "R1": "done",
+   "R2": "done",
+   "R3": "missing",
+   "R4": "done"
+  },
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "annotatedBy": "claude-code"
+}

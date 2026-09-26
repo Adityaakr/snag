@@ -1,0 +1,140 @@
+{
+ "id": "gold:sphinx-doc__sphinx-9591",
+ "corpus": "swebench",
+ "seedId": "sphinx-doc__sphinx-9591",
+ "input": {
+  "mode": "local",
+  "repo": "sphinx-doc/sphinx",
+  "baseSha": "9ed054279aeffd5b1d0642e2d24a8800389de29f",
+  "headSha": "gold-sphinx-doc__sphinx-9591",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "sphinx-doc",
+    "repo": "sphinx",
+    "number": 9591
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "sphinx-doc",
+     "repo": "sphinx",
+     "number": 9591
+    },
+    "title": "Cross-references don't work in property's type annotations",
+    "body": "### Describe the bug\r\n\r\nA documented type in property's type annotation does not get cross-referenced:\r\n```py\r\nfrom typing import Optional\r\n\r\n\r\nclass Point:\r\n    \"\"\"\r\n    A class representing a point.\r\n\r\n    Attributes:\r\n        x: Position X.\r\n        y: Position Y.\r\n    \"\"\"\r\n    x: int\r\n    y: int\r\n\r\n\r\nclass Square:\r\n    \"\"\"A class representing a square figure.\"\"\"\r\n    #: Square's start position (top-left corner).\r\n    start: Point\r\n    #: Square width.\r\n    width: int\r\n    #: Square height.\r\n    height: int\r\n\r\n    @property\r\n    def end(self) -> Point:\r\n        \"\"\"Square's end position (bottom-right corner).\"\"\"\r\n        return Point(self.start.x + self.width, self.start.y + self.height)\r\n\r\n\r\nclass Rectangle:\r\n    \"\"\"\r\n    A class representing a square figure.\r\n\r\n    Attributes:\r\n        start: Rectangle's start position (top-left corner).\r\n        width: Rectangle width.\r\n        height: Rectangle width.\r\n    \"\"\"\r\n    start: Point\r\n    width: int\r\n    height: int\r\n\r\n    @property\r\n    def end(self) -> Point:\r\n        \"\"\"Rectangle's end position (bottom-right corner).\"\"\"\r\n        return Point(self.start.x + self.width, self.start.y + self.height)\r\n```\r\n\r\n### How to Reproduce\r\n\r\n```\r\n$ git clone https://github.com/jack1142/sphinx-issue-9585\r\n$ cd sphinx-issue-9585\r\n$ pip install sphinx\r\n$ cd docs\r\n$ make html\r\n$ # open _build/html/index.html and see the issue\r\n```\r\n\r\n\r\n### Expected behavior\r\n\r\nI expected the documented type in property's type annotation to be cross-referenced.\r\n\r\n### Your project\r\n\r\nhttps://github.com/jack1142/sphinx-issue-9585\r\n\r\n### Screenshots\r\n\r\nHere's a link to the generated docs:\r\nhttps://sphinx-issue-9585.readthedocs.io/en/latest/\r\n\r\n### OS\r\n\r\nWindows 10, Ubuntu 18.04\r\n\r\n### Python version\r\n\r\n3.7, 3.8, 3.9\r\n\r\n### Sphinx version\r\n\r\n4.1.2\r\n\r\n### Sphinx extensions\r\n\r\nsphinx.ext.autodoc\r\n\r\n### Extra tools\r\n\r\n_No response_\r\n\r\n### Additional context\r\n\r\n_No response_",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:c295c8bab9e8dfc07d7b5761f37e3a3cb01679047143ee22e949f6de96afc813"
+   }
+  ],
+  "pr": {
+   "title": "Fix sphinx-doc__sphinx-9591",
+   "body": ""
+  },
+  "diffText": "diff --git a/sphinx/domains/python.py b/sphinx/domains/python.py\n--- a/sphinx/domains/python.py\n+++ b/sphinx/domains/python.py\n@@ -861,7 +861,8 @@ def handle_signature(self, sig: str, signode: desc_signature) -> Tuple[str, str]\n \n         typ = self.options.get('type')\n         if typ:\n-            signode += addnodes.desc_annotation(typ, ': ' + typ)\n+            annotations = _parse_annotation(typ, self.env)\n+            signode += addnodes.desc_annotation(typ, '', nodes.Text(': '), *annotations)\n \n         return fullname, prefix\n \n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "gold",
+  "source": "gold",
+  "strength": "strong"
+ },
+ "annotatedBy": "study"
+}

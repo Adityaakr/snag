@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:django__django-11451",
+ "corpus": "swebench",
+ "seedId": "django__django-11451",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "e065b293878b1e3ea56655aa9d33e87576cd77ff",
+  "headSha": "CodeStory-django__django-11451",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 11451
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 11451
+    },
+    "title": "ModelBackend.authenticate() shouldn't make a database query when username is None",
+    "body": "Description\n\t\nIt's easier to explain my issue by adding a comment in the current implementation of ModelBackend.authenticate():\n\tdef authenticate(self, request, username=None, password=None, **kwargs):\n\t\tif username is None:\n\t\t\tusername = kwargs.get(UserModel.USERNAME_FIELD)\n\t\t# At this point, username and password can be None,\n\t\t# typically if credentials are provided for another backend.\n\t\t# Continuing makes a useless database query and runs\n\t\t# the password hasher needlessly (which is expensive).\n\t\ttry:\n\t\t\tuser = UserModel._default_manager.get_by_natural_key(username)\n\t\texcept UserModel.DoesNotExist:\n\t\t\t# Run the default password hasher once to reduce the timing\n\t\t\t# difference between an existing and a nonexistent user (#20760).\n\t\t\tUserModel().set_password(password)\n\t\telse:\n\t\t\t...\nMy suggestion is to shortcut with:\n\t\tif username is None or password is None:\n\t\t\treturn\nI noticed this when writing assertNumQueries tests in django-sesame, which provides another authentication backend.\nI saw this query:\nsql = SELECT \"auth_user\".\"id\", \"auth_user\".\"password\", \"auth_user\".\"last_login\", \"auth_user\".\"is_superuser\", \"auth_user\".\"username\", \"auth_user\".\"first_name\", \"auth_user\".\"last_name\", \"auth_user\".\"email\", \"auth_user\".\"is_staff\", \"auth_user\".\"is_active\", \"auth_user\".\"date_joined\" FROM \"auth_user\" WHERE \"auth_user\".\"username\" IS NULL\nparams = ()\nwhich doesn't make sense: username isn't a nullable field.\nI thought about timing issues.\nauthenticate() attempts to mask timing differences between existing and non-existing users.\nI don't think that concern extends to different authentication backends. Since they run different code, they will have timing differences anyway.\nCurrently, in the scenario I'm describing, users are paying the time cost of UserModel().set_password(password), then of their other authentication backend, so there's a timing difference. With the change I'm proposing, they're only paying the time cost of their other authentication backend.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:6dd525e1c128f13df31dec7cd3f9ec2ba008ea7ffbda072fc863f5415bb8eaab"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-11451",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/contrib/auth/backends.py b/django/contrib/auth/backends.py\nindex f4b1722757..1c1cec8b33 100644\n--- a/django/contrib/auth/backends.py\n+++ b/django/contrib/auth/backends.py\n@@ -39,6 +39,8 @@ class ModelBackend(BaseBackend):\n     def authenticate(self, request, username=None, password=None, **kwargs):\n         if username is None:\n             username = kwargs.get(UserModel.USERNAME_FIELD)\n+        if username is None or password is None:\n+            return None\n         try:\n             user = UserModel._default_manager.get_by_natural_key(username)\n         except UserModel.DoesNotExist:\ndiff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..34f12de550\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,46 @@\n+import os\n+import django\n+from django.conf import settings\n+from django.contrib.auth import authenticate\n+from django.contrib.auth import get_user_model\n+from django.db import connection\n+\n+# Configure Django settings\n+if not settings.configured:\n+    settings.configure(\n+        DATABASES={\n+            'default': {\n+                'ENGINE': 'django.db.backends.sqlite3',\n+                'NAME': ':memory:',\n+            }\n+        },\n+        INSTALLED_APPS=[\n+            'django.contrib.auth',\n+            'django.contrib.contenttypes',\n+        ],\n+        PASSWORD_HASHERS=['django.contrib.auth.hashers.MD5PasswordHasher'],\n+        AUTHENTICATION_BACKENDS=['django.contrib.auth.backends.ModelBackend'],\n+    )\n+    django.setup()\n+\n+# Create tables\n+from django.core.management import call_command\n+call_command('migrate', verbosity=0)\n+\n+User = get_user_model()\n+\n+# Create a test user\n+User.objects.create_user(username='testuser', password='testpass')\n+\n+# Clear connection queries\n+connection.queries_log.clear()\n+\n+print(\"Testing authentication with None username...\")\n+# Try to authenticate with None username\n+user = authenticate(request=None, username=None, password=None)\n+\n+# Print the queries that were executed\n+print(\"\\nQueries executed:\")\n+for query in connection.queries:\n+    print(f\"sql = {query['sql']}\")\n+    print(f\"params = {query['params']}\\n\")\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

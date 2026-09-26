@@ -1,0 +1,142 @@
+{
+ "id": "CodeStory:django__django-13569",
+ "corpus": "swebench",
+ "seedId": "django__django-13569",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "257f8495d6c93e30ab0f52af4c488d7344bcf112",
+  "headSha": "CodeStory-django__django-13569",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 13569
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 13569
+    },
+    "title": "order_by('?') unexpectedly breaking queryset aggregation",
+    "body": "Description\n\t\nSteps to reproduce:\nclass Thing(models.Model):\n\tpass\nclass Related(models.Model):\n\tmodels.ForeignKey(Thing)\nWith data\nt = Thing.objects.create()\nrs = [Related.objects.create(thing=t) for _ in range(2)]\nThe following query works as expected. The aggregation with Count produces a GROUP BY clause on related.id.\n>>> Thing.objects.annotate(rc=Count('related')).order_by('rc').values('id', 'rc')\n<QuerySet [{'id': 1, 'rc': 2}]>\nThis also works as expected (at least to me). Although there is an aggregation, ordering by related means that the grouping will be broken down.\n>>> Thing.objects.annotate(rc=Count('related')).order_by('related').values('id', 'rc')\n<QuerySet [{'id': 1, 'rc': 1}, {'id': 1, 'rc': 1}]>\nBut the following seems wrong to me.\n>>> Thing.objects.annotate(rc=Count('related')).order_by('?').values('id', 'rc')\n<QuerySet [{'id': 1, 'rc': 1}, {'id': 1, 'rc': 1}]>\nThe random function call has nothing to do with the aggregation, and I see no reason it should break it. Dumping the query seems that indeed the random call breaks the group by call: (I simpilfied the table names a little)\n>>> print(Thing.objects.annotate(rc=Count('related')).order_by('?').values('id', 'rc').query)\nSELECT \"thing\".\"id\", COUNT(\"related\".\"id\") AS \"rc\" FROM \"thing\" LEFT OUTER JOIN \"related\" ON (\"thing\".\"id\" = \"related\".\"thing_id\") GROUP BY \"thing\".\"id\", RANDOM() ORDER BY RANDOM() ASC\nI dug into the SQL compiler, and it seems to me the problem is inside django.db.models.sql.compiler.get_group_by, where the compiler combines all non-aggregate, non-ref order_by expressions into group_by. I patched it like this\nfor expr, (sql, params, is_ref) in order_by:\n\tif expr.contains_aggregate:\n\t\tcontinue\n\tif is_ref:\n\t\tcontinue\n\texpressions.extend([\n\t\texp for exp in expr.get_source_expressions()\n\t\tif not isinstance(exp, Random)\n\t])\nand things seem to work correctly. No failed tests against SQLite3 with default settings.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:93d70a06b78cd360c513d256b6868bed80be7d1921fcb79c62903b5546105612"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-13569",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/db/models/sql/compiler.py b/django/db/models/sql/compiler.py\nindex 04e430a42e..3fdbe4d523 100644\n--- a/django/db/models/sql/compiler.py\n+++ b/django/db/models/sql/compiler.py\n@@ -129,7 +129,9 @@ class SQLCompiler:\n             # Skip References to the select clause, as all expressions in the\n             # select clause are already part of the group by.\n             if not is_ref:\n-                expressions.extend(expr.get_group_by_cols())\n+                # Skip Random expressions as they should not affect grouping\n+                if not isinstance(expr, OrderBy) or not isinstance(expr.expression, Random):\n+                    expressions.extend(expr.get_group_by_cols())\n         having_group_by = self.having.get_group_by_cols() if self.having else ()\n         for expr in having_group_by:\n             expressions.append(expr)\ndiff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..57064290af\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,51 @@\n+from django.db import models, connection\n+from django.db.models import Count\n+from django.conf import settings\n+import django\n+\n+if not settings.configured:\n+    settings.configure(\n+        DATABASES={\n+            'default': {\n+                'ENGINE': 'django.db.backends.sqlite3',\n+                'NAME': ':memory:',\n+            }\n+        },\n+        INSTALLED_APPS=[\n+            'django.contrib.contenttypes',\n+            'django.contrib.auth',\n+        ],\n+        DEFAULT_AUTO_FIELD='django.db.models.AutoField',\n+    )\n+    django.setup()\n+\n+class Thing(models.Model):\n+    class Meta:\n+        app_label = 'auth'  # Use an existing app\n+\n+class Related(models.Model):\n+    thing = models.ForeignKey(Thing, on_delete=models.CASCADE)\n+    class Meta:\n+        app_label = 'auth'  # Use an existing app\n+\n+# Create the tables manually\n+with connection.schema_editor() as schema_editor:\n+    schema_editor.create_model(Thing)\n+    schema_editor.create_model(Related)\n+\n+# Create test data\n+t = Thing.objects.create()\n+rs = [Related.objects.create(thing=t) for _ in range(2)]\n+\n+# Test queries\n+print(\"\\nTest 1 - order_by('rc'):\")\n+print(Thing.objects.annotate(rc=Count('related')).order_by('rc').values('id', 'rc'))\n+\n+print(\"\\nTest 2 - order_by('related'):\")\n+print(Thing.objects.annotate(rc=Count('related')).order_by('related').values('id', 'rc'))\n+\n+print(\"\\nTest 3 - order_by('?'):\")\n+print(Thing.objects.annotate(rc=Count('related')).order_by('?').values('id', 'rc'))\n+\n+print(\"\\nTest 3 SQL:\")\n+print(Thing.objects.annotate(rc=Count('related')).order_by('?').values('id', 'rc').query)\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq34_manual",
+  "strength": "weak",
+  "diffPattern": "noalignment",
+  "correctness": "uncertain"
+ },
+ "annotatedBy": "study"
+}

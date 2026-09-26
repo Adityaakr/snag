@@ -1,0 +1,140 @@
+{
+ "id": "OpenHands:django__django-13033",
+ "corpus": "swebench",
+ "seedId": "django__django-13033",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "a59de6e89e8dc1f3e71c9a5a5bbceb373ea5247e",
+  "headSha": "OpenHands-django__django-13033",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 13033
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 13033
+    },
+    "title": "Self referencing foreign key doesn't correctly order by a relation \"_id\" field.",
+    "body": "Description\n\t\nInitially discovered on 2.2.10 but verified still happens on 3.0.6. Given the following models:\nclass OneModel(models.Model):\n\tclass Meta:\n\t\tordering = (\"-id\",)\n\tid = models.BigAutoField(primary_key=True)\n\troot = models.ForeignKey(\"OneModel\", on_delete=models.CASCADE, null=True)\n\toneval = models.BigIntegerField(null=True)\nclass TwoModel(models.Model):\n\tid = models.BigAutoField(primary_key=True)\n\trecord = models.ForeignKey(OneModel, on_delete=models.CASCADE)\n\ttwoval = models.BigIntegerField(null=True)\nThe following queryset gives unexpected results and appears to be an incorrect SQL query:\nqs = TwoModel.objects.filter(record__oneval__in=[1,2,3])\nqs = qs.order_by(\"record__root_id\")\nprint(qs.query)\nSELECT \"orion_twomodel\".\"id\", \"orion_twomodel\".\"record_id\", \"orion_twomodel\".\"twoval\" FROM \"orion_twomodel\" INNER JOIN \"orion_onemodel\" ON (\"orion_twomodel\".\"record_id\" = \"orion_onemodel\".\"id\") LEFT OUTER JOIN \"orion_onemodel\" T3 ON (\"orion_onemodel\".\"root_id\" = T3.\"id\") WHERE \"orion_onemodel\".\"oneval\" IN (1, 2, 3) ORDER BY T3.\"id\" DESC\nThe query has an unexpected DESCENDING sort. That appears to come from the default sort order on the OneModel class, but I would expect the order_by() to take prececence. The the query has two JOINS, which is unnecessary. It appears that, since OneModel.root is a foreign key to itself, that is causing it to do the unnecessary extra join. In fact, testing a model where root is a foreign key to a third model doesn't show the problem behavior.\nNote also that the queryset with order_by(\"record__root\") gives the exact same SQL.\nThis queryset gives correct results and what looks like a pretty optimal SQL:\nqs = TwoModel.objects.filter(record__oneval__in=[1,2,3])\nqs = qs.order_by(\"record__root__id\")\nprint(qs.query)\nSELECT \"orion_twomodel\".\"id\", \"orion_twomodel\".\"record_id\", \"orion_twomodel\".\"twoval\" FROM \"orion_twomodel\" INNER JOIN \"orion_onemodel\" ON (\"orion_twomodel\".\"record_id\" = \"orion_onemodel\".\"id\") WHERE \"orion_onemodel\".\"oneval\" IN (1, 2, 3) ORDER BY \"orion_onemodel\".\"root_id\" ASC\nSo is this a potential bug or a misunderstanding on my part?\nAnother queryset that works around the issue and gives a reasonable SQL query and expected results:\nqs = TwoModel.objects.filter(record__oneval__in=[1,2,3])\nqs = qs.annotate(root_id=F(\"record__root_id\"))\nqs = qs.order_by(\"root_id\")\nprint(qs.query)\nSELECT \"orion_twomodel\".\"id\", \"orion_twomodel\".\"record_id\", \"orion_twomodel\".\"twoval\" FROM \"orion_twomodel\" INNER JOIN \"orion_onemodel\" ON (\"orion_twomodel\".\"record_id\" = \"orion_onemodel\".\"id\") WHERE \"orion_onemodel\".\"oneval\" IN (1, 2, 3) ORDER BY \"orion_onemodel\".\"zero_id\" ASC\nASCENDING sort, and a single INNER JOIN, as I'd expect. That actually works for my use because I need that output column anyway.\nOne final oddity; with the original queryset but the inverted sort order_by():\nqs = TwoModel.objects.filter(record__oneval__in=[1,2,3])\nqs = qs.order_by(\"-record__root_id\")\nprint(qs.query)\nSELECT \"orion_twomodel\".\"id\", \"orion_twomodel\".\"record_id\", \"orion_twomodel\".\"twoval\" FROM \"orion_twomodel\" INNER JOIN \"orion_onemodel\" ON (\"orion_twomodel\".\"record_id\" = \"orion_onemodel\".\"id\") LEFT OUTER JOIN \"orion_onemodel\" T3 ON (\"orion_onemodel\".\"root_id\" = T3.\"id\") WHERE \"orion_onemodel\".\"oneval\" IN (1, 2, 3) ORDER BY T3.\"id\" ASC\nOne gets the query with the two JOINs but an ASCENDING sort order. I was not under the impression that sort orders are somehow relative to the class level sort order, eg: does specifing order_by(\"-record__root_id\") invert the class sort order? Testing that on a simple case doesn't show that behavior at all.\nThanks for any assistance and clarification.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:d805fddeb91b248034e72dc99a0cd888bc91f864d26e0046a5f37fbf263db1a9"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-13033",
+   "body": ""
+  },
+  "diffText": "diff --git a/db.sqlite3 b/db.sqlite3\nnew file mode 100644\nindex 0000000000..ae3a17fe9a\nBinary files /dev/null and b/db.sqlite3 differ\ndiff --git a/django/db/models/sql/compiler.py b/django/db/models/sql/compiler.py\nindex abbb1e37cb..3e54eadc67 100644\n--- a/django/db/models/sql/compiler.py\n+++ b/django/db/models/sql/compiler.py\n@@ -7,6 +7,7 @@ from django.core.exceptions import EmptyResultSet, FieldError\n from django.db import DatabaseError, NotSupportedError\n from django.db.models.constants import LOOKUP_SEP\n from django.db.models.expressions import F, OrderBy, Random, RawSQL, Ref, Value\n+from django.db.models import F\n from django.db.models.functions import Cast\n from django.db.models.query_utils import Q, select_related_descend\n from django.db.models.sql.constants import (\n@@ -343,6 +344,30 @@ class SQLCompiler:\n             if not self.query.extra or col not in self.query.extra:\n                 # 'col' is of the form 'field' or 'field1__field2' or\n                 # '-field1__field2__field', etc.\n+                # Special handling for _id fields\n+                pieces = col.split(LOOKUP_SEP)\n+                if len(pieces) == 2 and pieces[1].endswith('_id'):\n+                    try:\n+                        field_obj = self.query.get_meta().get_field(pieces[0])\n+                        if field_obj.is_relation and field_obj.attname == pieces[1]:\n+                            # This is a direct reference to a foreign key's _id field\n+                            # Use the field's attname directly\n+                            order_by.append((\n+                                OrderBy(\n+                                    RawSQL(\n+                                        '%s.%s' % (\n+                                            self.quote_name_unless_alias(field_obj.model._meta.db_table),\n+                                            field_obj.attname\n+                                        ),\n+                                        []\n+                                    ),\n+                                    descending=descending\n+                                ),\n+                                False\n+                            ))\n+                            continue\n+                    except FieldDoesNotExist:\n+                        pass\n                 order_by.extend(self.find_ordering_name(\n                     field, self.query.get_meta(), default_order=asc))\n             else:\n@@ -727,7 +752,11 @@ class SQLCompiler:\n         # If we get to this point and the field is a relation to another model,\n         # append the default ordering for that model unless it is the pk\n         # shortcut or the attribute name of the field that is specified.\n-        if field.is_relation and opts.ordering and getattr(field, 'attname', None) != name and name != 'pk':\n+        # Also handle _id suffix for foreign keys\n+        if (field.is_relation and opts.ordering and \n+            name != 'pk' and name != getattr(field, 'attname', None) and \n+            not (name.endswith('_id') and name == field.attname) and\n+            not (len(pieces) == 2 and pieces[1].endswith('_id') and pieces[1] == field.attname)):\n             # Firstly, avoid infinite loops.\n             already_seen = already_seen or set()\n             join_tuple = tuple(getattr(self.query.alias_map[j], 'join_cols', None) for j in joins)\n@@ -757,6 +786,22 @@ class SQLCompiler:\n         match. Executing SQL where this is not true is an error.\n         \"\"\"\n         alias = alias or self.query.get_initial_alias()\n+        \n+        # Special handling for _id fields\n+        if len(pieces) == 2 and pieces[1].endswith('_id'):\n+            try:\n+                field = opts.get_field(pieces[0])\n+                if field.is_relation and field.attname == pieces[1]:\n+                    # This is a direct reference to a foreign key's _id field\n+                    # Use the field's attname directly\n+                    targets = [field]\n+                    joins = [alias]\n+                    path = []\n+                    transform_function = lambda field, alias: field.get_col(alias)\n+                    return field, targets, alias, joins, path, opts, transform_function\n+            except FieldDoesNotExist:\n+                pass\n+                \n         field, targets, opts, joins, path, transform_function = self.query.setup_joins(pieces, opts, alias)\n         alias = joins[-1]\n         return field, targets, alias, joins, path, opts, transform_function\ndiff --git a/django/db/models/sql/query.py b/django/db/models/sql/query.py\nindex d65141b834..440e965aac 100644\n--- a/django/db/models/sql/query.py\n+++ b/django/db/models/sql/query.py\n@@ -1445,13 +1445,24 @@ class Query(BaseExpression):\n             field = None\n             filtered_relation = None\n             try:\n+                # First try to get the field directly\n                 field = opts.get_field(name)\n             except FieldDoesNotExist:\n-                if name in self.annotation_select:\n-                    field = self.annotation_select[name].output_field\n-                elif name in self._filtered_relations and pos == 0:\n-                    filtered_relation = self._filtered_relations[name]\n-                    field = opts.get_field(filtered_relation.relation_name)\n+                # If not found and name ends with _id, try to get the related field\n+                if name.endswith('_id'):\n+                    try:\n+                        field = opts.get_field(name[:-3])\n+                        if field.is_relation:\n+                            # Use the foreign key field itself\n+                            field = opts.get_field(name)\n+                    except FieldDoesNotExist:\n+                        pass\n+                if field is None:\n+                    if name in self.annotation_select:\n+                        field = self.annotation_select[name].output_field\n+                    elif name in self._filtered_relations and pos == 0:\n+                        filtered_relation = self._filtered_relations[name]\n+                        field = opts.get_field(filtered_relation.relation_name)\n             if field is not None:\n                 # Fields that contain one-to-many relations with a generic\n                 # model (like a GenericForeignKey) cannot generate reverse\n@@ -1548,6 +1559,10 @@ class Query(BaseExpression):\n         that value. Final field is needed for example in some value\n         conversions (convert 'obj' in fk__id=obj to pk val using the foreign\n         key field for example).\n+\n+        Special handling for _id fields: If a field name ends with _id and it's\n+        a foreign key's attname, treat it as a direct field reference rather than\n+        a relation traversal.\n         \"\"\"\n         joins = [alias]\n         # The transform can't be applied yet, as joins must be trimmed later.\ndiff --git a/reproduce.py b/reproduce.py\nnew file mode 100644\nindex 0000000000..9c21521195\n--- /dev/null\n+++ b/reproduce.py\n@@ -0,0 +1,84 @@\n+from django.db import models\n+from django.conf import settings\n+import os\n+\n+# Configure Django settings\n+BASE_DIR = os.path.dirname(os.path.abspath(__file__))\n+settings.configure(\n+    DEBUG=True,\n+    DATABASES={\n+        'default': {\n+            'ENGINE': 'django.db.backends.sqlite3',\n+            'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),\n+        }\n+    },\n+    INSTALLED_APPS=[\n+        'django.contrib.contenttypes',\n+        'django.contrib.auth',\n+    ],\n+    DEFAULT_AUTO_FIELD='django.db.models.BigAutoField',\n+)\n+\n+import django\n+django.setup()\n+\n+# Define the models\n+class OneModel(models.Model):\n+    class Meta:\n+        ordering = (\"-id\",)\n+        managed = False\n+        db_table = 'one_model'\n+        app_label = 'contenttypes'\n+    id = models.BigAutoField(primary_key=True)\n+    root = models.ForeignKey(\"OneModel\", on_delete=models.CASCADE, null=True)\n+    oneval = models.BigIntegerField(null=True)\n+\n+class TwoModel(models.Model):\n+    class Meta:\n+        managed = False\n+        db_table = 'two_model'\n+        app_label = 'contenttypes'\n+    id = models.BigAutoField(primary_key=True)\n+    record = models.ForeignKey(OneModel, on_delete=models.CASCADE)\n+    twoval = models.BigIntegerField(null=True)\n+\n+# Create tables\n+from django.db import connection\n+with connection.schema_editor() as schema_editor:\n+    try:\n+        schema_editor.delete_model(TwoModel)\n+        schema_editor.delete_model(OneModel)\n+    except:\n+        pass\n+    schema_editor.create_model(OneModel)\n+    schema_editor.create_model(TwoModel)\n+\n+# Create some test data\n+one1 = OneModel.objects.create(oneval=1)\n+one2 = OneModel.objects.create(oneval=2, root=one1)\n+one3 = OneModel.objects.create(oneval=3, root=one2)\n+\n+two1 = TwoModel.objects.create(record=one1, twoval=10)\n+two2 = TwoModel.objects.create(record=one2, twoval=20)\n+two3 = TwoModel.objects.create(record=one3, twoval=30)\n+\n+# Test the queries\n+print(\"\\nTesting order_by('record__root_id'):\")\n+qs = TwoModel.objects.filter(record__oneval__in=[1,2,3])\n+qs = qs.order_by(\"record__root_id\")\n+print(qs.query)\n+\n+print(\"\\nTesting order_by('record__root'):\")\n+qs = TwoModel.objects.filter(record__oneval__in=[1,2,3])\n+qs = qs.order_by(\"record__root\")\n+print(qs.query)\n+\n+print(\"\\nTesting order_by('-record__root_id'):\")\n+qs = TwoModel.objects.filter(record__oneval__in=[1,2,3])\n+qs = qs.order_by(\"-record__root_id\")\n+print(qs.query)\n+\n+print(\"\\nTesting order_by('record__root__id'):\")\n+qs = TwoModel.objects.filter(record__oneval__in=[1,2,3])\n+qs = qs.order_by(\"record__root__id\")\n+print(qs.query)\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "OpenHands",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

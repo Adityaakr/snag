@@ -1,0 +1,140 @@
+{
+ "id": "LearnByInteract:django__django-11066",
+ "corpus": "swebench",
+ "seedId": "django__django-11066",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "4b45b6c8e4d7c9701a332e80d3b1c84209dc36e2",
+  "headSha": "LearnByInteract-django__django-11066",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 11066
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 11066
+    },
+    "title": "RenameContentType._rename() doesn't save the content type on the correct database",
+    "body": "Description\n\t\nThe commit in question:\n​https://github.com/django/django/commit/f179113e6cbc8ba0a8d4e87e1d4410fb61d63e75\nThe specific lines in question:\n​https://github.com/django/django/blob/586a9dc4295357de1f5ad0590ad34bf2bc008f79/django/contrib/contenttypes/management/__init__.py#L27\nwith transaction.atomic(using=db): \n\tcontent_type.save(update_fields={'model'})\nThe issue:\nFor some background, we run a dynamic database router and have no \"real\" databases configured in the settings file, just a default sqlite3 backend which is never actually generated or used. We forked the migrate.py management command and modified it to accept a dictionary containing database connection parameters as the --database argument. \nThe dynamic database router is based on, and very similar to this: ​https://github.com/ambitioninc/django-dynamic-db-router/blob/master/dynamic_db_router/router.py\nThis has worked beautifully for all migrations up until this point.\nThe issue we're running into is that when attempting to run a migration which contains a call to migrations.RenameModel, and while specifying the database parameters to the migrate command, the migration fails with an OperationalError, stating that no such table: django_content_types exists.\nAfter having exhaustively stepped through the traceback, it appears that even though the content_type.save call is wrapped in the with transaction.atomic(using=db) context manager, the actual database operation is being attempted on the default database (which in our case does not exist) rather than the database specified via schema_editor.connection.alias (on line 15 of the same file) and thus fails loudly.\nSo, I believe that:\ncontent_type.save(update_fields={'model'})\nshould be\ncontent_type.save(using=db, update_fields={'model'})",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:9b997d641c830091867ba1f0194d140f48936ce70ec6df85e5fbc5dffe7cee88"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-11066",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/contrib/contenttypes/management/__init__.py b/django/contrib/contenttypes/management/__init__.py\nindex 2b5f688136..4d0843aadc 100644\n--- a/django/contrib/contenttypes/management/__init__.py\n+++ b/django/contrib/contenttypes/management/__init__.py\n@@ -24,7 +24,7 @@ class RenameContentType(migrations.RunPython):\n             content_type.model = new_model\n             try:\n                 with transaction.atomic(using=db):\n-                    content_type.save(update_fields={'model'})\n+                    content_type.save(using=db, update_fields=['model'])\n             except IntegrityError:\n                 # Gracefully fallback if a stale content type causes a\n                 # conflict as remove_stale_contenttypes will take care of\n@@ -132,3 +132,4 @@ def create_contenttypes(app_config, verbosity=2, interactive=True, using=DEFAULT\n     if verbosity >= 2:\n         for ct in cts:\n             print(\"Adding content type '%s | %s'\" % (ct.app_label, ct.model))\n+\ndiff --git a/reproduce_issue.py b/reproduce_issue.py\nnew file mode 100644\nindex 0000000000..a183da27fc\n--- /dev/null\n+++ b/reproduce_issue.py\n@@ -0,0 +1,74 @@\n+import os\n+import django\n+from django.conf import settings\n+from django.db import connections\n+\n+if not settings.configured:\n+    # Configure Django settings\n+    TEST_DB = 'test_other.db'\n+    if os.path.exists(TEST_DB):\n+        os.remove(TEST_DB)\n+\n+    settings.configure(\n+        DATABASES={\n+            'default': {\n+                'ENGINE': 'django.db.backends.sqlite3',\n+                'NAME': ':memory:',  # This DB won't be used\n+            },\n+            'other': {\n+                'ENGINE': 'django.db.backends.sqlite3',\n+                'NAME': TEST_DB,\n+            },\n+        },\n+        INSTALLED_APPS=['django.contrib.contenttypes'],\n+    )\n+    django.setup()\n+\n+# Create a test router\n+class TestRouter:\n+    def allow_migrate(self, db, app_label, model_name=None, **hints):\n+        return True\n+    \n+    def db_for_write(self, model, **hints):\n+        return 'other'\n+    \n+    def db_for_read(self, model, **hints):\n+        return 'other'\n+\n+from django.contrib.contenttypes.management import RenameContentType\n+from django.db.migrations.state import ProjectState\n+from django.contrib.contenttypes.models import ContentType\n+\n+# Create the content types table in the test database\n+with connections['other'].cursor() as cursor:\n+    cursor.execute(\"\"\"\n+        CREATE TABLE IF NOT EXISTS django_content_type (\n+            id INTEGER PRIMARY KEY AUTOINCREMENT,\n+            app_label varchar(100) NOT NULL,\n+            model varchar(100) NOT NULL,\n+            UNIQUE(app_label, model)\n+        )\n+    \"\"\")\n+\n+# Add a test content type\n+ContentType.objects.using('other').create(app_label='testapp', model='oldmodel')\n+\n+# Set up a mock schema editor for the 'other' database\n+class MockSchemaEditor:\n+    def __init__(self):\n+        self.connection = connections['other']\n+\n+# Perform the rename operation\n+schema_editor = MockSchemaEditor()\n+rename_op = RenameContentType('testapp', 'oldmodel', 'newmodel')\n+state = ProjectState()\n+rename_op._rename(django.apps.apps, schema_editor, 'oldmodel', 'newmodel')\n+\n+# Verify which database was used\n+print(\"\\nContent types in 'other' database:\")\n+for ct in ContentType.objects.using('other').all():\n+    print(f\"app_label={ct.app_label}, model={ct.model}\")\n+\n+# Clean up\n+os.remove(TEST_DB)\n+\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "LearnByInteract",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

@@ -1,0 +1,142 @@
+{
+ "id": "LearnByInteract:django__django-13410",
+ "corpus": "swebench",
+ "seedId": "django__django-13410",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "580a4341cb0b4cbfc215a70afc004875a7e815f4",
+  "headSha": "LearnByInteract-django__django-13410",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 13410
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 13410
+    },
+    "title": "Bug in posix implementation of django/core/files/locks.py",
+    "body": "Description\n\t\nThe posix version of locks (the version which supports import fcntl) has a bug. The code attempts to return True to indicate success or failure acquiring a lock, but instead it always returns False. The reason is that cpython fcntl module returns None if successful, and raises an OSError to indicate failure (see ​https://docs.python.org/3/library/fcntl.html#fcntl.flock).\nAnyone interested in using the non-blocking (i.e. locks.LOCKS_NB) requires a valid return value to know if they have successfully acquired the lock.\nI believe the correct implementation should be the following:\ndiff --git a/django/core/files/locks.py b/django/core/files/locks.py\nindex c46b00b905..4938347ea7 100644\n--- a/django/core/files/locks.py\n+++ b/django/core/files/locks.py\n@@ -107,9 +107,15 @@ else:\n\t\t\t return True\n\t else:\n\t\t def lock(f, flags):\n-\t\t\tret = fcntl.flock(_fd(f), flags)\n-\t\t\treturn ret == 0\n+\t\t\ttry:\n+\t\t\t\tfcntl.flock(_fd(f), flags)\n+\t\t\t\treturn True\n+\t\t\texcept OSError:\n+\t\t\t\treturn False\n\t\t def unlock(f):\n-\t\t\tret = fcntl.flock(_fd(f), fcntl.LOCK_UN)\n-\t\t\treturn ret == 0\n+\t\t\ttry:\n+\t\t\t\tfcntl.flock(_fd(f), fcntl.LOCK_UN)\n+\t\t\t\treturn True\n+\t\t\texcept OSError:\n+\t\t\t\treturn False",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:a808385360b71fc691d73ba70d34c8ce8c60b9efcd076532e9d8922b9d812acc"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-13410",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/core/files/locks.py b/django/core/files/locks.py\nindex c46b00b905..f26b03f67f 100644\n--- a/django/core/files/locks.py\n+++ b/django/core/files/locks.py\n@@ -107,9 +107,16 @@ else:\n             return True\n     else:\n         def lock(f, flags):\n-            ret = fcntl.flock(_fd(f), flags)\n-            return ret == 0\n+            try:\n+                fcntl.flock(_fd(f), flags)\n+                return True\n+            except OSError:\n+                return False\n \n         def unlock(f):\n-            ret = fcntl.flock(_fd(f), fcntl.LOCK_UN)\n-            return ret == 0\n+            try:\n+                fcntl.flock(_fd(f), fcntl.LOCK_UN)\n+                return True\n+            except OSError:\n+                return False\n+\ndiff --git a/test_lock.py b/test_lock.py\nnew file mode 100644\nindex 0000000000..3bac22675d\n--- /dev/null\n+++ b/test_lock.py\n@@ -0,0 +1,29 @@\n+import os\n+import tempfile\n+from django.core.files import locks\n+\n+def test_file_locking():\n+    # Create a temporary file\n+    with tempfile.NamedTemporaryFile(delete=False) as temp_file:\n+        temp_path = temp_file.name\n+    \n+    # Try to acquire a lock in non-blocking mode\n+    with open(temp_path, 'w') as f1:\n+        # First lock should succeed\n+        result1 = locks.lock(f1, locks.LOCK_EX | locks.LOCK_NB)\n+        print(f\"First lock attempt: {result1}\")  # Should be True\n+        \n+        # Try to acquire another lock on the same file\n+        with open(temp_path, 'r') as f2:\n+            result2 = locks.lock(f2, locks.LOCK_EX | locks.LOCK_NB)\n+            print(f\"Second lock attempt: {result2}\")  # Should be False\n+            \n+        # Unlock the first file\n+        unlock_result = locks.unlock(f1)\n+        print(f\"Unlock result: {unlock_result}\")  # Should be True\n+\n+    # Clean up\n+    os.unlink(temp_path)\n+\n+if __name__ == \"__main__\":\n+    test_file_locking()\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "LearnByInteract",
+  "source": "rq34_manual",
+  "strength": "weak",
+  "diffPattern": "supplementary_more",
+  "correctness": "uncertain"
+ },
+ "annotatedBy": "study"
+}

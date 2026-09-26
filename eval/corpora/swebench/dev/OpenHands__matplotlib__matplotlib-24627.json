@@ -1,0 +1,140 @@
+{
+ "id": "OpenHands:matplotlib__matplotlib-24627",
+ "corpus": "swebench",
+ "seedId": "matplotlib__matplotlib-24627",
+ "input": {
+  "mode": "local",
+  "repo": "matplotlib/matplotlib",
+  "baseSha": "9d22ab09d52d279b125d8770967569de070913b2",
+  "headSha": "OpenHands-matplotlib__matplotlib-24627",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "matplotlib",
+    "repo": "matplotlib",
+    "number": 24627
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "matplotlib",
+     "repo": "matplotlib",
+     "number": 24627
+    },
+    "title": "cla(), clf() should unset the `.axes` and `.figure` attributes of deparented artists",
+    "body": "mpl2.0b3: Removing an artist from its axes unsets its `.axes` attribute, but clearing the axes does not do so.\n\n```\nIn [11]: f, a = plt.subplots(); l, = a.plot([1, 2]); l.remove(); print(l.axes)\nNone\n\nIn [12]: f, a = plt.subplots(); l, = a.plot([1, 2]); a.cla(); print(l.axes)\nAxes(0.125,0.11;0.775x0.77)\n```",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:05efc506cbb6183820ead0ee1df14d38cf1814dcab8d5f8b78b30797d2fb0095"
+   }
+  ],
+  "pr": {
+   "title": "Fix matplotlib__matplotlib-24627",
+   "body": ""
+  },
+  "diffText": "diff --git a/lib/matplotlib/axes/_base.py b/lib/matplotlib/axes/_base.py\nindex 90b0bf117e..140ba7cb84 100644\n--- a/lib/matplotlib/axes/_base.py\n+++ b/lib/matplotlib/axes/_base.py\n@@ -1308,6 +1308,18 @@ class _AxesBase(martist.Artist):\n         self._get_patches_for_fill = _process_plot_var_args(self, 'fill')\n \n         self._gridOn = mpl.rcParams['axes.grid']\n+        # Unset the .axes attribute of all artists before clearing the children list\n+        for artist in self._children:\n+            artist.axes = None\n+            if hasattr(artist, 'figure'):\n+                artist.figure = None\n+\n+        # Handle legend separately since it's not in _children\n+        if hasattr(self, 'legend_') and self.legend_ is not None:\n+            self.legend_.axes = None\n+            if hasattr(self.legend_, 'figure'):\n+                self.legend_.figure = None\n+\n         self._children = []\n         self._mouseover_set = _OrderedSet()\n         self.child_axes = []\ndiff --git a/reproduce.py b/reproduce.py\nnew file mode 100644\nindex 0000000000..b9d909f2e8\n--- /dev/null\n+++ b/reproduce.py\n@@ -0,0 +1,61 @@\n+import matplotlib.pyplot as plt\n+\n+# Test case 1: Removing an artist from its axes\n+f1, a1 = plt.subplots()\n+l1, = a1.plot([1, 2])\n+print(\"Test case 1 - Before remove():\", l1.axes)\n+l1.remove()\n+print(\"Test case 1 - After remove():\", l1.axes)\n+\n+# Test case 2: Clearing the axes with cla()\n+f2, a2 = plt.subplots()\n+l2, = a2.plot([1, 2])\n+print(\"\\nTest case 2 - Before cla():\", l2.axes)\n+a2.cla()\n+print(\"Test case 2 - After cla():\", l2.axes)\n+\n+# Test case 3: Clearing the figure with clf()\n+f3, a3 = plt.subplots()\n+l3, = a3.plot([1, 2])\n+print(\"\\nTest case 3 - Before clf():\", l3.axes)\n+f3.clf()\n+print(\"Test case 3 - After clf():\", l3.axes)\n+\n+# Test case 4: Nested artists (legend)\n+f4, a4 = plt.subplots()\n+l4, = a4.plot([1, 2], label='test')\n+leg = a4.legend()\n+print(\"\\nTest case 4 - Before cla():\")\n+print(\"Line axes:\", l4.axes)\n+print(\"Legend axes:\", leg.axes)\n+a4.cla()\n+print(\"After cla():\")\n+print(\"Line axes:\", l4.axes)\n+print(\"Legend axes:\", leg.axes)\n+\n+# Test case 5: Shared axes\n+f5, (a5_1, a5_2) = plt.subplots(1, 2, sharex=True)\n+l5_1, = a5_1.plot([1, 2])\n+l5_2, = a5_2.plot([3, 4])\n+print(\"\\nTest case 5 - Before clearing first axes:\")\n+print(\"Line 1 axes:\", l5_1.axes)\n+print(\"Line 2 axes:\", l5_2.axes)\n+a5_1.cla()\n+print(\"After clearing first axes:\")\n+print(\"Line 1 axes:\", l5_1.axes)\n+print(\"Line 2 axes:\", l5_2.axes)\n+\n+# Test case 6: Custom artist\n+class CustomArtist(plt.matplotlib.artist.Artist):\n+    def __init__(self, axes=None):\n+        super().__init__()\n+        self.axes = axes\n+\n+f6, a6 = plt.subplots()\n+custom = CustomArtist(a6)\n+a6.add_artist(custom)\n+print(\"\\nTest case 6 - Before cla():\")\n+print(\"Custom artist axes:\", custom.axes)\n+a6.cla()\n+print(\"After cla():\")\n+print(\"Custom artist axes:\", custom.axes)\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "OpenHands",
+  "source": "rq2_divergent",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

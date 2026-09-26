@@ -1,0 +1,140 @@
+{
+ "id": "gold:django__django-11490",
+ "corpus": "swebench",
+ "seedId": "django__django-11490",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "a7038adbd02c916315b16939b835f021c2ee8880",
+  "headSha": "gold-django__django-11490",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 11490
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 11490
+    },
+    "title": "Composed queries cannot change the list of columns with values()/values_list().",
+    "body": "Description\n\t\nComposed queries cannot change the list of columns when values()/values_list() is evaluated multiple times, e.g.\n>>> ReservedName.objects.create(name='a', order=2)\n>>> qs1 = ReservedName.objects.all()\n>>> print(qs1.union(qs1).values_list('name', 'order').get())\n('a', 2)\n>>> print(qs1.union(qs1).values_list('order').get())\n('a', 2)\n(see ​compiler.py#L428-L433).",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:1773cbe1cdec25c0b4cf20587653b6bf0bde3e1cd1a7f0b760498640cdb6636f"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-11490",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/db/models/sql/compiler.py b/django/db/models/sql/compiler.py\n--- a/django/db/models/sql/compiler.py\n+++ b/django/db/models/sql/compiler.py\n@@ -426,6 +426,7 @@ def get_combinator_sql(self, combinator, all):\n                 # must have the same columns list. Set the selects defined on\n                 # the query on all combined queries, if not already set.\n                 if not compiler.query.values_select and self.query.values_select:\n+                    compiler.query = compiler.query.clone()\n                     compiler.query.set_values((\n                         *self.query.extra_select,\n                         *self.query.values_select,\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "gold",
+  "source": "gold",
+  "strength": "strong"
+ },
+ "annotatedBy": "study"
+}

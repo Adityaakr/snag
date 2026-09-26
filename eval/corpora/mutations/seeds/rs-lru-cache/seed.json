@@ -1,0 +1,198 @@
+{
+  "id": "rs-lru-cache",
+  "language": "rs",
+  "annotated_by": "claude-code",
+  "split": "test",
+  "summary": "Bounded cache: LRU eviction, get updates recency, hit/miss/eviction stats, capacity ceiling.",
+  "requirements": [
+    {
+      "id": "R1",
+      "text": "When the cache is full, inserting a new key evicts the least recently used entry",
+      "implementing": [
+        {
+          "file": "src/cache.rs",
+          "symbol": "insert",
+          "remove": [
+            "if self.entries.len() >= self.capacity"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "file": "src/cache.rs",
+          "symbol": "evicts_the_least_recently_used_entry_when_full"
+        }
+      ],
+      "flip": {
+        "impl": {
+          "file": "src/cache.rs",
+          "symbol": "insert",
+          "from": ">=",
+          "to": ">"
+        },
+        "test": {
+          "file": "src/cache.rs",
+          "symbol": "evicts_the_least_recently_used_entry_when_full",
+          "from": "false",
+          "to": "true"
+        }
+      }
+    },
+    {
+      "id": "R2",
+      "text": "Reading an entry with `get` makes it the most recently used (for example with capacity 2: insert `a`, insert `b`, get `a`, insert `c` evicts `b`)",
+      "implementing": [
+        {
+          "file": "src/cache.rs",
+          "symbol": "get",
+          "remove": [
+            "let entry = self.entries.remove(index)",
+            "let value = entry.1.clone()",
+            "self.entries.push(entry)"
+          ],
+          "replace": [
+            {
+              "from": "Some(value)",
+              "to": "Some(self.entries[index].1.clone())"
+            }
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "file": "src/cache.rs",
+          "symbol": "get_marks_an_entry_as_recently_used"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "text": "`stats()` reports the number of hits, misses and evictions",
+      "implementing": [
+        {
+          "file": "src/cache.rs",
+          "symbol": "Stats"
+        },
+        {
+          "file": "src/cache.rs",
+          "symbol": "Cache"
+        },
+        {
+          "file": "src/cache.rs",
+          "symbol": "stats"
+        },
+        {
+          "file": "src/cache.rs",
+          "symbol": "new",
+          "replace": [
+            {
+              "from": "Cache { capacity: clamp_capacity(capacity), entries: Vec::new(), stats: Stats::default() }",
+              "to": "Cache { capacity: clamp_capacity(capacity), entries: Vec::new() }"
+            }
+          ]
+        },
+        {
+          "file": "src/cache.rs",
+          "symbol": "get",
+          "remove": [
+            "self.stats.misses += 1",
+            "self.stats.hits += 1"
+          ]
+        },
+        {
+          "file": "src/cache.rs",
+          "symbol": "insert",
+          "remove": [
+            "self.stats.evictions += 1"
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "file": "src/cache.rs",
+          "symbol": "stats_count_hits_misses_and_evictions"
+        }
+      ],
+      "partial": {
+        "impl": {
+          "file": "src/cache.rs",
+          "symbol": "insert",
+          "contains": "self.stats.evictions += 1"
+        },
+        "test": {
+          "file": "src/cache.rs",
+          "symbol": "stats_count_hits_misses_and_evictions",
+          "contains": "stats.evictions"
+        }
+      }
+    },
+    {
+      "id": "R4",
+      "text": "`Cache::new` clamps capacities above 10000 down to 10000",
+      "implementing": [
+        {
+          "file": "src/cache.rs",
+          "symbol": "MAX_CAPACITY"
+        },
+        {
+          "file": "src/cache.rs",
+          "symbol": "clamp_capacity"
+        },
+        {
+          "file": "src/cache.rs",
+          "symbol": "new",
+          "replace": [
+            {
+              "from": "capacity: clamp_capacity(capacity)",
+              "to": "capacity"
+            }
+          ]
+        }
+      ],
+      "tests": [
+        {
+          "file": "src/cache.rs",
+          "symbol": "clamps_capacity_to_the_maximum"
+        }
+      ],
+      "flip": {
+        "impl": {
+          "file": "src/cache.rs",
+          "symbol": "MAX_CAPACITY",
+          "from": "10_000",
+          "to": "1_000"
+        },
+        "test": {
+          "file": "src/cache.rs",
+          "symbol": "clamps_capacity_to_the_maximum",
+          "from": "10_000",
+          "to": "1_000"
+        }
+      },
+      "unwire": {
+        "file": "src/cache.rs",
+        "symbol": "new",
+        "callee": "clamp_capacity"
+      }
+    }
+  ],
+  "incidental": [],
+  "config": {
+    "file": "src/config.rs",
+    "symbol": "DEFAULT_CAPACITY",
+    "from": "128",
+    "to": "16"
+  },
+  "unrelatedTest": {
+    "file": "src/cache.rs",
+    "symbol": "replaces_the_value_of_an_existing_key"
+  },
+  "unrelatedCode": {
+    "file": "src/cache.rs",
+    "symbol": "keys",
+    "rename": {
+      "from": "out",
+      "to": "names"
+    }
+  }
+}

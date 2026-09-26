@@ -1,0 +1,142 @@
+{
+ "id": "LearnByInteract:django__django-12325",
+ "corpus": "swebench",
+ "seedId": "django__django-12325",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "29c126bb349526b5f1cd78facbe9f25906f18563",
+  "headSha": "LearnByInteract-django__django-12325",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 12325
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 12325
+    },
+    "title": "pk setup for MTI to parent get confused by multiple OneToOne references.",
+    "body": "Description\n\t\nclass Document(models.Model):\n\tpass\nclass Picking(Document):\n\tdocument_ptr = models.OneToOneField(Document, on_delete=models.CASCADE, parent_link=True, related_name='+')\n\torigin = models.OneToOneField(Document, related_name='picking', on_delete=models.PROTECT)\nproduces django.core.exceptions.ImproperlyConfigured: Add parent_link=True to appname.Picking.origin.\nclass Picking(Document):\n\torigin = models.OneToOneField(Document, related_name='picking', on_delete=models.PROTECT)\n\tdocument_ptr = models.OneToOneField(Document, on_delete=models.CASCADE, parent_link=True, related_name='+')\nWorks\nFirst issue is that order seems to matter?\nEven if ordering is required \"by design\"(It shouldn't be we have explicit parent_link marker) shouldn't it look from top to bottom like it does with managers and other things?",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:dc7ad147589f3456fa63dcd319740040f0a1f2a12c1da69aac12718a50a2274c"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-12325",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/db/models/base.py b/django/db/models/base.py\nindex 8ea6c05ef9..b22701346b 100644\n--- a/django/db/models/base.py\n+++ b/django/db/models/base.py\n@@ -200,11 +200,20 @@ class ModelBase(type):\n             # Skip concrete parent classes.\n             if base != new_class and not base._meta.abstract:\n                 continue\n-            # Locate OneToOneField instances.\n+            # Locate OneToOneField instances marked as parent links\n+            parent_links_count = {}\n             for field in base._meta.local_fields:\n-                if isinstance(field, OneToOneField):\n+                if isinstance(field, OneToOneField) and getattr(field.remote_field, 'parent_link', False):\n                     related = resolve_relation(new_class, field.remote_field.model)\n-                    parent_links[make_model_tuple(related)] = field\n+                    related_tuple = make_model_tuple(related)\n+                    parent_links_count[related_tuple] = parent_links_count.get(related_tuple, 0) + 1\n+                    if parent_links_count[related_tuple] > 1:\n+                        raise ValueError(\n+                            \"Multiple parent links found for '%s' - only one link \"\n+                            \"can be marked as parent_link=True\" % related.__name__\n+                        )\n+                    parent_links[related_tuple] = field\n+\n \n         # Track fields inherited from base models.\n         inherited_attributes = set()\n@@ -1913,3 +1922,5 @@ def model_unpickle(model_id):\n \n \n model_unpickle.__safe_for_unpickle__ = True\n+\n+\ndiff --git \"a/django/db/models/base.py\\\"\" \"b/django/db/models/base.py\\\"\"\nnew file mode 100644\nindex 0000000000..a134692239\n--- /dev/null\n+++ \"b/django/db/models/base.py\\\"\"\n@@ -0,0 +1,13 @@\n+# Locate OneToOneField instances marked as parent links\n+            parent_links_count = {}\n+            for field in base._meta.local_fields:\n+                if isinstance(field, OneToOneField) and getattr(field.remote_field, 'parent_link', False):\n+                    related = resolve_relation(new_class, field.remote_field.model)\n+                    related_tuple = make_model_tuple(related)\n+                    parent_links_count[related_tuple] = parent_links_count.get(related_tuple, 0) + 1\n+                    if parent_links_count[related_tuple] > 1:\n+                        raise ValueError(\n+                            \"Multiple parent links found for '%s' - only one link \"\n+                            \"can be marked as parent_link=True\" % related.__name__\n+                        )\n+                    parent_links[related_tuple] = field\ndiff --git a/test_mti.py b/test_mti.py\nnew file mode 100644\nindex 0000000000..bbcc83180c\n--- /dev/null\n+++ b/test_mti.py\n@@ -0,0 +1,34 @@\n+from django.db import models\n+from django.conf import settings\n+import django\n+import os\n+\n+# Configure minimal Django settings\n+settings.configure(\n+    DATABASES={\n+        'default': {\n+            'ENGINE': 'django.db.backends.sqlite3',\n+            'NAME': ':memory:',\n+        }\n+    },\n+    INSTALLED_APPS=[\n+        'django.contrib.contenttypes',\n+    ],\n+)\n+django.setup()\n+\n+# Define the models that demonstrate the issue\n+class Document(models.Model):\n+    class Meta:\n+        app_label = 'django.contrib.contenttypes'\n+\n+class Picking(Document):\n+    # Multiple fields with parent_link=True should raise an error\n+    document_ptr = models.OneToOneField(Document, on_delete=models.CASCADE, parent_link=True, related_name='+')\n+    origin = models.OneToOneField(Document, related_name='picking', on_delete=models.PROTECT, parent_link=True)\n+    \n+    class Meta:\n+        app_label = 'django.contrib.contenttypes'\n+\n+print(\"Model created successfully\")\n+\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "LearnByInteract",
+  "source": "rq34_manual",
+  "strength": "weak",
+  "diffPattern": "supplementary_more",
+  "correctness": "uncertain"
+ },
+ "annotatedBy": "study"
+}

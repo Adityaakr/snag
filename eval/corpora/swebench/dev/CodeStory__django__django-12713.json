@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:django__django-12713",
+ "corpus": "swebench",
+ "seedId": "django__django-12713",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "5b884d45ac5b76234eca614d90c83b347294c332",
+  "headSha": "CodeStory-django__django-12713",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 12713
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 12713
+    },
+    "title": "Allow overridding widget in formfield_for_manytomany().",
+    "body": "Description\n\t \n\t\t(last modified by Mariusz Felisiak)\n\t \nIt does not work when I set widget param to function formfield_for_manytomany().\nThis is different from the formfield_for_foreignkey() function.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:5c3ca07c8cd6905410a1f59f2a88a3e9fabd22c326f12158fde6d221612e6f59"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-12713",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/contrib/admin/options.py b/django/contrib/admin/options.py\nindex 69a5fbf389..db7df891e3 100644\n--- a/django/contrib/admin/options.py\n+++ b/django/contrib/admin/options.py\n@@ -249,16 +249,17 @@ class BaseModelAdmin(metaclass=forms.MediaDefiningClass):\n             return None\n         db = kwargs.get('using')\n \n-        autocomplete_fields = self.get_autocomplete_fields(request)\n-        if db_field.name in autocomplete_fields:\n-            kwargs['widget'] = AutocompleteSelectMultiple(db_field.remote_field, self.admin_site, using=db)\n-        elif db_field.name in self.raw_id_fields:\n-            kwargs['widget'] = widgets.ManyToManyRawIdWidget(db_field.remote_field, self.admin_site, using=db)\n-        elif db_field.name in [*self.filter_vertical, *self.filter_horizontal]:\n-            kwargs['widget'] = widgets.FilteredSelectMultiple(\n-                db_field.verbose_name,\n-                db_field.name in self.filter_vertical\n-            )\n+        if 'widget' not in kwargs:\n+            autocomplete_fields = self.get_autocomplete_fields(request)\n+            if db_field.name in autocomplete_fields:\n+                kwargs['widget'] = AutocompleteSelectMultiple(db_field.remote_field, self.admin_site, using=db)\n+            elif db_field.name in self.raw_id_fields:\n+                kwargs['widget'] = widgets.ManyToManyRawIdWidget(db_field.remote_field, self.admin_site, using=db)\n+            elif db_field.name in [*self.filter_vertical, *self.filter_horizontal]:\n+                kwargs['widget'] = widgets.FilteredSelectMultiple(\n+                    db_field.verbose_name,\n+                    db_field.name in self.filter_vertical\n+                )\n \n         if 'queryset' not in kwargs:\n             queryset = self.get_field_queryset(db, db_field, request)\ndiff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..2be3710c76\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,43 @@\n+import os\n+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'django.conf.global_settings')\n+import django\n+from django.conf import settings\n+if not settings.configured:\n+    settings.configure(\n+        INSTALLED_APPS=['django.contrib.admin', 'django.contrib.contenttypes', 'django.contrib.auth'],\n+        DATABASES={'default': {'ENGINE': 'django.db.backends.sqlite3', 'NAME': ':memory:'}},\n+    )\n+django.setup()\n+\n+from django.contrib import admin\n+from django.db import models\n+from django.forms import widgets\n+\n+# Create custom widget\n+class CustomSelectMultiple(widgets.SelectMultiple):\n+    pass\n+\n+# Create models\n+class Author(models.Model):\n+    class Meta:\n+        app_label = 'admin'\n+    name = models.CharField(max_length=100)\n+\n+class Book(models.Model):\n+    class Meta:\n+        app_label = 'admin'\n+    title = models.CharField(max_length=100)\n+    authors = models.ManyToManyField(Author)\n+\n+# Create admin class\n+class BookAdmin(admin.ModelAdmin):\n+    def formfield_for_manytomany(self, db_field, request, **kwargs):\n+        if db_field.name == 'authors':\n+            kwargs['widget'] = CustomSelectMultiple()\n+        return super().formfield_for_manytomany(db_field, request, **kwargs)\n+\n+# Test the widget handling\n+admin_site = admin.AdminSite()\n+book_admin = BookAdmin(Book, admin_site)\n+formfield = book_admin.formfield_for_manytomany(Book._meta.get_field('authors'), None, widget=CustomSelectMultiple())\n+print(f\"Widget class being used: {formfield.widget.__class__.__name__}\")\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

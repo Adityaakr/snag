@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:django__django-12774",
+ "corpus": "swebench",
+ "seedId": "django__django-12774",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "67f9d076cfc1858b94f9ed6d1a5ce2327dcc8d0d",
+  "headSha": "CodeStory-django__django-12774",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 12774
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 12774
+    },
+    "title": "Allow QuerySet.in_bulk() for fields with total UniqueConstraints.",
+    "body": "Description\n\t\nIf a field is unique by UniqueConstraint instead of unique=True running in_bulk() on that field will fail.\nConsider:\nclass Article(models.Model):\n\tslug = models.CharField(max_length=255)\n\t\n\tclass Meta:\n\t\tconstraints = [\n\t\t\tmodels.UniqueConstraint(fields=[\"slug\"], name=\"%(app_label)s_%(class)s_slug_unq\")\n\t\t]\n>>> Article.objects.in_bulk(field_name=\"slug\")\nTraceback (most recent call last):\n File \"/usr/local/lib/python3.8/code.py\", line 90, in runcode\n\texec(code, self.locals)\n File \"<console>\", line 1, in <module>\n File \"/app/venv/lib/python3.8/site-packages/django/db/models/manager.py\", line 82, in manager_method\n\treturn getattr(self.get_queryset(), name)(*args, **kwargs)\n File \"/app/venv/lib/python3.8/site-packages/django/db/models/query.py\", line 680, in in_bulk\n\traise ValueError(\"in_bulk()'s field_name must be a unique field but %r isn't.\" % field_name)\nValueError: in_bulk()'s field_name must be a unique field but 'slug' isn't.\nIt should be pretty simple to fix this and I have a patch if accepted.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:a01481c8fe839abc9487019a0f81dacfe474e544227f38d75e2af4b20ea8eb2e"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-12774",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/db/models/query.py b/django/db/models/query.py\nindex d9c9b0db04..7bb6db95b2 100644\n--- a/django/db/models/query.py\n+++ b/django/db/models/query.py\n@@ -15,7 +15,7 @@ from django.db import (\n     DJANGO_VERSION_PICKLE_KEY, IntegrityError, NotSupportedError, connections,\n     router, transaction,\n )\n-from django.db.models import AutoField, DateField, DateTimeField, sql\n+from django.db.models import AutoField, DateField, DateTimeField, sql, UniqueConstraint\n from django.db.models.constants import LOOKUP_SEP\n from django.db.models.deletion import Collector\n from django.db.models.expressions import Case, Expression, F, Value, When\n@@ -689,8 +689,17 @@ class QuerySet:\n         \"\"\"\n         assert not self.query.is_sliced, \\\n             \"Cannot use 'limit' or 'offset' with in_bulk\"\n-        if field_name != 'pk' and not self.model._meta.get_field(field_name).unique:\n-            raise ValueError(\"in_bulk()'s field_name must be a unique field but %r isn't.\" % field_name)\n+        if field_name != 'pk':\n+            field = self.model._meta.get_field(field_name)\n+            is_unique = field.unique\n+            if not is_unique:\n+                # Check if there's a UniqueConstraint that makes this field unique\n+                for constraint in self.model._meta.constraints:\n+                    if isinstance(constraint, UniqueConstraint) and constraint.fields == (field_name,) and constraint.condition is None:\n+                        is_unique = True\n+                        break\n+            if not is_unique:\n+                raise ValueError(\"in_bulk()'s field_name must be a unique field but %r isn't.\" % field_name)\n         if id_list is not None:\n             if not id_list:\n                 return {}\ndiff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..671652235a\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,45 @@\n+from django.db import models\n+from django.conf import settings\n+import os\n+\n+# Configure minimal settings\n+settings.configure(\n+    DATABASES={\n+        'default': {\n+            'ENGINE': 'django.db.backends.sqlite3',\n+            'NAME': ':memory:',\n+        }\n+    },\n+    INSTALLED_APPS=[],\n+    DEFAULT_AUTO_FIELD='django.db.models.AutoField',\n+)\n+\n+import django\n+django.setup()\n+\n+# Create your test model\n+class Article(models.Model):\n+    slug = models.CharField(max_length=255)\n+    \n+    class Meta:\n+        app_label = 'myapp'\n+        constraints = [\n+            models.UniqueConstraint(fields=[\"slug\"], name=\"article_slug_unq\")\n+        ]\n+\n+# Create the tables\n+from django.db import connection\n+with connection.schema_editor() as schema_editor:\n+    schema_editor.create_model(Article)\n+\n+# Create some test data\n+Article.objects.create(slug=\"test-1\")\n+Article.objects.create(slug=\"test-2\")\n+\n+# Try to use in_bulk with the uniquely constrained field\n+try:\n+    result = Article.objects.in_bulk(field_name=\"slug\")\n+    print(\"Success! in_bulk worked with UniqueConstraint field\")\n+    print(f\"Result: {result}\")\n+except ValueError as e:\n+    print(f\"Error occurred as expected: {str(e)}\")\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

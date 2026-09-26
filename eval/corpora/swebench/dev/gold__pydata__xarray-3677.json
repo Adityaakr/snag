@@ -1,0 +1,140 @@
+{
+ "id": "gold:pydata__xarray-3677",
+ "corpus": "swebench",
+ "seedId": "pydata__xarray-3677",
+ "input": {
+  "mode": "local",
+  "repo": "pydata/xarray",
+  "baseSha": "ef6e6a7b86f8479b9a1fecf15ad5b88a2326b31e",
+  "headSha": "gold-pydata__xarray-3677",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "pydata",
+    "repo": "xarray",
+    "number": 3677
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "pydata",
+     "repo": "xarray",
+     "number": 3677
+    },
+    "title": "Merging dataArray into dataset using dataset method fails",
+    "body": "While it's possible to merge a dataset and a dataarray object using the top-level `merge()` function, if you try the same thing with the `ds.merge()` method it fails.\r\n\r\n```python\r\nimport xarray as xr\r\n\r\nds = xr.Dataset({'a': 0})\r\nda = xr.DataArray(1, name='b')\r\n\r\nexpected = xr.merge([ds, da])  # works fine\r\nprint(expected)\r\n\r\nds.merge(da)  # fails\r\n```\r\n\r\nOutput:\r\n```\r\n<xarray.Dataset>\r\nDimensions:  ()\r\nData variables:\r\n    a        int64 0\r\n    b        int64 1\r\n\r\nTraceback (most recent call last):\r\n  File \"mwe.py\", line 6, in <module>\r\n    actual = ds.merge(da)\r\n  File \"/home/tegn500/Documents/Work/Code/xarray/xarray/core/dataset.py\", line 3591, in merge\r\n    fill_value=fill_value,\r\n  File \"/home/tegn500/Documents/Work/Code/xarray/xarray/core/merge.py\", line 835, in dataset_merge_method\r\n    objs, compat, join, priority_arg=priority_arg, fill_value=fill_value\r\n  File \"/home/tegn500/Documents/Work/Code/xarray/xarray/core/merge.py\", line 548, in merge_core\r\n    coerced = coerce_pandas_values(objects)\r\n  File \"/home/tegn500/Documents/Work/Code/xarray/xarray/core/merge.py\", line 394, in coerce_pandas_values\r\n    for k, v in obj.items():\r\n  File \"/home/tegn500/Documents/Work/Code/xarray/xarray/core/common.py\", line 233, in __getattr__\r\n    \"{!r} object has no attribute {!r}\".format(type(self).__name__, name)\r\nAttributeError: 'DataArray' object has no attribute 'items'\r\n```",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:27b0c7c3d90d2fe6c4e738aac1e945117ddaea3d54d7fdd7ea375deb69dfb161"
+   }
+  ],
+  "pr": {
+   "title": "Fix pydata__xarray-3677",
+   "body": ""
+  },
+  "diffText": "diff --git a/xarray/core/dataset.py b/xarray/core/dataset.py\n--- a/xarray/core/dataset.py\n+++ b/xarray/core/dataset.py\n@@ -3604,6 +3604,7 @@ def merge(\n             If any variables conflict (see ``compat``).\n         \"\"\"\n         _check_inplace(inplace)\n+        other = other.to_dataset() if isinstance(other, xr.DataArray) else other\n         merge_result = dataset_merge_method(\n             self,\n             other,\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "gold",
+  "source": "gold",
+  "strength": "strong"
+ },
+ "annotatedBy": "study"
+}

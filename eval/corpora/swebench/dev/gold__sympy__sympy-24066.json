@@ -1,0 +1,140 @@
+{
+ "id": "gold:sympy__sympy-24066",
+ "corpus": "swebench",
+ "seedId": "sympy__sympy-24066",
+ "input": {
+  "mode": "local",
+  "repo": "sympy/sympy",
+  "baseSha": "514579c655bf22e2af14f0743376ae1d7befe345",
+  "headSha": "gold-sympy__sympy-24066",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "sympy",
+    "repo": "sympy",
+    "number": 24066
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "sympy",
+     "repo": "sympy",
+     "number": 24066
+    },
+    "title": "SI._collect_factor_and_dimension() cannot properly detect that exponent is dimensionless",
+    "body": "How to reproduce:\r\n\r\n```python\r\nfrom sympy import exp\r\nfrom sympy.physics import units\r\nfrom sympy.physics.units.systems.si import SI\r\n\r\nexpr = units.second / (units.ohm * units.farad)\r\ndim = SI._collect_factor_and_dimension(expr)[1]\r\n\r\nassert SI.get_dimension_system().is_dimensionless(dim)\r\n\r\nbuggy_expr = 100 + exp(expr)\r\nSI._collect_factor_and_dimension(buggy_expr)\r\n\r\n# results in ValueError: Dimension of \"exp(second/(farad*ohm))\" is Dimension(time/(capacitance*impedance)), but it should be Dimension(1)\r\n```",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:cc2a3fad7d7fcb86a0ece16ff670d966ef0dc75bf1d82ac414d2a0391e9722af"
+   }
+  ],
+  "pr": {
+   "title": "Fix sympy__sympy-24066",
+   "body": ""
+  },
+  "diffText": "diff --git a/sympy/physics/units/unitsystem.py b/sympy/physics/units/unitsystem.py\n--- a/sympy/physics/units/unitsystem.py\n+++ b/sympy/physics/units/unitsystem.py\n@@ -190,10 +190,9 @@ def _collect_factor_and_dimension(self, expr):\n                 dim /= idim**count\n             return factor, dim\n         elif isinstance(expr, Function):\n-            fds = [self._collect_factor_and_dimension(\n-                arg) for arg in expr.args]\n-            return (expr.func(*(f[0] for f in fds)),\n-                    *(d[1] for d in fds))\n+            fds = [self._collect_factor_and_dimension(arg) for arg in expr.args]\n+            dims = [Dimension(1) if self.get_dimension_system().is_dimensionless(d[1]) else d[1] for d in fds]\n+            return (expr.func(*(f[0] for f in fds)), *dims)\n         elif isinstance(expr, Dimension):\n             return S.One, expr\n         else:\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "gold",
+  "source": "gold",
+  "strength": "strong"
+ },
+ "annotatedBy": "study"
+}

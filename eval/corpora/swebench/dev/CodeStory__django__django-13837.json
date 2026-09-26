@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:django__django-13837",
+ "corpus": "swebench",
+ "seedId": "django__django-13837",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "415f50298f97fb17f841a9df38d995ccf347dfcc",
+  "headSha": "CodeStory-django__django-13837",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 13837
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 13837
+    },
+    "title": "Allow autoreloading of `python -m pkg_other_than_django runserver`",
+    "body": "Description\n\t \n\t\t(last modified by William Schwartz)\n\t \n​django.utils.autoreload.get_child_arguments detects if Python was launched as python -m django. Currently it detects only when ​-m was passed specifically django (and only in Python environments in which __file__ is set on modules, which is ​not true of all Python environments). Like #32177, this ticket aims to remove one impediment to creating Django-based command-line utilities that have their own ​__main__ sub-module while overriding Django's built-in management commands—in this case, runserver.\nThe fix, which I have submitted in the ​attached PR, is to use Python's ​documented way of determining if -m was used in get_child_arguments:\nThe top-level __main__ module is always the entry point of a ​complete Python program.\n __main__.__spec__ is not None ​if and only if Python was launched with -m or the name of a \"directory, zipfile or other sys.path entry.\" In the latter cases, the ​documentation says\nIf the script name refers to a directory or zipfile, the script name is added to the start of sys.path and the __main__.py file in that location is executed as the __main__ module.\nHence __main__.__spec__.parent (which is ​usually but not always __main__.__package__) exists and is the empty string when Python is started with the name of a directory or zip file.\nTherefore Python was started with -m pkg if and only if __main__.__spec__.parent == \"pkg\".\nFollowing this algorithm is guaranteed to work as long as Python obeys its own documentation, and has the side benefit of avoiding use of __file__.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:a6ac5a80c489336e65a96da026a44184a123f705f587603d1609ad153b63f06d"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-13837",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/utils/autoreload.py b/django/utils/autoreload.py\nindex b8efb9f881..c8996f85d1 100644\n--- a/django/utils/autoreload.py\n+++ b/django/utils/autoreload.py\n@@ -215,16 +215,23 @@ def get_child_arguments():\n     Return the executable. This contains a workaround for Windows if the\n     executable is reported to not have the .exe extension which can cause bugs\n     on reloading.\n+    \n+    This function detects if Python was launched with -m pkg using Python's\n+    documented way: checking __main__.__spec__.parent.\n     \"\"\"\n-    import django.__main__\n-    django_main_path = Path(django.__main__.__file__)\n+    import __main__\n     py_script = Path(sys.argv[0])\n \n     args = [sys.executable] + ['-W%s' % o for o in sys.warnoptions]\n-    if py_script == django_main_path:\n-        # The server was started with `python -m django runserver`.\n-        args += ['-m', 'django']\n-        args += sys.argv[1:]\n+    \n+    # Check if Python was launched with -m pkg using __main__.__spec__.parent\n+    if hasattr(__main__, '__spec__') and __main__.__spec__ is not None:\n+        parent = __main__.__spec__.parent\n+        if parent:  # Not empty string (which would indicate directory/zipfile)\n+            # The server was started with `python -m pkg runserver`\n+            args += ['-m', parent]\n+            args += sys.argv[1:]\n+            return args\n     elif not py_script.exists():\n         # sys.argv[0] may not exist for several reasons on Windows.\n         # It may exist with a .exe extension or have a -script.py suffix.\ndiff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..ec38a2bb2b\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,56 @@\n+import os\n+import sys\n+import tempfile\n+from pathlib import Path\n+\n+# Create a temporary package directory\n+with tempfile.TemporaryDirectory() as temp_dir:\n+    pkg_dir = Path(temp_dir) / \"test_pkg\"\n+    pkg_dir.mkdir()\n+    \n+    # Create __init__.py files\n+    (pkg_dir / \"__init__.py\").write_text(\"\")\n+    \n+    # Create settings.py with minimal settings\n+    (pkg_dir / \"settings.py\").write_text(\"\"\"\n+SECRET_KEY = 'dummy'\n+DEBUG = True\n+ALLOWED_HOSTS = ['*']\n+ROOT_URLCONF = 'test_pkg.urls'\n+INSTALLED_APPS = []\n+DATABASES = {\n+    'default': {\n+        'ENGINE': 'django.db.backends.sqlite3',\n+        'NAME': ':memory:',\n+    }\n+}\n+MIDDLEWARE = []\n+TEMPLATES = []\n+\"\"\")\n+    \n+    # Create urls.py\n+    (pkg_dir / \"urls.py\").write_text(\"\"\"\n+from django.urls import path\n+urlpatterns = []\n+\"\"\")\n+    \n+    # Create __main__.py that uses Django's runserver\n+    (pkg_dir / \"__main__.py\").write_text(\"\"\"\n+import os\n+import sys\n+import django\n+from django.core.management import execute_from_command_line\n+\n+if __name__ == '__main__':\n+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'test_pkg.settings')\n+    django.setup()\n+    execute_from_command_line(sys.argv)\n+\"\"\")\n+    \n+    # Change to the temp directory and add it to Python path\n+    os.chdir(temp_dir)\n+    sys.path.insert(0, temp_dir)\n+    \n+    # Try to run the package with -m\n+    print(\"Running: python -m test_pkg runserver\")\n+    os.system(f\"{sys.executable} -m test_pkg runserver\")\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq2_divergent",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

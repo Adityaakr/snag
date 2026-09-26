@@ -1,0 +1,32 @@
+{
+  "fetchedAt": "2026-09-26",
+  "swebench_verified": {
+    "url": "https://datasets-server.huggingface.co/rows?dataset=princeton-nlp%2FSWE-bench_Verified&config=default&split=test",
+    "license": "unspecified (upstream project licenses; harness MIT)"
+  },
+  "patchdiff": {
+    "url": "https://zenodo.org/api/records/18258368/files/PatchDiff_0115_1.zip/content",
+    "doi": "10.5281/zenodo.18258368",
+    "license": "CC-BY-4.0",
+    "citation": "You Wang, Michael Pradel, Zhongxin Liu. Are 'Solved Issues' in SWE-bench Really Solved Correctly? ICSE 2026."
+  },
+  "sha256": {
+    "swebench_verified.jsonl": "c8c9570f76d0336864cb39252526d1967bf5def532d83cf3a5fe0e37e7ee40cb",
+    "patchdiff/results/RQ34.csv": "44ac55898d4a9212ba0d3a980d1cb6401c59c562bfc1aee40aa8dadfcd623289",
+    "patchdiff/tool_results/20241029_OpenHands-CodeAct-2.1-sonnet-20241022_verified/all_preds.jsonl": "85600971d3a9b270517197236168284c1e52ffe7c770286ab0f3f91518042808",
+    "patchdiff/tool_results/20241029_OpenHands-CodeAct-2.1-sonnet-20241022_verified/results.json": "4dcf8bbaa5c2a7d77ba0c5aea3940449aabd307c9e72eaad58da119301ff767b",
+    "patchdiff/results/RQ1_OpenHands_runall.json": "9e6913c0f169d5d62261ba8266400675cdbda3f531cd6d9cc3a92d5b6465421c",
+    "patchdiff/tool_results/20241221_codestory_midwit_claude-3-5-sonnet_swe-search/all_preds.jsonl": "74070d038a8dfb1e814f4f7bf6730c81643446688d4232b6553ecb93caa95bac",
+    "patchdiff/tool_results/20241221_codestory_midwit_claude-3-5-sonnet_swe-search/results.json": "77b12ce70290b0f12c43c6196eb0a3fc49cec57d24cfa21f9513a2c4d6260fc8",
+    "patchdiff/results/RQ1_CodeStory_runall.json": "30b2e153be517c08731a5ba273ebd0df91c509b7fd17d5cce12d5fb5acee033d",
+    "patchdiff/tool_results/20250110_learn_by_interact_claude3.5/all_preds.jsonl": "4bbb5122d0707324e8f54a04407eaa56dee650d715515b8d5378650e12ee28e5",
+    "patchdiff/tool_results/20250110_learn_by_interact_claude3.5/results.json": "9b980027f8badcb56c8ffadc801bac25f81e0dfc948f529f733878f722c09773",
+    "patchdiff/results/RQ1_LearnByInteract_runall.json": "b6471f1b6a4d66cb3dc08c001d2a908e9a9ca179f273edb4083bfa20cd004cf7",
+    "zip:results/RQ2_OpenHands_difftests.json": "0386857b2addcef4e65394a69986c4642320bde6409d87341bdac19e602a2685",
+    "patchdiff/derived/RQ2_OpenHands_divergent.json": "176c5edc5a68e734faaaf0f40e7f8883fe3c0ad1f973a203aeaf23a052a89059",
+    "zip:results/RQ2_CodeStory_difftests.json": "606bfdc0b8338aa60a542698ced2d9ae8d5660172994f0646e17bb14c6763a64",
+    "patchdiff/derived/RQ2_CodeStory_divergent.json": "910c7298576d8e6f58c39ef71695493a059c2dcaf40d81de49fcac1328f39c52",
+    "zip:results/RQ2_LearnByInteract_difftests.json": "2a7817091e633b77c8772aa567f59d7ffb0c6c6302e045e23d13acbbf8e18404",
+    "patchdiff/derived/RQ2_LearnByInteract_divergent.json": "5af8db52a7d499c6970a8143b1bc4a5e5b29067aac04b357ea8000dd6e8e25c4"
+  }
+}

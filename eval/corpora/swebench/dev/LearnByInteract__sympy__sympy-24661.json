@@ -1,0 +1,140 @@
+{
+ "id": "LearnByInteract:sympy__sympy-24661",
+ "corpus": "swebench",
+ "seedId": "sympy__sympy-24661",
+ "input": {
+  "mode": "local",
+  "repo": "sympy/sympy",
+  "baseSha": "a36caf5c74fe654cedc488e8a8a05fad388f8406",
+  "headSha": "LearnByInteract-sympy__sympy-24661",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "sympy",
+    "repo": "sympy",
+    "number": 24661
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "sympy",
+     "repo": "sympy",
+     "number": 24661
+    },
+    "title": "The evaluate=False parameter to `parse_expr` is ignored for relationals",
+    "body": "See also #22305 and #22098\r\n\r\nThis inequality evaluates even though `evaluate=False` is given:\r\n```python\r\nIn [14]: parse_expr('1 < 2', evaluate=False)\r\nOut[14]: True\r\n```\r\nThe result that should be returned is:\r\n```python\r\nIn [15]: Lt(1, 2, evaluate=False)\r\nOut[15]: 1 < 2\r\n```",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:593e14a4b28cad0a05270c9a89b6ad57e81f9c3d5648d62562b4ea44a6ec287a"
+   }
+  ],
+  "pr": {
+   "title": "Fix sympy__sympy-24661",
+   "body": ""
+  },
+  "diffText": "diff --git a/reproduce.py b/reproduce.py\nnew file mode 100644\nindex 0000000000..d4060f7f84\n--- /dev/null\n+++ b/reproduce.py\n@@ -0,0 +1,13 @@\n+from sympy.parsing.sympy_parser import parse_expr\n+from sympy import Lt\n+\n+# Should evaluate to True\n+print(\"With evaluate=True:\")\n+print(parse_expr('1 < 2'))\n+\n+# Should not evaluate\n+print(\"\\nWith evaluate=False:\")\n+print(parse_expr('1 < 2', evaluate=False))\n+\n+print(\"\\nExpected behavior (using Lt directly):\")\n+print(Lt(1, 2, evaluate=False))\ndiff --git a/sympy/parsing/sympy_parser.py b/sympy/parsing/sympy_parser.py\nindex 52711d1324..b96d5b5072 100644\n--- a/sympy/parsing/sympy_parser.py\n+++ b/sympy/parsing/sympy_parser.py\n@@ -1192,13 +1192,39 @@ def visit_Call(self, node):\n             new_node.keywords.append(ast.keyword(arg='evaluate', value=ast.NameConstant(value=False, ctx=ast.Load())))\n         return new_node\n \n+    def visit_Compare(self, node):\n+        \"\"\"Handle comparison operations with evaluate=False.\"\"\"\n+        if len(node.ops) == 1 and len(node.comparators) == 1:\n+            op = node.ops[0]\n+            op_map = {\n+                ast.Lt: 'Lt',\n+\n+                ast.Gt: 'Gt', \n+                ast.LtE: 'Le',\n+                ast.GtE: 'Ge',\n+                ast.Eq: 'Eq',\n+                ast.NotEq: 'Ne'\n+            }\n+            if op.__class__ in op_map:\n+                return ast.Call(\n+                    func=ast.Name(id=op_map[op.__class__], ctx=ast.Load()),\n+                    args=[self.visit(node.left), self.visit(node.comparators[0])],\n+                    keywords=[ast.keyword(arg='evaluate', value=ast.NameConstant(value=False))],\n+                    starargs=None,\n+                    kwargs=None\n+                )\n+        return node\n+\n \n _transformation = {  # items can be added but never re-ordered\n+\n 0: lambda_notation,\n 1: auto_symbol,\n 2: repeated_decimals,\n 3: auto_number,\n 4: factorial_notation,\n+\n+\n 5: implicit_multiplication_application,\n 6: convert_xor,\n 7: implicit_application,\n@@ -1239,3 +1265,10 @@ def __getitem__(self, t):\n         return tuple([_transformation[_] for _ in i])\n \n T = _T()\n+\n+\n+\n+\n+\n+\n+\ndiff --git \"a/sympy/parsing/sympy_parser.py\\\"\" \"b/sympy/parsing/sympy_parser.py\\\"\"\nnew file mode 100644\nindex 0000000000..8bb2aad4b1\n--- /dev/null\n+++ \"b/sympy/parsing/sympy_parser.py\\\"\"\n@@ -0,0 +1,13 @@\n+def visit_Compare(self, node):\n+    \"\"\"Handle comparison operations with evaluate=False.\"\"\"\n+    if len(node.ops) == 1 and len(node.comparators) == 1:\n+        op = node.ops[0]\n+        op_map = {\n+            ast.Lt: 'Lt',\n+            ast.Gt: 'Gt', \n+            ast.LtE: 'Le',\n+            ast.GtE: 'Ge',\n+            ast.Eq: 'Eq',\n+            ast.NotEq: 'Ne'\n+        }\n+\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "LearnByInteract",
+  "source": "rq2_divergent",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

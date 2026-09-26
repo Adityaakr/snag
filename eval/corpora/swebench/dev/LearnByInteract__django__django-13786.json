@@ -1,0 +1,140 @@
+{
+ "id": "LearnByInteract:django__django-13786",
+ "corpus": "swebench",
+ "seedId": "django__django-13786",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "bb64b99b78a579cb2f6178011a4cf9366e634438",
+  "headSha": "LearnByInteract-django__django-13786",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 13786
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 13786
+    },
+    "title": "squashmigrations does not unset model options when optimizing CreateModel and AlterModelOptions",
+    "body": "Description\n\t\nWhen an operation resembling AlterModelOptions(name=\"test_model\", options={}) is squashed into the corresponding CreateModel operation, model options are not cleared on the resulting new CreateModel operation object.\nCreateModel.reduce() sets the new options as options={**self.options, **operation.options} in this case (django/db/migrations/operations/models.py line 144 on commit 991dce4f), with no logic to remove options not found in operation.options as is found in AlterModelOptions.state_forwards().\nI believe this issue still exists on the master branch based on my reading of the code, but I've only tested against 2.2.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:d3b9688f8ef2dcb3c94252d9aad44ed1dd6c318c29523737771eaf89cb0ad21a"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-13786",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/db/migrations/operations/models.py b/django/db/migrations/operations/models.py\nindex dddf7c679c..79c8be5db2 100644\n--- a/django/db/migrations/operations/models.py\n+++ b/django/db/migrations/operations/models.py\n@@ -141,11 +141,12 @@ class CreateModel(ModelOperation):\n                 CreateModel(\n                     self.name,\n                     fields=self.fields,\n-                    options={**self.options, **operation.options},\n+                    options=operation.options,  # Use operation.options directly instead of merging\n                     bases=self.bases,\n                     managers=self.managers,\n                 ),\n             ]\n+\n         elif isinstance(operation, AlterTogetherOptionOperation) and self.name_lower == operation.name_lower:\n             return [\n                 CreateModel(\n@@ -905,3 +906,4 @@ class RemoveConstraint(IndexOperation):\n     @property\n     def migration_name_fragment(self):\n         return 'remove_%s_%s' % (self.model_name_lower, self.name.lower())\n+\ndiff --git a/reproduce.py b/reproduce.py\nnew file mode 100644\nindex 0000000000..bde6fa659a\n--- /dev/null\n+++ b/reproduce.py\n@@ -0,0 +1,24 @@\n+from django.db.migrations.operations.models import CreateModel, AlterModelOptions\n+\n+# Create initial model with some options\n+create_op = CreateModel(\n+    name=\"test_model\",\n+    fields=[],\n+    options={\"verbose_name\": \"Test Model\", \"indexes\": []}\n+)\n+\n+# Try to alter model options to empty dict\n+alter_op = AlterModelOptions(\n+    name=\"test_model\",\n+    options={}\n+)\n+\n+# Reduce should merge these operations\n+result = create_op.reduce(alter_op, \"testapp\")\n+\n+if result:\n+    new_create_op = result[0]\n+    print(\"Original options:\", create_op.options)\n+    print(\"New options:\", new_create_op.options)\n+    # The new options should be empty since AlterModelOptions has empty options\n+    assert new_create_op.options == {}, \"Options should be empty but got: %s\" % new_create_op.options\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "LearnByInteract",
+  "source": "rq2_divergent",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

@@ -1,0 +1,140 @@
+{
+ "id": "gold:django__django-11820",
+ "corpus": "swebench",
+ "seedId": "django__django-11820",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "c2678e49759e5c4c329bff0eeca2886267005d21",
+  "headSha": "gold-django__django-11820",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 11820
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 11820
+    },
+    "title": "models.E015 is raised when Meta.ordering contains \"pk\" of a related field.",
+    "body": "Description\n\t\nmodels.E015 is raised when Meta.ordering contains __pk of a related field, e.g.:\ntest_app.SomeModel: (models.E015) 'ordering' refers to the nonexistent field, related field, or lookup 'option__pk'.\nRegression in 440505cb2cadbe1a5b9fba246bcde6c04f51d07e.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:a4f7659abccc6dd9bfcb03784e08ea1d5087d94f3c33efd36acf1c8bba88cd3d"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-11820",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/db/models/base.py b/django/db/models/base.py\n--- a/django/db/models/base.py\n+++ b/django/db/models/base.py\n@@ -1708,9 +1708,15 @@ def _check_ordering(cls):\n             fld = None\n             for part in field.split(LOOKUP_SEP):\n                 try:\n-                    fld = _cls._meta.get_field(part)\n+                    # pk is an alias that won't be found by opts.get_field.\n+                    if part == 'pk':\n+                        fld = _cls._meta.pk\n+                    else:\n+                        fld = _cls._meta.get_field(part)\n                     if fld.is_relation:\n                         _cls = fld.get_path_info()[-1].to_opts.model\n+                    else:\n+                        _cls = None\n                 except (FieldDoesNotExist, AttributeError):\n                     if fld is None or fld.get_transform(part) is None:\n                         errors.append(\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "gold",
+  "source": "gold",
+  "strength": "strong"
+ },
+ "annotatedBy": "study"
+}

@@ -1,0 +1,140 @@
+{
+ "id": "gold:sphinx-doc__sphinx-9698",
+ "corpus": "swebench",
+ "seedId": "sphinx-doc__sphinx-9698",
+ "input": {
+  "mode": "local",
+  "repo": "sphinx-doc/sphinx",
+  "baseSha": "f050a7775dfc9000f55d023d36d925a8d02ccfa8",
+  "headSha": "gold-sphinx-doc__sphinx-9698",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "sphinx-doc",
+    "repo": "sphinx",
+    "number": 9698
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "sphinx-doc",
+     "repo": "sphinx",
+     "number": 9698
+    },
+    "title": "An index entry with parens was registered for `py:method` directive with `:property:` option",
+    "body": "### Describe the bug\n\nAn index entry with parens was registered for `py:method` directive with `:property:` option. It should not have parens.\r\n\n\n### How to Reproduce\n\n```\r\n# index.rst\r\n\r\n.. py:method:: Foo.bar\r\n   :property:\r\n\r\n.. py:property:: Foo.baz\r\n```\n\n### Expected behavior\n\nAn index entry for the property should not have parens.\n\n### Your project\n\nN/A\n\n### Screenshots\n\n<img width=\"528\" alt=\"スクリーンショット 2021-10-03 13 00 53\" src=\"https://user-images.githubusercontent.com/748828/135739148-7f404a37-159b-4032-ac68-efb0aaacb726.png\">\r\n\n\n### OS\n\nMac\n\n### Python version\n\n3.9.6\n\n### Sphinx version\n\nHEAD of 4.x\n\n### Sphinx extensions\n\n_No response_\n\n### Extra tools\n\n_No response_\n\n### Additional context\n\n_No response_",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:61bfdcf20910b6507ab0fd4a38c8f964385bc26e1766aeafafd18bc6c499def1"
+   }
+  ],
+  "pr": {
+   "title": "Fix sphinx-doc__sphinx-9698",
+   "body": ""
+  },
+  "diffText": "diff --git a/sphinx/domains/python.py b/sphinx/domains/python.py\n--- a/sphinx/domains/python.py\n+++ b/sphinx/domains/python.py\n@@ -796,7 +796,7 @@ def get_index_text(self, modname: str, name_cls: Tuple[str, str]) -> str:\n         if 'classmethod' in self.options:\n             return _('%s() (%s class method)') % (methname, clsname)\n         elif 'property' in self.options:\n-            return _('%s() (%s property)') % (methname, clsname)\n+            return _('%s (%s property)') % (methname, clsname)\n         elif 'staticmethod' in self.options:\n             return _('%s() (%s static method)') % (methname, clsname)\n         else:\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "gold",
+  "source": "gold",
+  "strength": "strong"
+ },
+ "annotatedBy": "study"
+}

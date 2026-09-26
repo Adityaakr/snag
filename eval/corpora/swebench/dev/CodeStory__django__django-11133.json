@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:django__django-11133",
+ "corpus": "swebench",
+ "seedId": "django__django-11133",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "879cc3da6249e920b8d54518a0ae06de835d7373",
+  "headSha": "CodeStory-django__django-11133",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 11133
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 11133
+    },
+    "title": "HttpResponse doesn't handle memoryview objects",
+    "body": "Description\n\t\nI am trying to write a BinaryField retrieved from the database into a HttpResponse. When the database is Sqlite this works correctly, but Postgresql returns the contents of the field as a memoryview object and it seems like current Django doesn't like this combination:\nfrom django.http import HttpResponse\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \n# String content\nresponse = HttpResponse(\"My Content\")\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\nresponse.content\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \n# Out: b'My Content'\n# This is correct\n# Bytes content\nresponse = HttpResponse(b\"My Content\")\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \nresponse.content\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \n# Out: b'My Content'\n# This is also correct\n# memoryview content\nresponse = HttpResponse(memoryview(b\"My Content\"))\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \nresponse.content\n# Out: b'<memory at 0x7fcc47ab2648>'\n# This is not correct, I am expecting b'My Content'",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:7286044e2e1f824de35ba1af276da9b309c5aa55eabdc47e5ba4458acd343996"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-11133",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/http/response.py b/django/http/response.py\nindex 6a84e193ba..507322473e 100644\n--- a/django/http/response.py\n+++ b/django/http/response.py\n@@ -233,6 +233,8 @@ class HttpResponseBase:\n             return bytes(value)\n         if isinstance(value, str):\n             return bytes(value.encode(self.charset))\n+        if isinstance(value, memoryview):\n+            return bytes(value)\n         # Handle non-string types.\n         return str(value).encode(self.charset)\n \ndiff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..7f4b026d6d\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,41 @@\n+from django.http import HttpResponse\n+from django.conf import settings\n+\n+# Configure Django settings\n+settings.configure(\n+    DEBUG=True,\n+    DEFAULT_CHARSET='utf-8'\n+)\n+\n+# Test with string content\n+response = HttpResponse(\"My Content\")\n+print(\"String content test:\")\n+print(response.content)\n+\n+# Test with bytes content\n+response = HttpResponse(b\"My Content\")\n+print(\"\\nBytes content test:\")\n+print(response.content)\n+\n+# Test with memoryview content\n+response = HttpResponse(memoryview(b\"My Content\"))\n+print(\"\\nMemoryview content test:\")\n+print(response.content)\n+\n+# Test edge cases\n+print(\"\\nEdge cases:\")\n+\n+# Empty memoryview\n+response = HttpResponse(memoryview(b\"\"))\n+print(\"\\nEmpty memoryview test:\")\n+print(response.content)\n+\n+# Non-ASCII content\n+response = HttpResponse(memoryview(\"Hello 世界\".encode('utf-8')))\n+print(\"\\nNon-ASCII memoryview test:\")\n+print(response.content)\n+\n+# Null bytes\n+response = HttpResponse(memoryview(b\"Hello\\x00World\"))\n+print(\"\\nNull bytes memoryview test:\")\n+print(response.content)\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

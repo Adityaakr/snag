@@ -1,0 +1,140 @@
+{
+ "id": "gold:sphinx-doc__sphinx-9658",
+ "corpus": "swebench",
+ "seedId": "sphinx-doc__sphinx-9658",
+ "input": {
+  "mode": "local",
+  "repo": "sphinx-doc/sphinx",
+  "baseSha": "232dbe41c5250eb7d559d40438c4743483e95f15",
+  "headSha": "gold-sphinx-doc__sphinx-9658",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "sphinx-doc",
+    "repo": "sphinx",
+    "number": 9658
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "sphinx-doc",
+     "repo": "sphinx",
+     "number": 9658
+    },
+    "title": "Inherited classes not correctly documented when mocked",
+    "body": "### Describe the bug\r\n\r\nWe're experiencing an issue when documenting classes that inherit mocked classes. However, classes which inherit other classes from our own package are ok.\r\n\r\nThis issue appears to be dependent on the `sphinx` version:\r\n\r\n- `sphinx<3.0`: Everything is OK. \r\n- `sphinx>=3.0 < 3.4.2`: Classes that inherit mocked classes are not documented. (see [sphinx #8164](https://github.com/sphinx-doc/sphinx/issues/8164)). This is fixed in `sphinx 3.4.2`. \r\n- `sphinx>=3.4.2`: The previously missing classes are now documented, but there is a problem with the \"Bases\" section in the docs. \r\n \r\nExample: In the docs for `alibi_detect.utils.pytorch.kernels.DeepKernel` in this readthedocs build https://seldon--338.org.readthedocs.build/projects/alibi-detect/en/338/api/alibi_detect.utils.pytorch.kernels.html, the base class is listed as \"Bases: `torch.nn.`\" instead of \"Bases: `torch.nn.Module`\". \r\n\r\n\r\n### How to Reproduce\r\n\r\n```\r\n$ git clone https://github.com/ascillitoe/alibi-detect.git\r\n$ cd alibi-detect\r\n$ pip install -r requirements/docs.txt\r\n$ make build_docs\r\n$ # open doc/_build/html/api/alibi_detect.utils.pytorch.kernels.html and see \"Bases\" section.\r\n```\r\n\r\n\r\n### Expected behavior\r\n\r\nThe \"Bases\" section should report `torch.nn.Module` not `torch.nn.`. \r\n\r\ni.e. see\r\nhttps://seldon--325.org.readthedocs.build/projects/alibi-detect/en/325/api/alibi_detect.utils.pytorch.kernels.html\r\n\r\n### Your project\r\n\r\nhttps://github.com/ascillitoe/alibi-detect/tree/feature_sphinx4\r\n\r\n### Screenshots\r\n\r\n### Screenshot with `sphinx==4.2`\r\n![sphinx_problem](https://user-images.githubusercontent.com/32061685/133816582-ca162b07-41c7-4b8e-98ea-781e7c659229.png)\r\n\r\n### Screenshot with `sphinx<3.0`\r\n![sphinx_working](https://user-images.githubusercontent.com/32061685/133816065-6291ce1b-96cf-4b0f-9648-7f993fc15611.png)\r\n\r\n\r\n\r\n### OS\r\n\r\nUbuntu 18.04 (used by readthedocs/build:6.0)\r\n\r\n### Python version\r\n\r\n3.8.11\r\n\r\n### Sphinx version\r\n\r\n`>=3.4.2`\r\n\r\n### Sphinx extensions\r\n\r\n    [\"sphinx.ext.autodoc\",\r\n    \"sphinx.ext.doctest\",\r\n    \"sphinx.ext.intersphinx\",\r\n    \"sphinx.ext.todo\",\r\n    \"sphinx.ext.coverage\",\r\n    \"sphinx.ext.mathjax\",\r\n    \"sphinx.ext.ifconfig\",\r\n    \"sphinx.ext.viewcode\",\r\n    \"sphinx.ext.napoleon\",\r\n    \"sphinx_autodoc_typehints\",\r\n    \"sphinxcontrib.apidoc\", \r\n    \"nbsphinx\",\r\n    \"nbsphinx_link\",  \r\n    \"myst_parser\"]\r\n\r\n\r\n### Extra tools\r\n\r\n_No response_\r\n\r\n### Additional context\r\n\r\ndemo PR:\r\nhttps://github.com/SeldonIO/alibi-detect/pull/338\r\n\r\nreadthedocs demo build:\r\nhttps://seldon--338.org.readthedocs.build/projects/alibi-detect/en/338/api/alibi_detect.utils.pytorch.kernels.html",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:3f88dc4715f66cf4ae0a98c25120442b63cd58420c4d0769441a5849c215cfd7"
+   }
+  ],
+  "pr": {
+   "title": "Fix sphinx-doc__sphinx-9658",
+   "body": ""
+  },
+  "diffText": "diff --git a/sphinx/ext/autodoc/mock.py b/sphinx/ext/autodoc/mock.py\n--- a/sphinx/ext/autodoc/mock.py\n+++ b/sphinx/ext/autodoc/mock.py\n@@ -26,6 +26,7 @@ class _MockObject:\n     \"\"\"Used by autodoc_mock_imports.\"\"\"\n \n     __display_name__ = '_MockObject'\n+    __name__ = ''\n     __sphinx_mock__ = True\n     __sphinx_decorator_args__: Tuple[Any, ...] = ()\n \n@@ -40,7 +41,7 @@ def __new__(cls, *args: Any, **kwargs: Any) -> Any:\n         return super().__new__(cls)\n \n     def __init__(self, *args: Any, **kwargs: Any) -> None:\n-        self.__qualname__ = ''\n+        self.__qualname__ = self.__name__\n \n     def __len__(self) -> int:\n         return 0\n@@ -73,6 +74,7 @@ def _make_subclass(name: str, module: str, superclass: Any = _MockObject,\n                    attributes: Any = None, decorator_args: Tuple = ()) -> Any:\n     attrs = {'__module__': module,\n              '__display_name__': module + '.' + name,\n+             '__name__': name,\n              '__sphinx_decorator_args__': decorator_args}\n     attrs.update(attributes or {})\n \n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "gold",
+  "source": "gold",
+  "strength": "strong"
+ },
+ "annotatedBy": "study"
+}

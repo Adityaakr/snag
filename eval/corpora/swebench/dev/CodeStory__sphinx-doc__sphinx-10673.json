@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:sphinx-doc__sphinx-10673",
+ "corpus": "swebench",
+ "seedId": "sphinx-doc__sphinx-10673",
+ "input": {
+  "mode": "local",
+  "repo": "sphinx-doc/sphinx",
+  "baseSha": "f35d2a6cc726f97d0e859ca7a0e1729f7da8a6c8",
+  "headSha": "CodeStory-sphinx-doc__sphinx-10673",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "sphinx-doc",
+    "repo": "sphinx",
+    "number": 10673
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "sphinx-doc",
+     "repo": "sphinx",
+     "number": 10673
+    },
+    "title": "toctree contains reference to nonexisting document 'genindex', 'modindex', 'search'",
+    "body": "**Is your feature request related to a problem? Please describe.**\r\nA lot of users try to add the following links to the toctree:\r\n```\r\n* :ref:`genindex`\r\n* :ref:`modindex`\r\n* :ref:`search`\r\n```\r\nlike this:\r\n```\r\n.. toctree::\r\n   :maxdepth: 1\r\n   :caption: Indices and tables\r\n\r\n   genindex \r\n   modindex\r\n   search\r\n```\r\n\r\nSee:\r\n* https://stackoverflow.com/questions/36235578/how-can-i-include-the-genindex-in-a-sphinx-toc\r\n* https://stackoverflow.com/questions/25243482/how-to-add-sphinx-generated-index-to-the-sidebar-when-using-read-the-docs-theme\r\n* https://stackoverflow.com/questions/40556423/how-can-i-link-the-generated-index-page-in-readthedocs-navigation-bar\r\n\r\nAnd probably more.\r\n\r\nHowever when doing this we get:\r\n```\r\n$ make html\r\n...\r\n.../index.rst:30: WARNING: toctree contains reference to nonexisting document 'genindex'\r\n.../index.rst:30: WARNING: toctree contains reference to nonexisting document 'modindex'\r\n.../index.rst:30: WARNING: toctree contains reference to nonexisting document 'search'\r\n...\r\n```\r\n\r\n**Describe the solution you'd like**\r\nThe following directive should be possible and do not rise errors:\r\n```\r\n.. toctree::\r\n   :maxdepth: 1\r\n   :caption: Indices and tables\r\n\r\n   genindex \r\n   modindex\r\n   search\r\n``",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:de24ffc26f87d2a12486f0a738c107890f55d718ae3ad5263590d362367a3ad2"
+   }
+  ],
+  "pr": {
+   "title": "Fix sphinx-doc__sphinx-10673",
+   "body": ""
+  },
+  "diffText": "diff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 000000000..a73ea7aaa\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,53 @@\n+import os\n+import shutil\n+import tempfile\n+from sphinx.application import Sphinx\n+\n+# Create a temporary directory for the test\n+temp_dir = tempfile.mkdtemp()\n+src_dir = os.path.join(temp_dir, 'source')\n+build_dir = os.path.join(temp_dir, 'build')\n+os.makedirs(src_dir)\n+\n+# Create a test RST file\n+index_rst = '''\n+Test Documentation\n+=================\n+\n+.. toctree::\n+   :maxdepth: 1\n+   :caption: Indices and tables\n+\n+   genindex\n+   modindex\n+   search\n+\n+Content\n+-------\n+\n+Some test content.\n+'''\n+\n+with open(os.path.join(src_dir, 'conf.py'), 'w') as f:\n+    f.write('''\n+project = 'Test'\n+copyright = '2023'\n+author = 'Test'\n+extensions = []\n+''')\n+\n+with open(os.path.join(src_dir, 'index.rst'), 'w') as f:\n+    f.write(index_rst)\n+\n+# Run Sphinx\n+app = Sphinx(\n+    srcdir=src_dir,\n+    confdir=src_dir,\n+    outdir=build_dir,\n+    doctreedir=os.path.join(build_dir, '.doctrees'),\n+    buildername='html'\n+)\n+app.build()\n+\n+# Clean up\n+shutil.rmtree(temp_dir)\n\\ No newline at end of file\ndiff --git a/sphinx/directives/other.py b/sphinx/directives/other.py\nindex 35e16e623..e99ec1bd2 100644\n--- a/sphinx/directives/other.py\n+++ b/sphinx/directives/other.py\n@@ -118,6 +118,9 @@ class TocTree(SphinxDirective):\n                 docname = docname_join(self.env.docname, docname)\n                 if url_re.match(ref) or ref == 'self':\n                     toctree['entries'].append((title, ref))\n+                elif ref in ('genindex', 'modindex', 'search'):\n+                    # Special pages are handled directly\n+                    toctree['entries'].append((title, ref))\n                 elif docname not in self.env.found_docs:\n                     if excluded(self.env.doc2path(docname, False)):\n                         message = __('toctree contains reference to excluded document %r')\ndiff --git a/sphinx/environment/adapters/toctree.py b/sphinx/environment/adapters/toctree.py\nindex 9678e3c7c..582047788 100644\n--- a/sphinx/environment/adapters/toctree.py\n+++ b/sphinx/environment/adapters/toctree.py\n@@ -116,7 +116,23 @@ class TocTree:\n             for (title, ref) in refs:\n                 try:\n                     refdoc = None\n-                    if url_re.match(ref):\n+                    # Handle special pages like genindex, modindex, search\n+                    special_pages = {\n+                        'genindex': __('Index'),\n+                        'modindex': __('Module Index'),\n+                        'search': __('Search Page'),\n+                    }\n+                    if ref in special_pages:\n+                        if title is None:\n+                            title = special_pages[ref]\n+                        reference = nodes.reference('', '', internal=True,\n+                                                refuri=ref,\n+                                                anchorname='',\n+                                                *[nodes.Text(title)])\n+                        para = addnodes.compact_paragraph('', '', reference)\n+                        item = nodes.list_item('', para)\n+                        toc = nodes.bullet_list('', item)\n+                    elif url_re.match(ref):\n                         if title is None:\n                             title = ref\n                         reference = nodes.reference('', '', internal=False,\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

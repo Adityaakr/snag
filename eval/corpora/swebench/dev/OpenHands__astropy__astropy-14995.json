@@ -1,0 +1,140 @@
+{
+ "id": "OpenHands:astropy__astropy-14995",
+ "corpus": "swebench",
+ "seedId": "astropy__astropy-14995",
+ "input": {
+  "mode": "local",
+  "repo": "astropy/astropy",
+  "baseSha": "b16c7d12ccbc7b2d20364b89fb44285bcbfede54",
+  "headSha": "OpenHands-astropy__astropy-14995",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "astropy",
+    "repo": "astropy",
+    "number": 14995
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "astropy",
+     "repo": "astropy",
+     "number": 14995
+    },
+    "title": "In v5.3, NDDataRef mask propagation fails when one of the operand does not have a mask",
+    "body": "### Description\n\nThis applies to v5.3. \r\n\r\nIt looks like when one of the operand does not have a mask, the mask propagation when doing arithmetic, in particular with `handle_mask=np.bitwise_or` fails.  This is not a problem in v5.2.\r\n\r\nI don't know enough about how all that works, but it seems from the error that the operand without a mask is set as a mask of None's and then the bitwise_or tries to operate on an integer and a None and fails.\n\n### Expected behavior\n\nWhen one of the operand does not have mask, the mask that exists should just be copied over to the output.  Or whatever was done in that situation in v5.2 where there's no problem.\n\n### How to Reproduce\n\nThis is with v5.3.   With v5.2, there are no errors.\r\n\r\n```\r\n>>> import numpy as np\r\n>>> from astropy.nddata import NDDataRef\r\n\r\n>>> array = np.array([[0, 1, 0], [1, 0, 1], [0, 1, 0]])\r\n>>> mask = np.array([[0, 1, 64], [8, 0, 1], [2, 1, 0]])\r\n\r\n>>> nref_nomask = NDDataRef(array)\r\n>>> nref_mask = NDDataRef(array, mask=mask)\r\n\r\n# multiply no mask by constant (no mask * no mask)\r\n>>> nref_nomask.multiply(1., handle_mask=np.bitwise_or).mask   # returns nothing, no mask,  OK\r\n\r\n# multiply no mask by itself (no mask * no mask)\r\n>>> nref_nomask.multiply(nref_nomask, handle_mask=np.bitwise_or).mask # return nothing, no mask, OK\r\n\r\n# multiply mask by constant (mask * no mask)\r\n>>> nref_mask.multiply(1., handle_mask=np.bitwise_or).mask\r\n...\r\nTypeError: unsupported operand type(s) for |: 'int' and 'NoneType'\r\n\r\n# multiply mask by itself (mask * mask)\r\n>>> nref_mask.multiply(nref_mask, handle_mask=np.bitwise_or).mask\r\narray([[ 0,  1, 64],\r\n       [ 8,  0,  1],\r\n       [ 2,  1,  0]])\r\n\r\n# multiply mask by no mask (mask * no mask)\r\n>>> nref_mask.multiply(nref_nomask, handle_mask=np.bitwise_or).mask\r\n...\r\nTypeError: unsupported operand type(s) for |: 'int' and 'NoneType'\r\n```\r\n\n\n### Versions\n\n>>> import sys; print(\"Python\", sys.version)\r\nPython 3.10.11 | packaged by conda-forge | (main, May 10 2023, 19:07:22) [Clang 14.0.6 ]\r\n>>> import astropy; print(\"astropy\", astropy.__version__)\r\nastropy 5.3\r\n>>> import numpy; print(\"Numpy\", numpy.__version__)\r\nNumpy 1.24.3\r\n>>> import erfa; print(\"pyerfa\", erfa.__version__)\r\npyerfa 2.0.0.3\r\n>>> import scipy; print(\"Scipy\", scipy.__version__)\r\nScipy 1.10.1\r\n>>> import matplotlib; print(\"Matplotlib\", matplotlib.__version__)\r\nMatplotlib 3.7.1",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:5e6a5300157d880e769c933ddbac7788998ecff4abaf16e8b3f8223e90f79cb4"
+   }
+  ],
+  "pr": {
+   "title": "Fix astropy__astropy-14995",
+   "body": ""
+  },
+  "diffText": "diff --git a/astropy/nddata/mixins/ndarithmetic.py b/astropy/nddata/mixins/ndarithmetic.py\nindex 4153dfccb2..7df0135b0f 100644\n--- a/astropy/nddata/mixins/ndarithmetic.py\n+++ b/astropy/nddata/mixins/ndarithmetic.py\n@@ -512,19 +512,26 @@ class NDArithmeticMixin:\n             If neither had a mask ``None`` is returned. Otherwise\n             ``handle_mask`` must create (and copy) the returned mask.\n         \"\"\"\n-        # If only one mask is present we need not bother about any type checks\n-        if (\n-            self.mask is None and operand is not None and operand.mask is None\n-        ) or handle_mask is None:\n+        # If handle_mask is None, return None\n+        if handle_mask is None:\n             return None\n-        elif self.mask is None and operand is not None:\n-            # Make a copy so there is no reference in the result.\n+            \n+        # If operand is a scalar or doesn't have a mask attribute, treat it as having no mask\n+        if not hasattr(operand, 'mask'):\n+            return deepcopy(self.mask)\n+            \n+        # If neither has a mask, return None\n+        if self.mask is None and operand.mask is None:\n+            return None\n+            \n+        # If only one has a mask, return a copy of that mask\n+        if self.mask is None:\n             return deepcopy(operand.mask)\n-        elif operand is None:\n+        if operand.mask is None:\n             return deepcopy(self.mask)\n-        else:\n-            # Now lets calculate the resulting mask (operation enforces copy)\n-            return handle_mask(self.mask, operand.mask, **kwds)\n+            \n+        # If both have masks, apply the handle_mask function\n+        return handle_mask(self.mask, operand.mask, **kwds)\n \n     def _arithmetic_wcs(self, operation, operand, compare_wcs, **kwds):\n         \"\"\"\ndiff --git a/reproduce.py b/reproduce.py\nnew file mode 100644\nindex 0000000000..6abda659a3\n--- /dev/null\n+++ b/reproduce.py\n@@ -0,0 +1,23 @@\n+import numpy as np\n+from astropy.nddata import NDDataRef\n+\n+array = np.array([[0, 1, 0], [1, 0, 1], [0, 1, 0]])\n+mask = np.array([[0, 1, 64], [8, 0, 1], [2, 1, 0]])\n+\n+nref_nomask = NDDataRef(array)\n+nref_mask = NDDataRef(array, mask=mask)\n+\n+print(\"Test 1: multiply no mask by constant (no mask * no mask)\")\n+print(nref_nomask.multiply(1., handle_mask=np.bitwise_or).mask)\n+\n+print(\"\\nTest 2: multiply no mask by itself (no mask * no mask)\")\n+print(nref_nomask.multiply(nref_nomask, handle_mask=np.bitwise_or).mask)\n+\n+print(\"\\nTest 3: multiply mask by constant (mask * no mask)\")\n+print(nref_mask.multiply(1., handle_mask=np.bitwise_or).mask)\n+\n+print(\"\\nTest 4: multiply mask by itself (mask * mask)\")\n+print(nref_mask.multiply(nref_mask, handle_mask=np.bitwise_or).mask)\n+\n+print(\"\\nTest 5: multiply mask by no mask (mask * no mask)\")\n+print(nref_mask.multiply(nref_nomask, handle_mask=np.bitwise_or).mask)\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "OpenHands",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

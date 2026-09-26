@@ -1,0 +1,140 @@
+{
+ "id": "LearnByInteract:django__django-13297",
+ "corpus": "swebench",
+ "seedId": "django__django-13297",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "8954f255bbf5f4ee997fd6de62cb50fc9b5dd697",
+  "headSha": "LearnByInteract-django__django-13297",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 13297
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 13297
+    },
+    "title": "TemplateView.get_context_data()'s kwargs returns SimpleLazyObjects that causes a crash when filtering.",
+    "body": "Description\n\t\nExample Code that works in 3.0, but not in 3.1:\nclass OfferView(TemplateView):\n\ttemplate_name = \"offers/offer.html\"\n\tdef get_context_data(self, **kwargs):\n\t\toffer_slug = kwargs.get(\"offer_slug\", \"\")\n\t\toffer = get_object_or_404(Account, slug=offer_slug)\n\t\treturn {\"offer\": offer, \"offer_slug\": offer_slug}\nIn order to make this work in 3.1, you have to explicitly convert the result of kwargs.get() to a string to get the SimpleLazyObject to resolve:\nclass OfferView(TemplateView):\n\ttemplate_name = \"offers/offer.html\"\n\tdef get_context_data(self, **kwargs):\n\t\toffer_slug = kwargs.get(\"offer_slug\", \"\")\n\t\toffer = get_object_or_404(Account, slug=str(offer_slug))\n\t\treturn {\"offer\": offer, \"offer_slug\": offer_slug}\nThe error generated if you don't is:\nError binding parameter 0 - probably unsupported type\nfrom django/db/backends/sqlite3/operations.py, line 144, in _quote_params_for_last_executed_query\nIn both cases, the urls.py looks like:\npath(\n\t\t\"/offers/<slug:offer_slug>/\",\n\t\tOfferView.as_view(),\n\t\tname=\"offer_view\",\n\t),\nWhen debugging, I found that offer_slug (coming in from kwargs.get) was of type 'SimpleLazyObject' in Django 3.1, and when I explicitly converted it to a string, get_object_or_404 behaved as expected.\nThis is using Python 3.7.8 with SQLite.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:f90eca398ee5f75c49644268e4d3debc044cef9544670f7bf597cb7ec27fdc85"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-13297",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/db/backends/sqlite3/base.py b/django/db/backends/sqlite3/base.py\nindex 8a105d4f35..5396b6e80d 100644\n--- a/django/db/backends/sqlite3/base.py\n+++ b/django/db/backends/sqlite3/base.py\n@@ -75,6 +75,15 @@ Database.register_converter(\"datetime\", decoder(parse_datetime))\n Database.register_converter(\"timestamp\", decoder(parse_datetime))\n \n Database.register_adapter(decimal.Decimal, str)\n+# Register adapter for SimpleLazyObject\n+from django.utils.functional import SimpleLazyObject\n+def adapt_lazy_object(obj):\n+    if hasattr(obj, '_wrapped'):\n+        if not obj._wrapped:\n+            obj._setup()\n+        return str(obj._wrapped)\n+    return str(obj)\n+Database.register_adapter(SimpleLazyObject, adapt_lazy_object)\n \n \n class DatabaseWrapper(BaseDatabaseWrapper):\n@@ -599,3 +608,4 @@ def _sqlite_lpad(text, length, fill_text):\n @none_guard\n def _sqlite_rpad(text, length, fill_text):\n     return (text + fill_text * length)[:length]\n+\ndiff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..834137a0f1\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,74 @@\n+from django.conf import settings\n+settings.configure(\n+    DEBUG=True,\n+    SECRET_KEY='dummy-key-for-test',\n+    ROOT_URLCONF=__name__,\n+    MIDDLEWARE=[\n+        'django.middleware.common.CommonMiddleware',\n+    ],\n+    INSTALLED_APPS=[\n+        'django.contrib.contenttypes',\n+        'django.contrib.auth',\n+    ],\n+    DATABASES={\n+        'default': {\n+            'ENGINE': 'django.db.backends.sqlite3',\n+            'NAME': ':memory:',\n+        }\n+    },\n+    TEMPLATES=[{\n+        'BACKEND': 'django.template.backends.django.DjangoTemplates',\n+        'APP_DIRS': True,\n+    }],\n+)\n+\n+import django\n+django.setup()\n+\n+# Create test models and views\n+from django.db import models\n+from django.views.generic import TemplateView\n+from django.shortcuts import get_object_or_404\n+from django.urls import path\n+from django.utils.functional import SimpleLazyObject\n+\n+class Account(models.Model):\n+    slug = models.SlugField(unique=True)\n+    \n+    class Meta:\n+        app_label = 'testapp'\n+\n+class OfferView(TemplateView):\n+    template_name = \"offers/offer.html\"\n+    def get_context_data(self, **kwargs):\n+        offer_slug = kwargs.get(\"offer_slug\", \"\")\n+        # This will fail with SimpleLazyObject\n+        offer = get_object_or_404(Account, slug=offer_slug)\n+        return {\"offer\": offer, \"offer_slug\": offer_slug}\n+\n+# URL configuration\n+urlpatterns = [\n+    path('offers/<slug:offer_slug>/', OfferView.as_view(), name='offer_view'),\n+]\n+\n+if __name__ == '__main__':\n+    # Create test database\n+    from django.db import connection\n+    with connection.schema_editor() as schema_editor:\n+        schema_editor.create_model(Account)\n+    \n+    # Create test account\n+    Account.objects.create(slug='test-offer')\n+    \n+    # Create a SimpleLazyObject that will be passed as a URL parameter\n+    lazy_slug = SimpleLazyObject(lambda: 'test-offer')\n+    \n+    # Simulate a view call with the lazy object\n+    view = OfferView()\n+    try:\n+        context = view.get_context_data(offer_slug=lazy_slug)\n+        print(\"Success! Context:\", context)\n+    except Exception as e:\n+        print(f\"Error occurred: {str(e)}\")\n+        import traceback\n+        traceback.print_exc()\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "LearnByInteract",
+  "source": "rq2_divergent",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

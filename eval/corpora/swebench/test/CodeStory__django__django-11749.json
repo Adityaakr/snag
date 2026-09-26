@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:django__django-11749",
+ "corpus": "swebench",
+ "seedId": "django__django-11749",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "350123f38c2b6217c38d70bfbd924a9ba3df1289",
+  "headSha": "CodeStory-django__django-11749",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 11749
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 11749
+    },
+    "title": "call_command fails when argument of required mutually exclusive group is passed in kwargs.",
+    "body": "Description\n\t\nThis error \ndjango.core.management.base.CommandError: Error: one of the arguments --shop-id --shop is required\nis raised when I run \ncall_command('my_command', shop_id=1)\nthe argument 'shop_id' is part of a required mutually exclusive group:\nshop = parser.add_mutually_exclusive_group(required=True)\nshop.add_argument('--shop-id', nargs='?', type=int, default=None, dest='shop_id')\nshop.add_argument('--shop', nargs='?', type=str, default=None, dest='shop_name')\nHowever, everything is fine when I call this command in this way:\ncall_command('my_command, '--shop-id=1')\nIn django sources I found that only those keyword arguments of call_command are passed to the parser that are defined as required:\n# Any required arguments which are passed in via '**options' must be passed\n# to parse_args().\nparse_args += [\n\t'{}={}'.format(min(opt.option_strings), arg_options[opt.dest])\n\tfor opt in parser._actions if opt.required and opt.dest in options\n]\nbut in this special case both of them individually are not required, they are actually part of a group that is required. And the code of call_command does nothing with groups defined in the parser.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:e48457f63284402586969c231b1aa1f9591c991913cea7bb4bee168cba72fdf2"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-11749",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/core/management/__init__.py b/django/core/management/__init__.py\nindex 5f2e64761e..84809ce0b2 100644\n--- a/django/core/management/__init__.py\n+++ b/django/core/management/__init__.py\n@@ -136,6 +136,22 @@ def call_command(command_name, *args, **options):\n         '{}={}'.format(min(opt.option_strings), arg_options[opt.dest])\n         for opt in parser_actions if opt.required and opt.dest in options\n     ]\n+    \n+    # Handle required mutually exclusive groups\n+    for group in parser._mutually_exclusive_groups:\n+        if group.required:\n+            # Check if multiple arguments from the same group are provided\n+            group_args = [opt.dest for opt in group._group_actions if opt.dest in options]\n+            if len(group_args) > 1:\n+                raise CommandError(\n+                    f\"Arguments {', '.join(group_args)} are mutually exclusive. \"\n+                    \"Only one of them should be provided.\"\n+                )\n+            # If any argument from the group is provided in options, add it to parse_args\n+            for opt in group._group_actions:\n+                if opt.dest in options:\n+                    parse_args.append('{}={}'.format(min(opt.option_strings), arg_options[opt.dest]))\n+                    break\n     defaults = parser.parse_args(args=parse_args)\n     defaults = dict(defaults._get_kwargs(), **arg_options)\n     # Raise an error if any unknown options were passed.\ndiff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..70f4db125f\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,54 @@\n+import os\n+import django\n+from django.conf import settings\n+from django.core.management import BaseCommand, CommandParser, call_command\n+from django.core.management.base import CommandError\n+\n+# Configure minimal Django settings\n+if not settings.configured:\n+    settings.configure(\n+        INSTALLED_APPS=[],\n+        DATABASES={'default': {'ENGINE': 'django.db.backends.sqlite3', 'NAME': ':memory:'}},\n+    )\n+    django.setup()\n+\n+class TestCommand(BaseCommand):\n+    def add_arguments(self, parser):\n+        shop = parser.add_mutually_exclusive_group(required=True)\n+        shop.add_argument('--shop-id', nargs='?', type=int, default=None, dest='shop_id')\n+        shop.add_argument('--shop', nargs='?', type=str, default=None, dest='shop_name')\n+\n+    def handle(self, *args, **options):\n+        print(f\"Received options: {options}\")\n+\n+# Test the command\n+if __name__ == \"__main__\":\n+    print(\"1. Testing with kwargs (should work):\")\n+    try:\n+        call_command(TestCommand(), shop_id=1)\n+    except Exception as e:\n+        print(f\"Error: {e}\")\n+\n+    print(\"\\n2. Testing with command line style (should work):\")\n+    try:\n+        call_command(TestCommand(), '--shop-id=1')\n+    except Exception as e:\n+        print(f\"Error: {e}\")\n+\n+    print(\"\\n3. Testing with no arguments (should fail):\")\n+    try:\n+        call_command(TestCommand())\n+    except Exception as e:\n+        print(f\"Error: {e}\")\n+\n+    print(\"\\n4. Testing with multiple exclusive arguments (should fail):\")\n+    try:\n+        call_command(TestCommand(), shop_id=1, shop_name='test')\n+    except Exception as e:\n+        print(f\"Error: {e}\")\n+\n+    print(\"\\n5. Testing with shop name (should work):\")\n+    try:\n+        call_command(TestCommand(), shop_name='test')\n+    except Exception as e:\n+        print(f\"Error: {e}\")\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

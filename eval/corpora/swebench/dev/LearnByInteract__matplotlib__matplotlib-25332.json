@@ -1,0 +1,140 @@
+{
+ "id": "LearnByInteract:matplotlib__matplotlib-25332",
+ "corpus": "swebench",
+ "seedId": "matplotlib__matplotlib-25332",
+ "input": {
+  "mode": "local",
+  "repo": "matplotlib/matplotlib",
+  "baseSha": "66ba515e671638971bd11a34cff12c107a437e0b",
+  "headSha": "LearnByInteract-matplotlib__matplotlib-25332",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "matplotlib",
+    "repo": "matplotlib",
+    "number": 25332
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "matplotlib",
+     "repo": "matplotlib",
+     "number": 25332
+    },
+    "title": "[Bug]: Unable to pickle figure with aligned labels",
+    "body": "### Bug summary\r\n\r\n Unable to pickle figure after calling `align_labels()`\r\n\r\n### Code for reproduction\r\n\r\n```python\r\nimport matplotlib.pyplot as plt\r\nimport pickle\r\n\r\nfig = plt.figure()\r\nax1 = fig.add_subplot(211)\r\nax2 = fig.add_subplot(212)\r\ntime=[0,1,2,3,4]\r\nspeed=[40000,4300,4500,4700,4800]\r\nacc=[10,11,12,13,14]\r\nax1.plot(time,speed)\r\nax1.set_ylabel('speed')\r\nax2.plot(time,acc)\r\nax2.set_ylabel('acc')\r\n\r\nfig.align_labels() ##pickling works after removing this line \r\n\r\npickle.dumps(fig)\r\nplt.show()\r\n```\r\n\r\n\r\n### Actual outcome\r\n```\r\nalign.py\", line 16\r\npickle.dumps(fig)\r\nTypeError: cannot pickle 'weakref.ReferenceType' object\r\n```\r\n### Expected outcome\r\n\r\nPickling successful\r\n\r\n### Additional information\r\n\r\n_No response_\r\n\r\n### Operating system\r\n\r\nWindows\r\n\r\n### Matplotlib Version\r\n\r\n3.7.0\r\n\r\n### Matplotlib Backend\r\n\r\n_No response_\r\n\r\n### Python version\r\n\r\n_No response_\r\n\r\n### Jupyter version\r\n\r\n_No response_\r\n\r\n### Installation\r\n\r\nNone",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:c1fa00c4be13f7b3de74350872a80d3f425fb31094b01d944556db3390cd618c"
+   }
+  ],
+  "pr": {
+   "title": "Fix matplotlib__matplotlib-25332",
+   "body": ""
+  },
+  "diffText": "diff --git a/lib/matplotlib/cbook.py b/lib/matplotlib/cbook.py\nindex c9699b2e21..76c78b0d35 100644\n--- a/lib/matplotlib/cbook.py\n+++ b/lib/matplotlib/cbook.py\n@@ -846,8 +846,27 @@ class Grouper:\n         siblings = self._mapping.get(weakref.ref(a), [weakref.ref(a)])\n         return [x() for x in siblings]\n \n+    def __getstate__(self):\n+        # Convert weak references to strong references for pickling\n+        # Filter out dead references and store only live objects\n+        return {\n+            '_mapping': {\n+                k(): [x() for x in v if x() is not None]\n+                for k, v in self._mapping.items()\n+                if k() is not None\n+            }\n+        }\n+\n+    def __setstate__(self, state):\n+        # Reconstruct weak references from unpickled state\n+        self._mapping = {\n+            weakref.ref(k): [weakref.ref(x) for x in v]\n+            for k, v in state['_mapping'].items()\n+        }\n+\n \n class GrouperView:\n+\n     \"\"\"Immutable view over a `.Grouper`.\"\"\"\n \n     def __init__(self, grouper): self._grouper = grouper\n@@ -2276,3 +2295,4 @@ def _auto_format_str(fmt, value):\n         return fmt % (value,)\n     except (TypeError, ValueError):\n         return fmt.format(value)\n+\ndiff --git a/reproduce_bug.py b/reproduce_bug.py\nnew file mode 100644\nindex 0000000000..c5371fab2f\n--- /dev/null\n+++ b/reproduce_bug.py\n@@ -0,0 +1,28 @@\n+import matplotlib.pyplot as plt\n+import pickle\n+\n+# Create figure with aligned labels\n+fig = plt.figure()\n+ax1 = fig.add_subplot(211)\n+ax2 = fig.add_subplot(212)\n+time=[0,1,2,3,4]\n+speed=[40000,4300,4500,4700,4800]\n+acc=[10,11,12,13,14]\n+ax1.plot(time,speed)\n+ax1.set_ylabel('speed')\n+ax2.plot(time,acc)\n+ax2.set_ylabel('acc')\n+\n+# Align labels - this would previously fail\n+fig.align_labels()\n+\n+# Try to pickle and unpickle\n+pickled_data = pickle.dumps(fig)\n+unpickled_fig = pickle.loads(pickled_data)\n+\n+print(\"Successfully pickled and unpickled figure!\")\n+\n+# Show both figures to verify they're identical\n+plt.figure(unpickled_fig.number)\n+plt.show()\n+\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "LearnByInteract",
+  "source": "rq2_divergent",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

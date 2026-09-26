@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:sympy__sympy-19954",
+ "corpus": "swebench",
+ "seedId": "sympy__sympy-19954",
+ "input": {
+  "mode": "local",
+  "repo": "sympy/sympy",
+  "baseSha": "6f54459aa0248bf1467ad12ee6333d8bc924a642",
+  "headSha": "CodeStory-sympy__sympy-19954",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "sympy",
+    "repo": "sympy",
+    "number": 19954
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "sympy",
+     "repo": "sympy",
+     "number": 19954
+    },
+    "title": "sylow_subgroup() IndexError",
+    "body": "I use sympy 1.6.1, with numpy 1.18.5, scipy 1.4.1, under Python '3.8.5 (default, Aug  5 2020, 09:44:06) [MSC v.1916 64 bit (AMD64)]'. \r\n\r\nThe code that I run as the following gives IndexError for sylow_subgroup():\r\n\r\nfrom sympy.combinatorics import DihedralGroup, PermutationGroup, Permutation\r\n\r\nG = DihedralGroup(18)\r\n\r\nS2 = G.sylow_subgroup(p=2)\r\n \r\nTraceback (most recent call last):\r\n  File \"<input>\", line 7, in <module>\r\n  File \"D:\\anaconda38\\envs\\default\\lib\\site-packages\\sympy\\combinatorics\\perm_groups.py\", line 4370, in sylow_subgroup\r\n    blocks = self.minimal_blocks()\r\n  File \"D:\\anaconda38\\envs\\default\\lib\\site-packages\\sympy\\combinatorics\\perm_groups.py\", line 2207, in minimal_blocks\r\n    del num_blocks[i], blocks[i]\r\nIndexError: list assignment index out of range\r\n\r\nThe same error shows up as well when I set: \r\nG = DihedralGroup(2*25)\r\n\r\nS2 = G.sylow_subgroup(p=2)",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:6ff21286a96903e32452b05036b99b853ee2550491e41fd6af245adefc0073d2"
+   }
+  ],
+  "pr": {
+   "title": "Fix sympy__sympy-19954",
+   "body": ""
+  },
+  "diffText": "diff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 0000000000..d1b7e57b3e\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,19 @@\n+from sympy.combinatorics import DihedralGroup, PermutationGroup, Permutation\n+\n+# Test case 1: n = 18\n+G = DihedralGroup(18)\n+print(\"Testing DihedralGroup(18)...\")\n+try:\n+    S2 = G.sylow_subgroup(p=2)\n+    print(\"Success! Sylow 2-subgroup:\", S2)\n+except Exception as e:\n+    print(\"Error:\", str(e))\n+\n+# Test case 2: n = 2*25\n+print(\"\\nTesting DihedralGroup(50)...\")\n+G = DihedralGroup(2*25)\n+try:\n+    S2 = G.sylow_subgroup(p=2)\n+    print(\"Success! Sylow 2-subgroup:\", S2)\n+except Exception as e:\n+    print(\"Error:\", str(e))\n\\ No newline at end of file\ndiff --git a/sympy/combinatorics/perm_groups.py b/sympy/combinatorics/perm_groups.py\nindex de94ddabb4..84cdc71a0a 100644\n--- a/sympy/combinatorics/perm_groups.py\n+++ b/sympy/combinatorics/perm_groups.py\n@@ -2198,14 +2198,16 @@ def _number_blocks(blocks):\n                 for i, r in enumerate(rep_blocks):\n                     if len(r) > len(rep) and rep.issubset(r):\n                         # i-th block system is not minimal\n-                        del num_blocks[i], blocks[i]\n-                        to_remove.append(rep_blocks[i])\n+                        to_remove.append(i)\n                     elif len(r) < len(rep) and r.issubset(rep):\n                         # the system being checked is not minimal\n                         minimal = False\n                         break\n                 # remove non-minimal representative blocks\n-                rep_blocks = [r for r in rep_blocks if r not in to_remove]\n+                for idx in sorted(to_remove, reverse=True):\n+                    del num_blocks[idx]\n+                    del blocks[idx]\n+                rep_blocks = [r for i, r in enumerate(rep_blocks) if i not in to_remove]\n \n                 if minimal and num_block not in num_blocks:\n                     blocks.append(block)\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

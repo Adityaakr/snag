@@ -1,0 +1,140 @@
+{
+ "id": "LearnByInteract:django__django-14771",
+ "corpus": "swebench",
+ "seedId": "django__django-14771",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "4884a87e022056eda10534c13d74e49b8cdda632",
+  "headSha": "LearnByInteract-django__django-14771",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 14771
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 14771
+    },
+    "title": "Auto-reloader should pass -X options (for cpython implementation)",
+    "body": "Description\n\t\nWindows OS\n$ winpty python -m django startproject my_project\n$ cd my_project/\n$ winpty python -m django startapp my_app\n$ vi my_app/apps.py # demo for xoptions ...\n$ cat -n my_app/apps.py\n\t 1 from django.apps import AppConfig\n\t 2\n\t 3 class MyAppConfig(AppConfig):\n\t 4\t default_auto_field = 'django.db.models.BigAutoField'\n\t 5\t name = 'my_app'\n\t 6\n\t 7 # myapp global initial_demo ...\n\t 8 with open(\"manage.py\", mode=\"r\") as stream:\n\t 9\t print(\"=== %s\" % stream.encoding)\n$ vi my_project/settings.py # INSTALLED_APPS\n$ winpty python -X utf8 manage.py runserver 0.0.0.0:8005 -v3\n=== UTF-8\n=== cp936\nWatching for file changes with StatReloader\nPerforming system checks...\n... ...\n$ winpty python -X utf8 manage.py runserver 0.0.0.0:8005 -v3 --noreload\n=== UTF-8\nPerforming system checks...\n... ...\nRefer:\n​https://docs.python.org/3/library/sys.html#sys._xoptions\n​https://docs.python.org/3/library/functions.html#open",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:30f1e86f6c01a168e8af112cf0e35a9b6995457c44243087c98a83dc7a861d36"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-14771",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/utils/autoreload.py b/django/utils/autoreload.py\nindex cc65c043ab..369c0dd84a 100644\n--- a/django/utils/autoreload.py\n+++ b/django/utils/autoreload.py\n@@ -220,6 +220,9 @@ def get_child_arguments():\n     py_script = Path(sys.argv[0])\n \n     args = [sys.executable] + ['-W%s' % o for o in sys.warnoptions]\n+    # Preserve -X options (implementation options)\n+    args.extend('-X%s' % name if value is True else '-X%s=%s' % (name, value) \n+               for name, value in sys._xoptions.items())\n     # __spec__ is set when the server was started with the `-m` option,\n     # see https://docs.python.org/3/reference/import.html#main-spec\n     # __spec__ may not exist, e.g. when running in a Conda env.\n@@ -642,3 +645,4 @@ def run_with_reloader(main_func, *args, **kwargs):\n             sys.exit(exit_code)\n     except KeyboardInterrupt:\n         pass\n+\ndiff --git a/server.log b/server.log\nnew file mode 100644\nindex 0000000000..a528f2c546\n--- /dev/null\n+++ b/server.log\n@@ -0,0 +1,7 @@\n+Performing system checks...\n+\n+System check identified no issues (0 silenced).\n+January 09, 2025 - 17:31:21\n+Django version 4.1.dev20210929060442, using settings 'test_settings'\n+Starting development server at http://127.0.0.1:8005/\n+Quit the server with CONTROL-C.\ndiff --git a/test.txt b/test.txt\nnew file mode 100644\nindex 0000000000..b68593227f\n--- /dev/null\n+++ b/test.txt\n@@ -0,0 +1 @@\n+Original process xoptions: {'utf8': True}\ndiff --git a/test_settings.py b/test_settings.py\nnew file mode 100644\nindex 0000000000..a4e1fec5d8\n--- /dev/null\n+++ b/test_settings.py\n@@ -0,0 +1,7 @@\n+\n+DEBUG = True\n+SECRET_KEY = 'dummy-key-for-test'\n+ALLOWED_HOSTS = ['*']\n+DATABASES = {'default': {'ENGINE': 'django.db.backends.sqlite3', 'NAME': ':memory:'}}\n+INSTALLED_APPS = []\n+ROOT_URLCONF = ''\ndiff --git a/test_xoptions.py b/test_xoptions.py\nnew file mode 100644\nindex 0000000000..e7be53435e\n--- /dev/null\n+++ b/test_xoptions.py\n@@ -0,0 +1,29 @@\n+import os\n+import sys\n+\n+# Configure settings before importing Django\n+os.environ.setdefault('DJANGO_ALLOW_ASYNC_UNSAFE', 'true')\n+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'test_settings')\n+\n+# Create a settings module\n+with open('test_settings.py', 'w') as f:\n+    f.write(\"\"\"\n+DEBUG = True\n+SECRET_KEY = 'dummy-key-for-test'\n+ALLOWED_HOSTS = ['*']\n+DATABASES = {'default': {'ENGINE': 'django.db.backends.sqlite3', 'NAME': ':memory:'}}\n+INSTALLED_APPS = []\n+ROOT_URLCONF = ''\n+\"\"\")\n+\n+import django\n+django.setup()\n+\n+# Record original xoptions\n+with open(\"test.txt\", mode=\"w\") as f:\n+    f.write(f\"Original process xoptions: {sys._xoptions}\\n\")\n+\n+# Start server\n+from django.core.management import execute_from_command_line\n+execute_from_command_line(['manage.py', 'runserver', '8005', '--noreload'])\n+\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "LearnByInteract",
+  "source": "rq2_divergent",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

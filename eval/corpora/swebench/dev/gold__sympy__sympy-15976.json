@@ -1,0 +1,140 @@
+{
+ "id": "gold:sympy__sympy-15976",
+ "corpus": "swebench",
+ "seedId": "sympy__sympy-15976",
+ "input": {
+  "mode": "local",
+  "repo": "sympy/sympy",
+  "baseSha": "701441853569d370506514083b995d11f9a130bd",
+  "headSha": "gold-sympy__sympy-15976",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "sympy",
+    "repo": "sympy",
+    "number": 15976
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "sympy",
+     "repo": "sympy",
+     "number": 15976
+    },
+    "title": "A symbol ending with a number is made invisible when printing with MathML",
+    "body": "A variable with a number, such as x1, is made invisible when printing in a MathML format.\r\n`import sympy\r\nfrom sympy.printing.mathml import mathml\r\n\r\nx2, y, z = sympy.symbols('x2 y z')\r\ny = x2*z+x2**3\r\nf = open('sympy_test.html', 'w')\r\nf.write('\\n')\r\nf.write('\\n')\r\nf.write('\\n')\r\nf.write('\\n')\r\nf.write(sympy.mathml(y, printer='presentation')+'\\n')\r\nf.write('\\n')\r\nf.write('\\n')\r\nf.write('\\n')\r\nf.close()`\r\n\r\nViewing the output in Safari 12.0.2:\r\n<img width=\"93\" alt=\"screen shot 2018-12-31 at 12 21 00 pm\" src=\"https://user-images.githubusercontent.com/46286768/50567565-48d8c080-0cfb-11e9-84d2-5738f1c2e2ba.png\">\r\n\r\nIf 'x' is used instead of 'x2', it works as expected:\r\nx, y, z = sympy.symbols('x y z')\r\ny = x*z+x**3\r\n<img width=\"78\" alt=\"screen shot 2018-12-31 at 12 26 24 pm\" src=\"https://user-images.githubusercontent.com/46286768/50567570-542bec00-0cfb-11e9-986d-015e0023a2a1.png\">\r\n\r\nBTW, I'm on a MacBook Pro, OS 10.14.2, Sympy 1.3, in Eclipse 2018-19, and Python 3.7.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:343691be0f4b8bc839f4f50d363f20475e4c414a1c9a90de68400a040e4d726c"
+   }
+  ],
+  "pr": {
+   "title": "Fix sympy__sympy-15976",
+   "body": ""
+  },
+  "diffText": "diff --git a/sympy/printing/mathml.py b/sympy/printing/mathml.py\n--- a/sympy/printing/mathml.py\n+++ b/sympy/printing/mathml.py\n@@ -743,11 +743,6 @@ def _print_Sum(self, e):\n         return mrow\n \n     def _print_Symbol(self, sym, style='plain'):\n-        x = self.dom.createElement('mi')\n-\n-        if style == 'bold':\n-            x.setAttribute('mathvariant', 'bold')\n-\n         def join(items):\n             if len(items) > 1:\n                 mrow = self.dom.createElement('mrow')\n@@ -781,24 +776,24 @@ def translate(s):\n         mname.appendChild(self.dom.createTextNode(name))\n         if len(supers) == 0:\n             if len(subs) == 0:\n-                x.appendChild(self.dom.createTextNode(name))\n+                x = mname\n             else:\n-                msub = self.dom.createElement('msub')\n-                msub.appendChild(mname)\n-                msub.appendChild(join(subs))\n-                x.appendChild(msub)\n+                x = self.dom.createElement('msub')\n+                x.appendChild(mname)\n+                x.appendChild(join(subs))\n         else:\n             if len(subs) == 0:\n-                msup = self.dom.createElement('msup')\n-                msup.appendChild(mname)\n-                msup.appendChild(join(supers))\n-                x.appendChild(msup)\n+                x = self.dom.createElement('msup')\n+                x.appendChild(mname)\n+                x.appendChild(join(supers))\n             else:\n-                msubsup = self.dom.createElement('msubsup')\n-                msubsup.appendChild(mname)\n-                msubsup.appendChild(join(subs))\n-                msubsup.appendChild(join(supers))\n-                x.appendChild(msubsup)\n+                x = self.dom.createElement('msubsup')\n+                x.appendChild(mname)\n+                x.appendChild(join(subs))\n+                x.appendChild(join(supers))\n+        # Set bold font?\n+        if style == 'bold':\n+            x.setAttribute('mathvariant', 'bold')\n         return x\n \n     def _print_MatrixSymbol(self, sym):\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "gold",
+  "source": "gold",
+  "strength": "strong"
+ },
+ "annotatedBy": "study"
+}

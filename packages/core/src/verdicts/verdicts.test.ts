@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { defaultConfig } from '../config/schema.js';
 import type { ChangeUnit, CodeFact, Requirement } from '../contracts/index.js';
-import { applyMap, type Calibration, calibrator } from './calibration.js';
+import { applyMap, type Calibration, calibrator, tunedThresholds } from './calibration.js';
 import {
   type ClaimSignal,
   type ForwardSignal,
@@ -681,5 +681,25 @@ describe('reason text limits', () => {
     const long = REASONS.claimMismatch(`${'word '.repeat(80)}.`).text;
     expect(long.length).toBeLessThan(260);
     expect(REASONS.deferred('Later.').text).toBe('The PR description says this is left for later: "Later".');
+  });
+});
+
+describe('tunedThresholds', () => {
+  const cal = {
+    id: 'c1',
+    jevModel: 'jev-1.13.0',
+    questionSet: 'qs-0.1.0',
+    maps: {},
+    labeledFindings: 10,
+    p0Precision: 0.9,
+    thresholds: { missing: 0.8, unknown_key: 0.1 },
+  };
+  it('applies tuned values only when the calibration matches the model and question set', () => {
+    const base = { missing: 0.7, full: 0.6 };
+    expect(tunedThresholds(base, cal, 'jev-1.13.0', 'qs-0.1.0')).toEqual({ missing: 0.8, full: 0.6 });
+    expect(tunedThresholds(base, cal, 'jev-2', 'qs-0.1.0')).toBe(base);
+    const { thresholds: _unused, ...plain } = cal;
+    expect(tunedThresholds(base, plain, 'jev-1.13.0', 'qs-0.1.0')).toBe(base);
+    expect(tunedThresholds(base, undefined, 'jev-1.13.0', 'qs-0.1.0')).toBe(base);
   });
 });

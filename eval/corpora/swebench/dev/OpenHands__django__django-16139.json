@@ -1,0 +1,140 @@
+{
+ "id": "OpenHands:django__django-16139",
+ "corpus": "swebench",
+ "seedId": "django__django-16139",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "d559cb02da30f74debbb1fc3a46de0df134d2d80",
+  "headSha": "OpenHands-django__django-16139",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 16139
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 16139
+    },
+    "title": "Accessing UserAdmin via to_field leads to link to PasswordResetForm being broken (404)",
+    "body": "Description\n\t \n\t\t(last modified by Simon Kern)\n\t \nAccessing the UserAdmin via another model's Admin that has a reference to User (with to_field set, e.g., to_field=\"uuid\") leads to the UserAdmin being accessed via an url that looks similar to this one:\n.../user/22222222-3333-4444-5555-666677778888/change/?_to_field=uuid\nHowever the underlying form looks like this: \nCode highlighting:\nclass UserChangeForm(forms.ModelForm):\n\tpassword = ReadOnlyPasswordHashField(\n\t\tlabel=_(\"Password\"),\n\t\thelp_text=_(\n\t\t\t\"Raw passwords are not stored, so there is no way to see this \"\n\t\t\t\"user’s password, but you can change the password using \"\n\t\t\t'<a href=\"{}\">this form</a>.'\n\t\t),\n\t)\n\t...\n\t...\n\tdef __init__(self, *args, **kwargs):\n\t\tsuper().__init__(*args, **kwargs)\n\t\tpassword = self.fields.get(\"password\")\n\t\tif password:\n\t\t\tpassword.help_text = password.help_text.format(\"../password/\")\n\t...\n\t...\nThis results in the link to the PasswordResetForm being wrong and thus ending up in a 404. If we drop the assumption that UserAdmin is always accessed via its pk, then we're good to go. It's as simple as replacing password.help_text = password.help_text.format(\"../password/\") with password.help_text = password.help_text.format(f\"../../{self.instance.pk}/password/\")\nI've opened a pull request on GitHub for this Ticket, please see:\n​PR",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:1e9f1d48d91f31e1de43041a9fa62bd0f04118b5119cf84f752cbe316b17bb24"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-16139",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/contrib/auth/forms.py b/django/contrib/auth/forms.py\nindex b3cfc6723c..f6c4b7fc2f 100644\n--- a/django/contrib/auth/forms.py\n+++ b/django/contrib/auth/forms.py\n@@ -163,7 +163,7 @@ class UserChangeForm(forms.ModelForm):\n         super().__init__(*args, **kwargs)\n         password = self.fields.get(\"password\")\n         if password:\n-            password.help_text = password.help_text.format(\"../password/\")\n+            password.help_text = password.help_text.format(f\"../../{self.instance.pk}/password/\")\n         user_permissions = self.fields.get(\"user_permissions\")\n         if user_permissions:\n             user_permissions.queryset = user_permissions.queryset.select_related(\ndiff --git a/test_password_link.py b/test_password_link.py\nnew file mode 100644\nindex 0000000000..d24a0efe6c\n--- /dev/null\n+++ b/test_password_link.py\n@@ -0,0 +1,87 @@\n+import os\n+import uuid\n+import django\n+from django.conf import settings\n+\n+# Configure Django settings before importing models\n+settings.configure(\n+    DEBUG=True,\n+    DATABASES={\n+        'default': {\n+            'ENGINE': 'django.db.backends.sqlite3',\n+            'NAME': ':memory:',\n+        }\n+    },\n+    INSTALLED_APPS=[\n+        'django.contrib.auth',\n+        'django.contrib.contenttypes',\n+        'django.contrib.admin',\n+        'django.contrib.sessions',\n+        'django.contrib.messages',\n+    ],\n+    MIDDLEWARE=[\n+        'django.contrib.sessions.middleware.SessionMiddleware',\n+        'django.contrib.auth.middleware.AuthenticationMiddleware',\n+        'django.contrib.messages.middleware.MessageMiddleware',\n+    ],\n+    TEMPLATES=[{\n+        'BACKEND': 'django.template.backends.django.DjangoTemplates',\n+        'APP_DIRS': True,\n+        'OPTIONS': {\n+            'context_processors': [\n+                'django.contrib.auth.context_processors.auth',\n+                'django.contrib.messages.context_processors.messages',\n+            ],\n+        },\n+    }],\n+    SECRET_KEY='test-key',\n+)\n+\n+django.setup()\n+\n+from django.contrib.auth import get_user_model\n+from django.contrib.auth.forms import UserChangeForm\n+from django.contrib.auth.admin import UserAdmin\n+from django.contrib.admin import AdminSite\n+from django.test import TestCase, RequestFactory\n+\n+\n+\n+# Create test case\n+class TestUserChangeFormPasswordLink(TestCase):\n+    def setUp(self):\n+        User = get_user_model()\n+        self.user = User.objects.create_user(\n+            username='testuser',\n+            password='testpass',\n+            email='test@example.com'\n+        )\n+\n+    def test_password_link_with_pk(self):\n+        form = UserChangeForm(instance=self.user)\n+        password_field = form.fields['password']\n+        help_text = password_field.help_text\n+        expected_link = f\"../../{self.user.pk}/password/\"\n+        self.assertIn(expected_link, help_text)\n+\n+    def test_password_link_with_custom_to_field(self):\n+        # Even when accessed via a custom to_field, the link should still use the PK\n+        request = RequestFactory().get('/')\n+        admin_site = AdminSite()\n+        admin = UserAdmin(get_user_model(), admin_site)\n+        admin.to_field = 'username'  # Simulate accessing via custom to_field\n+        form = admin.get_form(request, self.user)(instance=self.user)\n+        password_field = form.fields['password']\n+        help_text = password_field.help_text\n+        expected_link = f\"../../{self.user.pk}/password/\"\n+        self.assertIn(expected_link, help_text)\n+\n+if __name__ == '__main__':\n+    from django.test.runner import DiscoverRunner\n+    test_runner = DiscoverRunner(verbosity=2)\n+    failures = test_runner.run_tests(['__main__'])\n+    if failures:\n+        print(\"Test failed!\")\n+        exit(1)\n+    print(\"Test passed!\")\n+    exit(0)\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "OpenHands",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

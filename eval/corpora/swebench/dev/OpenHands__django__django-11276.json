@@ -1,0 +1,140 @@
+{
+ "id": "OpenHands:django__django-11276",
+ "corpus": "swebench",
+ "seedId": "django__django-11276",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "28d5262fa3315690395f04e3619ed554dbaf725b",
+  "headSha": "OpenHands-django__django-11276",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 11276
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 11276
+    },
+    "title": "Use Python stdlib html.escape() to in django.utils.html.escape()",
+    "body": "Description\n\t\nThe function django.utils.html.escape() partially duplicates the Python stdlib function html.escape(). We can replace this duplication with wider community developed version.\nhtml.escape() has been available since Python 3.2:\n​https://docs.python.org/3/library/html.html#html.escape\nThis function is also faster than Django's. As Python bug ​https://bugs.python.org/issue18020 concludes, using .replace() can be faster than .translate(). This function gets called numerous times when rendering templates. After making the change locally, I saw the following improvement:\nmaster:\n$ python -m timeit -s 'from django.utils.html import escape' 'escape(copyright)'\n50000 loops, best of 5: 4.03 usec per loop\nbranch:\n$ python -m timeit -s 'from django.utils.html import escape' 'escape(copyright)'\n100000 loops, best of 5: 2.45 usec per loop\nOne small concern, html.escape() converts ' to &#x27 rather than &#39. These values are functionally equivalent HTML, but I'll mention it as a backwards incompatible change as the literal text has changed",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:64563cba4d363f0c5d4aa6d718c8ec157601114134f71e63ab4c2e9601e26b95"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-11276",
+   "body": ""
+  },
+  "diffText": "diff --git a/benchmark_escape.py b/benchmark_escape.py\nnew file mode 100644\nindex 0000000000..5521c63274\n--- /dev/null\n+++ b/benchmark_escape.py\n@@ -0,0 +1,7 @@\n+import timeit\n+\n+setup = 'from django.utils.html import escape'\n+code = 'escape(copyright)'\n+\n+result = timeit.repeat(stmt=code, setup=setup, number=50000, repeat=5)\n+print(f\"{50000} loops, best of 5: {min(result)/50000*1e6:.2f} usec per loop\")\n\\ No newline at end of file\ndiff --git a/django/utils/html.py b/django/utils/html.py\nindex 9c519978f5..b4a546df46 100644\n--- a/django/utils/html.py\n+++ b/django/utils/html.py\n@@ -1,5 +1,6 @@\n \"\"\"HTML utilities suitable for global use.\"\"\"\n \n+import html\n import json\n import re\n from html.parser import HTMLParser\n@@ -24,14 +25,6 @@ word_split_re = re.compile(r'''([\\s<>\"']+)''')\n simple_url_re = re.compile(r'^https?://\\[?\\w', re.IGNORECASE)\n simple_url_2_re = re.compile(r'^www\\.|^(?!http)\\w[^@]+\\.(com|edu|gov|int|mil|net|org)($|/.*)$', re.IGNORECASE)\n \n-_html_escapes = {\n-    ord('&'): '&amp;',\n-    ord('<'): '&lt;',\n-    ord('>'): '&gt;',\n-    ord('\"'): '&quot;',\n-    ord(\"'\"): '&#39;',\n-}\n-\n \n @keep_lazy(str, SafeString)\n def escape(text):\n@@ -43,7 +36,7 @@ def escape(text):\n     This may result in double-escaping. If this is a concern, use\n     conditional_escape() instead.\n     \"\"\"\n-    return mark_safe(str(text).translate(_html_escapes))\n+    return mark_safe(html.escape(str(text)))\n \n \n _js_escapes = {\ndiff --git a/test_escape.py b/test_escape.py\nnew file mode 100644\nindex 0000000000..f6e8c84602\n--- /dev/null\n+++ b/test_escape.py\n@@ -0,0 +1,40 @@\n+from django.utils.html import escape\n+from django.utils.safestring import mark_safe, SafeString\n+\n+def test_escape():\n+    test_cases = [\n+        # Basic test cases\n+        ('&', '&amp;'),\n+        ('<', '&lt;'),\n+        ('>', '&gt;'),\n+        ('\"', '&quot;'),\n+        (\"'\", '&#x27;'),  # Note: This is different from Django's original &#39;\n+        \n+        # Combined test cases\n+        ('<script>alert(\"&\");</script>', '&lt;script&gt;alert(&quot;&amp;&quot;);&lt;/script&gt;'),\n+        \n+        # Edge cases\n+        ('', ''),  # Empty string\n+        ('Hello World', 'Hello World'),  # No special chars\n+        ('&amp;', '&amp;amp;'),  # Already escaped\n+        ('&&', '&amp;&amp;'),  # Multiple special chars\n+        ('<>\"\\'\"', '&lt;&gt;&quot;&#x27;&quot;'),  # All special chars\n+        \n+        # Unicode\n+        ('Hello 世界', 'Hello 世界'),  # Unicode text\n+        ('Hello & 世界', 'Hello &amp; 世界'),  # Unicode with special chars\n+    ]\n+    \n+    for input_text, expected in test_cases:\n+        result = escape(input_text)\n+        assert isinstance(result, SafeString), f\"Result for {input_text!r} should be SafeString\"\n+        assert result == expected, f\"Failed for {input_text!r}: expected {expected!r}, got {result!r}\"\n+        \n+        # Test with SafeString input\n+        safe_result = escape(mark_safe(input_text))\n+        assert isinstance(safe_result, SafeString), f\"Result for SafeString {input_text!r} should be SafeString\"\n+        assert safe_result == expected, f\"Failed for SafeString {input_text!r}: expected {expected!r}, got {safe_result!r}\"\n+\n+if __name__ == '__main__':\n+    test_escape()\n+    print(\"All tests passed!\")\n\\ No newline at end of file\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "OpenHands",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

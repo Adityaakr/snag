@@ -23,10 +23,24 @@ export const NON_PROBLEM_STATUSES: readonly RequirementStatus[] = ['done', 'pree
 export const ItemLabelsSchema = z.object({
   /** Expected status per requirement id (ids are stable per section 5). */
   requirements: z.record(z.string(), z.enum(REQUIREMENT_STATUSES)),
-  units: z.array(z.object({ file: z.string(), symbol: z.string().optional(), role: z.enum(UNIT_ROLES) })),
+  /** Other statuses that also count as correct for `passed` (G.1 `unwire`: partial or missing). Metrics use the primary label. */
+  requirementsAccept: z.record(z.string(), z.array(z.enum(REQUIREMENT_STATUSES))).default({}),
+  units: z.array(
+    z.object({
+      file: z.string(),
+      symbol: z.string().optional(),
+      role: z.enum(UNIT_ROLES),
+      /** Other roles that also count as correct (G.1 `inject_refactor`: benign or filtered). */
+      accept: z.array(z.enum(UNIT_ROLES)).optional(),
+    }),
+  ),
   facts: z.array(z.object({ kind: z.string(), file: z.string().optional(), symbol: z.string().optional() })),
   /** Units that should carry a test integrity finding. */
   testIntegrity: z.array(z.object({ file: z.string(), symbol: z.string().optional() })).default([]),
+  /** Requirements whose "done" claim in the PR body should be a P0 claim mismatch (G.1 `claim_all_done`). */
+  claimMismatch: z.array(z.string()).default([]),
+  /** Corpus C: human feedback by finding content key (strong and weak labels are reported separately). */
+  feedback: z.record(z.string(), z.enum(['agree', 'disagree', 'weak_agree', 'weak_disagree'])).optional(),
   pr: z.enum(['problem', 'clean']),
 });
 export type ItemLabels = z.infer<typeof ItemLabelsSchema>;
@@ -52,6 +66,8 @@ export interface EvalItem {
   /** Golden scenarios keep their full expectations. */
   expected?: Expected;
   annotatedBy?: 'claude-code' | 'human' | 'study';
+  /** Corpus-specific facts for slicing reports, for example corpus A's label source and strength. */
+  meta?: Record<string, string>;
 }
 
 /** ContentSource over in-memory trees. */

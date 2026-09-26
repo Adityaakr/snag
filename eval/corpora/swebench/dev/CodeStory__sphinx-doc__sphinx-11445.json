@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:sphinx-doc__sphinx-11445",
+ "corpus": "swebench",
+ "seedId": "sphinx-doc__sphinx-11445",
+ "input": {
+  "mode": "local",
+  "repo": "sphinx-doc/sphinx",
+  "baseSha": "71db08c05197545944949d5aa76cd340e7143627",
+  "headSha": "CodeStory-sphinx-doc__sphinx-11445",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "sphinx-doc",
+    "repo": "sphinx",
+    "number": 11445
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "sphinx-doc",
+     "repo": "sphinx",
+     "number": 11445
+    },
+    "title": "Using rst_prolog removes top level headings containing a domain directive",
+    "body": "### Describe the bug\r\n\r\nIf `rst_prolog` is set, then any documents that contain a domain directive as the first heading (eg `:mod:`) do not render the heading correctly or include the heading in the toctree.\r\n\r\nIn the example below, if the heading of `docs/mypackage.rst` were `mypackage2` instead of `:mod:mypackage2` then the heading displays correctly.\r\nSimilarly, if you do not set `rst_prolog` then the heading will display correctly.\r\n\r\nThis appears to have been broken for some time because I can reproduce it in v4.0.0 of Sphinx\r\n\r\n### How to Reproduce\r\n\r\n```bash\r\n$ sphinx-quickstart --no-sep --project mypackage --author me -v 0.1.0 --release 0.1.0 --language en docs\r\n$ echo -e 'Welcome\\n=======\\n\\n.. toctree::\\n\\n   mypackage\\n' > docs/index.rst\r\n$ echo -e ':mod:`mypackage2`\\n=================\\n\\nContent\\n\\nSubheading\\n----------\\n' > docs/mypackage.rst\r\n$ echo -e 'rst_prolog = \"\"\"\\n.. |psf| replace:: Python Software Foundation\\n\"\"\"\\n' >> docs/conf.py\r\n$ sphinx-build -b html . _build\r\n$ grep 'mypackage2' docs/_build/index.html\r\n```\r\n\r\n`docs/index.rst`:\r\n\r\n```rst\r\nWelcome\r\n=======\r\n\r\n.. toctree::\r\n\r\n   mypackage\r\n```\r\n\r\n`docs/mypackage.rst`:\r\n\r\n```rst\r\n:mod:`mypackage2`\r\n=================\r\n\r\nContent\r\n\r\nSubheading\r\n----------\r\n```\r\n\r\n### Environment Information\r\n\r\n```text\r\nPlatform:              linux; (Linux-6.3.2-arch1-1-x86_64-with-glibc2.37)\r\nPython version:        3.11.3 (main, Apr  5 2023, 15:52:25) [GCC 12.2.1 20230201])\r\nPython implementation: CPython\r\nSphinx version:        7.1.0+/d3c91f951\r\nDocutils version:      0.20.1\r\nJinja2 version:        3.1.2\r\nPygments version:      2.15.1\r\n```\r\n\r\n\r\n### Sphinx extensions\r\n\r\n```python\r\n[]\r\n```\r\n\r\n\r\n### Additional context\r\n\r\n_No response_",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:7d7f6618c0ab60e0cee06f6497abf071a1c27b27cac13dd599e02c9064cc6af6"
+   }
+  ],
+  "pr": {
+   "title": "Fix sphinx-doc__sphinx-11445",
+   "body": ""
+  },
+  "diffText": "diff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 000000000..4b06af672\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,91 @@\n+import os\n+import shutil\n+import subprocess\n+\n+# Create test directory\n+test_dir = \"test_sphinx_issue\"\n+if os.path.exists(test_dir):\n+    shutil.rmtree(test_dir)\n+os.makedirs(test_dir)\n+os.chdir(test_dir)\n+\n+# Run sphinx-quickstart\n+subprocess.run([\n+    \"sphinx-quickstart\",\n+    \"--no-sep\",\n+    \"--project\", \"mypackage\",\n+    \"--author\", \"me\",\n+    \"-v\", \"0.1.0\",\n+    \"--release\", \"0.1.0\",\n+    \"--language\", \"en\",\n+    \"docs\"\n+], check=True)\n+\n+# Create index.rst\n+with open(\"docs/index.rst\", \"w\") as f:\n+    f.write(\"\"\"Welcome\n+=======\n+\n+.. toctree::\n+\n+   mypackage\n+   complex_doc\n+\"\"\")\n+\n+# Create mypackage.rst (original test case)\n+with open(\"docs/mypackage.rst\", \"w\") as f:\n+    f.write(\"\"\":mod:`mypackage2`\n+=================\n+\n+Content\n+\n+Subheading\n+----------\n+\"\"\")\n+\n+# Create complex_doc.rst (edge cases)\n+with open(\"docs/complex_doc.rst\", \"w\") as f:\n+    f.write(\"\"\":author: John Doe\n+:version: 1.0\n+:date: 2023-07-20\n+\n+:class:`ComplexDocument`\n+=======================\n+\n+This is a test document with multiple docinfo fields and domain directives.\n+\n+Section with :func:`test_function`\n+--------------------------------\n+\n+Normal content with :class:`inline` reference.\n+\n+Another :mod:`module` Reference\n+-----------------------------\n+\n+More content here.\n+\"\"\")\n+\n+# Modify conf.py to add rst_prolog\n+with open(\"docs/conf.py\", \"a\") as f:\n+    f.write('\\nrst_prolog = \"\"\"\\n.. |psf| replace:: Python Software Foundation\\n\"\"\"\\n')\n+\n+# Build the documentation\n+os.chdir(\"docs\")\n+subprocess.run([\"sphinx-build\", \"-b\", \"html\", \".\", \"_build\"], check=True)\n+\n+# Check if all the important elements appear in the output\n+with open(\"_build/index.html\", \"r\") as f:\n+    content = f.read()\n+    success = True\n+    missing = []\n+    \n+    elements = [\"mypackage2\", \"ComplexDocument\", \"test_function\", \"module\"]\n+    for element in elements:\n+        if element not in content:\n+            success = False\n+            missing.append(element)\n+\n+if success:\n+    print(\"SUCCESS: All elements found in index.html\")\n+else:\n+    print(\"ERROR: The following elements were not found:\", \", \".join(missing))\n\\ No newline at end of file\ndiff --git a/sphinx/util/rst.py b/sphinx/util/rst.py\nindex 7a1538325..5f53e55cc 100644\n--- a/sphinx/util/rst.py\n+++ b/sphinx/util/rst.py\n@@ -25,7 +25,7 @@ except ImportError:\n \n logger = logging.getLogger(__name__)\n \n-docinfo_re = re.compile(':\\\\w+:.*?')\n+docinfo_re = re.compile('^:[\\\\w-]+: .*$')\n symbols_re = re.compile(r'([!-\\-/:-@\\[-`{-~])')  # symbols without dot(0x2e)\n SECTIONING_CHARS = ['=', '-', '~']\n \n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

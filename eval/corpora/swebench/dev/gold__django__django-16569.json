@@ -1,0 +1,140 @@
+{
+ "id": "gold:django__django-16569",
+ "corpus": "swebench",
+ "seedId": "django__django-16569",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "278881e37619278789942513916acafaa88d26f3",
+  "headSha": "gold-django__django-16569",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 16569
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 16569
+    },
+    "title": "Formsets' add_fields() method fails in some circumstances if the argument index is None.",
+    "body": "Description\n\t\nFormsets' add_fields() method fails in some circumstances if the argument index is None.\nWhen a FormSet has the attributes self.can_delete == True and self.can_delete_extra == False, calling the add_fields() method on that FormSet fails if the argument index is None. This occurs for example when calling FormSet.empty_form(). The result is that the method raises the exception TypeError: '<' not supported between instances of 'NoneType' and 'int'. \nCode example:\nMyFormSet = forms.formset_factory(\n\tform=MyForm,\n\tcan_delete=True,\n\tcan_delete_extra=False,\n)\nmy_formset = MyFormSet(\n\tinitial=None,\n)\nprint(my_formset.empty_form)\nThe reason this happens is that in in line 493 of [django.forms.formsets](​https://github.com/django/django/blob/main/django/forms/formsets.py) index is compared to initial_form_count:\nif self.can_delete and (self.can_delete_extra or index < initial_form_count):\nChecking for index not None should fix the issue:\nif self.can_delete and (self.can_delete_extra or (index is not None and index < initial_form_count)):\nHow to Reproduce\nA self-contained example to reproduce this bug is as follows:\n#!/usr/bin/env python3\nimport os\nimport django\nfrom django import forms\nclass MyForm(forms.Form):\n\tmy_field = forms.CharField()\nif __name__ == \"__main__\":\n\tsettings_file = os.path.splitext(os.path.basename(__file__))[0]\n\tdjango.conf.settings.configure(\n\t\tDEBUG=True,\n\t\tMIDDLEWARE_CLASSES=[],\n\t\tROOT_URLCONF=settings_file,\n\t)\n\tdjango.setup()\n\tMyFormSet = forms.formset_factory(\n\t\tform=MyForm,\n\t\tcan_delete=True,\n\t\tcan_delete_extra=False,\n\t)\n\tmy_formset = MyFormSet(\n\t\tinitial=None,\n\t)\n\tprint(my_formset.empty_form)",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:ab64f463d34fa11579e7edf618c5ae2cee89c0c578ebc0a64527eade673bfe1b"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-16569",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/forms/formsets.py b/django/forms/formsets.py\n--- a/django/forms/formsets.py\n+++ b/django/forms/formsets.py\n@@ -490,7 +490,9 @@ def add_fields(self, form, index):\n                     required=False,\n                     widget=self.get_ordering_widget(),\n                 )\n-        if self.can_delete and (self.can_delete_extra or index < initial_form_count):\n+        if self.can_delete and (\n+            self.can_delete_extra or (index is not None and index < initial_form_count)\n+        ):\n             form.fields[DELETION_FIELD_NAME] = BooleanField(\n                 label=_(\"Delete\"),\n                 required=False,\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "gold",
+  "source": "gold",
+  "strength": "strong"
+ },
+ "annotatedBy": "study"
+}

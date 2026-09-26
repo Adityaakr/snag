@@ -1,0 +1,140 @@
+{
+ "id": "gold:sphinx-doc__sphinx-8621",
+ "corpus": "swebench",
+ "seedId": "sphinx-doc__sphinx-8621",
+ "input": {
+  "mode": "local",
+  "repo": "sphinx-doc/sphinx",
+  "baseSha": "21698c14461d27933864d73e6fba568a154e83b3",
+  "headSha": "gold-sphinx-doc__sphinx-8621",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "sphinx-doc",
+    "repo": "sphinx",
+    "number": 8621
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "sphinx-doc",
+     "repo": "sphinx",
+     "number": 8621
+    },
+    "title": "kbd role produces incorrect HTML when compound-key separators (-, + or ^) are used as keystrokes",
+    "body": "**Describe the bug**\r\n\r\nThe `:kbd:` role produces incorrect HTML when:\r\n\r\n1) defining standalone keystrokes that use any of the compound-key separators (`-`, `+` and `^`)\r\n2) defining compound keystrokes where one or more keystrokes use any of the compound-key separators (`-`, `+` and `^`)\r\n\r\n**To Reproduce**\r\n\r\nFor the below three keyboard definitions:\r\n```\r\n(1) :kbd:`-`\r\n(2) :kbd:`+`\r\n(3) :kbd:`Shift-+`\r\n```\r\n\r\nThe following three incorrect output is generated:\r\n\r\n(1) `-` is treated as a separator with two \"blank\" keystrokes around it.\r\n\r\n```\r\n<kbd class=\"kbd docutils literal notranslate\"><kbd class=\"kbd docutils literal notranslate\"></kbd>-<kbd class=\"kbd docutils literal notranslate\"></kbd></kbd>\r\n```\r\n\r\n(2) `+` is treated as a separator with two \"blank\" keystrokes around it.\r\n\r\n```\r\n<kbd class=\"kbd docutils literal notranslate\"><kbd class=\"kbd docutils literal notranslate\"></kbd>+<kbd class=\"kbd docutils literal notranslate\"></kbd></kbd>\r\n```\r\n\r\n(3) `+` is treated as a separator within a compound-keystroke, with two \"blank\" keystrokes around it.\r\n\r\n```\r\n<kbd class=\"kbd docutils literal notranslate\"><kbd class=\"kbd docutils literal notranslate\">Shift</kbd>-<kbd class=\"kbd docutils literal notranslate\"></kbd>+<kbd class=\"kbd docutils literal notranslate\"></kbd></kbd>\r\n```\r\n\r\n**Expected behavior**\r\n\r\nFor single keystrokes that use `-`, `+` or`^`, just a single `kbd` element should be created.\r\n\r\nFor compound-keystrokes, the algorithm should differentiate between `-`, `+` and `^` characters appearing in separator vs keystroke positions (currently, it's very simplistic, it just treats all these characters as separators using a simple regexp).\r\n\r\n**Screenshot**\r\n\r\n![image](https://user-images.githubusercontent.com/698770/103331652-a2268680-4ab2-11eb-953a-2f50c8cb7a00.png)\r\n\r\n\r\n**Environment info**\r\n- OS: Windows\r\n- Python version: 3.9.1\r\n- Sphinx version: 3.4.0\r\n- Sphinx extensions:  -\r\n- Extra tools: -",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:955483e2ec9265cc1f4d0fc362856707a1d1e5ad41ca66442a08f85f3a754119"
+   }
+  ],
+  "pr": {
+   "title": "Fix sphinx-doc__sphinx-8621",
+   "body": ""
+  },
+  "diffText": "diff --git a/sphinx/builders/html/transforms.py b/sphinx/builders/html/transforms.py\n--- a/sphinx/builders/html/transforms.py\n+++ b/sphinx/builders/html/transforms.py\n@@ -37,7 +37,7 @@ class KeyboardTransform(SphinxPostTransform):\n     \"\"\"\n     default_priority = 400\n     builders = ('html',)\n-    pattern = re.compile(r'(-|\\+|\\^|\\s+)')\n+    pattern = re.compile(r'(?<=.)(-|\\+|\\^|\\s+)(?=.)')\n \n     def run(self, **kwargs: Any) -> None:\n         matcher = NodeMatcher(nodes.literal, classes=[\"kbd\"])\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "gold",
+  "source": "gold",
+  "strength": "strong"
+ },
+ "annotatedBy": "study"
+}

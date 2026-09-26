@@ -1,0 +1,140 @@
+{
+ "id": "OpenHands:pydata__xarray-4094",
+ "corpus": "swebench",
+ "seedId": "pydata__xarray-4094",
+ "input": {
+  "mode": "local",
+  "repo": "pydata/xarray",
+  "baseSha": "a64cf2d5476e7bbda099b34c40b7be1880dbd39a",
+  "headSha": "OpenHands-pydata__xarray-4094",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "pydata",
+    "repo": "xarray",
+    "number": 4094
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "pydata",
+     "repo": "xarray",
+     "number": 4094
+    },
+    "title": "to_unstacked_dataset broken for single-dim variables",
+    "body": "<!-- A short summary of the issue, if appropriate -->\r\n\r\n\r\n#### MCVE Code Sample\r\n\r\n```python\r\narr = xr.DataArray(\r\n     np.arange(3),\r\n     coords=[(\"x\", [0, 1, 2])],\r\n )\r\ndata = xr.Dataset({\"a\": arr, \"b\": arr})\r\nstacked = data.to_stacked_array('y', sample_dims=['x'])\r\nunstacked = stacked.to_unstacked_dataset('y')\r\n# MergeError: conflicting values for variable 'y' on objects to be combined. You can skip this check by specifying compat='override'.\r\n```\r\n\r\n#### Expected Output\r\nA working roundtrip.\r\n\r\n#### Problem Description\r\nI need to stack a bunch of variables and later unstack them again, however this doesn't work if the variables only have a single dimension.\r\n\r\n#### Versions\r\n\r\n<details><summary>Output of <tt>xr.show_versions()</tt></summary>\r\n\r\nINSTALLED VERSIONS\r\n------------------\r\ncommit: None\r\npython: 3.7.3 (default, Mar 27 2019, 22:11:17) \r\n[GCC 7.3.0]\r\npython-bits: 64\r\nOS: Linux\r\nOS-release: 4.15.0-96-generic\r\nmachine: x86_64\r\nprocessor: x86_64\r\nbyteorder: little\r\nLC_ALL: None\r\nLANG: en_GB.UTF-8\r\nLOCALE: en_GB.UTF-8\r\nlibhdf5: 1.10.4\r\nlibnetcdf: 4.6.2\r\n\r\nxarray: 0.15.1\r\npandas: 1.0.3\r\nnumpy: 1.17.3\r\nscipy: 1.3.1\r\nnetCDF4: 1.4.2\r\npydap: None\r\nh5netcdf: None\r\nh5py: 2.10.0\r\nNio: None\r\nzarr: None\r\ncftime: 1.0.4.2\r\nnc_time_axis: None\r\nPseudoNetCDF: None\r\nrasterio: None\r\ncfgrib: None\r\niris: None\r\nbottleneck: None\r\ndask: 2.10.1\r\ndistributed: 2.10.0\r\nmatplotlib: 3.1.1\r\ncartopy: None\r\nseaborn: 0.10.0\r\nnumbagg: None\r\nsetuptools: 41.0.0\r\npip: 19.0.3\r\nconda: 4.8.3\r\npytest: 5.3.5\r\nIPython: 7.9.0\r\nsphinx: None\r\n\r\n\r\n</details>",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:af46afa2f6c8683896be5455aa4b9741039e34f093b16a29a13477ac0485af46"
+   }
+  ],
+  "pr": {
+   "title": "Fix pydata__xarray-4094",
+   "body": ""
+  },
+  "diffText": "diff --git a/reproduce_error.py b/reproduce_error.py\nnew file mode 100644\nindex 00000000..a7578bce\n--- /dev/null\n+++ b/reproduce_error.py\n@@ -0,0 +1,22 @@\n+import xarray as xr\n+import numpy as np\n+\n+# Create test data\n+arr = xr.DataArray(\n+    np.arange(3),\n+    coords=[(\"x\", [0, 1, 2])],\n+)\n+data = xr.Dataset({\"a\": arr, \"b\": arr})\n+\n+# Try stacking and unstacking\n+stacked = data.to_stacked_array('y', sample_dims=['x'])\n+print(\"\\nStacked array:\")\n+print(stacked)\n+\n+try:\n+    unstacked = stacked.to_unstacked_dataset('y')\n+    print(\"\\nUnstacked dataset:\")\n+    print(unstacked)\n+except Exception as e:\n+    print(\"\\nError during unstacking:\")\n+    print(e)\n\\ No newline at end of file\ndiff --git a/test_edge_cases.py b/test_edge_cases.py\nnew file mode 100644\nindex 00000000..1280e828\n--- /dev/null\n+++ b/test_edge_cases.py\n@@ -0,0 +1,45 @@\n+import xarray as xr\n+import numpy as np\n+\n+def test_case(name, data):\n+    print(f\"\\nTest case: {name}\")\n+    print(\"Input dataset:\")\n+    print(data)\n+    \n+    stacked = data.to_stacked_array('y', sample_dims=['x'])\n+    print(\"\\nStacked array:\")\n+    print(stacked)\n+    \n+    unstacked = stacked.to_unstacked_dataset('y')\n+    print(\"\\nUnstacked dataset:\")\n+    print(unstacked)\n+    \n+    print(\"\\nRoundtrip successful:\", data.equals(unstacked))\n+\n+# Test case 1: Original case\n+arr = xr.DataArray(np.arange(3), coords=[(\"x\", [0, 1, 2])])\n+data1 = xr.Dataset({\"a\": arr, \"b\": arr})\n+test_case(\"Original case\", data1)\n+\n+# Test case 2: Different values\n+arr2 = xr.DataArray(np.arange(3), coords=[(\"x\", [0, 1, 2])])\n+data2 = xr.Dataset({\"a\": arr2, \"b\": arr2 * 2})\n+test_case(\"Different values\", data2)\n+\n+# Test case 3: Mixed dimensions with shared sample dim\n+arr3 = xr.DataArray(np.arange(3), coords=[(\"x\", [0, 1, 2])])\n+scalar = xr.DataArray([5, 6, 7], coords=[(\"x\", [0, 1, 2])])\n+data3 = xr.Dataset({\"a\": arr3, \"b\": scalar})\n+test_case(\"Mixed dimensions with shared sample dim\", data3)\n+\n+# Test case 4: Multiple coordinates\n+arr4 = xr.DataArray(\n+    np.arange(6).reshape(2, 3),\n+    coords={\n+        \"x\": [0, 1],\n+        \"y\": [\"a\", \"b\", \"c\"],\n+        \"z\": (\"x\", [10, 20])\n+    }\n+)\n+data4 = xr.Dataset({\"a\": arr4, \"b\": arr4.isel(y=0)})\n+test_case(\"Multiple coordinates\", data4)\n\\ No newline at end of file\ndiff --git a/xarray/core/dataarray.py b/xarray/core/dataarray.py\nindex b0df8749..0f5c95a2 100644\n--- a/xarray/core/dataarray.py\n+++ b/xarray/core/dataarray.py\n@@ -1960,11 +1960,48 @@ class DataArray(AbstractArray, DataWithCoords):\n \n         # pull variables out of datarray\n         data_dict = {}\n+        coords_dict = {}\n+        \n+        # Get the original non-stacked dimensions\n+        orig_dims = set(self.dims) - {dim}\n+        \n+        # First pass: collect all coordinates except the stacked one\n+        for coord_name, coord_var in self.coords.items():\n+            if coord_name != dim and coord_name != variable_dim:\n+                if set(coord_var.dims).issubset(orig_dims):\n+                    coords_dict[coord_name] = coord_var\n+\n+        # Second pass: extract data while preserving coordinates\n         for k in variables:\n-            data_dict[k] = self.sel({variable_dim: k}).squeeze(drop=True)\n-\n-        # unstacked dataset\n-        return Dataset(data_dict)\n+            # Get the data for this variable\n+            indexer = {variable_dim: k}\n+            selected = self.sel(indexer)\n+            \n+            # Get the non-stacked dimensions for this variable\n+            var_dims = [d for d in selected.dims if d != dim]\n+            \n+            # If no dimensions left, use the first available dimension\n+            if not var_dims and orig_dims:\n+                var_dims = [list(orig_dims)[0]]\n+                \n+            # Create a new variable with proper dimensions\n+            if var_dims:\n+                # For array data, keep original dimensions\n+                data = selected.squeeze().drop_vars([dim] if dim in selected.coords else [])\n+                data_dict[k] = data\n+            else:\n+                # For scalar data, create a 0-dimensional array\n+                data_dict[k] = selected.squeeze().drop_vars([dim] if dim in selected.coords else [])\n+\n+        # Create dataset with explicit coordinates to avoid conflicts\n+        ds = Dataset(data_dict, coords=coords_dict)\n+        \n+        # Drop any remaining stacked coordinates\n+        for v in ds.variables:\n+            if dim in ds[v].coords:\n+                ds[v] = ds[v].drop_vars(dim)\n+                \n+        return ds\n \n     def transpose(self, *dims: Hashable, transpose_coords: bool = True) -> \"DataArray\":\n         \"\"\"Return a new DataArray object with transposed dimensions.\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "OpenHands",
+  "source": "rq2_no_divergence",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

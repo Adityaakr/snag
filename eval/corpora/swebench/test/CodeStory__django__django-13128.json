@@ -1,0 +1,140 @@
+{
+ "id": "CodeStory:django__django-13128",
+ "corpus": "swebench",
+ "seedId": "django__django-13128",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "2d67222472f80f251607ae1b720527afceba06ad",
+  "headSha": "CodeStory-django__django-13128",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 13128
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 13128
+    },
+    "title": "make temporal subtraction work without ExpressionWrapper",
+    "body": "Description\n\t\nclass Experiment(models.Model):\n\tstart = models.DateTimeField()\n\tend = models.DateTimeField()\nExperiment.objects.annotate(\n\tdelta=F('end') - F('start') + Value(datetime.timedelta(), output_field=DurationField())\n)\nThis gives:\ndjango.core.exceptions.FieldError: Expression contains mixed types: DateTimeField, DurationField. You must set output_field.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:50cf229a22f6411de01d94ca3ae5ddba89c3cfd2ae1964fe33fef21f548edc75"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-13128",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/db/models/expressions.py b/django/db/models/expressions.py\nindex d913658291..ee569fd8cf 100644\n--- a/django/db/models/expressions.py\n+++ b/django/db/models/expressions.py\n@@ -297,19 +297,50 @@ class BaseExpression:\n         If a source's output field resolves to None, exclude it from this check.\n         If all sources are None, then an error is raised higher up the stack in\n         the output_field property.\n+\n+        Special cases for temporal fields:\n+        1. When subtracting two temporal fields of the same type, the result is a DurationField\n+        2. When adding/subtracting a duration to/from a temporal field, the result is the same type as the temporal field\n         \"\"\"\n-        sources_iter = (source for source in self.get_source_fields() if source is not None)\n-        for output_field in sources_iter:\n-            for source in sources_iter:\n-                if not isinstance(output_field, source.__class__):\n-                    raise FieldError(\n-                        'Expression contains mixed types: %s, %s. You must '\n-                        'set output_field.' % (\n-                            output_field.__class__.__name__,\n-                            source.__class__.__name__,\n-                        )\n+        sources = [source for source in self.get_source_fields() if source is not None]\n+        if not sources:\n+            return None\n+\n+        # Handle temporal field operations\n+        if len(sources) == 2 and hasattr(self, 'connector'):\n+            lhs, rhs = sources\n+            lhs_type = lhs.get_internal_type()\n+            rhs_type = rhs.get_internal_type()\n+            temporal_fields = {'DateField', 'DateTimeField', 'TimeField'}\n+\n+            # Case 1: datetime - datetime = duration\n+            if (\n+                self.connector == self.SUB and\n+                lhs_type in temporal_fields and\n+                lhs_type == rhs_type\n+            ):\n+                return fields.DurationField()\n+\n+            # Case 2: datetime ± duration = datetime\n+            if (\n+                self.connector in {self.ADD, self.SUB} and\n+                ((lhs_type in temporal_fields and rhs_type == 'DurationField') or\n+                 (rhs_type in temporal_fields and lhs_type == 'DurationField'))\n+            ):\n+                return next(source for source in sources if source.get_internal_type() in temporal_fields)\n+\n+        # Default behavior for other cases\n+        output_field = sources[0]\n+        for source in sources[1:]:\n+            if not isinstance(output_field, source.__class__):\n+                raise FieldError(\n+                    'Expression contains mixed types: %s, %s. You must '\n+                    'set output_field.' % (\n+                        output_field.__class__.__name__,\n+                        source.__class__.__name__,\n                     )\n-            return output_field\n+                )\n+        return output_field\n \n     @staticmethod\n     def _convert_value_noop(value, expression, connection):\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "problem"
+ },
+ "meta": {
+  "tool": "CodeStory",
+  "source": "rq2_divergent",
+  "strength": "weak"
+ },
+ "annotatedBy": "study"
+}

@@ -1,0 +1,140 @@
+{
+ "id": "gold:django__django-13810",
+ "corpus": "swebench",
+ "seedId": "django__django-13810",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "429d089d0a8fbd400e0c010708df4f0d16218970",
+  "headSha": "gold-django__django-13810",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 13810
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 13810
+    },
+    "title": "MiddlewareNotUsed leaves undesired side effects when loading middleware in ASGI context",
+    "body": "Description\n\t\nI experienced strange issues when working with ​ASGI , ​django-debug-toolbar and my own small middleware. It was hard problem to debug, I uploaded an example project here: ​https://github.com/hbielenia/asgi-djangotoolbar-bug (the name is misleading - I initially thought it's a bug with django-debug-toolbar).\nThe SESSION_FILE_PATH setting is intentionally broken to cause a 500 error. When starting the application and accessing /admin (any location really, but I wanted to leave it at a minimum and didn't add any views) it gives TypeError: object HttpResponse can't be used in 'await' expression. Commenting out asgi_djangotoolbar_bug.middleware.DummyMiddleware fixes the issue (in that I receive a 500 ImproperlyConfigured exception). I'm not sure about the overall role of django-debug-toolbar here - removing it causes Daphne to return a 500 error page but without debug information and there's no traceback in console either. I decided to leave it since it helped me approximate the causes of issue.\nI notice that in ​https://github.com/django/django/blob/3.1.4/django/core/handlers/base.py#L58 while MiddlewareNotUsed causes the loop to skip futher processing and go to next middleware, it does leave handler variable overwritten with output of self.adapt_method_mode(). On next pass, this handler is passed to next middleware instance, disregarding all the previous checks for (lack of) async support. This likely causes the middleware chain to be \"poisoned\" from this point onwards, resulting in last middleware in response cycle to return an HttpResponse as a synchronous middleware would, instead of coroutine that is expected.\nThis is probably avoided by adding async support to my middleware, but unless I'm missing something ​docs indicate it should work as it is. It is my intention that it's applied only on synchronous requests, so I didn't make it async compatible on purpose. If it's intentional in Django that every middleware needs to support async if the application is run as ASGI app, the documentation should probably state that clearly. Though it kinda defeats the purpose of having async_capable = False flag in the first place.",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:200ee1b462621d894570c3ff667951e3c0d96f4beb5470e6235af30cdceef9bf"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-13810",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/core/handlers/base.py b/django/core/handlers/base.py\n--- a/django/core/handlers/base.py\n+++ b/django/core/handlers/base.py\n@@ -51,11 +51,11 @@ def load_middleware(self, is_async=False):\n                 middleware_is_async = middleware_can_async\n             try:\n                 # Adapt handler, if needed.\n-                handler = self.adapt_method_mode(\n+                adapted_handler = self.adapt_method_mode(\n                     middleware_is_async, handler, handler_is_async,\n                     debug=settings.DEBUG, name='middleware %s' % middleware_path,\n                 )\n-                mw_instance = middleware(handler)\n+                mw_instance = middleware(adapted_handler)\n             except MiddlewareNotUsed as exc:\n                 if settings.DEBUG:\n                     if str(exc):\n@@ -63,6 +63,8 @@ def load_middleware(self, is_async=False):\n                     else:\n                         logger.debug('MiddlewareNotUsed: %r', middleware_path)\n                 continue\n+            else:\n+                handler = adapted_handler\n \n             if mw_instance is None:\n                 raise ImproperlyConfigured(\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "gold",
+  "source": "gold",
+  "strength": "strong"
+ },
+ "annotatedBy": "study"
+}

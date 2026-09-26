@@ -1,0 +1,140 @@
+{
+ "id": "gold:django__django-13670",
+ "corpus": "swebench",
+ "seedId": "django__django-13670",
+ "input": {
+  "mode": "local",
+  "repo": "django/django",
+  "baseSha": "c448e614c60cc97c6194c62052363f4f501e0953",
+  "headSha": "gold-django__django-13670",
+  "linkStrength": "closing",
+  "issueRefs": [
+   {
+    "owner": "django",
+    "repo": "django",
+    "number": 13670
+   }
+  ],
+  "issues": [
+   {
+    "ref": {
+     "owner": "django",
+     "repo": "django",
+     "number": 13670
+    },
+    "title": "dateformat.y() doesn't support years < 1000.",
+    "body": "Description\n\t \n\t\t(last modified by Sam)\n\t \nWhen using the the dateformat of django with a date before 999 (or 99 and 9 for similar matters) and the format character \"y\" no leading zero will be printed. This is not consistent with the way the python datetime module and PHP handle that character \"y\" in format strings:\ndjango (version 3.1):\n>>> import datetime\n>>> from django.utils import dateformat\n>>> dateformat.format(datetime.datetime(123, 4, 5, 6, 7), \"y\")\n'3'\npython (version 3.8):\n>>> import datetime\n>>> datetime.datetime(123, 4, 5, 6, 7).strftime(\"%y\")\n'23'\nphp (version 7.4):\necho date(\"y\", strtotime(\"0123-04-05 06:07:00\"))\n23\nI have a pull-request ready for this: ​https://github.com/django/django/pull/13614",
+    "author": "swebench",
+    "state": "closed",
+    "comments": [],
+    "contentHash": "sha256:845431b7e37fe37e09cd3a192c99e7b089953ea960d5ac477e1f6ff4532f7fc2"
+   }
+  ],
+  "pr": {
+   "title": "Fix django__django-13670",
+   "body": ""
+  },
+  "diffText": "diff --git a/django/utils/dateformat.py b/django/utils/dateformat.py\n--- a/django/utils/dateformat.py\n+++ b/django/utils/dateformat.py\n@@ -325,8 +325,8 @@ def W(self):\n         return self.data.isocalendar()[1]\n \n     def y(self):\n-        \"Year, 2 digits; e.g. '99'\"\n-        return str(self.data.year)[2:]\n+        \"\"\"Year, 2 digits with leading zeros; e.g. '99'.\"\"\"\n+        return '%02d' % (self.data.year % 100)\n \n     def Y(self):\n         \"Year, 4 digits; e.g. '1999'\"\n"
+ },
+ "config": {
+  "version": 1,
+  "mode": "comment_only",
+  "languages": [
+   "typescript",
+   "javascript",
+   "python",
+   "rust"
+  ],
+  "ignore_paths": [],
+  "draft_prs": "review",
+  "extraction": {
+   "mode": "auto",
+   "provider": "anthropic",
+   "model": "claude-opus-5-5"
+  },
+  "baseline": {
+   "model": "claude-opus-5-5"
+  },
+  "llm_prices": {
+   "claude-opus-5-5": {
+    "input": 4,
+    "output": 20
+   },
+   "claude-opus-5": {
+    "input": 5,
+    "output": 25
+   },
+   "claude-sonnet-5": {
+    "input": 2,
+    "output": 10
+   }
+  },
+  "jev": {
+   "model": "jev-1.13.0",
+   "max_state_tokens": 24000,
+   "concurrency": 8,
+   "price_per_million_input_usd": 0.042
+  },
+  "thresholds": {
+   "full": 0.6,
+   "partial": 0.5,
+   "missing": 0.7,
+   "missing_send_back": 0.85,
+   "contradicted": 0.7,
+   "ambiguous": 0.6,
+   "checkable": 0.35,
+   "preexisting": 0.7,
+   "serves": 0.55,
+   "plumbing": 0.6,
+   "behavior": 0.6,
+   "loosens": 0.7,
+   "min_confidence": 0.5
+  },
+  "gate": {
+   "threshold": 0.9,
+   "min_labeled_findings": 200,
+   "min_precision": 0.85
+  },
+  "surfaces": {
+   "sticky_comment": true,
+   "check_run": true,
+   "inline_comments": false,
+   "labels": false
+  },
+  "issue_checklist": "off",
+  "issue_checklist_label": "agent-ready",
+  "rework": {
+   "mention": ""
+  },
+  "budgets": {
+   "max_usd_per_review": 0.5,
+   "max_units": 400,
+   "max_repo_mb": 200
+  },
+  "retention": {
+   "retain_payloads": false,
+   "retention_days": 14,
+   "delete_on_uninstall": true
+  },
+  "eval": {
+   "cost_false_p0": 3,
+   "cost_missed_problem": 2,
+   "cost_false_p1": 1
+  }
+ },
+ "labels": {
+  "requirements": {},
+  "requirementsAccept": {},
+  "units": [],
+  "facts": [],
+  "testIntegrity": [],
+  "claimMismatch": [],
+  "pr": "clean"
+ },
+ "meta": {
+  "tool": "gold",
+  "source": "gold",
+  "strength": "strong"
+ },
+ "annotatedBy": "study"
+}
