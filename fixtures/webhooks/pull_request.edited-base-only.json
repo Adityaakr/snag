@@ -42,8 +42,10 @@
     "type": "User"
   },
   "changes": {
-    "body": {
-      "from": "Old description"
+    "base": {
+      "ref": {
+        "from": "dev"
+      }
     }
   }
 }

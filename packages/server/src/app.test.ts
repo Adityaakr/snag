@@ -36,6 +36,7 @@ function setup(opts: { config?: string; calibration?: Calibration } = {}) {
     newId: () => `rev_${++n}`,
     debounceMs: 0,
     publicUrl: 'https://remit.example.com',
+    setupToken: 'setup-token-for-tests',
   };
   const app = createApp(deps);
   let delivery = 0;
@@ -84,8 +85,25 @@ describe('webhook handling', () => {
     expect(again.status).toBe(200);
     expect(await again.text()).toBe('duplicate delivery');
     expect(repo.gh.checkRuns.length).toBeLessThanOrEqual(1);
+    // A chunked body without Content-Length is capped while streaming, before the signature check.
+    const big = new ReadableStream({
+      start(controller) {
+        const chunk = new Uint8Array(1024 * 1024);
+        for (let i = 0; i < 26; i++) controller.enqueue(chunk);
+        controller.close();
+      },
+    });
+    const chunked = await app.request('/webhooks', {
+      method: 'POST',
+      body: big,
+      headers: { 'x-github-event': 'pull_request', 'x-github-delivery': 'big' },
+      duplex: 'half',
+    } as RequestInit);
+    expect(chunked.status).toBe(413);
     const bad = '{"action":"opened"}';
-    expect((await send('pull_request', bad)).status).toBe(400);
+    expect((await send('pull_request', bad, { 'x-github-delivery': 'retry-me' })).status).toBe(400);
+    // The failed delivery was released, so GitHub's redelivery is processed, not dropped as a duplicate.
+    expect((await send('pull_request', body, { 'x-github-delivery': 'retry-me' })).status).toBe(202);
     expect((await send('pull_request', 'not json')).status).toBe(400);
   });
 
@@ -113,6 +131,9 @@ describe('webhook handling', () => {
       });
     expect(await (await hook('pull_request', 'pull_request.closed')).json()).toEqual({
       ignored: 'pull_request.closed',
+    });
+    expect(await (await hook('pull_request', 'pull_request.edited-base-only')).json()).toEqual({
+      ignored: 'pull_request.edited (no title or body change)',
     });
     expect(await (await hook('ping', 'ping')).json()).toEqual({ handled: 'ping' });
     expect(await (await hook('star', 'ping')).json()).toEqual({ ignored: 'star' });
@@ -255,7 +276,7 @@ describe('health, metrics and setup', () => {
     expect(await (await app.request('/metrics')).text()).toBe('\n');
   });
 
-  it('runs the manifest flow with a state cookie', async () => {
+  it('runs the manifest flow with a one-time token, a state cookie and no-store headers', async () => {
     const saved: unknown[] = [];
     const { deps } = setup();
     const app = createApp({
@@ -271,7 +292,11 @@ describe('health, metrics and setup', () => {
         clientSecret: 's',
       }),
     });
-    const page = await app.request('/setup?org=acme');
+    expect((await app.request('/setup?org=acme')).status).toBe(403);
+    const page = await app.request('/setup?org=acme&token=setup-token-for-tests');
+    expect(page.headers.get('cache-control')).toBe('no-store');
+    expect(page.headers.get('referrer-policy')).toBe('no-referrer');
+    expect(page.headers.get('content-security-policy')).toContain("default-src 'none'");
     const html = await page.text();
     expect(html).toContain('https://github.com/organizations/acme/settings/apps/new?state=');
     expect(html).toContain('https://remit.example.com/webhooks');
@@ -281,9 +306,28 @@ describe('health, metrics and setup', () => {
     const done = await app.request(`/setup/callback?code=abc&state=${state}`, {
       headers: { cookie: `remit_setup_state=${state}` },
     });
+    expect(done.headers.get('cache-control')).toBe('no-store');
     expect(await done.text()).toContain('https://github.com/apps/remit/installations/new');
     expect(saved).toHaveLength(1);
     const noUrl = createApp({ ...deps, publicUrl: undefined as unknown as string });
-    expect((await noUrl.request('/setup')).status).toBe(500);
+    expect((await noUrl.request('/setup?token=setup-token-for-tests')).status).toBe(500);
+  });
+
+  it('closes setup once the App is configured, and when no setup token exists', async () => {
+    const { deps } = setup();
+    const configured = createApp({ ...deps, configured: async () => true });
+    expect((await configured.request('/setup?token=setup-token-for-tests')).status).toBe(404);
+    expect((await configured.request('/setup/callback?code=a&state=b')).status).toBe(404);
+    const noToken = createApp({ ...deps, setupToken: undefined as unknown as string });
+    expect((await noToken.request('/setup')).status).toBe(404);
+  });
+
+  it('protects /metrics with a bearer token when one is set', async () => {
+    const { deps } = setup();
+    const app = createApp({ ...deps, metricsToken: 'metrics-token' });
+    expect((await app.request('/metrics')).status).toBe(401);
+    expect(
+      (await app.request('/metrics', { headers: { authorization: 'Bearer metrics-token' } })).status,
+    ).toBe(200);
   });
 });

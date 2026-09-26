@@ -23,10 +23,10 @@ The App reviews every pull request that links an issue. It posts one sticky comm
 
 ## Setup
 
-1. Run the server with `PUBLIC_URL` set to an address GitHub can reach, then open `${PUBLIC_URL}/setup` (add `?org=<org>` to create the App under an organization).
+1. Run the server with `PUBLIC_URL` set to an address GitHub can reach. While the App is not configured, the server prints a one-time setup link, `${PUBLIC_URL}/setup?token=...` (or set `SETUP_TOKEN` yourself). Open it; add `&org=<org>` to create the App under an organization. Setup answers `404` without the token and as soon as credentials exist, so nobody can replace a configured App.
 2. The page pre-fills GitHub's App Manifest: the name comes from `BRAND`, the webhook is `${PUBLIC_URL}/webhooks`, and the permissions and events are the ones above. Click **Create the GitHub App**.
 3. GitHub redirects to `/setup/callback`, and the server exchanges the one-time code for the App's credentials.
-   - With `SECRETS_ENCRYPTION_KEY` set, the credentials are stored encrypted (AES-256-GCM) in `${DATA_DIR:-.data}/app-secrets.enc`.
+   - With `SECRETS_ENCRYPTION_KEY` set, the credentials are stored encrypted in `${DATA_DIR:-.data}/app-secrets.enc`. The key must be at least 32 characters (generate one with `openssl rand -base64 48`); it is stretched with scrypt and a random salt, and the file uses AES-256-GCM. Stored credentials are never overwritten: to set up again, delete the file deliberately.
    - Without it, the page shows `GITHUB_APP_ID`, `GITHUB_WEBHOOK_SECRET` and `GITHUB_APP_PRIVATE_KEY` once. Put them in the server's environment; they are not stored.
 4. Follow the install link and choose repositories.
 
@@ -37,7 +37,10 @@ The App reviews every pull request that links an issue. It posts one sticky comm
 | `PUBLIC_URL` | where GitHub sends webhooks (used by `/setup`) |
 | `PORT` | listen port (default `3000`) |
 | `GITHUB_APP_ID`, `GITHUB_APP_PRIVATE_KEY`, `GITHUB_WEBHOOK_SECRET` | App credentials, unless stored by `/setup` |
-| `SECRETS_ENCRYPTION_KEY`, `DATA_DIR` | encrypted credential storage |
+| `SECRETS_ENCRYPTION_KEY`, `DATA_DIR` | encrypted credential storage (key of at least 32 characters) |
+| `SETUP_TOKEN` | optional fixed setup token (otherwise one is generated and printed at startup) |
+| `GITHUB_APP_SLUG` | the App's slug (stored by `/setup`), so Remit only edits comments by `<slug>[bot]` |
+| `METRICS_TOKEN` | bearer token for `/metrics`; without it, keep `/metrics` on an internal network |
 | `TYPESAFE_API_KEY`, `ANTHROPIC_API_KEY` (or `OPENAI_COMPATIBLE_API_KEY` and `OPENAI_COMPATIBLE_BASE_URL`) | providers; without them verdicts are uncertain and only task lists are read |
 | `REMIT_CALIBRATION_DIR` | calibration files (default `eval/calibration`) |
 
@@ -54,16 +57,16 @@ GitHub must reach the webhook, so point `PUBLIC_URL` at a webhook proxy such as 
 ## How a review runs
 
 1. **Webhook:**
-   - The HMAC SHA-256 signature is checked in constant time before the body is parsed; unsigned requests get `401`.
-   - Deliveries are deduped by `X-GitHub-Delivery`.
+   - Bodies over 25 MB are refused while streaming (`413`), then the HMAC SHA-256 signature is checked in constant time before the body is parsed; unsigned requests get `401`.
+   - Deliveries are deduped by `X-GitHub-Delivery`; a delivery whose handling fails is released so GitHub can redeliver it.
    - A job is queued and the webhook answers `202`.
-2. **Debounce:** `synchronize` bursts for the same PR within `30 s` collapse into one review of the latest head. A newer job cancels a running one, whose check run ends as "Superseded by a newer push".
+2. **Debounce:** `synchronize` bursts (and `edited` events that change the title or body; other edits are ignored) for the same PR within `30 s` collapse into one review of the latest head. A newer job cancels a running one, whose check run ends as "Superseded by a newer push".
 3. **Config:** `.remit.yml` is read from the default branch only.
    - An invalid file falls back to defaults, and the errors are shown in the check run.
    - A PR that edits `.remit.yml` gets a note that the change applies after merge.
 4. **Review:**
    - Create the check run (in progress).
-   - Run the pipeline with a per-job installation token (never stored).
+   - Run the pipeline with a per-job installation token narrowed to the PR's repository (never stored). Linked issues outside the PR's account are not read, and the comment says so.
    - Upsert the sticky comment.
    - In rework mode, also upsert the rework request (mentioning `rework.mention` if set; nobody by default).
    - Complete the check run with the mode's conclusion and annotations batched 50 per request.

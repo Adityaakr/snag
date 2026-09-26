@@ -20,9 +20,13 @@ export async function upsertSticky(
   ref: { owner: string; repo: string; number: number },
   kind: StickyKind,
   body: string,
+  /** The login this App posts as (for example `remit[bot]`); when known, only its comments are edited. */
+  botLogin?: string,
 ): Promise<{ id: number; created: boolean }> {
   const marker = markerOf(kind);
-  const existing = (await gh.listIssueComments(ref)).find((c) => c.authorIsBot && c.body.includes(marker));
+  const existing = (await gh.listIssueComments(ref)).find(
+    (c) => c.authorIsBot && c.body.includes(marker) && (!botLogin || c.author === botLogin),
+  );
   if (existing) {
     if (existing.body !== body) await gh.updateIssueComment(ref.owner, ref.repo, existing.id, body);
     return { id: existing.id, created: false };

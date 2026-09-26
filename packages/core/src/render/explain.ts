@@ -4,7 +4,7 @@
  */
 import type { Thresholds } from '../config/schema.js';
 import type { Answer, ReviewResult } from '../contracts/index.js';
-import { plain } from './sanitize.js';
+import { neutralizeMentions, plain } from './sanitize.js';
 
 function answerLine(a: Answer): string {
   const probs = a.probabilities
@@ -64,4 +64,18 @@ export function explainFinding(r: ReviewResult, id: string, thresholds: Threshol
       .join(' ')}`,
   );
   return `${out.join('\n')}\n`;
+}
+
+/**
+ * The explanation as a GitHub comment (`/remit explain`): the plain text inside a fenced block whose fence is longer
+ * than any backtick run in it, so issue and PR text cannot render links, images, HTML or mentions (6.10). Mentions
+ * are also neutralized in case a client renders the block loosely.
+ */
+export function explainMarkdown(r: ReviewResult, id: string, thresholds: Thresholds): string | null {
+  const text = explainFinding(r, id, thresholds);
+  if (text === null) return null;
+  const body = neutralizeMentions(text);
+  const longest = Math.max(0, ...[...body.matchAll(/`+/g)].map((m) => m[0].length));
+  const fence = '`'.repeat(Math.max(3, longest + 1));
+  return `${fence}text\n${body.trimEnd()}\n${fence}\n`;
 }

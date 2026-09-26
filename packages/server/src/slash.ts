@@ -2,7 +2,7 @@
  * Slash commands (BUILD_PROMPT 10.2): accepted only from users with write or triage permission (or the issue author
  * for `confirm`); bots and the App's own comments are ignored.
  */
-import { BRAND, explainFinding, sanitize } from '@remit/core';
+import { BRAND, explainMarkdown, sanitize } from '@remit/core';
 
 export type SlashCommand =
   | { name: 'review' }
@@ -67,4 +67,4 @@ export function isBotLogin(login: string, type?: string): boolean {
   return type === 'Bot' || login.endsWith('[bot]');
 }
 
-export { explainFinding, sanitize };
+export { explainMarkdown, sanitize };

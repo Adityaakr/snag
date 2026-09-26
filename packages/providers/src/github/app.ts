@@ -56,11 +56,16 @@ export async function installationToken(
   creds: AppCredentials,
   installationId: number,
   nowMs = Date.now(),
+  /** Narrows the token to these repositories (names without the owner) for a single-repo job. */
+  repositories?: string[],
 ): Promise<{ token: string; expiresAt: string }> {
   const octokit = client(appJwt(creds.appId, creds.privateKey, nowMs), creds);
   return withRetry(async () => {
     try {
-      const { data } = await octokit.apps.createInstallationAccessToken({ installation_id: installationId });
+      const { data } = await octokit.apps.createInstallationAccessToken({
+        installation_id: installationId,
+        ...(repositories?.length ? { repositories } : {}),
+      });
       return { token: data.token, expiresAt: data.expires_at };
     } catch (e) {
       throw classifyGitHubError(e);
