@@ -26,3 +26,4 @@ packages/dashboard/lib/
 # Local Laya verdict engine (Python venv and model cache)
 .venv-laya/
 .laya/
+.prism/runs/

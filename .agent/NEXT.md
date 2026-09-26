@@ -1,7 +1,7 @@
 # Next
 
-Milestone: M10 Eval-driven improvement (with the LLM verdict engine, D34)
-Task: live dev baseline once OpenRouter has credits (B9).
+Milestone: M10 Eval-driven improvement (branch feat/laya-engine)
+Task: fine-tune Laya as Remit's own verdict engine at a 4k window; OpenRouter spend cap $5 (stop when account usage reaches $14.80; it was $9.80 at the start).
 
 Next action:
 1. When credits are added (B9), run golden live: `REMIT_CACHE_MODE=live pnpm remit eval golden --mode live --config config/llm-jev.remit.yml`. Fix plumbing issues first; golden must be judged on real answers, not provider errors (check item warnings).

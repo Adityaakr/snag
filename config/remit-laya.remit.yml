@@ -1,0 +1,21 @@
+# Verdicts from Remit's own fine-tuned Laya checkpoint (remit-laya, DECISIONS D35) served locally by
+# scripts/laya/server.py, and extraction through OpenRouter (Sonnet 5, the cheaper model).
+# Needs REMIT_JEV_BASE_URL=http://127.0.0.1:8765 and the OPENAI_COMPATIBLE_* variables in .env.
+extraction:
+  mode: auto
+  provider: openai_compatible
+  model: anthropic/claude-sonnet-5
+llm_prices:
+  anthropic/claude-sonnet-5:
+    input: 2
+    output: 10
+jev:
+  model: remit-laya
+  # Remit's estimate is characters / 3; the checkpoint was trained to 4096 real tokens and the server rejects
+  # anything longer, so Remit shrinks context before it would be cut.
+  max_state_tokens: 3400
+  concurrency: 2
+  price_per_million_input_usd: 0.001
+budgets:
+  # In eval runs, one provider tracker is shared by the whole run, so this is also the run's hard dollar cap.
+  max_usd_per_review: 0.5
