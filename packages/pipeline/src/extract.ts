@@ -124,13 +124,18 @@ export async function extractRequirements(
         warnings.push(`${targetOf(issue)}: extraction.mode is tasklist_only but the issue has no task list.`);
       continue;
     }
-    if (!deps.llm)
+    if (!deps.llm) {
+      if (mode === 'auto' && tasks.length) {
+        warnings.push(`${targetOf(issue)}: no LLM is configured; using the task list only.`);
+        continue;
+      }
       throw new ProviderError(
         'llm',
         'config',
         'no LLM is configured for requirement extraction',
         'Set ANTHROPIC_API_KEY, or use extraction.mode: tasklist_only.',
       );
+    }
     try {
       const r = await llmExtract(issue, index, deps.llm, deps.reviewId, warnings);
       llmModel = r.model;
