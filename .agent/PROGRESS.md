@@ -82,7 +82,7 @@ Status: BLOCKED-HUMAN
 - [x] **Without keys:** the report is generated from fakes and clearly marked `not a real measurement`, and M10 records the blocker. (evidence: eval/reports/2026-09-26T17-51-01-962Z/report.md starts with 'Not a real measurement'; logged in EXPERIMENTS.md; M10.md 'Carried from M6' and BLOCKERS B5 record the blocker, 3c52ef9)
 
 ## M7 GitHub App and Action
-Status: TODO
+Status: DONE
 - [x] A Hono server with `/webhooks`, `/setup` (the manifest flow), `/healthz`, `/readyz` and `/metrics`. (evidence: packages/server/src/app.ts (/webhooks, /setup and /setup/callback, /healthz, /readyz, /metrics); app.test.ts 'health, metrics and setup'; main.ts starts it with @hono/node-server, 1554d88)
 - [x] Every event in 10.2 is handled, with signature verification, dedupe, debounce and cancellation of superseded jobs. (evidence: events.ts handles pull_request (5 actions), issues (edited, labeled, assigned), issue_comment (created, edited), check_run rerequested, installation and installation_repositories; HMAC constant-time check before parsing (webhook-verify.ts), delivery dedupe (deliveries.ts), 30 s debounce and cancellation of superseded jobs (queue.ts); app.test.ts and units.test.ts 'job queue', 1554d88)
 - [x] Config comes from the default branch only, is validated, and errors show up in the check run. (evidence: repo-config.ts reads .remit.yml at the default branch only and validates it; errors go to the check run summary (app.test.ts 'config errors appear in the check run'); PRs editing .remit.yml get an after-merge note (units.test.ts), 1554d88)

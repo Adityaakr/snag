@@ -137,6 +137,14 @@ describe('calibration in the Action', () => {
     expect(
       await run({ config: 'gate:\n  threshold: 0.5\n', inputs: { mode: 'gate' }, calibrationDir: dir }).done,
     ).toBe(1);
+    const corrupt = mkdtempSync(join(tmpdir(), 'remit-cal-'));
+    mkdirSync(join(corrupt, 'jev-1.13.0'));
+    writeFileSync(join(corrupt, 'jev-1.13.0', 'qs-0.1.0.json'), '{not json');
+    const bad = run({ inputs: { mode: 'gate' }, calibrationDir: corrupt });
+    expect(await bad.done).toBe(0);
+    expect(bad.repo.gh.posted.get('acme/reports#77')?.[0]?.body).toContain(
+      'bundled for jev-1.13.0 is not valid',
+    );
     const empty = mkdtempSync(join(tmpdir(), 'remit-cal-'));
     expect(
       await run({ config: 'gate:\n  threshold: 0.5\n', inputs: { mode: 'gate' }, calibrationDir: empty })
