@@ -482,6 +482,8 @@ const SUPPRESSION =
 const suppressionAdded: Detector = {
   kind: 'suppression_added',
   languages: 'all',
+  // Suppression comments only matter in code; docs that mention `@ts-expect-error` are not suppressions (dogfood M5 X1).
+  appliesTo: (u) => u.kind !== 'docs',
   detect({ raw }) {
     return netAdded(raw, SUPPRESSION).map((l) => ({
       kind: 'suppression_added',
