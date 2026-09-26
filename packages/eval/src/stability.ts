@@ -1,6 +1,6 @@
 /**
  * Extraction stability (BUILD_PROMPT 11.4): run extraction twice on about 10% of issues (by a stable hash of the
- * item id) and report requirement-set agreement as Jaccard over normalized quotes. Live runs must pass an uncached
+ * issue content) and report requirement-set agreement as Jaccard over normalized quotes. Live runs must pass an uncached
  * second provider, or both runs would return the same cassette.
  */
 import { normalizeForMatch } from '@remit/core';
@@ -35,8 +35,9 @@ export async function measureStability(
   // One sample per distinct issue text.
   const seen = new Set<string>();
   const sample = items.filter((i) => {
+    // Sample by issue content, so the fraction is of issues, not of items.
     const key = i.input.issues.map((x) => x.contentHash).join('|');
-    if (seen.has(key) || hashFraction(i.id) >= fraction) return false;
+    if (seen.has(key) || hashFraction(key) >= fraction) return false;
     seen.add(key);
     return true;
   });

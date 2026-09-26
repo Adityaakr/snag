@@ -190,3 +190,9 @@ Append-only. Each entry: date, decision, alternatives, why. Deviations from BUIL
 - The 11.8 ECE row uses the out-of-sample ECE after isotonic calibration (5-fold cross-validation), never raw ECE. The clean-seed false-alarm row counts clean seeds only (no operator), and the 11.4 false-alarm rate still covers every clean item.
 - Calibration pairs come from dev labels only for now: corpus C has no data until M8, and dogfood labels carry no probabilities without keys. M8 adds corpus C pairs; M10 adds live dogfood pairs.
 - `--no-log` is refused with `--gate`. Run summaries go under "## Eval runs" in EXPERIMENTS.md.
+
+## 2026-09-26 D29 M6 closing notes (milestone-verifier PASS, second run)
+- M6 closes as BLOCKED-HUMAN (B5) but still gets the `m6-done` tag. The tag anchors `guard:split`'s append-only check on the frozen manifest, which rule 3 needs from the freeze onward. This departs from the M2 precedent (BLOCKED-HUMAN without a tag). The tag marks "every item that can be done without keys is done and audited", not DONE.
+- `ts-job-intervals` drop R1 keeps R3 `done`: with R1 gone, intervals are milliseconds again and `scheduleJob` still rejects values under `1000`. The kept R3 test passes a unit string (`'0s'`, which becomes NaN), so it would fail on that head. That is a test the PR left stale, not an R3 regression, and it is realistic for a partial revert.
+- Stability samples by a hash of the issue content (10% of issues), not the item id.
+- The simulated calibration and the M6 dev report were regenerated after the label fix, from a committed tree.
