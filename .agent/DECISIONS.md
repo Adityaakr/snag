@@ -96,3 +96,11 @@ Append-only. Each entry: date, decision, alternatives, why. Deviations from BUIL
 - The PR diff is rebuilt from the files API: GitHub patches get `diff --git`/`---`/`+++` headers; files without a patch are diffed locally from base and head contents (head read from the fork for fork PRs); binary or over-`1 MB` files become binary markers and are listed as ignored.
 - Rate limits: an exhausted primary limit waits until `x-ratelimit-reset` plus one second (capped at 60 s per wait by the shared backoff, up to 5 attempts); secondary limits honor `retry-after`.
 - Linked-issue parsing ignores code spans, fenced code and HTML comments, and parses issue URLs as text only (no fetching, 9 rule 7).
+
+## 2026-09-26 D15 Config keys beyond 10.5
+- Added `extraction.effort` (optional, see D13), `baseline.model` (named in section 8), `llm_prices` (per-model input and output prices; section 8 says keep prices in config), and `eval.cost_false_p0`, `eval.cost_missed_problem`, `eval.cost_false_p1` (11.5 says the weights live in config). `jev.max_state_tokens` is capped at `32000`, the per-question limit in 7.2.
+- Invalid config returns the defaults plus human-readable errors instead of throwing (10.2: explain in the check run and use defaults).
+
+## 2026-09-26 D16 Doctor model verification without keys
+- `remit doctor` is implemented and tested with fake dependencies for every check, and ran live in the build environment: GitHub reachable, Node and config ok, key checks fail with fixes, provider checks skip. The live Models API and Jev probe results need keys, so docs/providers.md records the keyless run and blocker B2 holds the exact rerun step. The M2 item is checked for the doctor itself; the live verification is tracked as B2 and repeated at M10.
+- The CLI loads `.env` from the working directory at startup with `process.loadEnvFile` (existing environment variables win).

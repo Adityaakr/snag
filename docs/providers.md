@@ -178,4 +178,23 @@ try {
 ## Anthropic
 
 - SDK package: `@anthropic-ai/sdk`, current npm version `0.128.0`.
-- Model ID verification: to be verified in M2 via `remit doctor` (uses the Models API).
+- Model ID verification: `remit doctor` lists models through the Models API and checks the configured ids; see "Doctor results" below.
+
+
+## Doctor results
+
+`remit doctor` checks Node, keys, config, TypeSafe connectivity (a one-question `systemOne` call that must be answered by the pinned `jev-1.13.0`, since `/v1/models` lists aliases only), the Anthropic Models API (the configured `extraction.model` and `baseline.model` must be listed), GitHub rate-limit headroom, and prints a fix for every failure.
+
+Run on `2026-09-26` in the build environment, which has no keys yet:
+
+| Check | Result |
+| --- | --- |
+| Node | `v22.23.2`, ok |
+| Config | no `.remit.yml`, defaults |
+| `TYPESAFE_API_KEY`, `ANTHROPIC_API_KEY` | not set (blocker B1) |
+| `GITHUB_TOKEN` | not set, warning |
+| TypeSafe model `jev-1.13.0` | skipped: no key |
+| Anthropic model `claude-opus-5-5` | skipped: no key; not yet verified against the Models API |
+| GitHub | reachable, `59/60` unauthenticated requests left |
+
+When keys are added, rerun `pnpm remit doctor` and replace the skipped rows with the live results.

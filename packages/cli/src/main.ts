@@ -1,4 +1,5 @@
 import { BRAND } from '@remit/core';
+import { doctorCommand } from './commands/doctor.js';
 import { unitsCommand } from './commands/units.js';
 import { CliError, EXIT } from './errors.js';
 import type { Io } from './io.js';
@@ -6,6 +7,10 @@ import type { Io } from './io.js';
 type Command = (argv: string[], io: Io) => Promise<number>;
 
 const COMMANDS: Record<string, { run: Command; summary: string }> = {
+  doctor: {
+    run: (argv, io) => doctorCommand(argv, io),
+    summary: 'Check Node, keys, config, provider connectivity, model ids and rate limits',
+  },
   units: {
     run: unitsCommand,
     summary: 'Debug view of change units and code facts for a diff file or git range',

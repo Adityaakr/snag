@@ -5,3 +5,4 @@ export { estimateTokens } from './tokens.js';
 
 /** The package name, used by smoke tests to prove workspace wiring. */
 export const PACKAGE = '@remit/core';
+export * from './config/schema.js';
