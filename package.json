@@ -1,0 +1,31 @@
+{
+  "name": "remit",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.23.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "verify": "node scripts/verify.mjs",
+    "format:check": "biome format .",
+    "format": "biome format --write .",
+    "lint": "biome lint .",
+    "typecheck": "tsc -b",
+    "test": "vitest run",
+    "test:cov": "vitest run --coverage",
+    "test:slow": "vitest run --config vitest.slow.config.ts",
+    "test:live": "REMIT_ALLOW_NETWORK=1 vitest run --config vitest.live.config.ts",
+    "guard": "node scripts/guard.mjs",
+    "progress": "node scripts/progress.mjs"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.14",
+    "@types/node": "22.20.4",
+    "@vitest/coverage-v8": "5.0.2",
+    "fast-check": "4.10.2",
+    "typescript": "5.9.3",
+    "vitest": "5.0.2"
+  }
+}

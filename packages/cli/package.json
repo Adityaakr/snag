@@ -1,0 +1,23 @@
+{
+  "name": "@remit/cli",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The remit command",
+  "type": "module",
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "test": "vitest run --root ../.. --project cli"
+  },
+  "dependencies": {
+    "@remit/core": "workspace:*",
+    "@remit/analysis": "workspace:*",
+    "@remit/providers": "workspace:*",
+    "@remit/pipeline": "workspace:*"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "customConditions": ["source"]
+  },
+  "include": ["src"],
+  "references": [
+    {
+      "path": "../core"
+    },
+    {
+      "path": "../analysis"
+    },
+    {
+      "path": "../providers"
+    },
+    {
+      "path": "../pipeline"
+    }
+  ]
+}

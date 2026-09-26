@@ -1,0 +1,23 @@
+{
+  "name": "@remit/eval",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Corpora builders, mutation engine, metrics, calibration, baselines, reports",
+  "type": "module",
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "test": "vitest run --root ../.. --project eval"
+  },
+  "dependencies": {
+    "@remit/core": "workspace:*",
+    "@remit/analysis": "workspace:*",
+    "@remit/providers": "workspace:*",
+    "@remit/pipeline": "workspace:*"
+  }
+}

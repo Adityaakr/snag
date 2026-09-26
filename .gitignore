@@ -1,0 +1,13 @@
+# env (keep the example)
+.env*
+!.env.example
+
+node_modules/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+.DS_Store
+
+.agent/loop-logs/
+.agent/STOP
