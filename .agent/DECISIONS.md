@@ -116,3 +116,9 @@ Append-only. Each entry: date, decision, alternatives, why. Deviations from BUIL
 - CLI caches live in `~/.cache/remit` (or `REMIT_CACHE_DIR`), content-free; `--offline` means replay-only.
 - Live extraction cassettes for the 12 fixtures need keys (B1); the fixtures run on scripted LLM output as the M3 criterion allows.
 - Update 2026-09-26 (M3 gate follow-ups): amendments are enforced in code (a replacement quoted from an "other" commenter is ignored with a warning); a task-list item shorter than 12 characters no longer swallows a longer LLM requirement that contains it; the architecture test checks every module specifier; live cassette recording is a `pending:` live test with blocker B3.
+
+## 2026-09-26 D18 Question set details (qs-0.1.0)
+- The C.4 applicability notes ("Test units only.", "Config and CI units only.") decide which units get `loosens_test` and `runtime_setting`; they are not sent in the instructions, since the model sees one unit at a time.
+- Example question ids are 0-based to match `requirement.examples[{i}]` (`example_0_checked`); reports show them 1-based.
+- `tests.v0` Choice options use the description `` `tests` entry {id} ({file}) ``, and `claims.v0` `about` reuses the C.4 requirement option form, since C.3 and C.6 only say "one option per test unit / requirement".
+- `rerank.v0` question ids are `c_<unit id>`; the judge view is truncated so state plus one question stays under the 32k per-question limit, and batches stay under Remit's 56k per-request budget.

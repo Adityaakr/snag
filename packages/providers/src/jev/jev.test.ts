@@ -190,7 +190,10 @@ describe('LiveJev', () => {
     const long = { ...QUESTIONS, extra: noul('q'.repeat(900)) };
     const shrinks: number[] = [];
     await jev.ask(META, 'small state', long, {
-      shrink: (n) => (shrinks.push(n), { state: 'small state', questions: QUESTIONS }),
+      shrink: (n) => {
+        shrinks.push(n);
+        return { state: 'small state', questions: QUESTIONS };
+      },
     });
     expect(shrinks).toEqual([1]);
     expect(Object.keys((f.requests[0]?.body as { questions?: object } | undefined)?.questions ?? {})).toEqual(
