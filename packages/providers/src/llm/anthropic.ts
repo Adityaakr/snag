@@ -138,7 +138,8 @@ export class AnthropicLlm implements LlmProvider {
     const call = async (msgs: LlmMessage[]): Promise<string> => {
       const started = Date.now();
       const estimate = estimateTokens([opts.system, ...msgs.map((m) => m.content)].join('\n'));
-      this.opts.costs?.ensure('anthropic', llmCost(this.opts.price, estimate, 0));
+      // The worst case, output included, must fit the budget before the call starts.
+      this.opts.costs?.ensure('anthropic', llmCost(this.opts.price, estimate, opts.maxTokens ?? 16_000));
       const res = await withRetry(
         async () => {
           try {

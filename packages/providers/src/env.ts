@@ -40,13 +40,20 @@ export function operatorPricesFromEnv(
   defaults: RemitConfig,
   env: Record<string, string | undefined>,
 ): OperatorPrices {
-  const llm: OperatorPrices['llm'] = { ...defaults.llm_prices };
+  // A null-prototype table: model ids like `constructor` or `__proto__` never resolve to inherited properties.
+  const llm: OperatorPrices['llm'] = Object.assign(Object.create(null), defaults.llm_prices);
   if (env.REMIT_LLM_PRICES) {
     const parsed: unknown = JSON.parse(env.REMIT_LLM_PRICES);
     if (!parsed || typeof parsed !== 'object') throw new Error('REMIT_LLM_PRICES must be a JSON object');
     for (const [model, p] of Object.entries(parsed)) {
       const { input, output } = (p ?? {}) as { input?: unknown; output?: unknown };
-      if (typeof input !== 'number' || typeof output !== 'number' || !(input > 0) || !(output > 0))
+      if (
+        typeof input !== 'number' ||
+        typeof output !== 'number' ||
+        !(input > 0) ||
+        !(output > 0) ||
+        !Number.isFinite(input + output)
+      )
         throw new Error(`REMIT_LLM_PRICES.${model} needs positive input and output prices`);
       llm[model] = { input, output };
     }
@@ -54,7 +61,8 @@ export function operatorPricesFromEnv(
   const jev = env.REMIT_JEV_PRICE_PER_MILLION_USD
     ? Number(env.REMIT_JEV_PRICE_PER_MILLION_USD)
     : defaults.jev.price_per_million_input_usd;
-  if (!(jev > 0)) throw new Error('REMIT_JEV_PRICE_PER_MILLION_USD must be a positive number');
+  if (!(jev > 0) || !Number.isFinite(jev))
+    throw new Error('REMIT_JEV_PRICE_PER_MILLION_USD must be a positive number');
   return { llm, jevPerMillionUsd: jev };
 }
 
@@ -67,17 +75,24 @@ export function resolvePrices(
   config: RemitConfig,
   operator: OperatorPrices | undefined,
 ): { llm: { input: number; output: number } | undefined; llmAllowed: boolean; jevPerMillionUsd: number } {
-  const repo = config.llm_prices[config.extraction.model];
+  const m = config.extraction.model;
+  const repo = Object.hasOwn(config.llm_prices, m) ? config.llm_prices[m] : undefined;
   if (!operator)
     return { llm: repo, llmAllowed: true, jevPerMillionUsd: config.jev.price_per_million_input_usd };
-  const floor = operator.llm[config.extraction.model];
+  const positive = (n: unknown): n is number => typeof n === 'number' && Number.isFinite(n) && n > 0;
+  const own = Object.hasOwn(operator.llm, m) ? operator.llm[m] : undefined;
+  const floor = own && positive(own.input) && positive(own.output) ? own : undefined;
   return {
     llm: floor && {
       input: Math.max(floor.input, repo?.input ?? 0),
       output: Math.max(floor.output, repo?.output ?? 0),
     },
     llmAllowed: Boolean(floor),
-    jevPerMillionUsd: Math.max(operator.jevPerMillionUsd, config.jev.price_per_million_input_usd),
+    // An invalid operator Jev price fails closed (infinite cost), never open.
+    jevPerMillionUsd: Math.max(
+      positive(operator.jevPerMillionUsd) ? operator.jevPerMillionUsd : Number.POSITIVE_INFINITY,
+      config.jev.price_per_million_input_usd,
+    ),
   };
 }
 

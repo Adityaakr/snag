@@ -33,11 +33,13 @@ export class CostTracker {
 
   /** Throws BudgetExceededError when the estimated cost would pass the limit. */
   ensure(provider: string, estimateUsd = 0): void {
-    if (this.usage.costUsd + estimateUsd > this.limitUsd)
+    // Fail closed: a cost that is not a finite number (a bad price) never slips past the limit.
+    if (!Number.isFinite(estimateUsd) || !(this.usage.costUsd + estimateUsd <= this.limitUsd))
       throw new BudgetExceededError(provider, this.usage.costUsd, this.limitUsd);
   }
 
   addJev(inputTokens: number, costUsd: number, meta?: CallMetaInput): void {
+    costUsd = checkedCost(costUsd);
     this.usage.jevInputTokens += inputTokens;
     this.usage.costUsd += costUsd;
     this.usage.calls += 1;
@@ -47,6 +49,7 @@ export class CostTracker {
   addLlm(inputTokens: number, outputTokens: number, costUsd: number, meta?: CallMetaInput): void {
     this.usage.llmInputTokens += inputTokens;
     this.usage.llmOutputTokens += outputTokens;
+    costUsd = checkedCost(costUsd);
     this.usage.costUsd += costUsd;
     this.usage.calls += 1;
     this.record(meta, inputTokens, outputTokens, costUsd);
@@ -63,6 +66,11 @@ export class CostTracker {
   }
 
   get exceeded(): boolean {
-    return this.usage.costUsd >= this.limitUsd;
+    return !(this.usage.costUsd < this.limitUsd);
   }
+}
+
+/** A call whose cost is not a finite, non-negative number counts as unbounded, so the budget closes. */
+function checkedCost(costUsd: number): number {
+  return Number.isFinite(costUsd) && costUsd >= 0 ? costUsd : Number.POSITIVE_INFINITY;
 }

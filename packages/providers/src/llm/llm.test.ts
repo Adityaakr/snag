@@ -249,6 +249,39 @@ describe('OpenAiCompatibleLlm', () => {
     expect((f.requests[0]?.body?.messages as { role: string }[] | undefined)?.[0]?.role).toBe('system');
   });
 
+  it('charges the worst case when the backend omits usage, and checks output cost before the call', async () => {
+    const noUsage = completion(JSON.stringify(GOOD));
+    delete (noUsage.body as { usage?: unknown }).usage;
+    const f = scriptedFetch([noUsage]);
+    const costs = new CostTracker(10);
+    const llm = new OpenAiCompatibleLlm({
+      model: 'local-model',
+      price: { inputPerMillionUsd: 1, outputPerMillionUsd: 2 },
+      apiKey: 'k-not-real',
+      baseURL: 'http://localhost:9999/v1',
+      fetch: f.fetch,
+      costs,
+      retry: { sleep: async () => {} },
+    });
+    await llm.structured(Schema, MSGS, { ...OPTS, maxTokens: 1000 });
+    expect(costs.usage.llmOutputTokens).toBe(1000);
+    expect(costs.usage.llmInputTokens).toBeGreaterThan(0);
+    // 16,000 output tokens at $20 per million is $0.32: more than a $0.10 budget, so the call never starts.
+    const tight = new CostTracker(0.1);
+    const g = scriptedFetch([completion(JSON.stringify(GOOD))]);
+    const capped = new OpenAiCompatibleLlm({
+      model: 'local-model',
+      price: PRICE,
+      apiKey: 'k-not-real',
+      baseURL: 'http://localhost:9999/v1',
+      fetch: g.fetch,
+      costs: tight,
+      retry: { sleep: async () => {} },
+    });
+    await expect(capped.structured(Schema, MSGS, OPTS)).rejects.toThrow();
+    expect(g.requests).toHaveLength(0);
+  });
+
   it('needs both key and base URL', async () => {
     const llm = new OpenAiCompatibleLlm({ model: 'm', price: PRICE });
     await expect(llm.structured(Schema, MSGS, OPTS)).rejects.toMatchObject({ kind: 'config' });

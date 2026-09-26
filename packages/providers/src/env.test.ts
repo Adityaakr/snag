@@ -38,6 +38,28 @@ describe('operator prices', () => {
     expect(providersFromEnv(c, env, { breakers: false }).llm).toBeDefined();
   });
 
+  it('model ids that name object properties are not priced by inheritance', () => {
+    for (const model of ['constructor', '__proto__', 'toString', 'hasOwnProperty']) {
+      const c = withRepo((c) => {
+        c.extraction.provider = 'openai_compatible';
+        c.extraction.model = model;
+      });
+      const p = resolvePrices(c, operator);
+      expect(p.llmAllowed).toBe(false);
+      expect(p.llm).toBeUndefined();
+      const env = {
+        OPENAI_COMPATIBLE_API_KEY: ['k', 'test'].join('-'),
+        OPENAI_COMPATIBLE_BASE_URL: 'http://127.0.0.1:1/v1',
+        REMIT_CACHE_DIR: '/nonexistent/remit-cache',
+      };
+      expect(providersFromEnv(c, env, { operatorPrices: operator, breakers: false }).llm).toBeUndefined();
+    }
+    const polluted = operatorPricesFromEnv(defaultConfig(), {
+      REMIT_LLM_PRICES: '{"__proto__":{"input":1,"output":1}}',
+    });
+    expect(Object.getPrototypeOf(polluted.llm)).toBeNull();
+  });
+
   it('the CLI and the Action keep the repository prices', () => {
     const c = withRepo((c) => (c.jev.price_per_million_input_usd = 0.01));
     expect(resolvePrices(c, undefined).jevPerMillionUsd).toBe(0.01);

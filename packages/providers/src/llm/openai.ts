@@ -104,7 +104,11 @@ export class OpenAiCompatibleLlm implements LlmProvider {
     const call = async (msgs: LlmMessage[]): Promise<string> => {
       const started = Date.now();
       const estimate = estimateTokens([opts.system, ...msgs.map((m) => m.content)].join('\n'));
-      this.opts.costs?.ensure('openai_compatible', llmCost(this.opts.price, estimate, 0));
+      // The worst case, output included, must fit the budget before the call starts.
+      this.opts.costs?.ensure(
+        'openai_compatible',
+        llmCost(this.opts.price, estimate, opts.maxTokens ?? 16_000),
+      );
       const res = await withRetry(async () => {
         try {
           return await this.sdk().chat.completions.create(
@@ -127,8 +131,9 @@ export class OpenAiCompatibleLlm implements LlmProvider {
         }
       }, this.opts.retry);
       model = res.model;
-      const inT = res.usage?.prompt_tokens ?? 0;
-      const outT = res.usage?.completion_tokens ?? 0;
+      // A backend that omits usage is charged the worst case, so its spend is never invisible to budgets.
+      const inT = res.usage?.prompt_tokens ?? estimate;
+      const outT = res.usage?.completion_tokens ?? opts.maxTokens ?? 16_000;
       usage.inputTokens += inT;
       usage.outputTokens += outT;
       this.opts.costs?.addLlm(inT, outT, llmCost(this.opts.price, inT, outT), {
