@@ -1,11 +1,9 @@
 # Next
 
 Milestone: M1 Contracts and diff analysis (offline)
-Task: zod contracts for section 5.
+Task: M1 gate.
 
 Next action:
-1. `pnpm --filter @remit/core add zod@4.6.5 --save-exact`.
-2. Write packages/core/src/contracts/*.ts: every section 5 type as a zod schema with inferred types (field names binding).
-3. Export JSON Schemas to schemas/ via `z.toJSONSchema` (script `pnpm schemas`) and add round-trip tests (parse → serialize → parse, schema file up to date).
-4. Then the unified diff parser in packages/analysis with fast-check property tests.
-Notes: web-tree-sitter 0.27.0 loads the stock npm grammars (tree-sitter-typescript 0.23.2, -javascript 0.25.0, -python 0.25.0, -rust 0.24.0), checked in scratch.
+1. Run the `milestone-verifier` subagent on .agent/milestones/M1.md. Fix every gap and rerun until VERDICT: PASS.
+2. Set M1 Status: DONE, set M2 Status: IN_PROGRESS, log the gate in SESSION_LOG.md, commit, `git tag m1-done`.
+3. Start M2 with the Jev adapter (packages/providers): JevProvider interface, FakeJev (scripted, throws on unscripted calls, records states), token estimation and packing, then LiveJev over @typesafe-ai/sdk 0.6.0 with SDK retries off (DECISIONS D5), then CachedJev.
