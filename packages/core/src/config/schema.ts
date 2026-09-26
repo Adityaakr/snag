@@ -38,6 +38,13 @@ export const ConfigSchema = z
     }),
     jev: z
       .object({
+        /**
+         * Who answers the typed questions: TypeSafe's Jev (or a server speaking its protocol at REMIT_JEV_BASE_URL),
+         * or a generative LLM through the extraction provider's credentials (DECISIONS D34).
+         */
+        engine: z.enum(['typesafe', 'llm']).default('typesafe'),
+        /** The LLM for engine `llm`; defaults to `extraction.model`. */
+        llm_model: z.string().min(1).optional(),
         model: z.string().min(1).default('jev-1.13.0'),
         max_state_tokens: z.number().int().positive().max(32_000).default(24_000),
         concurrency: z.number().int().min(1).max(64).default(8),
@@ -45,6 +52,7 @@ export const ConfigSchema = z
       })
       .strict()
       .default({
+        engine: 'typesafe',
         model: 'jev-1.13.0',
         max_state_tokens: 24_000,
         concurrency: 8,

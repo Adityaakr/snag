@@ -38,6 +38,15 @@ export { CachedJev } from './jev/cached.js';
 export { FakeJev, type JevScript, type RecordedCall, type ScriptedAnswer } from './jev/fake.js';
 export { classifyJevError, LiveJev, type LiveJevOptions, processJevLimiter } from './jev/live.js';
 export * from './jev/types.js';
+export {
+  entropyConfidence,
+  LLM_JEV_PROMPT_VERSION,
+  LLM_JEV_SYSTEM,
+  LlmJev,
+  type LlmJevOptions,
+  normalize,
+  toJevAnswers,
+} from './jev/llm.js';
 export { validateAnswers } from './jev/validate.js';
 export {
   AnthropicLlm,

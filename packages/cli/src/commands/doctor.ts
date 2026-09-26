@@ -39,6 +39,15 @@ export interface DoctorDeps {
   githubRateLimit(): Promise<{ limit: number; remaining: number; resetAt: number }>;
 }
 
+/** The origin of a URL only, so credentials or paths in it are never printed. */
+const safeUrl = (raw: string) => {
+  try {
+    return new URL(raw).origin;
+  } catch {
+    return 'an invalid URL';
+  }
+};
+
 const describeError = (e: unknown) =>
   e instanceof ProviderError
     ? { detail: e.message, fix: e.fix }
@@ -89,8 +98,8 @@ export async function runChecks(deps: DoctorDeps): Promise<{ checks: Check[]; co
   const keys: [string, boolean, string][] = [
     [
       'TYPESAFE_API_KEY',
-      true,
-      'See https://docs.typesafe.ai/introduction/quickstart and add it to .env, or run with --offline to see demo data.',
+      !deps.env.REMIT_JEV_BASE_URL,
+      'See https://docs.typesafe.ai/introduction/quickstart and add it to .env, set REMIT_JEV_BASE_URL to a self-hosted engine (docs/laya.md), or run with --offline to see demo data.',
     ],
     [
       config.extraction.provider === 'anthropic' ? 'ANTHROPIC_API_KEY' : 'OPENAI_COMPATIBLE_API_KEY',
@@ -112,11 +121,17 @@ export async function runChecks(deps: DoctorDeps): Promise<{ checks: Check[]; co
     );
   }
 
-  if (deps.env.TYPESAFE_API_KEY) {
+  if (deps.env.REMIT_JEV_BASE_URL)
+    checks.push({
+      name: 'env REMIT_JEV_BASE_URL',
+      status: 'ok',
+      detail: `self-hosted Jev-compatible engine at ${safeUrl(deps.env.REMIT_JEV_BASE_URL)}`,
+    });
+  if (deps.env.TYPESAFE_API_KEY || deps.env.REMIT_JEV_BASE_URL) {
     try {
       const r = await deps.jevProbe(config.jev.model);
       checks.push(
-        r.model === config.jev.model
+        r.model === config.jev.model || r.model.startsWith(`${config.jev.model}@`)
           ? { name: 'typesafe', status: 'ok', detail: `reachable; answered by ${r.model}` }
           : {
               name: 'typesafe',
@@ -134,7 +149,12 @@ export async function runChecks(deps: DoctorDeps): Promise<{ checks: Check[]; co
         fix: d.fix ?? 'Check network access to api.typesafe.ai.',
       });
     }
-  } else checks.push({ name: 'typesafe', status: 'skip', detail: 'skipped: TYPESAFE_API_KEY not set' });
+  } else
+    checks.push({
+      name: 'typesafe',
+      status: 'skip',
+      detail: 'skipped: neither TYPESAFE_API_KEY nor REMIT_JEV_BASE_URL is set',
+    });
 
   if (config.extraction.provider === 'anthropic' && deps.env.ANTHROPIC_API_KEY) {
     try {
@@ -299,7 +319,8 @@ export function liveDeps(io: Io, configPath?: string): DoctorDeps {
       const jev = new LiveJev({
         model,
         pricePerMillionUsd: 0.042,
-        ...(io.env.TYPESAFE_API_KEY ? { apiKey: io.env.TYPESAFE_API_KEY } : {}),
+        apiKey: io.env.TYPESAFE_API_KEY ?? io.env.REMIT_JEV_API_KEY ?? 'self-hosted',
+        ...(io.env.REMIT_JEV_BASE_URL ? { baseURL: io.env.REMIT_JEV_BASE_URL } : {}),
         retry: { attempts: 2 },
       });
       const r = await jev.ask(

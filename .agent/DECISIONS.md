@@ -321,3 +321,12 @@ Append-only. Each entry: date, decision, alternatives, why. Deviations from BUIL
   - `scripts/__tests__/deploy.test.ts` checks the Dockerfile and compose statically, including that every volume target the image mounts is created and owned by `node`, and that stale `*.tsbuildinfo` never reaches the build (the M9 milestone-verifier found both defects; fixed in the same commit);
   - B7 lists the exact unblock commands.
 - Remaining risk: the image has never been built. The first `docker compose up` could still expose runtime-only problems (native modules, file permissions). The CI `docker` job would catch them on the first push.
+
+## 2026-09-27 D34 Verdict engines other than TypeSafe
+- Context: TypeSafe has paused new signups, so there is no Jev key.
+- Two alternatives behind the unchanged `JevProvider` interface:
+  - `REMIT_JEV_BASE_URL` points `LiveJev` at any server speaking Jev's `/v1/systemone` protocol. `scripts/laya/server.py` provides one on Laya. Unlike `laya-serve`, it rejects oversized requests (400 max_tokens_exceeded) rather than truncating silently, and it names the checkpoint and snapshot in `model`.
+  - `jev.engine: llm` (config) uses `LlmJev`: a generative LLM answers each call's typed questions in one structured request, with per-option probabilities. It uses the extraction provider's credentials and its own `jev.llm_model` and price. The operator price rules apply.
+- Result: Laya as shipped does not discriminate on code (golden 1/18, near-constant answers; EXPERIMENTS 2026-09-27), so the LLM engine is the working alternative. Its probabilities are self-reported: calibration fitted on dev for its model id is required before trusting confidences, and gate mode stays off until then.
+- Spec deviation: BUILD_PROMPT 7 makes Jev the verdict engine. TypeSafe stays the default, and switching engines is explicit config.
+- 402 from an OpenAI-compatible endpoint (out of credits) is now a fatal `budget` error with a fix, not a retryable server error. Before this, it opened the circuit breaker.

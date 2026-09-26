@@ -1,0 +1,19 @@
+# Verdicts from the local Laya engine (scripts/laya/server.py, docs/laya.md) and extraction through OpenRouter.
+# Needs REMIT_JEV_BASE_URL=http://127.0.0.1:8765 and the OPENAI_COMPATIBLE_* variables in .env.
+# Use with --config config/laya.remit.yml.
+extraction:
+  mode: auto
+  provider: openai_compatible
+  model: anthropic/claude-opus-5.5
+llm_prices:
+  anthropic/claude-opus-5.5:
+    input: 4
+    output: 20
+jev:
+  model: laya-typed-decisions
+  # Remit's estimate (characters / 3); the server rejects anything over its real token window, and Remit shrinks.
+  max_state_tokens: 3000
+  # One local worker serves requests in turn.
+  concurrency: 2
+  # Local compute: a nominal price, so budgets still count calls.
+  price_per_million_input_usd: 0.001

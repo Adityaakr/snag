@@ -78,6 +78,8 @@ No keys: task-list extraction (9 requirements), no Jev verdicts; 175 units. Code
 - 2026-09-26T17:40:19.484Z mutations/dev simulated (not a real measurement): 0/128 items correct, requirement F1 0.30, PR recall 0.85, false alarms 9.94, P0 precision 0.20, cost $0.0000. Report: eval/reports/2026-09-26T17-40-19-484Z (superseded by 2026-09-26T17-51-01-962Z)
 - 2026-09-26T17:50:10.881Z mutations/dev simulated (not a real measurement): 0/128 items correct, requirement F1 0.30, PR recall 0.85, false alarms 9.94, P0 precision 0.20, cost $0.0000. Report: eval/reports/2026-09-26T17-50-10-881Z (local only, superseded)
 - 2026-09-26T17:51:01.962Z mutations/dev simulated (not a real measurement): 0/128 items correct, requirement F1 0.30, PR recall 0.85, false alarms 9.94, P0 precision 0.20, cost $0.0000. Report: eval/reports/2026-09-26T17-51-01-962Z
+- 2026-09-26T22:11:21.632Z golden/all live: 1/18 items correct, requirement F1 0.00, PR recall 0.22, false alarms 0.00, P0 precision 0.50, cost $0.0000. Report: eval/reports/2026-09-26T22-11-21-632Z
+- 2026-09-26T22:17:32.055Z golden/all live: 1/18 items correct, requirement F1 0.33, PR recall 0.11, false alarms 0.11, P0 precision 1.00, cost $0.0000. Report: eval/reports/2026-09-26T22-17-32-055Z
 
 ## 2026-09-27 Live extraction through OpenRouter (not an experiment; first live data)
 
@@ -88,3 +90,19 @@ No keys: task-list extraction (9 requirements), no Jev verdicts; 175 units. Code
   - examples: turns two worked examples into separate requirements. The labels treat examples as part of R1.
   - non_goals: the same quote appears as R1 and R2, which the duplicate check should have merged. It also adds the second non-goal as R4.
 - Candidate experiments for M10 (dev only; wording changes bump the prompt version): tell extraction that examples illustrate a requirement rather than add one, and that a user-need statement is context, not a requirement. Merge identical quotes before validation.
+
+## 2026-09-27 Laya as the Jev engine (golden, live)
+
+- Setup: local `laya-typed-decisions` (snapshot 55cf4c4e) behind scripts/laya/server.py, window 4096; extraction through OpenRouter (Opus 5.5).
+- Golden 1/18. Answers barely depend on the code:
+  - coverage `1.9`-`2.4` of `3` for done and missing requirements alike (three_reqs_one_missing: R2 done `2.14`, R3 missing `2.15`);
+  - conflict `0.55`-`0.64` for matching and contradicting code (misread_self_consistent `0.62`);
+  - asserts_as_stated and asserts_differently both `0.6`-`0.7` on the same tests.
+- The other checkpoints were no better on a hand probe (404 required, code returns 400): english coverage "fully" `0.90`, conflict `0.04`; multilingual conflict `0.38`.
+- Conclusion: not usable as shipped. Calibration cannot fix answers without discrimination. A candidate for later: fine-tune on Remit dev labels (distilled from the LLM engine).
+
+## 2026-09-27 LLM engine (jev.engine: llm), first live runs
+
+- A single probe (404 required, 400 returned) through Sonnet 5 gave conflict `0.95` and coverage "partly" `0.90`: correct.
+- Golden three_reqs_one_missing (single review): R2 done (`0.80`), R3 missing (`1.0`, P0), R1 uncertain. R1 is the extra user-need requirement from live extraction ("Add an export to the reports page."), a known over-extraction. Cost `$0.10`, 16 calls.
+- The full golden run was invalid: the OpenRouter account ran out of credits mid-run (HTTP 402). Retries opened the circuit breaker, and most items got no answers. The 402 handling is fixed (D34). Needs credits to rerun (B9).
