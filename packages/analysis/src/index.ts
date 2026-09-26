@@ -11,3 +11,6 @@ export const PACKAGE = '@remit/analysis';
 export function describePackage(): string {
   return `${BRAND.name} ${PACKAGE}`;
 }
+export * from './files/classify.js';
+export * from './files/gitattributes.js';
+export * from './files/glob.js';
