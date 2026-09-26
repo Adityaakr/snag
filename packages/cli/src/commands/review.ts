@@ -155,7 +155,7 @@ export async function reviewCommand(argv: string[], io: Io, providers?: CliProvi
   const logger = values.verbose
     ? pino(
         { level: io.env.REMIT_LOG_LEVEL ?? 'debug', redact: ['*.apiKey', '*.authorization', '*.token'] },
-        pino.destination(2),
+        { write: (line: string) => io.err(line) },
       ).child({ reviewId })
     : undefined;
   const p =
@@ -194,6 +194,10 @@ export async function reviewCommand(argv: string[], io: Io, providers?: CliProvi
       );
       return EXIT.ok;
     }
+    logger?.info(
+      { mode: prepared.input.mode, issues: prepared.input.issueRefs.length, cacheMode: p.cacheMode },
+      'review started',
+    );
     const result = await runReview(prepared.input, {
       ...prepared.deps,
       ...(p.jev ? { jev: p.jev } : {}),
@@ -203,6 +207,15 @@ export async function reviewCommand(argv: string[], io: Io, providers?: CliProvi
       reviewId,
     });
     result.warnings.unshift(...p.notes, ...prepared.notes);
+    logger?.info(
+      {
+        findings: result.findings.length,
+        costUsd: result.usage.costUsd,
+        calls: result.usage.calls,
+        warnings: result.warnings.length,
+      },
+      'review finished',
+    );
 
     if (values.out) {
       const dir = isAbsolute(values.out) ? values.out : join(io.cwd, values.out);

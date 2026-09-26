@@ -151,3 +151,4 @@ Append-only. Each entry: date, decision, alternatives, why. Deviations from BUIL
 - A draft PR with `draft_prs: skip` prints the reason and exits `0`.
 - `--verbose` writes pino JSON logs with `reviewId` to stderr; secret-looking fields are redacted.
 - Rendering copy: parentheses, dashes and `!` are not escaped in sanitized text (brackets are, which already blocks links); reason templates keep their monospace numbers by rendering backtick spans through the safe `code` helper.
+- Update 2026-09-26 (M5 gate follow-ups): every command has `--help`/`-h` with its options; an unknown option prints the command help. `--verbose` logs go through the CLI's stderr stream (pino with a write function), including "review started" and "review finished" lines. Quoted PR sentences inside reasons are capped at 200 characters like other quotes. New snapshots: the full check run (summary and annotation batches) and the JSON result for `unrelated_config`.

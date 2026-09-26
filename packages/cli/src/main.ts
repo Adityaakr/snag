@@ -10,34 +10,66 @@ import type { Io } from './io.js';
 
 type Command = (argv: string[], io: Io) => Promise<number>;
 
-const COMMANDS: Record<string, { run: Command; summary: string }> = {
-  demo: { run: demoCommand, summary: 'Offline demo on two recorded reviews (no keys needed)' },
+interface CommandSpec {
+  run: Command;
+  summary: string;
+  /** Usage line and options, shown by `<command> --help`. */
+  help: string;
+}
+
+const s = BRAND.slug;
+
+const COMMANDS: Record<string, CommandSpec> = {
+  demo: {
+    run: demoCommand,
+    summary: 'Offline demo on two recorded reviews (no keys needed)',
+    help: `${s} demo\n\nReplays golden scenarios 1 and 2 with scripted answers. Needs no keys and no network.`,
+  },
   init: {
     run: async (argv, io) => initCommand(argv, io),
     summary: 'Write a commented .remit.yml and check env vars',
+    help: `${s} init [--force]\n\n  --force   overwrite an existing .${s}.yml with the defaults`,
   },
   review: {
     run: (argv, io) => reviewCommand(argv, io),
     summary: 'Review a GitHub PR, or a local diff against an issue',
+    help: `${s} review <pr-url>
+${s} review --issue <url|file> [--issue ...] --diff <file|range> [--pr-body <file>]
+
+  --json              print the full ReviewResult as JSON
+  --markdown          print the PR comment markdown
+  --sarif             print SARIF 2.1.0
+  --out <dir>         write every output to a directory
+  --offline           use recorded answers only (replay)
+  --dry-run           estimate calls, tokens and cost without calling anything
+  --budget-usd <n>    override the per-review budget
+  --explain <id>      show the answers, thresholds and evidence behind one finding
+  --config <path>     use a specific config file
+  --verbose           structured logs on stderr
+
+Exit codes: 0 ok, 1 gate failure, 2 usage or config error, 3 provider or network error, 4 budget exceeded.`,
   },
   extract: {
     run: (argv, io) => extractCommand(argv, io),
     summary: 'Requirements and open questions for an issue URL or markdown file',
+    help: `${s} extract <issue-url|owner/repo#n|file> [--json] [--offline] [--config <path>]`,
   },
   doctor: {
     run: (argv, io) => doctorCommand(argv, io),
     summary: 'Check Node, keys, config, provider connectivity, model ids and rate limits',
+    help: `${s} doctor\n\nPrints a fix for every failed check. Exit 0 when all required checks pass, 3 otherwise, 2 for an invalid config.`,
   },
   units: {
     run: unitsCommand,
     summary: 'Debug view of change units and code facts for a diff file or git range',
+    help: `${s} units --diff <file|base..head|base...head> [--json]`,
   },
 };
 
 export function usage(): string {
-  const lines = [`Usage: ${BRAND.slug} <command> [options]`, '', 'Commands:'];
+  const lines = [`Usage: ${s} <command> [options]`, '', 'Commands:'];
   for (const [name, c] of Object.entries(COMMANDS)) lines.push(`  ${name.padEnd(10)} ${c.summary}`);
-  lines.push('', `Run \`${BRAND.slug} <command> --help\` for options.`);
+  lines.push('', `Run \`${s} <command> --help\` for options.`);
   return `${lines.join('\n')}\n`;
 }
 
@@ -53,6 +85,10 @@ export async function main(argv: string[], io: Io): Promise<number> {
     io.err(`Unknown command "${name}".\n\n${usage()}`);
     return EXIT.usage;
   }
+  if (rest.includes('--help') || rest.includes('-h')) {
+    io.out(`${command.help}\n`);
+    return EXIT.ok;
+  }
   try {
     return await command.run(rest, io);
   } catch (e) {
@@ -61,7 +97,7 @@ export async function main(argv: string[], io: Io): Promise<number> {
       return e.exitCode;
     }
     if (e instanceof TypeError && /Unknown option|unexpected argument|argument missing/i.test(e.message)) {
-      io.err(`${e.message}\nFix: run \`${BRAND.slug} ${name} --help\`.\n`);
+      io.err(`${e.message}\n\n${command.help}\n`);
       return EXIT.usage;
     }
     io.err(`${BRAND.name} failed unexpectedly: ${e instanceof Error ? e.message : String(e)}\n`);
