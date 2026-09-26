@@ -12,3 +12,4 @@ export * from './questions/index.js';
 export * from './routing/index.js';
 export * from './verdicts/index.js';
 export * from './claims.js';
+export * from './render/index.js';

@@ -16,7 +16,7 @@ export const REASONS = {
   }),
   deferred: (sentence: string) => ({
     template: 'req.deferred',
-    text: `The PR description says this is left for later: "${sentence}".`,
+    text: `The PR description says this is left for later: "${sentence.replace(/[.!]+$/, '')}".`,
   }),
   contradicted: (p: number) => ({
     template: 'req.contradicted',
@@ -62,7 +62,7 @@ export const REASONS = {
   }),
   claimMismatch: (sentence: string) => ({
     template: 'req.claim_mismatch',
-    text: `The PR description says this is done: "${sentence}".`,
+    text: `The PR description says this is done: "${sentence.replace(/[.!]+$/, '')}".`,
   }),
   forwardReverseDisagree: () => ({
     template: 'check.disagree',

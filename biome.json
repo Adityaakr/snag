@@ -17,7 +17,8 @@
       "!**/__tests__/fixtures",
       "!.claude/settings.json",
       "!fixtures/golden",
-      "!fixtures/extraction"
+      "!fixtures/extraction",
+      "!fixtures/snapshots"
     ]
   },
   "formatter": {
