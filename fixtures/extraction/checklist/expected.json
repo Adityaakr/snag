@@ -1,0 +1,36 @@
+{
+  "ids": ["R1", "R2", "R3", "R4"],
+  "requirements": [
+    {
+      "id": "R1",
+      "quote": "the export button downloads a CSV",
+      "source": {
+        "kind": "tasklist"
+      }
+    },
+    {
+      "id": "R2",
+      "quote": "include a header row",
+      "source": {
+        "kind": "tasklist"
+      }
+    },
+    {
+      "id": "R3",
+      "quote": "the filename includes the report date",
+      "signals": {
+        "ambiguous": 0.7,
+        "checkable": 0.9
+      }
+    },
+    {
+      "id": "R4",
+      "kind": "constraint",
+      "priority": "should",
+      "source": {
+        "kind": "body"
+      }
+    }
+  ],
+  "warnings": []
+}

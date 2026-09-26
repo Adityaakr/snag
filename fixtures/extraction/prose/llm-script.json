@@ -1,0 +1,35 @@
+{
+  "extract:local/local#1": [
+    {
+      "requirements": [
+        {
+          "id": "a",
+          "text": "GET /users/:id returns 404 for an id that does not exist.",
+          "quote": "with an id that does not exist, the API must return 404",
+          "source": {
+            "kind": "body"
+          },
+          "kind": "behavior",
+          "explicitness": "explicit",
+          "priority": "must",
+          "examples": [],
+          "checkableInCode": true
+        },
+        {
+          "id": "b",
+          "text": "The 404 response body includes the message \"user not found\".",
+          "quote": "The response body should include the message \"user not found\"",
+          "source": {
+            "kind": "body"
+          },
+          "kind": "behavior",
+          "explicitness": "explicit",
+          "priority": "should",
+          "examples": [],
+          "checkableInCode": true
+        }
+      ],
+      "openQuestions": []
+    }
+  ]
+}

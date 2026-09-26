@@ -1,0 +1,9 @@
+{
+  "ids": ["R1"],
+  "requirements": [
+    {
+      "id": "R1"
+    }
+  ],
+  "warnings": ["duplicate"]
+}

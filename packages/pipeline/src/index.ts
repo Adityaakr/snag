@@ -1,5 +1,9 @@
 import { BRAND } from '@remit/core';
 
+export * from './extract.js';
+export * from './stages.js';
+export * from './types.js';
+
 /** The package name, used by smoke tests to prove workspace wiring. */
 export const PACKAGE = '@remit/pipeline';
 

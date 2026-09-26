@@ -1,0 +1,15 @@
+{
+  "ids": ["R1", "R2"],
+  "requirements": [
+    {
+      "id": "R1",
+      "quote": "the export button downloads a CSV"
+    },
+    {
+      "id": "R2",
+      "quote": "The filename includes the report date"
+    }
+  ],
+  "warnings": [],
+  "closingIssueTags": 1
+}

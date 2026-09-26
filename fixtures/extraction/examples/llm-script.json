@@ -1,0 +1,43 @@
+{
+  "extract:local/local#1": [
+    {
+      "requirements": [
+        {
+          "id": "R1",
+          "text": "slugify lowercases the title and joins words with dashes.",
+          "quote": "slugify must lowercase and join words with dashes",
+          "source": {
+            "kind": "body"
+          },
+          "kind": "behavior",
+          "explicitness": "explicit",
+          "priority": "must",
+          "examples": [
+            {
+              "input": "Hello World",
+              "expected": "hello-world",
+              "quote": "\"Hello World\" -> \"hello-world\""
+            },
+            {
+              "input": "  Trim me  ",
+              "expected": "trim-me",
+              "quote": "\"  Trim me  \" -> \"trim-me\""
+            },
+            {
+              "input": "A/B test",
+              "expected": "a-b-test",
+              "quote": "\"A/B test\" -> \"a-b-test\""
+            },
+            {
+              "input": "Ünïcode",
+              "expected": "unicode",
+              "quote": "\"Ünïcode\" -> \"unicode\""
+            }
+          ],
+          "checkableInCode": true
+        }
+      ],
+      "openQuestions": []
+    }
+  ]
+}

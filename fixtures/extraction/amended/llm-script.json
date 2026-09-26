@@ -1,0 +1,37 @@
+{
+  "extract:local/local#1": [
+    {
+      "requirements": [
+        {
+          "id": "R1",
+          "text": "The request timeout is 30 seconds.",
+          "quote": "The request timeout should be 30 seconds",
+          "source": {
+            "kind": "body"
+          },
+          "kind": "behavior",
+          "explicitness": "explicit",
+          "priority": "should",
+          "examples": [],
+          "checkableInCode": true,
+          "supersededBy": "R2"
+        },
+        {
+          "id": "R2",
+          "text": "The request timeout is 60 seconds.",
+          "quote": "make the timeout 60 seconds",
+          "source": {
+            "kind": "comment",
+            "commentId": "c1"
+          },
+          "kind": "behavior",
+          "explicitness": "explicit",
+          "priority": "must",
+          "examples": [],
+          "checkableInCode": true
+        }
+      ],
+      "openQuestions": []
+    }
+  ]
+}

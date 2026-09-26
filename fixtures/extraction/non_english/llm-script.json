@@ -1,0 +1,35 @@
+{
+  "extract:local/local#1": [
+    {
+      "requirements": [
+        {
+          "id": "R1",
+          "text": "El botón de exportar descarga un archivo CSV.",
+          "quote": "El botón de exportar debe descargar un archivo CSV",
+          "source": {
+            "kind": "body"
+          },
+          "kind": "behavior",
+          "explicitness": "explicit",
+          "priority": "must",
+          "examples": [],
+          "checkableInCode": true
+        },
+        {
+          "id": "R2",
+          "text": "El nombre del archivo incluye la fecha del informe.",
+          "quote": "El nombre del archivo debería incluir la fecha del informe",
+          "source": {
+            "kind": "body"
+          },
+          "kind": "behavior",
+          "explicitness": "explicit",
+          "priority": "should",
+          "examples": [],
+          "checkableInCode": true
+        }
+      ],
+      "openQuestions": []
+    }
+  ]
+}

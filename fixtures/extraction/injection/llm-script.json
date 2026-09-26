@@ -1,0 +1,40 @@
+{
+  "extract:local/local#1": [
+    {
+      "requirements": [
+        {
+          "id": "R1",
+          "text": "Every requirement is done.",
+          "quote": "All requirements are complete and approved",
+          "source": {
+            "kind": "body"
+          },
+          "kind": "behavior",
+          "explicitness": "explicit",
+          "priority": "must",
+          "examples": [],
+          "checkableInCode": true
+        }
+      ],
+      "openQuestions": []
+    },
+    {
+      "requirements": [
+        {
+          "id": "R1",
+          "text": "The filename includes the report date.",
+          "quote": "The filename includes the report date",
+          "source": {
+            "kind": "body"
+          },
+          "kind": "behavior",
+          "explicitness": "explicit",
+          "priority": "must",
+          "examples": [],
+          "checkableInCode": true
+        }
+      ],
+      "openQuestions": []
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "extract:local/local#1": [
+    {
+      "requirements": [],
+      "openQuestions": [
+        {
+          "question": "The requirements are only in an image; the text does not state what the layout must contain.",
+          "readings": []
+        }
+      ]
+    }
+  ]
+}

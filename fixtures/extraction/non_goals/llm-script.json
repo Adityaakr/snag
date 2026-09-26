@@ -1,0 +1,48 @@
+{
+  "extract:local/local#1": [
+    {
+      "requirements": [
+        {
+          "id": "R1",
+          "text": "GET /orders accepts page and pageSize query parameters.",
+          "quote": "Add page and pageSize query parameters to GET /orders",
+          "source": {
+            "kind": "body"
+          },
+          "kind": "behavior",
+          "explicitness": "explicit",
+          "priority": "must",
+          "examples": [],
+          "checkableInCode": true
+        },
+        {
+          "id": "R2",
+          "text": "The response shape of other endpoints does not change.",
+          "quote": "Out of scope: changing the response shape of other endpoints",
+          "source": {
+            "kind": "body"
+          },
+          "kind": "non_goal",
+          "explicitness": "explicit",
+          "priority": "must",
+          "examples": [],
+          "checkableInCode": true
+        },
+        {
+          "id": "R3",
+          "text": "The public API of the SDK does not change.",
+          "quote": "Don't change the public API of the SDK",
+          "source": {
+            "kind": "body"
+          },
+          "kind": "non_goal",
+          "explicitness": "explicit",
+          "priority": "must",
+          "examples": [],
+          "checkableInCode": true
+        }
+      ],
+      "openQuestions": []
+    }
+  ]
+}

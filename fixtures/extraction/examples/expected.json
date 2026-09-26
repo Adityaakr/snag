@@ -1,0 +1,10 @@
+{
+  "ids": ["R1"],
+  "requirements": [
+    {
+      "id": "R1",
+      "exampleCount": 3
+    }
+  ],
+  "warnings": []
+}

@@ -1,0 +1,12 @@
+{
+  "issue": {
+    "R1": {
+      "ambiguous": 0.2,
+      "checkable_in_code": 0.9
+    },
+    "R2": {
+      "ambiguous": 0.65,
+      "checkable_in_code": 0.9
+    }
+  }
+}
