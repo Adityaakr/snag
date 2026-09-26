@@ -92,7 +92,7 @@ Status: TODO
 - [x] Rework mode and gate mode (including refusal) work end to end. (evidence: app.test.ts 'modes': the rework request with mention; gate refused without calibration (neutral) and failure with calibration evidence; action.test.ts gate exit codes, 1554d88)
 - [x] The GitHub Action package, with docs per 10.3. (evidence: packages/action (action.yml node24, src/action.ts, build.mjs, committed dist/index.js with grammars); action.test.ts; bundle.slow.test.ts runs the bundle against a local fake GitHub API; docs/github-action.md covers pull_request, pull_request_target, permissions and SHA pinning, 1554d88)
 - [x] Integration tests replay recorded webhook payloads against FakeGitHub. An end-to-end test runs through a local fake GitHub harness. (evidence: fixtures/webhooks/*.json replayed in packages/server/src/app.test.ts against FakeGitHub; e2e.test.ts runs the real server on a socket with LiveGitHub (App JWT, per-job installation tokens) against fake-github-server.ts over HTTP, 1554d88)
-- [ ] `docs/github-app.md` exists, and the `security-reviewer` subagent returns `VERDICT: PASS`.
+- [x] `docs/github-app.md` exists, and the `security-reviewer` subagent returns `VERDICT: PASS`. (evidence: docs/github-app.md; security-reviewer second run VERDICT: PASS at e5095cf (first run FAIL, fixed per D30), 6e3eed1)
 
 ## M8 Persistence, feedback, dashboard
 Status: TODO
