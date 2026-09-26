@@ -225,8 +225,13 @@ async function runSlash(
         return;
       }
       const found = cmd.ids.map((id) => latest.result.findings.find((f) => f.id === id));
+      // An edited comment re-runs its command: keep one label per finding and person.
+      const prior = await deps.store.feedback(`${owner}/${repo}`, e.issue.number);
       for (const f of found)
-        if (f)
+        if (
+          f &&
+          !prior.some((p) => p.contentKey === f.contentKey && p.login === login && p.label === cmd.name)
+        )
           await deps.store.addFeedback({
             repo: `${owner}/${repo}`,
             pr: e.issue.number,

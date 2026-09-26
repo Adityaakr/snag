@@ -126,6 +126,17 @@ export async function runAction(io: ActionIo): Promise<number> {
   }
   const ref = { owner, repo, number: event.pull_request.number };
   const ingest = await ingestPullRequest(gh, ref);
+  // Linked issues are read only inside the PR's own account (9.7).
+  const foreign = ingest.input.issues.filter((i) => i.ref.owner.toLowerCase() !== owner.toLowerCase());
+  if (foreign.length) {
+    ingest.input.issues = ingest.input.issues.filter((i) => !foreign.includes(i));
+    ingest.input.issueRefs = ingest.input.issues.map((i) => i.ref);
+    if (!ingest.input.issues.length) ingest.input.linkStrength = 'none';
+    for (const i of foreign)
+      ingest.warnings.push(
+        `Issue ${i.ref.owner}/${i.ref.repo}#${i.ref.number} is outside this account, so it was not used.`,
+      );
+  }
   const p = (io.providers ?? providersFromEnv)(config, { ...keys, REMIT_CACHE_MODE: 'live' });
   const reviewId = `action_${env.GITHUB_RUN_ID ?? 'local'}_${env.GITHUB_RUN_ATTEMPT ?? '1'}`;
   const result = await runReview(ingest.input, {

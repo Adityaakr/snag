@@ -205,7 +205,7 @@ describe('explainMarkdown', () => {
           route: 'send_back',
           confidence: 0.9,
           contentKey: 'k',
-          locations: [{ file: 'src/@x.ts', lines: [1, 2] }],
+          locations: [{ file: 'src/@x\u202e.ts', lines: [1, 2] }],
           reasons: [{ template: 't', text: hostile }],
         },
       ],
@@ -232,6 +232,7 @@ describe('explainMarkdown', () => {
     const inner = md.slice(fence.length + 5, md.trimEnd().length - fence.length);
     expect(inner.includes(fence)).toBe(false);
     expect(/@acme/.test(inner)).toBe(false);
+    expect(inner.includes('\u202e')).toBe(false);
     expect(explainMarkdown(r, 'F-X', defaultConfig().thresholds)).toBeNull();
   });
 });
