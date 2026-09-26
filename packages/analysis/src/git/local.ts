@@ -136,3 +136,13 @@ export class LocalGit {
     return (this.git(['ls-tree', '-r', '--name-only', '-z', sha]) as string).split('\0').filter(Boolean);
   }
 }
+
+/** Adapts LocalGit to the ContentSource shape used by the unit builder. Skipped files read as null. */
+export function localContents(git: LocalGit, baseSha: string, headSha: string) {
+  return {
+    async get(side: 'base' | 'head', path: string): Promise<string | null> {
+      const r = git.show(side === 'base' ? baseSha : headSha, path);
+      return r && 'content' in r ? r.content : null;
+    },
+  };
+}

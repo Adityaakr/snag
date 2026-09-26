@@ -14,3 +14,6 @@ export function describePackage(): string {
 export * from './files/classify.js';
 export * from './files/gitattributes.js';
 export * from './files/glob.js';
+export * from './syntax/strip.js';
+export * from './syntax/treesitter.js';
+export * from './units/build.js';
