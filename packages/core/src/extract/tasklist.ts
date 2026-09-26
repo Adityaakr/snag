@@ -41,6 +41,7 @@ export function coveredByTaskList(quote: string, items: readonly ExtractedRequir
   const q = normalizeForMatch(quote).toLowerCase();
   return items.some((t) => {
     const item = normalizeForMatch(t.quote).toLowerCase();
-    return item.includes(q) || q.includes(item);
+    // The LLM quote sits inside the item, or spans the whole item; very short items only match the first way.
+    return item.includes(q) || (item.length >= 12 && q.includes(item));
   });
 }
