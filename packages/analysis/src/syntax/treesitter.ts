@@ -67,6 +67,8 @@ export interface CodeSymbol {
   endLine: number;
   /** Nesting depth; 0 for top level. */
   depth: number;
+  /** Names of enclosing symbols and this one, joined with `/` (for example `Exporter/run`). */
+  qualifiedName: string;
   /** For test symbols, the title string or function name. */
   testTitle?: string;
 }
@@ -130,7 +132,7 @@ function startWithAttributes(n: Node): number {
   return start;
 }
 
-function jsSymbol(n: Node, parentKinds: SymbolKind[]): Omit<CodeSymbol, 'depth'> | null {
+function jsSymbol(n: Node, parentKinds: SymbolKind[]): Omit<CodeSymbol, 'depth' | 'qualifiedName'> | null {
   switch (n.type) {
     case 'function_declaration':
     case 'generator_function_declaration': {
@@ -198,7 +200,7 @@ function jsSymbol(n: Node, parentKinds: SymbolKind[]): Omit<CodeSymbol, 'depth'>
   }
 }
 
-function pySymbol(n: Node, parentKinds: SymbolKind[]): Omit<CodeSymbol, 'depth'> | null {
+function pySymbol(n: Node, parentKinds: SymbolKind[]): Omit<CodeSymbol, 'depth' | 'qualifiedName'> | null {
   const target = n.type === 'decorated_definition' ? n.childForFieldName('definition') : n;
   if (!target || (n.type !== 'decorated_definition' && n.parent?.type === 'decorated_definition'))
     return null;
@@ -230,7 +232,7 @@ function hasAttribute(n: Node, attr: RegExp): boolean {
   return false;
 }
 
-function rsSymbol(n: Node, parentKinds: SymbolKind[]): Omit<CodeSymbol, 'depth'> | null {
+function rsSymbol(n: Node, parentKinds: SymbolKind[]): Omit<CodeSymbol, 'depth' | 'qualifiedName'> | null {
   switch (n.type) {
     case 'function_item':
     case 'function_signature_item': {
@@ -281,7 +283,7 @@ function rsSymbol(n: Node, parentKinds: SymbolKind[]): Omit<CodeSymbol, 'depth'>
 
 const EXTRACTORS: Record<
   ParsedLanguage,
-  (n: Node, parents: SymbolKind[]) => Omit<CodeSymbol, 'depth'> | null
+  (n: Node, parents: SymbolKind[]) => Omit<CodeSymbol, 'depth' | 'qualifiedName'> | null
 > = {
   ts: jsSymbol,
   tsx: jsSymbol,
@@ -294,13 +296,14 @@ const EXTRACTORS: Record<
 export function symbolsOf(lang: ParsedLanguage, tree: Tree): CodeSymbol[] {
   const out: CodeSymbol[] = [];
   const extract = EXTRACTORS[lang];
-  const visit = (n: Node, parents: SymbolKind[]) => {
+  const visit = (n: Node, parents: SymbolKind[], names: string[]) => {
     const sym = extract(n, parents);
-    if (sym) out.push({ ...sym, depth: parents.length });
+    if (sym) out.push({ ...sym, depth: parents.length, qualifiedName: [...names, sym.name].join('/') });
     const next = sym ? [...parents, sym.kind] : parents;
-    for (const child of n.namedChildren) if (child) visit(child, next);
+    const nextNames = sym ? [...names, sym.name] : names;
+    for (const child of n.namedChildren) if (child) visit(child, next, nextNames);
   };
-  visit(tree.rootNode, []);
+  visit(tree.rootNode, [], []);
   return out;
 }
 
