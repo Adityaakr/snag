@@ -30,17 +30,17 @@ Status: DONE
 - [x] Line coverage of `analysis` is `≥ 90%`. (evidence: `pnpm test:cov` analysis lines 95.6% (threshold 90% enforced in vitest.config.ts), 761fda0)
 
 ## M2 Providers, budgets, record and replay
-Status: IN_PROGRESS
+Status: BLOCKED-HUMAN
 - [x] The Jev adapter from 7.3 (LiveJev, FakeJev, CachedJev), with tests for: packing; 400 shrink-and-retry; 429 and 529 backoff; validation; concurrency; cost accounting; model logging. (evidence: packages/providers/src/jev/jev.test.ts (overflow shrink, 429/529 backoff, validation, concurrency, cost, model logging, preflight packing) + common/common.test.ts, 0a53ab4)
 - [x] The LLM adapter from section 8 (Anthropic, OpenAI-compatible, FakeLlm, CachedLlm), with structured output, the repair retry and cost accounting. (evidence: packages/providers/src/llm/llm.test.ts, b453f61)
 - [x] A GitHub adapter covering: PR metadata; paginated files and patches, with the local diff fallback; contents at a SHA, with a size guard; issues and comments with roles; linked issues per 6.1; rate-limit handling. It includes FakeGitHub for tests. (evidence: packages/providers/src/github/github.test.ts (msw: PR, paginated files, contents size guard, issues with roles, GraphQL closing refs, rate limits; FakeGitHub diff fallback), bf95446)
 - [x] Record and replay per 7.4, with all four modes. A test proves cassettes contain no auth headers. (evidence: packages/providers/src/cache/store.test.ts + jev.test.ts/llm.test.ts cassette tests ("never stores auth headers"), 9d63961)
-- [x] `remit doctor` per 10.1, including model ID verification through the Anthropic Models API. The results are recorded in `docs/providers.md`. (evidence: packages/cli/src/commands/doctor.test.ts; `pnpm remit doctor` (keyless run recorded in docs/providers.md; live model check is B2), 6710c8a)
+- [ ] `remit doctor` per 10.1, including model ID verification through the Anthropic Models API. The results are recorded in `docs/providers.md`.
 - [x] `pnpm test:live` smoke tests run only when keys exist, and print `skipped: <KEY> not set` otherwise. (evidence: `pnpm test:live` prints "skipped: TYPESAFE_API_KEY not set" etc.; packages/providers/src/providers.live.test.ts, d09d9a2)
 - [x] `guard:tests` (3.6) runs in `pnpm verify`. (evidence: scripts/__tests__/tests-guard.test.ts; `pnpm guard` prints guard:tests: ok, 4353c0f)
 
 ## M3 Blind requirement extraction
-Status: TODO
+Status: IN_PROGRESS
 - [ ] Extraction prompt v0 (Appendix B.1) is versioned `xp-0.1.0`. The extractor accepts only `IssueSnapshot`.; The architecture test and the pipeline blindness test from 6.2 pass..
 - [ ] Quote validation with normalization and one repair call. Unanchored items are dropped with warnings.
 - [ ] The task-list fast path and all three `extraction.mode` values.

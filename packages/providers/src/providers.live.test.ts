@@ -15,7 +15,7 @@ const hasAnthropic = gate('ANTHROPIC_API_KEY');
 const hasGitHub = gate('GITHUB_TOKEN');
 
 describe('live TypeSafe', () => {
-  it.runIf(hasJev)('answers a Noul with the pinned model', async () => {
+  it.runIf(hasJev)('pending: TypeSafe answers with the pinned jev-1.13.0 (blocker B2)', async () => {
     const jev = new LiveJev({ model: 'jev-1.13.0', pricePerMillionUsd: 0.042 });
     const r = await jev.ask(
       { kind: 'issue', questionSet: 'live-smoke', targetId: 't', reviewId: 'live' },
@@ -33,24 +33,27 @@ describe('live TypeSafe', () => {
 });
 
 describe('live Anthropic', () => {
-  it.runIf(hasAnthropic)('lists claude-opus-5-5 and returns structured output', async () => {
-    const llm = new AnthropicLlm({
-      model: 'claude-opus-5-5',
-      price: { inputPerMillionUsd: 4, outputPerMillionUsd: 20 },
-      effort: 'low',
-    });
-    expect(await llm.listModels()).toContain('claude-opus-5-5');
-    const r = await llm.structured(
-      z.object({ color: z.string() }),
-      [{ role: 'user', content: 'The sky is blue. What color is the sky?' }],
-      {
-        schemaName: 'color',
-        system: 'Answer with the color only.',
-        promptVersion: 'live-smoke',
-      },
-    );
-    expect(r.data.color.toLowerCase()).toContain('blue');
-  });
+  it.runIf(hasAnthropic)(
+    'pending: live Models API confirms claude-opus-5-5 and structured output works (blocker B2)',
+    async () => {
+      const llm = new AnthropicLlm({
+        model: 'claude-opus-5-5',
+        price: { inputPerMillionUsd: 4, outputPerMillionUsd: 20 },
+        effort: 'low',
+      });
+      expect(await llm.listModels()).toContain('claude-opus-5-5');
+      const r = await llm.structured(
+        z.object({ color: z.string() }),
+        [{ role: 'user', content: 'The sky is blue. What color is the sky?' }],
+        {
+          schemaName: 'color',
+          system: 'Answer with the color only.',
+          promptVersion: 'live-smoke',
+        },
+      );
+      expect(r.data.color.toLowerCase()).toContain('blue');
+    },
+  );
 });
 
 describe('live GitHub', () => {
