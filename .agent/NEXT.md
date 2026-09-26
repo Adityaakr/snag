@@ -1,10 +1,9 @@
 # Next
 
 Milestone: M9 Production hardening
-Task: container and deployment.
+Task: the M9 gate.
 
 Next action:
-1. Read M9 in BUILD_PROMPT section 13 and `.agent/milestones/M9.md`.
-2. Multi-stage Dockerfile (non-root), docker-compose with server, worker and Postgres plus health checks; `docker compose up` works with fakes. Split a worker entry point (pg-boss consumers) from the web server.
-3. docs/operations.md: deploy guides for Fly.io, Railway and Render.
-4. Observability (pino with redact paths and reviewId, Prometheus metrics for reviews, latency, provider calls, tokens, cost, findings and feedback, optional OpenTelemetry); budgets (per-installation daily), rate limiters, circuit breakers, graceful partial results; retention and deletion tests; a load test (50 concurrent PR events); chaos tests; the D30 carry-overs (AbortSignal into runReview, Renovate, CI pnpm audit, docs/security.md, token permissions, slug lookup).
+1. Wait for the `security-reviewer` (started on 8d957ba); fix every high or medium finding and re-run until VERDICT: PASS; then check the last M9 item.
+2. Run the `milestone-verifier` on `.agent/milestones/M9.md`. The Dockerfile item stays unchecked until `docker compose up` runs (B7: no container runtime here; `pnpm stack:smoke` covers the same topology), so M9 closes BLOCKED-HUMAN on B7 unless Docker becomes available.
+3. Then M10 (BLOCKED-HUMAN without TYPESAFE_API_KEY and ANTHROPIC_API_KEY: record exact unblock steps) and docs/HANDOFF.md.
