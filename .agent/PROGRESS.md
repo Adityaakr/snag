@@ -35,7 +35,7 @@ Status: IN_PROGRESS
 - [x] The LLM adapter from section 8 (Anthropic, OpenAI-compatible, FakeLlm, CachedLlm), with structured output, the repair retry and cost accounting. (evidence: packages/providers/src/llm/llm.test.ts, b453f61)
 - [x] A GitHub adapter covering: PR metadata; paginated files and patches, with the local diff fallback; contents at a SHA, with a size guard; issues and comments with roles; linked issues per 6.1; rate-limit handling. It includes FakeGitHub for tests. (evidence: packages/providers/src/github/github.test.ts (msw: PR, paginated files, contents size guard, issues with roles, GraphQL closing refs, rate limits; FakeGitHub diff fallback), bf95446)
 - [x] Record and replay per 7.4, with all four modes. A test proves cassettes contain no auth headers. (evidence: packages/providers/src/cache/store.test.ts + jev.test.ts/llm.test.ts cassette tests ("never stores auth headers"), 9d63961)
-- [ ] `remit doctor` per 10.1, including model ID verification through the Anthropic Models API. The results are recorded in `docs/providers.md`.
+- [x] `remit doctor` per 10.1, including model ID verification through the Anthropic Models API. The results are recorded in `docs/providers.md`. (evidence: packages/cli/src/commands/doctor.test.ts; `pnpm remit doctor` (keyless run recorded in docs/providers.md; live model check is B2), 6710c8a)
 - [ ] `pnpm test:live` smoke tests run only when keys exist, and print `skipped: <KEY> not set` otherwise.
 - [ ] `guard:tests` (3.6) runs in `pnpm verify`.
 
