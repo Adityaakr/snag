@@ -1,0 +1,11 @@
+# Extraction through OpenRouter (OpenAI-compatible). Needs OPENAI_COMPATIBLE_API_KEY and
+# OPENAI_COMPATIBLE_BASE_URL=https://openrouter.ai/api/v1 in .env. Use with --config config/openrouter.remit.yml.
+# Prices are OpenRouter's list prices on 2026-09-27, in USD per million tokens.
+extraction:
+  mode: auto
+  provider: openai_compatible
+  model: anthropic/claude-opus-5.5
+llm_prices:
+  anthropic/claude-opus-5.5:
+    input: 4
+    output: 20

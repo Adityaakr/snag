@@ -180,6 +180,15 @@ try {
 - SDK package: `@anthropic-ai/sdk`, current npm version `0.128.0`.
 - Model ID verification: `remit doctor` lists models through the Models API and checks the configured ids; see "Doctor results" below.
 
+## OpenRouter (OpenAI-compatible)
+
+Extraction can run through any OpenAI-compatible endpoint. OpenRouter serves the same Claude models.
+
+- Put `OPENAI_COMPATIBLE_API_KEY` and `OPENAI_COMPATIBLE_BASE_URL=https://openrouter.ai/api/v1` in `.env`.
+- Use `config/openrouter.remit.yml` (`--config config/openrouter.remit.yml`), or copy its `extraction` and `llm_prices` blocks into a repository's `.remit.yml`.
+- OpenRouter model ids use dots: `anthropic/claude-opus-5.5`. On `2026-09-27` it listed `$4` in and `$20` out per million tokens, the same as Anthropic direct, with `response_format` and structured outputs supported.
+- In the App, budgets use the operator's price table. Add the model with `REMIT_LLM_PRICES='{"anthropic/claude-opus-5.5":{"input":4,"output":20}}'`, or the App will not call it.
+- OpenRouter covers extraction only. Every verdict still needs Jev (`TYPESAFE_API_KEY`).
 
 ## Doctor results
 
@@ -197,4 +206,14 @@ Run on `2026-09-26` in the build environment, which has no keys yet:
 | Anthropic model `claude-opus-5-5` | skipped: no key; not yet verified against the Models API |
 | GitHub | reachable, `59/60` unauthenticated requests left |
 
-When keys are added, rerun `pnpm remit doctor` and replace the skipped rows with the live results.
+Rerun on `2026-09-27` with an OpenRouter key (`pnpm remit doctor --config config/openrouter.remit.yml`):
+
+| Check | Result |
+| --- | --- |
+| Config | `config/openrouter.remit.yml` is valid |
+| `OPENAI_COMPATIBLE_API_KEY` | set |
+| OpenRouter model `anthropic/claude-opus-5.5` | available, priced for budgets |
+| `TYPESAFE_API_KEY` | not set: TypeSafe and every verdict still unverified (B1, B2) |
+| GitHub | reachable, `58/60` unauthenticated requests left |
+
+When the TypeSafe and Anthropic keys are added, rerun `pnpm remit doctor` and replace the skipped rows with the live results.

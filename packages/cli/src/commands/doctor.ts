@@ -3,10 +3,18 @@
  * GitHub, configured model ids and rate-limit headroom. Every failure prints a fix. Never prints secret values.
  */
 import { existsSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { isAbsolute, join } from 'node:path';
+import { parseArgs } from 'node:util';
 import { BRAND, parseConfig, type RemitConfig } from '@remit/core';
-import { AnthropicLlm, LiveGitHub, LiveJev, noul, ProviderError } from '@remit/providers';
-import { EXIT } from '../errors.js';
+import {
+  AnthropicLlm,
+  LiveGitHub,
+  LiveJev,
+  noul,
+  OpenAiCompatibleLlm,
+  ProviderError,
+} from '@remit/providers';
+import { CliError, EXIT } from '../errors.js';
 import type { Io } from '../io.js';
 
 export type CheckStatus = 'ok' | 'warn' | 'fail' | 'skip';
@@ -24,6 +32,10 @@ export interface DoctorDeps {
   configText: string | null;
   jevProbe(model: string): Promise<{ model: string }>;
   anthropicModels(): Promise<string[]>;
+  /** Model ids from the OpenAI-compatible endpoint in OPENAI_COMPATIBLE_BASE_URL. */
+  openaiCompatibleModels(): Promise<string[]>;
+  /** The config file name shown in messages; defaults to `.remit.yml`. */
+  configName?: string;
   githubRateLimit(): Promise<{ limit: number; remaining: number; resetAt: number }>;
 }
 
@@ -69,7 +81,7 @@ export async function runChecks(deps: DoctorDeps): Promise<{ checks: Check[]; co
           detail:
             deps.configText === null
               ? `no .${BRAND.slug}.yml, using defaults`
-              : `.${BRAND.slug}.yml is valid`,
+              : `${deps.configName ?? `.${BRAND.slug}.yml`} is valid`,
         },
   );
 
@@ -155,6 +167,57 @@ export async function runChecks(deps: DoctorDeps): Promise<{ checks: Check[]; co
     checks.push({ name: 'anthropic', status: 'skip', detail: 'skipped: ANTHROPIC_API_KEY not set' });
   }
 
+  if (config.extraction.provider === 'openai_compatible') {
+    if (!deps.env.OPENAI_COMPATIBLE_API_KEY)
+      checks.push({
+        name: 'openai_compatible',
+        status: 'skip',
+        detail: 'skipped: OPENAI_COMPATIBLE_API_KEY not set',
+      });
+    else if (!deps.env.OPENAI_COMPATIBLE_BASE_URL)
+      checks.push({
+        name: 'openai_compatible',
+        status: 'fail',
+        detail: 'OPENAI_COMPATIBLE_BASE_URL is not set',
+        fix: 'Add the endpoint to .env, for example https://openrouter.ai/api/v1.',
+      });
+    else {
+      try {
+        const ids = await deps.openaiCompatibleModels();
+        const id = config.extraction.model;
+        checks.push(
+          ids.includes(id)
+            ? { name: 'openai_compatible model', status: 'ok', detail: `${id} is available` }
+            : {
+                name: 'openai_compatible model',
+                status: 'fail',
+                detail: `${id} is not in the endpoint's model list`,
+                fix: `Set extraction.model to one the endpoint serves, such as: ${ids.slice(0, 6).join(', ')}.`,
+              },
+        );
+        const priced = Object.hasOwn(config.llm_prices, id);
+        checks.push(
+          priced
+            ? { name: 'openai_compatible price', status: 'ok', detail: `${id} is priced for budgets` }
+            : {
+                name: 'openai_compatible price',
+                status: 'warn',
+                detail: `${id} has no price, so budgets count it as $0`,
+                fix: `Add llm_prices.${id} with input and output USD per million tokens.`,
+              },
+        );
+      } catch (e) {
+        const d = describeError(e);
+        checks.push({
+          name: 'openai_compatible',
+          status: 'fail',
+          detail: d.detail,
+          fix: d.fix ?? 'Check OPENAI_COMPATIBLE_BASE_URL and network access to it.',
+        });
+      }
+    }
+  }
+
   try {
     const rl = await deps.githubRateLimit();
     const pct = rl.limit ? rl.remaining / rl.limit : 0;
@@ -208,12 +271,30 @@ export function renderChecks(checks: readonly Check[]): string {
   return `${lines.join('\n')}\n`;
 }
 
-export function liveDeps(io: Io): DoctorDeps {
-  const cfgPath = join(io.cwd, `.${BRAND.slug}.yml`);
+export function liveDeps(io: Io, configPath?: string): DoctorDeps {
+  const cfgPath = configPath
+    ? isAbsolute(configPath)
+      ? configPath
+      : join(io.cwd, configPath)
+    : join(io.cwd, `.${BRAND.slug}.yml`);
+  if (configPath && !existsSync(cfgPath))
+    throw new CliError(
+      `Config file ${configPath} does not exist.`,
+      `Check the path, or drop --config to use .${BRAND.slug}.yml.`,
+    );
   return {
     nodeVersion: process.version,
     env: io.env,
     configText: existsSync(cfgPath) ? readFileSync(cfgPath, 'utf8') : null,
+    ...(configPath ? { configName: configPath } : {}),
+    async openaiCompatibleModels() {
+      return new OpenAiCompatibleLlm({
+        model: 'probe',
+        price: { inputPerMillionUsd: 0, outputPerMillionUsd: 0 },
+        ...(io.env.OPENAI_COMPATIBLE_API_KEY ? { apiKey: io.env.OPENAI_COMPATIBLE_API_KEY } : {}),
+        ...(io.env.OPENAI_COMPATIBLE_BASE_URL ? { baseURL: io.env.OPENAI_COMPATIBLE_BASE_URL } : {}),
+      }).listModels();
+    },
     async jevProbe(model) {
       const jev = new LiveJev({
         model,
@@ -244,11 +325,9 @@ export function liveDeps(io: Io): DoctorDeps {
   };
 }
 
-export async function doctorCommand(
-  _argv: string[],
-  io: Io,
-  deps: DoctorDeps = liveDeps(io),
-): Promise<number> {
+export async function doctorCommand(argv: string[], io: Io, injected?: DoctorDeps): Promise<number> {
+  const { values } = parseArgs({ args: argv, options: { config: { type: 'string' } }, strict: true });
+  const deps = injected ?? liveDeps(io, values.config);
   const { checks } = await runChecks(deps);
   io.out(renderChecks(checks));
   if (checks.some((c) => c.name === 'config' && c.status === 'fail')) return EXIT.usage;

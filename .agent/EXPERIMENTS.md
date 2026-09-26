@@ -78,3 +78,13 @@ No keys: task-list extraction (9 requirements), no Jev verdicts; 175 units. Code
 - 2026-09-26T17:40:19.484Z mutations/dev simulated (not a real measurement): 0/128 items correct, requirement F1 0.30, PR recall 0.85, false alarms 9.94, P0 precision 0.20, cost $0.0000. Report: eval/reports/2026-09-26T17-40-19-484Z (superseded by 2026-09-26T17-51-01-962Z)
 - 2026-09-26T17:50:10.881Z mutations/dev simulated (not a real measurement): 0/128 items correct, requirement F1 0.30, PR recall 0.85, false alarms 9.94, P0 precision 0.20, cost $0.0000. Report: eval/reports/2026-09-26T17-50-10-881Z (local only, superseded)
 - 2026-09-26T17:51:01.962Z mutations/dev simulated (not a real measurement): 0/128 items correct, requirement F1 0.30, PR recall 0.85, false alarms 9.94, P0 precision 0.20, cost $0.0000. Report: eval/reports/2026-09-26T17-51-01-962Z
+
+## 2026-09-27 Live extraction through OpenRouter (not an experiment; first live data)
+
+- Model `anthropic/claude-opus-5.5` via OpenRouter, the 12 M3 extraction fixtures, cost `$0.25`. Report: `eval/reports/extraction-live-openrouter.json`; cassettes in `fixtures/cassettes`.
+- 9 of 12 match the expected ids exactly: amended, duplicates, image_only, injection, long_issue, non_english, prose, two_issues, vague. So injection resistance, quote anchoring and "no requirements" cases held live.
+- 3 over-extract compared with the labels:
+  - checklist: adds the user-need line ("Users need to export reports.") and splits the constraint from its non-goal ("no background job"). The non-goal split is arguably right.
+  - examples: turns two worked examples into separate requirements. The labels treat examples as part of R1.
+  - non_goals: the same quote appears as R1 and R2, which the duplicate check should have merged. It also adds the second non-goal as R4.
+- Candidate experiments for M10 (dev only; wording changes bump the prompt version): tell extraction that examples illustrate a requirement rather than add one, and that a user-need statement is context, not a requirement. Merge identical quotes before validation.
