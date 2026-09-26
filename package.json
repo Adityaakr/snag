@@ -22,7 +22,10 @@
     "schemas": "tsx packages/core/src/contracts/write-schemas.ts",
     "remit": "tsx --conditions=source packages/cli/src/bin.ts",
     "fixtures:golden": "tsx --conditions=source scripts/fixtures/golden.ts",
-    "demo": "tsx --conditions=source packages/cli/src/bin.ts demo"
+    "demo": "tsx --conditions=source packages/cli/src/bin.ts demo",
+    "eval:golden": "tsx --conditions=source packages/cli/src/bin.ts eval golden",
+    "eval:dev": "tsx --conditions=source packages/cli/src/bin.ts eval mutations --split dev",
+    "eval:test": "tsx --conditions=source packages/cli/src/bin.ts eval mutations --split test"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.14",

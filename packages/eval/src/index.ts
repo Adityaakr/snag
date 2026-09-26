@@ -1,5 +1,12 @@
 import { BRAND } from '@remit/core';
 
+export * from './calibration.js';
+export * from './corpora/golden.js';
+export * from './item.js';
+export * from './metrics.js';
+export * from './runner.js';
+export * from './simulated.js';
+
 /** The package name, used by smoke tests to prove workspace wiring. */
 export const PACKAGE = '@remit/eval';
 
@@ -7,3 +14,6 @@ export const PACKAGE = '@remit/eval';
 export function describePackage(): string {
   return `${BRAND.name} ${PACKAGE}`;
 }
+export * from './baselines.js';
+export * from './corpora/files.js';
+export * from './report.js';

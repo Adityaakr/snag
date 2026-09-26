@@ -18,6 +18,9 @@
     },
     {
       "path": "../pipeline"
+    },
+    {
+      "path": "../eval"
     }
   ]
 }
