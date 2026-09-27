@@ -117,3 +117,12 @@ No keys: task-list extraction (9 requirements), no Jev verdicts; 175 units. Code
   - tests.asserts_differently `0.050` to `0.943`, tests.test_evidence `0.446` to `0.906`.
 - Weak: tests.asserts_as_stated `0.418` and reverse.serves `0.400`. Claims are too few to judge (n=8).
 - Caveat: conflict and asserts_differently are mostly negative. The discrimination on contradicted items is measured by the mutation eval, not by this accuracy.
+
+## 2026-09-27 remit-laya-v1 end-to-end evals (local engine, $0)
+
+- Golden (scripted extraction): as shipped `1/18`, remit-laya-v1 `5/18`; requirement F1 `0.00` to `0.50`.
+- Mutations dev (all 9 seeds, 7 trained on): as shipped `0/128` correct, F1 `0.02`, PR recall `0.13`; v1 `15/128`, F1 `0.06`, PR recall `0.28`, false alarms `0.78`.
+- Held-out seeds only (rs-semver-compare, py-retry-backoff): v1 detected `1/21` targeted requirement defects; PR recall `0.26`.
+- Verdict mix (v1): missing to done `31`, contradicted to done `19`. The model learned the majority answers.
+- Diagnosis: class imbalance. Coverage targets are mostly Full, and conflict and asserts_differently mostly no (20 flips, 36 drops in all). The 82% question accuracy was largely the majority rate; per-question accuracy is the wrong selection metric.
+- Next (v2): counterfactual negatives (each done forward/tests example gets a twin with the implementing or testing units removed, so coverage None and evidence none), class-balanced sampling, balanced accuracy per question.
