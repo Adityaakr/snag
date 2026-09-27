@@ -11,6 +11,7 @@
  */
 import type { CallMeta, EntryType, JevAnswers, JevProvider, JevResult, Questions } from '@remit/providers';
 import { validateAnswers } from '@remit/providers';
+import { adjudicationFor, EXCLUDED_TEST_REFS } from './adjudications.js';
 import type { EvalItem } from './item.js';
 import type { Seed } from './mutations/seed.js';
 
@@ -52,7 +53,8 @@ export function refMatches(unit: UnitLike, ref: { file: string; symbol?: string 
   if (!ref.symbol) return true;
   const b = norm(ref.symbol);
   const names = [unit.symbol, ...(unit.titles ?? [])].map(norm).filter(Boolean);
-  return names.some((a) => a === b || a.includes(b) || b.includes(a));
+  // Exact names only: substring matching let `get` match `get_bool` and `parse` match `parse_errors_name_the_input`.
+  return names.some((a) => a === b);
 }
 
 const noulAnswer = (p: number) => ({ type: 'noul', noul: p });
@@ -98,7 +100,13 @@ export class OracleJev implements JevProvider {
   }
 
   private seedReq(reqId: string) {
-    return this.seed.requirements.find((r) => r.id === reqId);
+    const req = this.seed.requirements.find((r) => r.id === reqId);
+    if (!req) return undefined;
+    // Drop test refs the audit found do not assert this requirement.
+    const excluded = EXCLUDED_TEST_REFS.filter((x) => x.seedId === this.seed.id && x.requirement === reqId);
+    return excluded.length
+      ? { ...req, tests: req.tests.filter((t) => !excluded.some((x) => norm(x.symbol) === norm(t.symbol))) }
+      : req;
   }
 
   /** The requirement ids whose implementing or test refs match the unit. */
@@ -147,6 +155,10 @@ export class OracleJev implements JevProvider {
         return level && keys.includes(level) ? { probabilities: oneHot(level) } : null;
       }
       if (qid === 'conflict') {
+        // A removed case or a skipped call site can produce the opposite outcome for some inputs, so "conflict" is
+        // genuinely ambiguous for the targeted requirement of partial and unwire items: no label (audit).
+        const targeted = this.item.target === meta.targetId;
+        if (targeted && (op === 'partial_requirement' || op === 'unwire')) return null;
         if (L === 'contradicted') return { noul: 1 };
         return L === 'done' || L === 'partial' || L === 'missing' ? { noul: 0 } : null;
       }
@@ -254,7 +266,18 @@ export class OracleJev implements JevProvider {
     const s = (state ?? {}) as Record<string, unknown>;
     const answers: Record<string, unknown> = {};
     for (const [qid, q] of Object.entries(questions)) {
-      const t = this.target(meta, qid, q, s);
+      let t = this.target(meta, qid, q, s);
+      const flowTarget = t;
+      if (t && (meta.kind === 'forward' || meta.kind === 'tests')) {
+        const adj = adjudicationFor(
+          this.seed.id,
+          this.item.operator ?? 'clean',
+          meta.targetId,
+          `${meta.kind}.${qid}`,
+        );
+        if (adj?.action === 'exclude') t = null;
+        else if (adj?.action === 'relabel') t = { noul: adj.noul };
+      }
       if (t) {
         const support = this.support(meta, s);
         this.records.push({
@@ -274,6 +297,12 @@ export class OracleJev implements JevProvider {
         const flowProbs = Object.keys(probs).length > 1 ? oneHot(Object.keys(probs)[0] as string) : probs;
         answers[qid] =
           'noul' in t ? noulAnswer(t.noul) : distAnswer(q.type as 'choice' | 'score', keysOf(q), flowProbs);
+      } else if (flowTarget) {
+        // Excluded from training, but the pipeline still follows the label-implied answer.
+        answers[qid] =
+          'noul' in flowTarget
+            ? noulAnswer(flowTarget.noul)
+            : distAnswer(q.type as 'choice' | 'score', keysOf(q), flowTarget.probabilities);
       } else answers[qid] = this.flow(meta, qid, q);
     }
     validateAnswers(questions, answers);

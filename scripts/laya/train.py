@@ -134,14 +134,25 @@ for _r in recs:
 
 
 def backfill_pool(r):
-    """Units from other seeds on the same side of the split, to keep a twin's candidate count unchanged."""
-    same_val = r["seedId"] in VAL_SEEDS
-    return [
-        u
-        for seed, units in RAW_POOLS[r["call"]].items()
-        if seed != r["seedId"] and (seed in VAL_SEEDS) == same_val
-        for u in units
-    ]
+    """Same-seed decoys to keep a twin's candidate count: units of the same repository that are not in the state and
+    do not implement (or test) the requirement. Foreign units would make twins recognisable by language and style
+    (label audit, 2026-09-27); padding with foreign units is applied to originals and twins alike instead."""
+    field = FIELD[r["call"]]
+    present = {json.dumps(u, sort_keys=True) for u in r["state"].get(field, [])}
+    sup_keys = {
+        (u.get("file"), u.get("symbol"), tuple(u.get("titles") or []))
+        for u in r["state"].get(field, [])
+        if u.get("id") in set(r.get("support") or [])
+    }
+    seen, out = set(), []
+    for u in RAW_POOLS[r["call"]][r["seedId"]]:
+        k = json.dumps(u, sort_keys=True)
+        key = (u.get("file"), u.get("symbol"), tuple(u.get("titles") or []))
+        if k in present or k in seen or key in sup_keys:
+            continue
+        seen.add(k)
+        out.append(u)
+    return out
 
 
 def is_positive(r):
@@ -168,8 +179,10 @@ def twin(r):
         return None
     r2 = copy.deepcopy(r)
     pool = backfill_pool(r)
-    # Replace each removed unit with a realistic unit from another seed, so the count does not reveal the answer.
-    fill = [dict(u) for u in random.sample(pool, min(len(sup), len(pool)))]
+    if len(pool) < len(sup):
+        return None  # not enough same-seed decoys to keep the count: no twin rather than a recognisable one
+    # Replace each removed unit with a same-seed decoy, so neither the count nor the language reveals the answer.
+    fill = [dict(u) for u in random.sample(pool, len(sup))]
     r2["state"][field] = kept + fill
     r2["support"] = []
     r2["twin"] = True
