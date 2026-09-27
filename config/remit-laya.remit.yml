@@ -17,5 +17,6 @@ jev:
   concurrency: 2
   price_per_million_input_usd: 0.001
 budgets:
-  # In eval runs, one provider tracker is shared by the whole run, so this is also the run's hard dollar cap.
-  max_usd_per_review: 0.5
+  # In eval runs, one provider tracker is shared by the whole run, so this is also a hard dollar cap for the run.
+  # EVAL_MAX_USD sets the tighter per-run cap (scripts/laya/eval-remit-laya.sh). Lower it for production use.
+  max_usd_per_review: 1.5

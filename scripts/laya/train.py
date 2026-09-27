@@ -46,11 +46,14 @@ p.add_argument("--epochs", type=int, default=3)
 p.add_argument("--max-steps", type=int, default=0, help="stop after N optimizer steps (smoke runs)")
 p.add_argument("--max-len", type=int, default=4096)
 p.add_argument("--head-max-len", type=int, default=512)
-p.add_argument("--freeze", type=int, default=14, help="freeze embeddings and the first N encoder layers")
+p.add_argument("--freeze", type=int, default=22, help="freeze embeddings and the first N encoder layers")
 p.add_argument("--lr-enc", type=float, default=2e-5)
 p.add_argument("--lr-head", type=float, default=1e-4)
 p.add_argument("--accum", type=int, default=8)
-p.add_argument("--long-variants", type=int, default=2, help="long-context copies per forward/tests record")
+p.add_argument("--long-variants", type=int, default=1, help="long-context copies per forward/tests record")
+p.add_argument("--cap", type=int, default=250, help="max unique examples per question (train side)")
+p.add_argument("--val-cap", type=int, default=80, help="max unique examples per question (validation side)")
+p.add_argument("--checkpointing", action="store_true", help="gradient checkpointing (slower, less memory)")
 p.add_argument("--name", default="remit-laya-v1")
 p.add_argument("--seed", type=int, default=7)
 args = p.parse_args()
@@ -75,12 +78,14 @@ for r in raw:
 by_q = defaultdict(list)
 for r in recs:
     by_q[(r["call"], r["qid"])].append(r)
-data = []
+train, val = [], []
 for k, lst in by_q.items():
     random.shuffle(lst)
-    data.extend(lst[: CAPS.get(k, len(lst))])
-train = [r for r in data if r["seedId"] not in VAL_SEEDS]
-val = [r for r in data if r["seedId"] in VAL_SEEDS]
+    tr = [r for r in lst if r["seedId"] not in VAL_SEEDS]
+    va = [r for r in lst if r["seedId"] in VAL_SEEDS]
+    train.extend(tr[: min(args.cap, CAPS.get(k, len(tr)))])
+    val.extend(va[: args.val_cap])
+data = train + val
 
 
 def pool_for(rows, call, field):
@@ -137,7 +142,12 @@ def expand(rows, split):
     for r in rows:
         if r["call"] not in FIELD:
             continue
-        for lo, hi in [(1024, 2048), (2048, args.max_len - 300)][: args.long_variants]:
+        ranges = (
+            [(1024, args.max_len - 300)]
+            if args.long_variants == 1
+            else [(1024, 2048), (2048, args.max_len - 300)][: args.long_variants]
+        )
+        for lo, hi in ranges:
             v = with_distractors(r, split, random.randint(lo, hi))
             if v:
                 out.append(v)
@@ -198,8 +208,10 @@ def batches(items, budget=4096, max_rows=8, shuffle=True):
 
 
 def collate(batch):
-    n, L = len(batch), max(e["len"] for e in batch)
-    k = max(len(e["markers"]) for e in batch)
+    # Shapes are bucketed (length to a multiple of 256, options to a multiple of 8): the MPS backend compiles and
+    # caches a graph per distinct shape, and unbounded shapes grow that cache until memory runs out.
+    n, L = len(batch), -(-max(e["len"] for e in batch) // 256) * 256
+    k = -(-max(len(e["markers"]) for e in batch) // 8) * 8
     ids = torch.full((n, L), tok.pad_token_id, dtype=torch.long)
     att = torch.zeros((n, L), dtype=torch.long)
     mpos = torch.zeros((n, k), dtype=torch.long)
@@ -284,11 +296,14 @@ for prm in enc.embeddings.parameters():
 for layer in enc.layers[: args.freeze]:
     for prm in layer.parameters():
         prm.requires_grad = False
-enc.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})
-if hasattr(model, "head_checkpointing"):
-    model.head_checkpointing = True
+if args.checkpointing:
+    enc.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})
+    if hasattr(model, "head_checkpointing"):
+        model.head_checkpointing = True
 
 report("base (as shipped, T=1)", evaluate(val_items))
+if device.type == "mps":
+    torch.mps.empty_cache()
 
 enc_params = [p_ for n, p_ in model.named_parameters() if p_.requires_grad and n.startswith("encoder.")]
 head_params = [p_ for n, p_ in model.named_parameters() if p_.requires_grad and not n.startswith("encoder.")]
@@ -321,7 +336,9 @@ for epoch in range(args.epochs):
             sched.step()
             opt.zero_grad(set_to_none=True)
             step += 1
-            if step % 10 == 0:
+            if device.type == "mps":
+                torch.mps.empty_cache()
+            if step % 5 == 0:
                 el = time.time() - t0
                 print(f"epoch {epoch} step {step}/{total} loss {running / (bi + 1):.4f} "
                       f"{el / step:.1f}s/step eta {(total - step) * el / step / 60:.0f} min", flush=True)

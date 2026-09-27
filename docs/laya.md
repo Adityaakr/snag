@@ -45,3 +45,23 @@ The first start downloads about 1 GB of weights into `.laya/hf`. `pnpm remit doc
 - golden accuracy was `1/18`.
 
 Laya was trained on general text decisions, not on reading code against a spec. It remains the fast, free option if it is fine-tuned on Remit's labeled data, for example distilled from the LLM engine's answers on the dev split. See `.agent/EXPERIMENTS.md`.
+
+## remit-laya: Remit's own fine-tuned checkpoint
+
+`remit-laya` is Laya fine-tuned on Remit's own questions, at a 4,096-token window (DECISIONS D35).
+
+1. **Data.** `pnpm exec tsx --conditions=source scripts/laya/build-trainset.ts` runs Remit's real pipeline on every mutation item in the **dev** split, with `OracleJev` (`packages/eval/src/oracle.ts`) answering.
+   - Answers come from the item's labels and its seed's annotations.
+   - A training example is recorded only for questions the labels decide.
+   - It refuses test-split seeds, which live in `seeds/` outside guard:split.
+   - Output: `.laya/data/records.jsonl` (about 4,300 examples, 3,300 unique).
+2. **Train.** `HF_HOME=.laya/hf .venv-laya/bin/python -u scripts/laya/train.py --epochs 2 --accum 8 --checkpointing`:
+   - Two dev seeds are held out for model selection and temperature fitting.
+   - Forward and tests states are padded with other seeds' units, so answers are learned from about 800 up to 4,096 tokens, with the deciding unit at varied depths. RoPE is unchanged: ModernBERT was pretrained to 8,192 positions, and no sequence is ever truncated.
+   - Loss: soft cross-entropy on Laya's option logits. The top 6 encoder layers and the head train; the rest is frozen. bf16 on the Apple GPU.
+   - Shapes are bucketed so the MPS graph cache stays bounded.
+   - Writes `.laya/remit-laya-v1/`: weights, encoder config, tokenizer, and `rl_agent_config.json` with fitted temperatures and provenance.
+3. **Serve.** `scripts/laya/server.py` loads `.laya/remit-laya-v1` (or `LAYA_REMIT_DIR`) and answers for `model: remit-laya`.
+4. **Use.** `REMIT_JEV_BASE_URL=http://127.0.0.1:8765 pnpm remit review ... --config config/remit-laya.remit.yml`.
+
+On the Mac used here (Apple Silicon, 24 GB) training takes about 7 hours for 2 epochs. The checkpoint stays local (`.laya/` is gitignored); rebuild it with the two commands above.

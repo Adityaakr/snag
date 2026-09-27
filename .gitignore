@@ -27,3 +27,5 @@ packages/dashboard/lib/
 .venv-laya/
 .laya/
 .prism/runs/
+__pycache__/
+*.pyc

@@ -3,6 +3,8 @@
 Milestone: M10 Eval-driven improvement (branch feat/laya-engine)
 Task: fine-tune Laya as Remit's own verdict engine at a 4k window; OpenRouter spend cap $5 (stop when account usage reaches $14.80; it was $9.80 at the start).
 
+Status (2026-09-27): remit-laya-v1 is training in the background (`.laya/train-v1.log`, about 4 h). The data is from scripts/laya/build-trainset.ts. Restart with: `HF_HOME=$PWD/.laya/hf HF_HUB_OFFLINE=1 .venv-laya/bin/python -u scripts/laya/train.py --epochs 2 --accum 8 --checkpointing`. Then serve with scripts/laya/server.py (model remit-laya) and evaluate with config/remit-laya.remit.yml. OpenRouter spend so far: $0.
+
 Next action:
 1. When credits are added (B9), run golden live: `REMIT_CACHE_MODE=live pnpm remit eval golden --mode live --config config/llm-jev.remit.yml`. Fix plumbing issues first; golden must be judged on real answers, not provider errors (check item warnings).
 2. Then the dev baseline with this config: `pnpm remit eval mutations --split dev --mode live --config config/llm-jev.remit.yml --baseline single_pass`, and swebench dev (start with `--limit 20` to measure cost). Then `pnpm remit calibrate --config config/llm-jev.remit.yml`.
