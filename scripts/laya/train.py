@@ -86,6 +86,59 @@ TWIN_TARGETS = {
 }
 
 
+def unit_label(field, it):
+    """The option text Remit's question builders use for a unit (packages/core/src/questions/{forward,tests}.ts)."""
+    if field == "tests":
+        return f"`tests` entry {it['id']} ({it.get('file', '')})"
+    return f"`candidates` entry {it['id']} ({it.get('file', '')}, {it.get('symbol') or '(file)'})"
+
+
+def renumber(r):
+    """Shuffles the units and renames them U1..Un, rebuilding choice options, targets and support to match.
+
+    Without this, augmented units would carry tell-tale ids (distractors as D*, gaps where twins removed units), and
+    the model could learn the id pattern instead of reading the code.
+    """
+    if r["call"] not in FIELD:
+        return r
+    field = FIELD[r["call"]]
+    items = r["state"][field]
+    random.shuffle(items)
+    mapping = {}
+    for i, it in enumerate(items, 1):
+        if it.get("id") is not None:
+            mapping[it["id"]] = f"U{i}"
+        it["id"] = f"U{i}"
+    q = r["question"]
+    if q["type"] == "choice" and "none" in q["criteria"]:
+        none = q["criteria"]["none"]
+        q["criteria"] = {**{it["id"]: unit_label(field, it) for it in items}, "none": none}
+        probs = r["target"]["probabilities"]
+        r["target"]["probabilities"] = {
+            ("none" if k == "none" else mapping[k]): v for k, v in probs.items() if k == "none" or k in mapping
+        }
+    if r.get("support"):
+        r["support"] = [mapping[x] for x in r["support"] if x in mapping]
+    return r
+
+
+RAW_POOLS = defaultdict(lambda: defaultdict(list))  # call -> seed -> units
+for _r in recs:
+    if _r["call"] in FIELD:
+        RAW_POOLS[_r["call"]][_r["seedId"]].extend(_r["state"].get(FIELD[_r["call"]], []))
+
+
+def backfill_pool(r):
+    """Units from other seeds on the same side of the split, to keep a twin's candidate count unchanged."""
+    same_val = r["seedId"] in VAL_SEEDS
+    return [
+        u
+        for seed, units in RAW_POOLS[r["call"]].items()
+        if seed != r["seedId"] and (seed in VAL_SEEDS) == same_val
+        for u in units
+    ]
+
+
 def is_positive(r):
     t = r["target"]
     k = (r["call"], r["qid"])
@@ -109,14 +162,17 @@ def twin(r):
     if not kept or len(kept) == len(r["state"].get(field, [])):
         return None
     r2 = copy.deepcopy(r)
-    r2["state"][field] = kept
+    pool = backfill_pool(r)
+    # Replace each removed unit with a realistic unit from another seed, so the count does not reveal the answer.
+    fill = [dict(u) for u in random.sample(pool, min(len(sup), len(pool)))]
+    r2["state"][field] = kept + fill
     r2["support"] = []
     r2["twin"] = True
+    r2["target"] = copy.deepcopy(TWIN_TARGETS[k])
     q = r2["question"]
     if q["type"] == "choice":
-        q["criteria"] = {c: v for c, v in q["criteria"].items() if c not in sup}
-    r2["target"] = copy.deepcopy(TWIN_TARGETS[k])
-    return r2
+        q["criteria"] = {"none": q["criteria"]["none"]}  # rebuilt by renumber()
+    return renumber(r2)
 
 
 recs += [t for t in (twin(r) for r in recs) if t]
@@ -200,16 +256,16 @@ def with_distractors(r, split, target_tokens):
             break
         d = dict(c)
         n += 1
-        d["id"] = f"D{n}"
-        items.insert(random.randint(0, len(items)), d)
+        d["id"] = f"x{n}"  # temporary; renumber() assigns the final U ids
+        items.append(d)
         if q["type"] == "choice" and "none" in q["criteria"]:
-            crit = {k: v for k, v in q["criteria"].items() if k != "none"}
-            label = f"`{field}` entry D{n} ({d.get('file', '')}{', ' + d['symbol'] if d.get('symbol') else ''})"
-            crit[f"D{n}"] = label
-            crit["none"] = q["criteria"]["none"]
-            q["criteria"] = crit
-            r2["target"]["probabilities"][f"D{n}"] = 0.0
-    return r2 if n else None
+            r2["target"]["probabilities"][d["id"]] = 0.0
+    if not n:
+        return None
+    if q["type"] == "choice" and "none" in q["criteria"]:
+        # Keep existing option text for original units; renumber() rebuilds labels for all of them.
+        pass
+    return renumber(r2)
 
 
 def expand(rows, split):
