@@ -330,3 +330,7 @@ Append-only. Each entry: date, decision, alternatives, why. Deviations from BUIL
 - Result: Laya as shipped does not discriminate on code (golden 1/18, near-constant answers; EXPERIMENTS 2026-09-27), so the LLM engine is the working alternative. Its probabilities are self-reported: calibration fitted on dev for its model id is required before trusting confidences, and gate mode stays off until then.
 - Spec deviation: BUILD_PROMPT 7 makes Jev the verdict engine. TypeSafe stays the default, and switching engines is explicit config.
 - 402 from an OpenAI-compatible endpoint (out of credits) is now a fatal `budget` error with a fix, not a retryable server error. Before this, it opened the circuit breaker.
+
+## 2026-09-27 D36 single_pass line ranges as objects
+- The `single_pass` baseline schema used a two-element tuple for line ranges. zod renders that as JSON Schema `prefixItems`, which the OpenAI-compatible structured-output path rejects (HTTP 400), so every baseline call failed (7/7 errors).
+- Line ranges are now `{start, end}` objects, and the prompt version is bumped to `sp-0.2.0`. The Appendix B.2 prompt text is unchanged.

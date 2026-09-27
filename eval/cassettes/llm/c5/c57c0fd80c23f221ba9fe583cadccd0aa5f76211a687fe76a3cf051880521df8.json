@@ -1,0 +1,116 @@
+{
+  "key": "c57c0fd80c23f221ba9fe583cadccd0aa5f76211a687fe76a3cf051880521df8",
+  "response": {
+    "data": {
+      "requirements": [
+        {
+          "id": "1",
+          "text": "Delays between attempts start at base_delay and double each time, capped at max_delay (with a base of 0.5s: 0.5, 1, 2, 4)",
+          "quote": "Delays between attempts start at `base_delay` and double each time, capped at `max_delay` (with a base of 0.5s: 0.5, 1, 2, 4)",
+          "status": "done",
+          "confidence": 0.9,
+          "evidence": [
+            {
+              "file": "client/retry.py",
+              "lines": {
+                "start": 17,
+                "end": 23
+              }
+            },
+            {
+              "file": "client/retry.py",
+              "lines": {
+                "start": 33,
+                "end": 40
+              }
+            },
+            {
+              "file": "tests/test_retry.py",
+              "lines": {
+                "start": 35,
+                "end": 41
+              }
+            }
+          ]
+        },
+        {
+          "id": "2",
+          "text": "Only status 429 and the gateway errors 502, 503 and 504 are retried; any other status is raised on the first failure",
+          "quote": "Only status 429 and the gateway errors 502, 503 and 504 are retried; any other status is raised on the first failure",
+          "status": "missing",
+          "confidence": 0.75,
+          "evidence": [
+            {
+              "file": "client/retry.py",
+              "lines": {
+                "start": 30,
+                "end": 40
+              }
+            }
+          ]
+        },
+        {
+          "id": "3",
+          "text": "When the last attempt fails, raise RetryExhausted with the number of attempts and the last HTTP error as its cause",
+          "quote": "When the last attempt fails, raise `RetryExhausted` with the number of attempts and the last HTTP error as its cause",
+          "status": "done",
+          "confidence": 0.9,
+          "evidence": [
+            {
+              "file": "client/retry.py",
+              "lines": {
+                "start": 17,
+                "end": 21
+              }
+            },
+            {
+              "file": "client/retry.py",
+              "lines": {
+                "start": 36,
+                "end": 37
+              }
+            },
+            {
+              "file": "tests/test_retry.py",
+              "lines": {
+                "start": 28,
+                "end": 33
+              }
+            }
+          ]
+        },
+        {
+          "id": "4",
+          "text": "Each retry logs a warning such as retry 2/4 in 0.5s (next attempt, max attempts, delay)",
+          "quote": "Each retry logs a warning such as `retry 2/4 in 0.5s` (next attempt, max attempts, delay)",
+          "status": "done",
+          "confidence": 0.85,
+          "evidence": [
+            {
+              "file": "client/retry.py",
+              "lines": {
+                "start": 38,
+                "end": 40
+              }
+            },
+            {
+              "file": "tests/test_retry.py",
+              "lines": {
+                "start": 50,
+                "end": 53
+              }
+            }
+          ]
+        }
+      ],
+      "unexplained": []
+    },
+    "model": "anthropic/claude-sonnet-5",
+    "usage": {
+      "inputTokens": 2437,
+      "outputTokens": 1859
+    },
+    "repairs": 0
+  },
+  "recordedAt": "2026-09-27T17:17:13.357Z"
+}

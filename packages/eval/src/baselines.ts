@@ -17,9 +17,11 @@ Respond with exactly one call to the record_review tool.
 - For each requirement (use <requirements> when given; otherwise first extract atomic, quoted requirements from the issue): status (done, partial, missing, contradicted, uncertain), confidence from 0 to 1, and evidence as file paths with line ranges from the diff.
 - Judge tests against the issue text, not against the implementation. If the code and the tests agree with each other but not with the issue, the requirement is contradicted.
 - For each changed region of the diff that serves no requirement: the file, the line range, and whether it changes observable behavior.`;
-export const SINGLE_PASS_VERSION = 'sp-0.1.0';
+export const SINGLE_PASS_VERSION = 'sp-0.2.0';
 
-const Lines = z.tuple([z.number().int(), z.number().int()]);
+// A {start, end} object rather than a two-element tuple: tuples become JSON Schema `prefixItems`, which the
+// OpenAI-compatible structured-output path rejects (HTTP 400), so every single_pass call failed (DECISIONS D36).
+const Lines = z.object({ start: z.number().int(), end: z.number().int() });
 export const SinglePassSchema = z.object({
   requirements: z.array(
     z.object({

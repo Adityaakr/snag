@@ -1,0 +1,101 @@
+{
+  "key": "046e0a5133dca0ba4cd9d9df198d5008e7ba46bca2289e78429eaac2116aff59",
+  "response": {
+    "data": {
+      "requirements": [
+        {
+          "id": "1",
+          "text": "A leading `v` is accepted and ignored (for example `v1.2.3` parses as `1.2.3`)",
+          "quote": "A leading `v` is accepted and ignored (for example `v1.2.3` parses as `1.2.3`)",
+          "status": "done",
+          "confidence": 0.95,
+          "evidence": [
+            {
+              "file": "src/version.rs",
+              "lines": {
+                "start": 25,
+                "end": 27
+              }
+            },
+            {
+              "file": "src/version.rs",
+              "lines": {
+                "start": 29,
+                "end": 33
+              }
+            },
+            {
+              "file": "src/version.rs",
+              "lines": {
+                "start": 74,
+                "end": 77
+              }
+            }
+          ]
+        },
+        {
+          "id": "2",
+          "text": "Missing minor or patch parts default to 0 (for example `1.4` parses as `1.4.0` and `2` as `2.0.0`)",
+          "quote": "Missing minor or patch parts default to 0 (for example `1.4` parses as `1.4.0` and `2` as `2.0.0`)",
+          "status": "done",
+          "confidence": 0.95,
+          "evidence": [
+            {
+              "file": "src/version.rs",
+              "lines": {
+                "start": 35,
+                "end": 40
+              }
+            },
+            {
+              "file": "src/version.rs",
+              "lines": {
+                "start": 79,
+                "end": 82
+              }
+            }
+          ]
+        },
+        {
+          "id": "3",
+          "text": "`caret_matches` implements caret ranges: `^1.2.3` matches versions from `1.2.3` up to but not including `2.0.0`, and `^0.3.1` only matches `0.3.x` versions from `0.3.1`",
+          "quote": "`caret_matches` implements caret ranges: `^1.2.3` matches versions from `1.2.3` up to but not including `2.0.0`, and `^0.3.1` only matches `0.3.x` versions from `0.3.1`",
+          "status": "missing",
+          "confidence": 0.9,
+          "evidence": []
+        },
+        {
+          "id": "4",
+          "text": "A parse failure displays as `invalid version: <input>`",
+          "quote": "A parse failure displays as `invalid version: <input>`",
+          "status": "done",
+          "confidence": 0.95,
+          "evidence": [
+            {
+              "file": "src/version.rs",
+              "lines": {
+                "start": 21,
+                "end": 27
+              }
+            },
+            {
+              "file": "src/version.rs",
+              "lines": {
+                "start": 84,
+                "end": 87
+              }
+            }
+          ]
+        }
+      ],
+      "unexplained": []
+    },
+    "model": "anthropic/claude-sonnet-5",
+    "usage": {
+      "inputTokens": 2449,
+      "outputTokens": 922
+    },
+    "repairs": 0
+  },
+  "recordedAt": "2026-09-27T17:18:36.063Z"
+}

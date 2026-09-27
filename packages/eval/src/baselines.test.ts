@@ -19,7 +19,7 @@ const req = (id: string, status: Status) => ({
   text: id,
   status,
   confidence: 0.9,
-  evidence: [{ file: 'src/schedule.ts', lines: [1, 2] as [number, number] }],
+  evidence: [{ file: 'src/schedule.ts', lines: { start: 1, end: 2 } }],
 });
 
 describe('single_pass baseline', () => {
@@ -62,7 +62,7 @@ describe('single_pass baseline', () => {
     expect(
       singlePassFlags({
         requirements: [],
-        unexplained: [{ file: 'a', lines: [1, 1] as [number, number], behavioral: true }],
+        unexplained: [{ file: 'a', lines: { start: 1, end: 1 }, behavioral: true }],
       }),
     ).toBe(true);
     expect(singlePassFlags({ requirements: [req('R1', 'partial')], unexplained: [] }, 0.95)).toBe(false);

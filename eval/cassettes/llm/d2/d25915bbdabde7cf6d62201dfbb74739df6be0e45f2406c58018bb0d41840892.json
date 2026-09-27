@@ -1,0 +1,109 @@
+{
+  "key": "d25915bbdabde7cf6d62201dfbb74739df6be0e45f2406c58018bb0d41840892",
+  "response": {
+    "data": {
+      "requirements": [
+        {
+          "id": "R1",
+          "text": "A leading `v` is accepted and ignored (for example `v1.2.3` parses as `1.2.3`)",
+          "quote": "A leading `v` is accepted and ignored (for example `v1.2.3` parses as `1.2.3`)",
+          "status": "done",
+          "confidence": 0.95,
+          "evidence": [
+            {
+              "file": "src/version.rs",
+              "lines": {
+                "start": 29,
+                "end": 31
+              }
+            },
+            {
+              "file": "src/version.rs",
+              "lines": {
+                "start": 84,
+                "end": 87
+              }
+            }
+          ]
+        },
+        {
+          "id": "R2",
+          "text": "Missing minor or patch parts default to 0 (for example `1.4` parses as `1.4.0` and `2` as `2.0.0`)",
+          "quote": "Missing minor or patch parts default to 0 (for example `1.4` parses as `1.4.0` and `2` as `2.0.0`)",
+          "status": "done",
+          "confidence": 0.95,
+          "evidence": [
+            {
+              "file": "src/version.rs",
+              "lines": {
+                "start": 33,
+                "end": 45
+              }
+            },
+            {
+              "file": "src/version.rs",
+              "lines": {
+                "start": 89,
+                "end": 93
+              }
+            }
+          ]
+        },
+        {
+          "id": "R3",
+          "text": "`caret_matches` implements caret ranges: `^1.2.3` matches versions from `1.2.3` up to but not including `2.0.0`, and `^0.3.1` only matches `0.3.x` versions from `0.3.1`",
+          "quote": "`caret_matches` implements caret ranges: `^1.2.3` matches versions from `1.2.3` up to but not including `2.0.0`, and `^0.3.1` only matches `0.3.x` versions from `0.3.1`",
+          "status": "done",
+          "confidence": 0.85,
+          "evidence": [
+            {
+              "file": "src/version.rs",
+              "lines": {
+                "start": 47,
+                "end": 56
+              }
+            },
+            {
+              "file": "src/version.rs",
+              "lines": {
+                "start": 95,
+                "end": 109
+              }
+            }
+          ]
+        },
+        {
+          "id": "R4",
+          "text": "A parse failure displays as `invalid version: <input>`",
+          "quote": "A parse failure displays as `invalid version: <input>`",
+          "status": "done",
+          "confidence": 0.95,
+          "evidence": [
+            {
+              "file": "src/version.rs",
+              "lines": {
+                "start": 21,
+                "end": 27
+              }
+            },
+            {
+              "file": "src/version.rs",
+              "lines": {
+                "start": 111,
+                "end": 114
+              }
+            }
+          ]
+        }
+      ],
+      "unexplained": []
+    },
+    "model": "anthropic/claude-sonnet-5",
+    "usage": {
+      "inputTokens": 3351,
+      "outputTokens": 1846
+    },
+    "repairs": 0
+  },
+  "recordedAt": "2026-09-27T17:16:02.613Z"
+}
