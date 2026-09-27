@@ -126,3 +126,12 @@ No keys: task-list extraction (9 requirements), no Jev verdicts; 175 units. Code
 - Verdict mix (v1): missing to done `31`, contradicted to done `19`. The model learned the majority answers.
 - Diagnosis: class imbalance. Coverage targets are mostly Full, and conflict and asserts_differently mostly no (20 flips, 36 drops in all). The 82% question accuracy was largely the majority rate; per-question accuracy is the wrong selection metric.
 - Next (v2): counterfactual negatives (each done forward/tests example gets a twin with the implementing or testing units removed, so coverage None and evidence none), class-balanced sampling, balanced accuracy per question.
+
+## 2026-09-27 v2 stopped, ceiling check, mechanics check, paused for review
+
+- **v2 stopped** at step 90 of 394 (2h12m), for two reasons. The first was two confirmed training-input shortcuts: distractor ids `D*`, and twins with one fewer candidate. The second was a flat loss (1.42 to 1.44 from step 50). The trainer has no resumable checkpointing, so about 2 hours were lost. The log and launch config are in `.laya/runs/v2-stopped`. Both shortcuts are fixed (6ba07f2) and verified in the export.
+- **Eval infrastructure bug.** The per-review config cap ($0.50) was the run-wide tracker's limit, so it starved the first strategy-B run. Fixed (d677096). EVAL_MAX_USD is now the run cap, and incomplete reviews are reported.
+- **Ceiling (strategy B, Sonnet 5 as the LLM engine), 7 held-out items:** target defects flagged 6/6, 4/7 fully correct, 0 false alarms on 1 clean item, $1.10 ($0.16 per review). The task is solvable from Remit's context; Laya's discrimination is the gap.
+- **Strategy A (`single_pass`):** unmeasured. OpenRouter rejects its schema (HTTP 400, the JSON tuple for line ranges). Still open.
+- **Mechanics check FAILED:** 16 examples, 15 passes, accuracy flat at 0.562; only a shared bias moved (val NLL 0.954 to 0.839). The recipe (22 of 28 layers frozen, lr head 1e-4 and encoder 2e-5) cannot separate inputs.
+- **Paused for the user's review** of the strategy and data: `training/laya/README.md`. OpenRouter spend is $1.81 of $5.
