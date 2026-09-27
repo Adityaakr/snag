@@ -203,8 +203,10 @@ def batches(items, budget=4096, max_rows=8, shuffle=True):
 
 
 def collate(batch):
-    n, L = len(batch), max(e["len"] for e in batch)
-    k = max(len(e["markers"]) for e in batch)
+    # Shapes are bucketed (length to a multiple of 256, options to a multiple of 8): the MPS backend compiles and
+    # caches a graph per distinct shape, and unbounded shapes grow that cache until memory runs out.
+    n, L = len(batch), -(-max(e["len"] for e in batch) // 256) * 256
+    k = -(-max(len(e["markers"]) for e in batch) // 8) * 8
     ids = torch.full((n, L), tok.pad_token_id, dtype=torch.long)
     att = torch.zeros((n, L), dtype=torch.long)
     mpos = torch.zeros((n, k), dtype=torch.long)
@@ -329,6 +331,8 @@ for epoch in range(args.epochs):
             sched.step()
             opt.zero_grad(set_to_none=True)
             step += 1
+            if device.type == "mps":
+                torch.mps.empty_cache()
             if step % 5 == 0:
                 el = time.time() - t0
                 print(f"epoch {epoch} step {step}/{total} loss {running / (bi + 1):.4f} "
