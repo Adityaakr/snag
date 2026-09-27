@@ -142,7 +142,12 @@ def expand(rows, split):
     for r in rows:
         if r["call"] not in FIELD:
             continue
-        for lo, hi in [(1024, 2048), (2048, args.max_len - 300)][: args.long_variants]:
+        ranges = (
+            [(1024, args.max_len - 300)]
+            if args.long_variants == 1
+            else [(1024, 2048), (2048, args.max_len - 300)][: args.long_variants]
+        )
+        for lo, hi in ranges:
             v = with_distractors(r, split, random.randint(lo, hi))
             if v:
                 out.append(v)
