@@ -164,4 +164,29 @@ describe('scoreItem', () => {
     );
     expect(s.entireReviewBlockers.filter((b) => b.startsWith('fact'))).toEqual([]);
   });
+
+  it('a claim-mismatch facet on a requirement finding is one finding, not two', () => {
+    const claim = labels({
+      requirements: { R1: 'missing', R2: 'done' },
+      claimMismatch: ['R1'],
+      pr: 'problem',
+    });
+    const s = scoreItem(
+      pred('m/s.claim_all_done.R1', claim, {
+        surfaced: [{ id: 'f', type: 'requirement', requirement: 'R1', status: 'missing', claim: true }],
+      }),
+      units,
+    );
+    expect(s.surfaced).toBe(1);
+    expect(s.correctFindings).toBe(1);
+    expect(s.falseFindings).toBe(0);
+    expect(s.target).toEqual({ measurable: true, strict: true, any: true });
+    const plain = scoreItem(
+      pred('m/s.claim_all_done.R1', claim, {
+        surfaced: [{ id: 'f', type: 'requirement', requirement: 'R1', status: 'missing' }],
+      }),
+      units,
+    );
+    expect(plain.target?.strict).toBe(false);
+  });
 });

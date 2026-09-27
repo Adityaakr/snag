@@ -6,7 +6,7 @@ Task: fine-tune Laya as Remit's own verdict engine at a 4k window; OpenRouter sp
 Status (2026-09-27): remit-laya-v1 is training in the background (`.laya/train-v1.log`, about 4 h). The data is from scripts/laya/build-trainset.ts. Restart with: `HF_HOME=$PWD/.laya/hf HF_HUB_OFFLINE=1 .venv-laya/bin/python -u scripts/laya/train.py --epochs 2 --accum 8 --checkpointing`. Then serve with scripts/laya/server.py (model remit-laya) and evaluate with config/remit-laya.remit.yml. OpenRouter spend so far: $0.
 
 Next action:
-1. Reference system: A (single pass, Sonnet 5) plus deterministic facts (docs/eval-results-abc.md). Laya training is paused: Stage A failed its gate (E2). B's extra components are not demonstrated.
-2. Next experiment: fix A's defect-type errors (missing reported as contradicted) with an explicit "implemented anywhere in the diff?" step, and A's false findings on done requirements. Evaluate on the held-out dev seeds (cached predictions exist in eval/results/abc-2026-09-27).
-3. Build an adjudicated clean-PR set (PAIChecker's SWE-bench Verified labels) to measure specificity on real code. The 9/30 gold flags are unadjudicated.
-4. OpenRouter spend: $3.54 of $5 (stop when account usage reaches $14.80). The final test (3 mutation test seeds) is untouched.
+1. Candidate: A + deterministic facts + E4 (docs/eval-results-strict.md). 99% acceptance fails on every metric. Laya training is paused.
+2. Next experiment (free first): a fix-path definition of "explained" for unit findings (a changed region on the call path of cited evidence code is explained). Evaluate on cached predictions with scripts/eval/swebench-findings.ts and scripts/eval/compare.ts before any new predictions.
+3. Open: E5 (sp-0.3.0) is untested on the mutation set (about $0.90); B is measured on 7 items only; the training seeds probably share the operator-name labelling error (audit before any Laya retraining).
+4. OpenRouter spend: $4.07 of $5. The frozen final test is untouched.

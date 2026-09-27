@@ -58,14 +58,15 @@ function fromReport(dir: string): Map<string, Prediction> {
         ? [loc.lines[0], loc.lines[1] ?? loc.lines[0]]
         : undefined;
       if (f.type === 'requirement') {
+        // A claim-mismatch reason is a facet of this one finding, not a second finding.
+        const claim = (f.reasons ?? []).some((x: Json) => /claim/.test(x.template ?? ''));
         surfaced.push({
           id: f.id,
           type: 'requirement',
           requirement: f.targetId,
           status: statuses[f.targetId],
+          ...(claim ? { claim: true } : {}),
         });
-        if ((f.reasons ?? []).some((x: Json) => /claim/.test(x.template ?? '')))
-          surfaced.push({ id: `${f.id}:claim`, type: 'claim', requirement: f.targetId });
       } else if (f.type === 'unit') {
         const u = units.get(f.targetId);
         const ul = unitLines(u) ?? lines;
@@ -167,7 +168,9 @@ const overlay: Record<
 > = overlayFile ? JSON.parse(readFileSync(overlayFile, 'utf8')).items : {};
 const dropAmbiguous = args.includes('--strict-ambiguous');
 function applyOverlay(p: Prediction): Prediction | null {
-  const o = overlay[p.id];
+  // Overlay keys may carry a corpus prefix (mutations/...); prediction ids may not.
+  const tail = p.id.split('/').pop() ?? p.id;
+  const o = overlay[p.id] ?? Object.entries(overlay).find(([k]) => (k.split('/').pop() ?? k) === tail)?.[1];
   if (!o) return p;
   if (o.ambiguous && dropAmbiguous) return null;
   const requirements = {

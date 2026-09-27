@@ -1,0 +1,4612 @@
+{
+ "shared": [
+  "py-retry-backoff.claim_all_done.R1",
+  "py-retry-backoff.clean",
+  "py-retry-backoff.drop_requirement.R1",
+  "py-retry-backoff.drop_requirement.R2",
+  "py-retry-backoff.drop_requirement.R3",
+  "py-retry-backoff.drop_requirement.R4",
+  "py-retry-backoff.flip_condition.R1",
+  "py-retry-backoff.flip_condition.R2",
+  "py-retry-backoff.inject_config.client_config.py",
+  "py-retry-backoff.inject_refactor.client_urls.py",
+  "py-retry-backoff.partial_requirement.R2",
+  "py-retry-backoff.skip_test.tests_test_urls.py",
+  "py-retry-backoff.unwire.R1",
+  "py-retry-backoff.weaken_assertion.tests_test_urls.py",
+  "rs-semver-compare.claim_all_done.R1",
+  "rs-semver-compare.clean",
+  "rs-semver-compare.drop_requirement.R1",
+  "rs-semver-compare.drop_requirement.R2",
+  "rs-semver-compare.drop_requirement.R3",
+  "rs-semver-compare.drop_requirement.R4",
+  "rs-semver-compare.flip_condition.R2",
+  "rs-semver-compare.flip_condition.R3",
+  "rs-semver-compare.flip_condition.R4",
+  "rs-semver-compare.inject_config.src_policy.rs",
+  "rs-semver-compare.inject_refactor.src_policy.rs",
+  "rs-semver-compare.partial_requirement.R2",
+  "rs-semver-compare.skip_test.src_version.rs",
+  "rs-semver-compare.unwire.R1",
+  "rs-semver-compare.weaken_assertion.src_version.rs"
+ ],
+ "sharedRows": [
+  {
+   "name": "A",
+   "agg": {
+    "items": 29,
+    "seeds": 2,
+    "targetRecallStrict": {
+     "k": 16,
+     "n": 25,
+     "interval": [
+      0.44518154601046633,
+      0.7975234356826436
+     ]
+    },
+    "targetFlaggedAnyType": {
+     "k": 21,
+     "n": 25,
+     "interval": [
+      0.6534598601976184,
+      0.9359665239142201
+     ]
+    },
+    "targetUnmeasured": 0,
+    "allDefectRecallStrict": {
+     "k": 18,
+     "n": 27,
+     "interval": [
+      0.47824419872105484,
+      0.8135694555640666
+     ]
+    },
+    "defectsUnmeasured": 0,
+    "findingPrecision": {
+     "k": 18,
+     "n": 25,
+     "interval": [
+      0.524230281034417,
+      0.8571632616261843
+     ]
+    },
+    "typeMismatches": 5,
+    "duplicates": 0,
+    "falseFindings": 2,
+    "incorrectFindingsOnDefectivePRs": 7,
+    "defectivePRs": 25,
+    "cleanPRFalsePositive": {
+     "k": 0,
+     "n": 4,
+     "interval": [
+      0,
+      0.48990002040399916
+     ]
+    },
+    "requirementStatusAccuracy": {
+     "k": 111,
+     "n": 116,
+     "interval": [
+      0.9030501672966321,
+      0.9814507071910248
+     ]
+    },
+    "abstentions": {
+     "k": 0,
+     "n": 116,
+     "interval": [
+      0,
+      0.03205564678709229
+     ]
+    },
+    "entireReview": {
+     "k": 17,
+     "n": 29,
+     "interval": [
+      0.4073752847851524,
+      0.7448706472035448
+     ]
+    },
+    "completion": {
+     "k": 29,
+     "n": 29,
+     "interval": [
+      0.8830264055344442,
+      1.0000000000000002
+     ]
+    },
+    "costPerReview": 0.028606206896551727,
+    "latencyLive": {
+     "n": 27,
+     "p50": 17241,
+     "p95": 47533
+    },
+    "cachedItems": 2
+   }
+  },
+  {
+   "name": "A+facts",
+   "agg": {
+    "items": 29,
+    "seeds": 2,
+    "targetRecallStrict": {
+     "k": 20,
+     "n": 25,
+     "interval": [
+      0.6086866446346176,
+      0.9113954589934752
+     ]
+    },
+    "targetFlaggedAnyType": {
+     "k": 23,
+     "n": 25,
+     "interval": [
+      0.7503348787704218,
+      0.977780066308908
+     ]
+    },
+    "targetUnmeasured": 0,
+    "allDefectRecallStrict": {
+     "k": 22,
+     "n": 27,
+     "interval": [
+      0.6330094349480825,
+      0.9181941342571468
+     ]
+    },
+    "defectsUnmeasured": 0,
+    "findingPrecision": {
+     "k": 22,
+     "n": 29,
+     "interval": [
+      0.5789204778167131,
+      0.8778173181493787
+     ]
+    },
+    "typeMismatches": 3,
+    "duplicates": 2,
+    "falseFindings": 2,
+    "incorrectFindingsOnDefectivePRs": 7,
+    "defectivePRs": 25,
+    "cleanPRFalsePositive": {
+     "k": 0,
+     "n": 4,
+     "interval": [
+      0,
+      0.48990002040399916
+     ]
+    },
+    "requirementStatusAccuracy": {
+     "k": 111,
+     "n": 116,
+     "interval": [
+      0.9030501672966321,
+      0.9814507071910248
+     ]
+    },
+    "abstentions": {
+     "k": 0,
+     "n": 116,
+     "interval": [
+      0,
+      0.03205564678709229
+     ]
+    },
+    "entireReview": {
+     "k": 20,
+     "n": 29,
+     "interval": [
+      0.5076952952728147,
+      0.8272457551023195
+     ]
+    },
+    "completion": {
+     "k": 29,
+     "n": 29,
+     "interval": [
+      0.8830264055344442,
+      1.0000000000000002
+     ]
+    },
+    "costPerReview": 0.028606206896551727,
+    "latencyLive": {
+     "n": 27,
+     "p50": 17241,
+     "p95": 47533
+    },
+    "cachedItems": 2
+   }
+  },
+  {
+   "name": "A+facts+E4",
+   "agg": {
+    "items": 29,
+    "seeds": 2,
+    "targetRecallStrict": {
+     "k": 20,
+     "n": 25,
+     "interval": [
+      0.6086866446346176,
+      0.9113954589934752
+     ]
+    },
+    "targetFlaggedAnyType": {
+     "k": 23,
+     "n": 25,
+     "interval": [
+      0.7503348787704218,
+      0.977780066308908
+     ]
+    },
+    "targetUnmeasured": 0,
+    "allDefectRecallStrict": {
+     "k": 22,
+     "n": 27,
+     "interval": [
+      0.6330094349480825,
+      0.9181941342571468
+     ]
+    },
+    "defectsUnmeasured": 0,
+    "findingPrecision": {
+     "k": 22,
+     "n": 29,
+     "interval": [
+      0.5789204778167131,
+      0.8778173181493787
+     ]
+    },
+    "typeMismatches": 3,
+    "duplicates": 2,
+    "falseFindings": 2,
+    "incorrectFindingsOnDefectivePRs": 7,
+    "defectivePRs": 25,
+    "cleanPRFalsePositive": {
+     "k": 0,
+     "n": 4,
+     "interval": [
+      0,
+      0.48990002040399916
+     ]
+    },
+    "requirementStatusAccuracy": {
+     "k": 111,
+     "n": 116,
+     "interval": [
+      0.9030501672966321,
+      0.9814507071910248
+     ]
+    },
+    "abstentions": {
+     "k": 0,
+     "n": 116,
+     "interval": [
+      0,
+      0.03205564678709229
+     ]
+    },
+    "entireReview": {
+     "k": 20,
+     "n": 29,
+     "interval": [
+      0.5076952952728147,
+      0.8272457551023195
+     ]
+    },
+    "completion": {
+     "k": 29,
+     "n": 29,
+     "interval": [
+      0.8830264055344442,
+      1.0000000000000002
+     ]
+    },
+    "costPerReview": 0.028606206896551727,
+    "latencyLive": {
+     "n": 27,
+     "p50": 17241,
+     "p95": 47533
+    },
+    "cachedItems": 2
+   }
+  },
+  {
+   "name": "C_laya_v1",
+   "agg": {
+    "items": 29,
+    "seeds": 2,
+    "targetRecallStrict": {
+     "k": 4,
+     "n": 25,
+     "interval": [
+      0.06403347608577989,
+      0.34654013980238163
+     ]
+    },
+    "targetFlaggedAnyType": {
+     "k": 5,
+     "n": 25,
+     "interval": [
+      0.08860454100652486,
+      0.3913133553653824
+     ]
+    },
+    "targetUnmeasured": 0,
+    "allDefectRecallStrict": {
+     "k": 4,
+     "n": 27,
+     "interval": [
+      0.0591583185964489,
+      0.3247906334682948
+     ]
+    },
+    "defectsUnmeasured": 0,
+    "findingPrecision": {
+     "k": 4,
+     "n": 13,
+     "interval": [
+      0.1268049716161809,
+      0.5763111218666236
+     ]
+    },
+    "typeMismatches": 1,
+    "duplicates": 0,
+    "falseFindings": 8,
+    "incorrectFindingsOnDefectivePRs": 8,
+    "defectivePRs": 25,
+    "cleanPRFalsePositive": {
+     "k": 1,
+     "n": 4,
+     "interval": [
+      0.045586062644636216,
+      0.6993639475573634
+     ]
+    },
+    "requirementStatusAccuracy": {
+     "k": 76,
+     "n": 116,
+     "interval": [
+      0.564952718128387,
+      0.7354438052825154
+     ]
+    },
+    "abstentions": {
+     "k": 21,
+     "n": 116,
+     "interval": [
+      0.12156590382956904,
+      0.260952353603576
+     ]
+    },
+    "entireReview": {
+     "k": 3,
+     "n": 29,
+     "interval": [
+      0.03581424038130106,
+      0.26385447247069155
+     ]
+    },
+    "completion": {
+     "k": 29,
+     "n": 29,
+     "interval": [
+      0.8830264055344442,
+      1.0000000000000002
+     ]
+    },
+    "costPerReview": null,
+    "latencyLive": {
+     "n": 0,
+     "p50": null,
+     "p95": null
+    },
+    "cachedItems": 0
+   }
+  }
+ ],
+ "allRows": [
+  {
+   "name": "A",
+   "agg": {
+    "items": 29,
+    "seeds": 2,
+    "targetRecallStrict": {
+     "k": 16,
+     "n": 25,
+     "interval": [
+      0.44518154601046633,
+      0.7975234356826436
+     ]
+    },
+    "targetFlaggedAnyType": {
+     "k": 21,
+     "n": 25,
+     "interval": [
+      0.6534598601976184,
+      0.9359665239142201
+     ]
+    },
+    "targetUnmeasured": 0,
+    "allDefectRecallStrict": {
+     "k": 18,
+     "n": 27,
+     "interval": [
+      0.47824419872105484,
+      0.8135694555640666
+     ]
+    },
+    "defectsUnmeasured": 0,
+    "findingPrecision": {
+     "k": 18,
+     "n": 25,
+     "interval": [
+      0.524230281034417,
+      0.8571632616261843
+     ]
+    },
+    "typeMismatches": 5,
+    "duplicates": 0,
+    "falseFindings": 2,
+    "incorrectFindingsOnDefectivePRs": 7,
+    "defectivePRs": 25,
+    "cleanPRFalsePositive": {
+     "k": 0,
+     "n": 4,
+     "interval": [
+      0,
+      0.48990002040399916
+     ]
+    },
+    "requirementStatusAccuracy": {
+     "k": 111,
+     "n": 116,
+     "interval": [
+      0.9030501672966321,
+      0.9814507071910248
+     ]
+    },
+    "abstentions": {
+     "k": 0,
+     "n": 116,
+     "interval": [
+      0,
+      0.03205564678709229
+     ]
+    },
+    "entireReview": {
+     "k": 17,
+     "n": 29,
+     "interval": [
+      0.4073752847851524,
+      0.7448706472035448
+     ]
+    },
+    "completion": {
+     "k": 29,
+     "n": 29,
+     "interval": [
+      0.8830264055344442,
+      1.0000000000000002
+     ]
+    },
+    "costPerReview": 0.028606206896551727,
+    "latencyLive": {
+     "n": 27,
+     "p50": 17241,
+     "p95": 47533
+    },
+    "cachedItems": 2
+   }
+  },
+  {
+   "name": "A+facts",
+   "agg": {
+    "items": 29,
+    "seeds": 2,
+    "targetRecallStrict": {
+     "k": 20,
+     "n": 25,
+     "interval": [
+      0.6086866446346176,
+      0.9113954589934752
+     ]
+    },
+    "targetFlaggedAnyType": {
+     "k": 23,
+     "n": 25,
+     "interval": [
+      0.7503348787704218,
+      0.977780066308908
+     ]
+    },
+    "targetUnmeasured": 0,
+    "allDefectRecallStrict": {
+     "k": 22,
+     "n": 27,
+     "interval": [
+      0.6330094349480825,
+      0.9181941342571468
+     ]
+    },
+    "defectsUnmeasured": 0,
+    "findingPrecision": {
+     "k": 22,
+     "n": 29,
+     "interval": [
+      0.5789204778167131,
+      0.8778173181493787
+     ]
+    },
+    "typeMismatches": 3,
+    "duplicates": 2,
+    "falseFindings": 2,
+    "incorrectFindingsOnDefectivePRs": 7,
+    "defectivePRs": 25,
+    "cleanPRFalsePositive": {
+     "k": 0,
+     "n": 4,
+     "interval": [
+      0,
+      0.48990002040399916
+     ]
+    },
+    "requirementStatusAccuracy": {
+     "k": 111,
+     "n": 116,
+     "interval": [
+      0.9030501672966321,
+      0.9814507071910248
+     ]
+    },
+    "abstentions": {
+     "k": 0,
+     "n": 116,
+     "interval": [
+      0,
+      0.03205564678709229
+     ]
+    },
+    "entireReview": {
+     "k": 20,
+     "n": 29,
+     "interval": [
+      0.5076952952728147,
+      0.8272457551023195
+     ]
+    },
+    "completion": {
+     "k": 29,
+     "n": 29,
+     "interval": [
+      0.8830264055344442,
+      1.0000000000000002
+     ]
+    },
+    "costPerReview": 0.028606206896551727,
+    "latencyLive": {
+     "n": 27,
+     "p50": 17241,
+     "p95": 47533
+    },
+    "cachedItems": 2
+   }
+  },
+  {
+   "name": "A+facts+E4",
+   "agg": {
+    "items": 29,
+    "seeds": 2,
+    "targetRecallStrict": {
+     "k": 20,
+     "n": 25,
+     "interval": [
+      0.6086866446346176,
+      0.9113954589934752
+     ]
+    },
+    "targetFlaggedAnyType": {
+     "k": 23,
+     "n": 25,
+     "interval": [
+      0.7503348787704218,
+      0.977780066308908
+     ]
+    },
+    "targetUnmeasured": 0,
+    "allDefectRecallStrict": {
+     "k": 22,
+     "n": 27,
+     "interval": [
+      0.6330094349480825,
+      0.9181941342571468
+     ]
+    },
+    "defectsUnmeasured": 0,
+    "findingPrecision": {
+     "k": 22,
+     "n": 29,
+     "interval": [
+      0.5789204778167131,
+      0.8778173181493787
+     ]
+    },
+    "typeMismatches": 3,
+    "duplicates": 2,
+    "falseFindings": 2,
+    "incorrectFindingsOnDefectivePRs": 7,
+    "defectivePRs": 25,
+    "cleanPRFalsePositive": {
+     "k": 0,
+     "n": 4,
+     "interval": [
+      0,
+      0.48990002040399916
+     ]
+    },
+    "requirementStatusAccuracy": {
+     "k": 111,
+     "n": 116,
+     "interval": [
+      0.9030501672966321,
+      0.9814507071910248
+     ]
+    },
+    "abstentions": {
+     "k": 0,
+     "n": 116,
+     "interval": [
+      0,
+      0.03205564678709229
+     ]
+    },
+    "entireReview": {
+     "k": 20,
+     "n": 29,
+     "interval": [
+      0.5076952952728147,
+      0.8272457551023195
+     ]
+    },
+    "completion": {
+     "k": 29,
+     "n": 29,
+     "interval": [
+      0.8830264055344442,
+      1.0000000000000002
+     ]
+    },
+    "costPerReview": 0.028606206896551727,
+    "latencyLive": {
+     "n": 27,
+     "p50": 17241,
+     "p95": 47533
+    },
+    "cachedItems": 2
+   }
+  },
+  {
+   "name": "C_laya_v1",
+   "agg": {
+    "items": 29,
+    "seeds": 2,
+    "targetRecallStrict": {
+     "k": 4,
+     "n": 25,
+     "interval": [
+      0.06403347608577989,
+      0.34654013980238163
+     ]
+    },
+    "targetFlaggedAnyType": {
+     "k": 5,
+     "n": 25,
+     "interval": [
+      0.08860454100652486,
+      0.3913133553653824
+     ]
+    },
+    "targetUnmeasured": 0,
+    "allDefectRecallStrict": {
+     "k": 4,
+     "n": 27,
+     "interval": [
+      0.0591583185964489,
+      0.3247906334682948
+     ]
+    },
+    "defectsUnmeasured": 0,
+    "findingPrecision": {
+     "k": 4,
+     "n": 13,
+     "interval": [
+      0.1268049716161809,
+      0.5763111218666236
+     ]
+    },
+    "typeMismatches": 1,
+    "duplicates": 0,
+    "falseFindings": 8,
+    "incorrectFindingsOnDefectivePRs": 8,
+    "defectivePRs": 25,
+    "cleanPRFalsePositive": {
+     "k": 1,
+     "n": 4,
+     "interval": [
+      0.045586062644636216,
+      0.6993639475573634
+     ]
+    },
+    "requirementStatusAccuracy": {
+     "k": 76,
+     "n": 116,
+     "interval": [
+      0.564952718128387,
+      0.7354438052825154
+     ]
+    },
+    "abstentions": {
+     "k": 21,
+     "n": 116,
+     "interval": [
+      0.12156590382956904,
+      0.260952353603576
+     ]
+    },
+    "entireReview": {
+     "k": 3,
+     "n": 29,
+     "interval": [
+      0.03581424038130106,
+      0.26385447247069155
+     ]
+    },
+    "completion": {
+     "k": 29,
+     "n": 29,
+     "interval": [
+      0.8830264055344442,
+      1.0000000000000002
+     ]
+    },
+    "costPerReview": null,
+    "latencyLive": {
+     "n": 0,
+     "p50": null,
+     "p95": null
+    },
+    "cachedItems": 0
+   }
+  }
+ ],
+ "perItem": {
+  "A": [
+   {
+    "id": "py-retry-backoff.claim_all_done.R1",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": false,
+     "any": false
+    },
+    "defects": {
+     "measurable": 2,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "claim claim:R1 not surfaced"
+    ],
+    "costUsd": 0.02102,
+    "latencyMs": 14585,
+    "cached": false
+   },
+   {
+    "id": "py-retry-backoff.clean",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "defects": {
+     "measurable": 0,
+     "strict": 0,
+     "any": 0,
+     "unmeasurable": 0
+    },
+    "surfaced": 0,
+    "correctFindings": 0,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": false,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.017326,
+    "latencyMs": 9702,
+    "cached": false
+   },
+   {
+    "id": "py-retry-backoff.drop_requirement.R1",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0,
+    "latencyMs": 1,
+    "cached": true
+   },
+   {
+    "id": "py-retry-backoff.drop_requirement.R2",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": false,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 0,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 0,
+    "typeMismatches": 1,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 3,
+     "abstained": 0
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "requirement R2: labelled contradicted, got missing",
+     "target req:R2 not surfaced with the right type",
+     "1 incorrect surfaced finding(s)"
+    ],
+    "costUsd": 0.015702,
+    "latencyMs": 10246,
+    "cached": false
+   },
+   {
+    "id": "py-retry-backoff.drop_requirement.R3",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.02426,
+    "latencyMs": 18221,
+    "cached": false
+   },
+   {
+    "id": "py-retry-backoff.drop_requirement.R4",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.017068,
+    "latencyMs": 11696,
+    "cached": false
+   },
+   {
+    "id": "py-retry-backoff.flip_condition.R1",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.021546,
+    "latencyMs": 14276,
+    "cached": false
+   },
+   {
+    "id": "py-retry-backoff.flip_condition.R2",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.022946,
+    "latencyMs": 15504,
+    "cached": false
+   },
+   {
+    "id": "py-retry-backoff.inject_config.client_config.py",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 2,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 1,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 3,
+     "abstained": 0
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "requirement R3: labelled done, got contradicted",
+     "1 incorrect surfaced finding(s)"
+    ],
+    "costUsd": 0.027342,
+    "latencyMs": 21039,
+    "cached": false
+   },
+   {
+    "id": "py-retry-backoff.inject_refactor.client_urls.py",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "defects": {
+     "measurable": 0,
+     "strict": 0,
+     "any": 0,
+     "unmeasurable": 0
+    },
+    "surfaced": 0,
+    "correctFindings": 0,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": false,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.03617,
+    "latencyMs": 27670,
+    "cached": false
+   },
+   {
+    "id": "py-retry-backoff.partial_requirement.R2",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.026166,
+    "latencyMs": 18771,
+    "cached": false
+   },
+   {
+    "id": "py-retry-backoff.skip_test.tests_test_urls.py",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": false,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 0,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 0,
+    "typeMismatches": 1,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "fact test_skipped tests/test_urls.py not reported",
+     "test_integrity test:tests/test_urls.py# not surfaced",
+     "1 incorrect surfaced finding(s)"
+    ],
+    "costUsd": 0.018948,
+    "latencyMs": 11656,
+    "cached": false
+   },
+   {
+    "id": "py-retry-backoff.unwire.R1",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 2,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 1,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 3,
+     "abstained": 0
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "requirement R4: labelled done, got partial",
+     "fact new_symbol_unreferenced client/retry.py not reported",
+     "1 incorrect surfaced finding(s)"
+    ],
+    "costUsd": 0.068764,
+    "latencyMs": 59143,
+    "cached": false
+   },
+   {
+    "id": "py-retry-backoff.weaken_assertion.tests_test_urls.py",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": false,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 0,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 0,
+    "typeMismatches": 1,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "fact assertion_weakened tests/test_urls.py not reported",
+     "test_integrity test:tests/test_urls.py#test_joins_without_double_slash not surfaced",
+     "1 incorrect surfaced finding(s)"
+    ],
+    "costUsd": 0.023244,
+    "latencyMs": 16242,
+    "cached": false
+   },
+   {
+    "id": "rs-semver-compare.claim_all_done.R1",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": false,
+     "any": false
+    },
+    "defects": {
+     "measurable": 2,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "claim claim:R1 not surfaced"
+    ],
+    "costUsd": 0.023684,
+    "latencyMs": 17241,
+    "cached": false
+   },
+   {
+    "id": "rs-semver-compare.clean",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "defects": {
+     "measurable": 0,
+     "strict": 0,
+     "any": 0,
+     "unmeasurable": 0
+    },
+    "surfaced": 0,
+    "correctFindings": 0,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": false,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.023002,
+    "latencyMs": 16041,
+    "cached": false
+   },
+   {
+    "id": "rs-semver-compare.drop_requirement.R1",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": false,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 0,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 0,
+    "typeMismatches": 1,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 3,
+     "abstained": 0
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "requirement R1: labelled contradicted, got missing",
+     "target req:R1 not surfaced with the right type",
+     "1 incorrect surfaced finding(s)"
+    ],
+    "costUsd": 0,
+    "latencyMs": 7,
+    "cached": true
+   },
+   {
+    "id": "rs-semver-compare.drop_requirement.R2",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": false,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 0,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 0,
+    "typeMismatches": 1,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 3,
+     "abstained": 0
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "requirement R2: labelled contradicted, got missing",
+     "target req:R2 not surfaced with the right type",
+     "1 incorrect surfaced finding(s)"
+    ],
+    "costUsd": 0.024286,
+    "latencyMs": 17454,
+    "cached": false
+   },
+   {
+    "id": "rs-semver-compare.drop_requirement.R3",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.02542,
+    "latencyMs": 15982,
+    "cached": false
+   },
+   {
+    "id": "rs-semver-compare.drop_requirement.R4",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.046962,
+    "latencyMs": 33495,
+    "cached": false
+   },
+   {
+    "id": "rs-semver-compare.flip_condition.R2",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.025302,
+    "latencyMs": 18695,
+    "cached": false
+   },
+   {
+    "id": "rs-semver-compare.flip_condition.R3",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.020214,
+    "latencyMs": 12271,
+    "cached": false
+   },
+   {
+    "id": "rs-semver-compare.flip_condition.R4",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.049204,
+    "latencyMs": 37138,
+    "cached": false
+   },
+   {
+    "id": "rs-semver-compare.inject_config.src_policy.rs",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.02439,
+    "latencyMs": 17215,
+    "cached": false
+   },
+   {
+    "id": "rs-semver-compare.inject_refactor.src_policy.rs",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "defects": {
+     "measurable": 0,
+     "strict": 0,
+     "any": 0,
+     "unmeasurable": 0
+    },
+    "surfaced": 0,
+    "correctFindings": 0,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": false,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.022624,
+    "latencyMs": 14569,
+    "cached": false
+   },
+   {
+    "id": "rs-semver-compare.partial_requirement.R2",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.027122,
+    "latencyMs": 20648,
+    "cached": false
+   },
+   {
+    "id": "rs-semver-compare.skip_test.src_version.rs",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": false,
+     "any": false
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 0,
+     "any": 0,
+     "unmeasurable": 0
+    },
+    "surfaced": 0,
+    "correctFindings": 0,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "fact test_skipped src/version.rs not reported",
+     "test_integrity test:src/version.rs# not surfaced"
+    ],
+    "costUsd": 0.059602,
+    "latencyMs": 47533,
+    "cached": false
+   },
+   {
+    "id": "rs-semver-compare.unwire.R1",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "fact new_symbol_unreferenced src/version.rs not reported"
+    ],
+    "costUsd": 0.058282,
+    "latencyMs": 51073,
+    "cached": false
+   },
+   {
+    "id": "rs-semver-compare.weaken_assertion.src_version.rs",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": false,
+     "any": false
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 0,
+     "any": 0,
+     "unmeasurable": 0
+    },
+    "surfaced": 0,
+    "correctFindings": 0,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "fact assertion_weakened src/version.rs not reported",
+     "test_integrity test:src/version.rs#parses_three_part_versions not surfaced"
+    ],
+    "costUsd": 0.058984,
+    "latencyMs": 44689,
+    "cached": false
+   }
+  ],
+  "A+facts": [
+   {
+    "id": "py-retry-backoff.claim_all_done.R1",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": false,
+     "any": false
+    },
+    "defects": {
+     "measurable": 2,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "claim claim:R1 not surfaced"
+    ],
+    "costUsd": 0.02102,
+    "latencyMs": 14585,
+    "cached": false
+   },
+   {
+    "id": "py-retry-backoff.clean",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "defects": {
+     "measurable": 0,
+     "strict": 0,
+     "any": 0,
+     "unmeasurable": 0
+    },
+    "surfaced": 0,
+    "correctFindings": 0,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": false,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.017326,
+    "latencyMs": 9702,
+    "cached": false
+   },
+   {
+    "id": "py-retry-backoff.drop_requirement.R1",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0,
+    "latencyMs": 1,
+    "cached": true
+   },
+   {
+    "id": "py-retry-backoff.drop_requirement.R2",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": false,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 0,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 0,
+    "typeMismatches": 1,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 3,
+     "abstained": 0
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "requirement R2: labelled contradicted, got missing",
+     "target req:R2 not surfaced with the right type",
+     "1 incorrect surfaced finding(s)"
+    ],
+    "costUsd": 0.015702,
+    "latencyMs": 10246,
+    "cached": false
+   },
+   {
+    "id": "py-retry-backoff.drop_requirement.R3",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.02426,
+    "latencyMs": 18221,
+    "cached": false
+   },
+   {
+    "id": "py-retry-backoff.drop_requirement.R4",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.017068,
+    "latencyMs": 11696,
+    "cached": false
+   },
+   {
+    "id": "py-retry-backoff.flip_condition.R1",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.021546,
+    "latencyMs": 14276,
+    "cached": false
+   },
+   {
+    "id": "py-retry-backoff.flip_condition.R2",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.022946,
+    "latencyMs": 15504,
+    "cached": false
+   },
+   {
+    "id": "py-retry-backoff.inject_config.client_config.py",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 2,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 1,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 3,
+     "abstained": 0
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "requirement R3: labelled done, got contradicted",
+     "1 incorrect surfaced finding(s)"
+    ],
+    "costUsd": 0.027342,
+    "latencyMs": 21039,
+    "cached": false
+   },
+   {
+    "id": "py-retry-backoff.inject_refactor.client_urls.py",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "defects": {
+     "measurable": 0,
+     "strict": 0,
+     "any": 0,
+     "unmeasurable": 0
+    },
+    "surfaced": 0,
+    "correctFindings": 0,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": false,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.03617,
+    "latencyMs": 27670,
+    "cached": false
+   },
+   {
+    "id": "py-retry-backoff.partial_requirement.R2",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.026166,
+    "latencyMs": 18771,
+    "cached": false
+   },
+   {
+    "id": "py-retry-backoff.skip_test.tests_test_urls.py",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 2,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 1,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "1 incorrect surfaced finding(s)"
+    ],
+    "costUsd": 0.018948,
+    "latencyMs": 11656,
+    "cached": false
+   },
+   {
+    "id": "py-retry-backoff.unwire.R1",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 2,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 1,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 3,
+     "abstained": 0
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "requirement R4: labelled done, got partial",
+     "1 incorrect surfaced finding(s)"
+    ],
+    "costUsd": 0.068764,
+    "latencyMs": 59143,
+    "cached": false
+   },
+   {
+    "id": "py-retry-backoff.weaken_assertion.tests_test_urls.py",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 2,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 1,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "1 incorrect surfaced finding(s)"
+    ],
+    "costUsd": 0.023244,
+    "latencyMs": 16242,
+    "cached": false
+   },
+   {
+    "id": "rs-semver-compare.claim_all_done.R1",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": false,
+     "any": false
+    },
+    "defects": {
+     "measurable": 2,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "claim claim:R1 not surfaced"
+    ],
+    "costUsd": 0.023684,
+    "latencyMs": 17241,
+    "cached": false
+   },
+   {
+    "id": "rs-semver-compare.clean",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "defects": {
+     "measurable": 0,
+     "strict": 0,
+     "any": 0,
+     "unmeasurable": 0
+    },
+    "surfaced": 0,
+    "correctFindings": 0,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": false,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.023002,
+    "latencyMs": 16041,
+    "cached": false
+   },
+   {
+    "id": "rs-semver-compare.drop_requirement.R1",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": false,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 0,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 0,
+    "typeMismatches": 1,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 3,
+     "abstained": 0
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "requirement R1: labelled contradicted, got missing",
+     "target req:R1 not surfaced with the right type",
+     "1 incorrect surfaced finding(s)"
+    ],
+    "costUsd": 0,
+    "latencyMs": 7,
+    "cached": true
+   },
+   {
+    "id": "rs-semver-compare.drop_requirement.R2",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": false,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 0,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 0,
+    "typeMismatches": 1,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 3,
+     "abstained": 0
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "requirement R2: labelled contradicted, got missing",
+     "target req:R2 not surfaced with the right type",
+     "1 incorrect surfaced finding(s)"
+    ],
+    "costUsd": 0.024286,
+    "latencyMs": 17454,
+    "cached": false
+   },
+   {
+    "id": "rs-semver-compare.drop_requirement.R3",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.02542,
+    "latencyMs": 15982,
+    "cached": false
+   },
+   {
+    "id": "rs-semver-compare.drop_requirement.R4",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.046962,
+    "latencyMs": 33495,
+    "cached": false
+   },
+   {
+    "id": "rs-semver-compare.flip_condition.R2",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.025302,
+    "latencyMs": 18695,
+    "cached": false
+   },
+   {
+    "id": "rs-semver-compare.flip_condition.R3",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.020214,
+    "latencyMs": 12271,
+    "cached": false
+   },
+   {
+    "id": "rs-semver-compare.flip_condition.R4",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.049204,
+    "latencyMs": 37138,
+    "cached": false
+   },
+   {
+    "id": "rs-semver-compare.inject_config.src_policy.rs",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.02439,
+    "latencyMs": 17215,
+    "cached": false
+   },
+   {
+    "id": "rs-semver-compare.inject_refactor.src_policy.rs",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "defects": {
+     "measurable": 0,
+     "strict": 0,
+     "any": 0,
+     "unmeasurable": 0
+    },
+    "surfaced": 0,
+    "correctFindings": 0,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": false,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.022624,
+    "latencyMs": 14569,
+    "cached": false
+   },
+   {
+    "id": "rs-semver-compare.partial_requirement.R2",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.027122,
+    "latencyMs": 20648,
+    "cached": false
+   },
+   {
+    "id": "rs-semver-compare.skip_test.src_version.rs",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.059602,
+    "latencyMs": 47533,
+    "cached": false
+   },
+   {
+    "id": "rs-semver-compare.unwire.R1",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.058282,
+    "latencyMs": 51073,
+    "cached": false
+   },
+   {
+    "id": "rs-semver-compare.weaken_assertion.src_version.rs",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.058984,
+    "latencyMs": 44689,
+    "cached": false
+   }
+  ],
+  "A+facts+E4": [
+   {
+    "id": "py-retry-backoff.claim_all_done.R1",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": false,
+     "any": false
+    },
+    "defects": {
+     "measurable": 2,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "claim claim:R1 not surfaced"
+    ],
+    "costUsd": 0.02102,
+    "latencyMs": 14585,
+    "cached": false
+   },
+   {
+    "id": "py-retry-backoff.clean",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "defects": {
+     "measurable": 0,
+     "strict": 0,
+     "any": 0,
+     "unmeasurable": 0
+    },
+    "surfaced": 0,
+    "correctFindings": 0,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": false,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.017326,
+    "latencyMs": 9702,
+    "cached": false
+   },
+   {
+    "id": "py-retry-backoff.drop_requirement.R1",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0,
+    "latencyMs": 1,
+    "cached": true
+   },
+   {
+    "id": "py-retry-backoff.drop_requirement.R2",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": false,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 0,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 0,
+    "typeMismatches": 1,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 3,
+     "abstained": 0
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "requirement R2: labelled contradicted, got missing",
+     "target req:R2 not surfaced with the right type",
+     "1 incorrect surfaced finding(s)"
+    ],
+    "costUsd": 0.015702,
+    "latencyMs": 10246,
+    "cached": false
+   },
+   {
+    "id": "py-retry-backoff.drop_requirement.R3",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.02426,
+    "latencyMs": 18221,
+    "cached": false
+   },
+   {
+    "id": "py-retry-backoff.drop_requirement.R4",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.017068,
+    "latencyMs": 11696,
+    "cached": false
+   },
+   {
+    "id": "py-retry-backoff.flip_condition.R1",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.021546,
+    "latencyMs": 14276,
+    "cached": false
+   },
+   {
+    "id": "py-retry-backoff.flip_condition.R2",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.022946,
+    "latencyMs": 15504,
+    "cached": false
+   },
+   {
+    "id": "py-retry-backoff.inject_config.client_config.py",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 2,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 1,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 3,
+     "abstained": 0
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "requirement R3: labelled done, got contradicted",
+     "1 incorrect surfaced finding(s)"
+    ],
+    "costUsd": 0.027342,
+    "latencyMs": 21039,
+    "cached": false
+   },
+   {
+    "id": "py-retry-backoff.inject_refactor.client_urls.py",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "defects": {
+     "measurable": 0,
+     "strict": 0,
+     "any": 0,
+     "unmeasurable": 0
+    },
+    "surfaced": 0,
+    "correctFindings": 0,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": false,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.03617,
+    "latencyMs": 27670,
+    "cached": false
+   },
+   {
+    "id": "py-retry-backoff.partial_requirement.R2",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.026166,
+    "latencyMs": 18771,
+    "cached": false
+   },
+   {
+    "id": "py-retry-backoff.skip_test.tests_test_urls.py",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 2,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 1,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "1 incorrect surfaced finding(s)"
+    ],
+    "costUsd": 0.018948,
+    "latencyMs": 11656,
+    "cached": false
+   },
+   {
+    "id": "py-retry-backoff.unwire.R1",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 2,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 1,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 3,
+     "abstained": 0
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "requirement R4: labelled done, got partial",
+     "1 incorrect surfaced finding(s)"
+    ],
+    "costUsd": 0.068764,
+    "latencyMs": 59143,
+    "cached": false
+   },
+   {
+    "id": "py-retry-backoff.weaken_assertion.tests_test_urls.py",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 2,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 1,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "1 incorrect surfaced finding(s)"
+    ],
+    "costUsd": 0.023244,
+    "latencyMs": 16242,
+    "cached": false
+   },
+   {
+    "id": "rs-semver-compare.claim_all_done.R1",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": false,
+     "any": false
+    },
+    "defects": {
+     "measurable": 2,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "claim claim:R1 not surfaced"
+    ],
+    "costUsd": 0.023684,
+    "latencyMs": 17241,
+    "cached": false
+   },
+   {
+    "id": "rs-semver-compare.clean",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "defects": {
+     "measurable": 0,
+     "strict": 0,
+     "any": 0,
+     "unmeasurable": 0
+    },
+    "surfaced": 0,
+    "correctFindings": 0,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": false,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.023002,
+    "latencyMs": 16041,
+    "cached": false
+   },
+   {
+    "id": "rs-semver-compare.drop_requirement.R1",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": false,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 0,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 0,
+    "typeMismatches": 1,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 3,
+     "abstained": 0
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "requirement R1: labelled contradicted, got missing",
+     "target req:R1 not surfaced with the right type",
+     "1 incorrect surfaced finding(s)"
+    ],
+    "costUsd": 0,
+    "latencyMs": 7,
+    "cached": true
+   },
+   {
+    "id": "rs-semver-compare.drop_requirement.R2",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": false,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 0,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 0,
+    "typeMismatches": 1,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 3,
+     "abstained": 0
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "requirement R2: labelled contradicted, got missing",
+     "target req:R2 not surfaced with the right type",
+     "1 incorrect surfaced finding(s)"
+    ],
+    "costUsd": 0.024286,
+    "latencyMs": 17454,
+    "cached": false
+   },
+   {
+    "id": "rs-semver-compare.drop_requirement.R3",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.02542,
+    "latencyMs": 15982,
+    "cached": false
+   },
+   {
+    "id": "rs-semver-compare.drop_requirement.R4",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.046962,
+    "latencyMs": 33495,
+    "cached": false
+   },
+   {
+    "id": "rs-semver-compare.flip_condition.R2",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.025302,
+    "latencyMs": 18695,
+    "cached": false
+   },
+   {
+    "id": "rs-semver-compare.flip_condition.R3",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.020214,
+    "latencyMs": 12271,
+    "cached": false
+   },
+   {
+    "id": "rs-semver-compare.flip_condition.R4",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.049204,
+    "latencyMs": 37138,
+    "cached": false
+   },
+   {
+    "id": "rs-semver-compare.inject_config.src_policy.rs",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.02439,
+    "latencyMs": 17215,
+    "cached": false
+   },
+   {
+    "id": "rs-semver-compare.inject_refactor.src_policy.rs",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "defects": {
+     "measurable": 0,
+     "strict": 0,
+     "any": 0,
+     "unmeasurable": 0
+    },
+    "surfaced": 0,
+    "correctFindings": 0,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": false,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.022624,
+    "latencyMs": 14569,
+    "cached": false
+   },
+   {
+    "id": "rs-semver-compare.partial_requirement.R2",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.027122,
+    "latencyMs": 20648,
+    "cached": false
+   },
+   {
+    "id": "rs-semver-compare.skip_test.src_version.rs",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.059602,
+    "latencyMs": 47533,
+    "cached": false
+   },
+   {
+    "id": "rs-semver-compare.unwire.R1",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.058282,
+    "latencyMs": 51073,
+    "cached": false
+   },
+   {
+    "id": "rs-semver-compare.weaken_assertion.src_version.rs",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": 0.058984,
+    "latencyMs": 44689,
+    "cached": false
+   }
+  ],
+  "C_laya_v1": [
+   {
+    "id": "py-retry-backoff.claim_all_done.R1",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": false,
+     "any": false
+    },
+    "defects": {
+     "measurable": 2,
+     "strict": 0,
+     "any": 0,
+     "unmeasurable": 0
+    },
+    "surfaced": 0,
+    "correctFindings": 0,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 3,
+     "abstained": 0
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "requirement R1: labelled contradicted, got done",
+     "claim claim:R1 not surfaced",
+     "target req:R1 not surfaced with the right type"
+    ],
+    "costUsd": null,
+    "latencyMs": 0,
+    "cached": null
+   },
+   {
+    "id": "py-retry-backoff.clean",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "defects": {
+     "measurable": 0,
+     "strict": 0,
+     "any": 0,
+     "unmeasurable": 0
+    },
+    "surfaced": 0,
+    "correctFindings": 0,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": false,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": null,
+    "latencyMs": 0,
+    "cached": null
+   },
+   {
+    "id": "py-retry-backoff.drop_requirement.R1",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": false,
+     "any": false
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 0,
+     "any": 0,
+     "unmeasurable": 0
+    },
+    "surfaced": 0,
+    "correctFindings": 0,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 3,
+     "abstained": 0
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "requirement R1: labelled contradicted, got done",
+     "target req:R1 not surfaced with the right type"
+    ],
+    "costUsd": null,
+    "latencyMs": 0,
+    "cached": null
+   },
+   {
+    "id": "py-retry-backoff.drop_requirement.R2",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": false,
+     "any": false
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 0,
+     "any": 0,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 0,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 1,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 1,
+     "abstained": 2
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "requirement R1: labelled done, got uncertain",
+     "requirement R2: labelled contradicted, got done",
+     "requirement R3: labelled done, got uncertain",
+     "target req:R2 not surfaced with the right type",
+     "1 incorrect surfaced finding(s)"
+    ],
+    "costUsd": null,
+    "latencyMs": 0,
+    "cached": null
+   },
+   {
+    "id": "py-retry-backoff.drop_requirement.R3",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": false,
+     "any": false
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 0,
+     "any": 0,
+     "unmeasurable": 0
+    },
+    "surfaced": 2,
+    "correctFindings": 0,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 2,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 2,
+     "abstained": 1
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "requirement R1: labelled done, got uncertain",
+     "requirement R3: labelled contradicted, got done",
+     "target req:R3 not surfaced with the right type",
+     "2 incorrect surfaced finding(s)"
+    ],
+    "costUsd": null,
+    "latencyMs": 0,
+    "cached": null
+   },
+   {
+    "id": "py-retry-backoff.drop_requirement.R4",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": false,
+     "any": false
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 0,
+     "any": 0,
+     "unmeasurable": 0
+    },
+    "surfaced": 0,
+    "correctFindings": 0,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 2,
+     "abstained": 1
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "requirement R1: labelled done, got uncertain",
+     "requirement R4: labelled missing, got done",
+     "target req:R4 not surfaced with the right type"
+    ],
+    "costUsd": null,
+    "latencyMs": 0,
+    "cached": null
+   },
+   {
+    "id": "py-retry-backoff.flip_condition.R1",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": false,
+     "any": false
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 0,
+     "any": 0,
+     "unmeasurable": 0
+    },
+    "surfaced": 0,
+    "correctFindings": 0,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 3,
+     "abstained": 0
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "requirement R1: labelled contradicted, got done",
+     "target req:R1 not surfaced with the right type"
+    ],
+    "costUsd": null,
+    "latencyMs": 0,
+    "cached": null
+   },
+   {
+    "id": "py-retry-backoff.flip_condition.R2",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": false,
+     "any": false
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 0,
+     "any": 0,
+     "unmeasurable": 0
+    },
+    "surfaced": 0,
+    "correctFindings": 0,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 3,
+     "abstained": 0
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "requirement R2: labelled contradicted, got done",
+     "target req:R2 not surfaced with the right type"
+    ],
+    "costUsd": null,
+    "latencyMs": 0,
+    "cached": null
+   },
+   {
+    "id": "py-retry-backoff.inject_config.client_config.py",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": false,
+     "any": false
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 0,
+     "any": 0,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 0,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 1,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 2,
+     "abstained": 2
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "requirement R1: labelled done, got uncertain",
+     "requirement R3: labelled done, got uncertain",
+     "unit client/config.py#retry_settings: labelled unexplained_behavioral, got implements",
+     "1 incorrect surfaced finding(s)"
+    ],
+    "costUsd": null,
+    "latencyMs": 0,
+    "cached": null
+   },
+   {
+    "id": "py-retry-backoff.inject_refactor.client_urls.py",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "defects": {
+     "measurable": 0,
+     "strict": 0,
+     "any": 0,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 0,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 1,
+    "defective": false,
+    "requirements": {
+     "labelled": 4,
+     "correct": 2,
+     "abstained": 2
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "requirement R1: labelled done, got uncertain",
+     "requirement R3: labelled done, got uncertain",
+     "unit client/urls.py#join_url: labelled unexplained_benign, got implements",
+     "1 incorrect surfaced finding(s)"
+    ],
+    "costUsd": null,
+    "latencyMs": 0,
+    "cached": null
+   },
+   {
+    "id": "py-retry-backoff.partial_requirement.R2",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": false,
+     "any": false
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 0,
+     "any": 0,
+     "unmeasurable": 0
+    },
+    "surfaced": 0,
+    "correctFindings": 0,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 3,
+     "abstained": 0
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "requirement R2: labelled contradicted, got done",
+     "target req:R2 not surfaced with the right type"
+    ],
+    "costUsd": null,
+    "latencyMs": 0,
+    "cached": null
+   },
+   {
+    "id": "py-retry-backoff.skip_test.tests_test_urls.py",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": null,
+    "latencyMs": 0,
+    "cached": null
+   },
+   {
+    "id": "py-retry-backoff.unwire.R1",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": false,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 0,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 2,
+    "correctFindings": 0,
+    "typeMismatches": 1,
+    "duplicates": 0,
+    "falseFindings": 1,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 2,
+     "abstained": 0
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "requirement R1: labelled contradicted, got partial",
+     "requirement R4: labelled done, got partial",
+     "target req:R1 not surfaced with the right type",
+     "2 incorrect surfaced finding(s)"
+    ],
+    "costUsd": null,
+    "latencyMs": 0,
+    "cached": null
+   },
+   {
+    "id": "py-retry-backoff.weaken_assertion.tests_test_urls.py",
+    "seed": "py-retry-backoff",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 4,
+     "abstained": 0
+    },
+    "entireReview": true,
+    "entireReviewBlockers": [],
+    "costUsd": null,
+    "latencyMs": 0,
+    "cached": null
+   },
+   {
+    "id": "rs-semver-compare.claim_all_done.R1",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": false,
+     "any": false
+    },
+    "defects": {
+     "measurable": 2,
+     "strict": 0,
+     "any": 0,
+     "unmeasurable": 0
+    },
+    "surfaced": 0,
+    "correctFindings": 0,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 3,
+     "abstained": 0
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "requirement R1: labelled missing, got done",
+     "claim claim:R1 not surfaced",
+     "target req:R1 not surfaced with the right type"
+    ],
+    "costUsd": null,
+    "latencyMs": 0,
+    "cached": null
+   },
+   {
+    "id": "rs-semver-compare.clean",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "defects": {
+     "measurable": 0,
+     "strict": 0,
+     "any": 0,
+     "unmeasurable": 0
+    },
+    "surfaced": 0,
+    "correctFindings": 0,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": false,
+    "requirements": {
+     "labelled": 4,
+     "correct": 3,
+     "abstained": 1
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "requirement R1: labelled done, got uncertain"
+    ],
+    "costUsd": null,
+    "latencyMs": 0,
+    "cached": null
+   },
+   {
+    "id": "rs-semver-compare.drop_requirement.R1",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": false,
+     "any": false
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 0,
+     "any": 0,
+     "unmeasurable": 0
+    },
+    "surfaced": 0,
+    "correctFindings": 0,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 3,
+     "abstained": 0
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "requirement R1: labelled contradicted, got done",
+     "target req:R1 not surfaced with the right type"
+    ],
+    "costUsd": null,
+    "latencyMs": 0,
+    "cached": null
+   },
+   {
+    "id": "rs-semver-compare.drop_requirement.R2",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": false,
+     "any": false
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 0,
+     "any": 0,
+     "unmeasurable": 0
+    },
+    "surfaced": 0,
+    "correctFindings": 0,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 2,
+     "abstained": 1
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "requirement R1: labelled done, got uncertain",
+     "requirement R2: labelled contradicted, got done",
+     "target req:R2 not surfaced with the right type"
+    ],
+    "costUsd": null,
+    "latencyMs": 0,
+    "cached": null
+   },
+   {
+    "id": "rs-semver-compare.drop_requirement.R3",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": false,
+     "any": false
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 0,
+     "any": 0,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 0,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 1,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 2,
+     "abstained": 1
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "requirement R2: labelled done, got uncertain",
+     "requirement R3: labelled missing, got done",
+     "target req:R3 not surfaced with the right type",
+     "1 incorrect surfaced finding(s)"
+    ],
+    "costUsd": null,
+    "latencyMs": 0,
+    "cached": null
+   },
+   {
+    "id": "rs-semver-compare.drop_requirement.R4",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": false,
+     "any": false
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 0,
+     "any": 0,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 0,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 1,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 2,
+     "abstained": 1
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "requirement R2: labelled done, got uncertain",
+     "requirement R4: labelled missing, got done",
+     "target req:R4 not surfaced with the right type",
+     "1 incorrect surfaced finding(s)"
+    ],
+    "costUsd": null,
+    "latencyMs": 0,
+    "cached": null
+   },
+   {
+    "id": "rs-semver-compare.flip_condition.R2",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": false,
+     "any": false
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 0,
+     "any": 0,
+     "unmeasurable": 0
+    },
+    "surfaced": 0,
+    "correctFindings": 0,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 2,
+     "abstained": 1
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "requirement R1: labelled done, got uncertain",
+     "requirement R2: labelled contradicted, got done",
+     "target req:R2 not surfaced with the right type"
+    ],
+    "costUsd": null,
+    "latencyMs": 0,
+    "cached": null
+   },
+   {
+    "id": "rs-semver-compare.flip_condition.R3",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": false,
+     "any": false
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 0,
+     "any": 0,
+     "unmeasurable": 0
+    },
+    "surfaced": 0,
+    "correctFindings": 0,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 2,
+     "abstained": 1
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "requirement R1: labelled done, got uncertain",
+     "requirement R3: labelled contradicted, got done",
+     "target req:R3 not surfaced with the right type"
+    ],
+    "costUsd": null,
+    "latencyMs": 0,
+    "cached": null
+   },
+   {
+    "id": "rs-semver-compare.flip_condition.R4",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": false,
+     "any": false
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 0,
+     "any": 0,
+     "unmeasurable": 0
+    },
+    "surfaced": 0,
+    "correctFindings": 0,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 2,
+     "abstained": 1
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "requirement R1: labelled done, got uncertain",
+     "requirement R4: labelled contradicted, got done",
+     "target req:R4 not surfaced with the right type"
+    ],
+    "costUsd": null,
+    "latencyMs": 0,
+    "cached": null
+   },
+   {
+    "id": "rs-semver-compare.inject_config.src_policy.rs",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": false,
+     "any": false
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 0,
+     "any": 0,
+     "unmeasurable": 0
+    },
+    "surfaced": 0,
+    "correctFindings": 0,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 3,
+     "abstained": 1
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "requirement R1: labelled done, got uncertain",
+     "unit src/policy.rs#default_policy: labelled unexplained_behavioral, got implements"
+    ],
+    "costUsd": null,
+    "latencyMs": 0,
+    "cached": null
+   },
+   {
+    "id": "rs-semver-compare.inject_refactor.src_policy.rs",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "defects": {
+     "measurable": 0,
+     "strict": 0,
+     "any": 0,
+     "unmeasurable": 0
+    },
+    "surfaced": 0,
+    "correctFindings": 0,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": false,
+    "requirements": {
+     "labelled": 4,
+     "correct": 3,
+     "abstained": 1
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "requirement R1: labelled done, got uncertain",
+     "unit src/policy.rs#is_upgrade_allowed: labelled unexplained_benign, got implements"
+    ],
+    "costUsd": null,
+    "latencyMs": 0,
+    "cached": null
+   },
+   {
+    "id": "rs-semver-compare.partial_requirement.R2",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": false,
+     "any": false
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 0,
+     "any": 0,
+     "unmeasurable": 0
+    },
+    "surfaced": 0,
+    "correctFindings": 0,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 2,
+     "abstained": 1
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "requirement R1: labelled done, got uncertain",
+     "requirement R2: labelled partial, got done",
+     "target req:R2 not surfaced with the right type"
+    ],
+    "costUsd": null,
+    "latencyMs": 0,
+    "cached": null
+   },
+   {
+    "id": "rs-semver-compare.skip_test.src_version.rs",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 3,
+     "abstained": 1
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "requirement R1: labelled done, got uncertain"
+    ],
+    "costUsd": null,
+    "latencyMs": 0,
+    "cached": null
+   },
+   {
+    "id": "rs-semver-compare.unwire.R1",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": false,
+     "any": false
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 0,
+     "any": 0,
+     "unmeasurable": 0
+    },
+    "surfaced": 0,
+    "correctFindings": 0,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 3,
+     "abstained": 1
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "requirement R1: labelled partial, got uncertain",
+     "target req:R1 not surfaced with the right type"
+    ],
+    "costUsd": null,
+    "latencyMs": 0,
+    "cached": null
+   },
+   {
+    "id": "rs-semver-compare.weaken_assertion.src_version.rs",
+    "seed": "rs-semver-compare",
+    "failed": false,
+    "target": {
+     "measurable": true,
+     "strict": true,
+     "any": true
+    },
+    "defects": {
+     "measurable": 1,
+     "strict": 1,
+     "any": 1,
+     "unmeasurable": 0
+    },
+    "surfaced": 1,
+    "correctFindings": 1,
+    "typeMismatches": 0,
+    "duplicates": 0,
+    "falseFindings": 0,
+    "defective": true,
+    "requirements": {
+     "labelled": 4,
+     "correct": 3,
+     "abstained": 1
+    },
+    "entireReview": false,
+    "entireReviewBlockers": [
+     "requirement R1: labelled done, got uncertain"
+    ],
+    "costUsd": null,
+    "latencyMs": 0,
+    "cached": null
+   }
+  ]
+ }
+}

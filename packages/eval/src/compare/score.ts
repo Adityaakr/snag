@@ -22,6 +22,8 @@ export interface SurfacedFinding {
   requirement?: string;
   /** For requirement findings: the status the finding asserts (missing, partial, contradicted, ...). */
   status?: string;
+  /** The finding also reports that the PR description claims this requirement is done (one finding, two facets). */
+  claim?: boolean;
   file?: string;
   lines?: [number, number];
 }
@@ -155,7 +157,7 @@ function relation(f: SurfacedFinding, d: Defect): 'strict' | 'type' | null {
     if (f.type !== 'requirement' || f.requirement !== d.requirement) return null;
     return f.status && d.accepted?.has(f.status) ? 'strict' : 'type';
   }
-  if (d.type === 'claim') return f.type === 'claim' && f.requirement === d.requirement ? 'strict' : null;
+  if (d.type === 'claim') return f.type === 'claim' && f.requirement === d.requirement ? 'strict' : null; // claim facets are matched separately
   if (d.unmeasurable || f.file !== d.file) return null;
   // A skipped test with no resolvable symbol range: the file-level test-integrity finding is the defect.
   const place = d.lines ? overlaps(f.lines, d.lines) : d.type === 'test_integrity';
@@ -190,6 +192,12 @@ export function matchFindings(surfaced: readonly SurfacedFinding[], defects: rea
     if (defects.some((d) => relation(f, d) !== null)) res.duplicates.push(f.id);
     else res.unmatched.push(f.id);
   }
+  // A claim-mismatch facet on a requirement finding satisfies the claim defect without being a second finding.
+  for (const d of defects)
+    if (d.type === 'claim' && !res.strict.has(d.key)) {
+      const f = surfaced.find((x) => x.type === 'requirement' && x.claim && x.requirement === d.requirement);
+      if (f) res.strict.set(d.key, `${f.id}#claim`);
+    }
   return res;
 }
 
@@ -293,7 +301,7 @@ export function scoreItem(p: Prediction, units: UnitIndex): ItemScore {
       unmeasurable: defects.length - measurable.length,
     },
     surfaced: p.surfaced.length,
-    correctFindings: m.strict.size,
+    correctFindings: [...m.strict.values()].filter((v) => !v.endsWith('#claim')).length,
     typeMismatches: m.typeMismatch.size,
     duplicates: m.duplicates.length,
     falseFindings: m.unmatched.length,

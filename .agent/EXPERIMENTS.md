@@ -206,3 +206,12 @@ No keys: task-list extraction (9 requirements), no Jev verdicts; 175 units. Code
   - partial and unwire reported as contradicted (2, both audit-disputed);
   - "unexplained" on weakened test files (2; a real defect but the wrong finding type);
   - false contradicted and partial on done requirements (2).
+
+## 2026-09-28 E6 Strict evaluation, adjudication, E4 and E5 (docs/eval-results-strict.md)
+- **Old to strict reconciliation, A + facts, 29 items, original labels:** precision 25/29 to 20/29 (5 type mismatches); correct-type recall 20/25 to 19/25 (rs-semver claim_all_done: status right, claim not surfaced); entire review 21/29 to 20/29 (same item). The 2 test-file unit findings are duplicates of the deterministic finding.
+- **Report dump bug:** runs over 50 items dropped passing items. C's v1 report lacked its 15 passing items; C was regenerated on the held-out seeds (eval/reports/2026-09-27T18-32-23-201Z, now with D37).
+- **Mutation label adjudication (rubric):** 9 of 12 audited held-out cases are contradicted, not missing or partial. Applied as an overlay.
+- **Real-patch adjudication:** A's 19 findings on 9 flagged gold patches: 1 valid, 1 type-mismatched, 14 false, 3 undecidable. 6 unflagged patches: 5 clean, 1 undecidable, 0 missed.
+- **E4 (evidence-consistency rule):** real-patch false findings 14 to 10, valid unchanged, no mutation change. KEEP.
+- **E5 (sp-0.3.0 extraction rule):** removed invented requirements but added 6 false fix-path findings. False 14 to 14, valid 1 to 2; with E4, 2/9. Untested on mutations (budget). NOT ADOPTED.
+- **Spend:** $4.07 of $5.

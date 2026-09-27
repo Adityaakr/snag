@@ -1,5 +1,7 @@
 # A vs B vs C: measured comparison (2026-09-27)
 
+> **Superseded by `docs/eval-results-strict.md`.** The metrics below came from a lenient scorer (status-based target detection, type-agnostic finding correctness) and unadjudicated labels. The "9/30" SWE-bench figure is an unadjudicated flag rate, not specificity.
+
 Systems, all scored by `scripts/eval/compare.mjs` with the definitions in `docs/acceptance.md`:
 - **A:** single-pass review, one Claude Sonnet 5 call per PR (via OpenRouter), prompt `sp-0.2.0`, given Remit's extracted requirements.
 - **B:** structured Remit pipeline with Sonnet 5 answering the typed questions (`jev.engine: llm`), including the D37 fix unless noted.

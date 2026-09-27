@@ -12,11 +12,27 @@ if (!predFile || !labelFile)
   throw new Error('usage: swebench-findings.ts <predictions.jsonl> <labels.json> [--e4]');
 const e4 = process.argv.includes('--e4');
 const labels = JSON.parse(readFileSync(labelFile, 'utf8')) as {
-  findings: { item: string; requirement?: string; file?: string; line?: number; verdict: string }[];
+  findings: {
+    item: string;
+    requirement?: string;
+    text?: string;
+    file?: string;
+    line?: number;
+    verdict: string;
+  }[];
   prs: Record<string, string>;
 };
 const PROBLEM = new Set(['missing', 'partial', 'contradicted']);
 const norm = (r: string | undefined) => (r ?? '').replace(/^R/i, '');
+const words = (t: string) => new Set(t.toLowerCase().match(/[a-z0-9_]{3,}/g) ?? []);
+/** Jaccard overlap of content words: requirement ids are renumbered between prompts, texts are not. */
+function overlap(a: string, b: string): number {
+  const x = words(a);
+  const y = words(b);
+  let n = 0;
+  for (const w of x) if (y.has(w)) n++;
+  return x.size + y.size - n ? n / (x.size + y.size - n) : 0;
+}
 
 const counts: Record<string, number> = {
   valid: 0,
@@ -44,7 +60,8 @@ for (const line of readFileSync(predFile, 'utf8').split('\n').filter(Boolean)) {
       .map((r) => ({
         kind: 'requirement' as const,
         requirement: norm(r.id),
-        label: `R${norm(r.id)} ${r.status}`,
+        text: r.text,
+        label: `R${norm(r.id)} ${r.status}: ${r.text.slice(0, 60)}`,
       })),
     ...out.unexplained
       .filter((u) => u.behavioral)
@@ -67,7 +84,7 @@ for (const line of readFileSync(predFile, 'utf8').split('\n').filter(Boolean)) {
       (x) =>
         x.item === d.id &&
         (f.kind === 'requirement'
-          ? x.requirement !== undefined && norm(x.requirement) === f.requirement
+          ? x.text !== undefined && overlap(x.text, f.text) >= 0.5
           : x.file === f.file && x.line !== undefined && x.line >= f.start && x.line <= f.end),
     );
     const verdict = v?.verdict ?? 'unadjudicated';

@@ -19,6 +19,17 @@ Respond with exactly one call to the record_review tool.
 - For each changed region of the diff that serves no requirement: the file, the line range, and whether it changes observable behavior.`;
 export const SINGLE_PASS_VERSION = 'sp-0.2.0';
 
+/**
+ * Product prompt for system A (E5, 2026-09-28). Identical to Appendix B.2 except the extraction instruction: adjudication
+ * of real SWE-bench gold patches found 7 of 14 false findings came from "requirements" that were code quotes, PR-author
+ * notes, diagnostics or proposed alternatives. The B.2 prompt stays verbatim for the baseline role.
+ */
+export const SINGLE_PASS_SYSTEM_V3 = SINGLE_PASS_SYSTEM.replace(
+  'otherwise first extract atomic, quoted requirements from the issue',
+  'otherwise first extract atomic, quoted requirements from the issue: only behavior the issue asks for, quoted from the issue text itself. Do not turn into requirements: quoted code, a pull-request description, test changes the issue does not ask for, diagnostic remarks, or alternatives the issue only suggests ("could", "might", "I propose", "one option")',
+);
+export const SINGLE_PASS_VERSION_V3 = 'sp-0.3.0';
+
 // A {start, end} object rather than a two-element tuple: tuples become JSON Schema `prefixItems`, which the
 // OpenAI-compatible structured-output path rejects (HTTP 400), so every single_pass call failed (DECISIONS D36).
 const Lines = z.object({ start: z.number().int(), end: z.number().int() });
@@ -98,6 +109,7 @@ export async function runSinglePass(
   item: EvalItem,
   llm: LlmProvider,
   variant: SinglePassVariant,
+  prompt: 'b2' | 'v3' = 'b2',
 ): Promise<BaselineOutcome> {
   let requirements: Requirement[] | undefined;
   const started = Date.now();
@@ -115,8 +127,8 @@ export async function runSinglePass(
       [{ role: 'user', content: singlePassMessage(item, requirements) }],
       {
         schemaName: 'record_review',
-        system: SINGLE_PASS_SYSTEM,
-        promptVersion: SINGLE_PASS_VERSION,
+        system: prompt === 'v3' ? SINGLE_PASS_SYSTEM_V3 : SINGLE_PASS_SYSTEM,
+        promptVersion: prompt === 'v3' ? SINGLE_PASS_VERSION_V3 : SINGLE_PASS_VERSION,
         maxTokens: 8000,
         kind: `single_pass_${variant}`,
         targetId: item.id,

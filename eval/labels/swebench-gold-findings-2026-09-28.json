@@ -3,18 +3,48 @@
   "source": "training/laya/audit/swebench-gold-adjudication-2026-09-28.md",
   "note": "Finding-level verdicts for system A's findings on 9 flagged SWE-bench Verified gold patches (issue + diff only), and PR-level verdicts for 6 unflagged ones. Development data once inspected.",
   "findings": [
-    { "item": "gold:astropy__astropy-13236", "requirement": "R1", "verdict": "undecidable" },
-    { "item": "gold:django__django-10097", "requirement": "R2", "verdict": "false" },
-    { "item": "gold:django__django-10097", "requirement": "R3", "verdict": "false" },
-    { "item": "gold:mwaskom__seaborn-3187", "requirement": "R3", "verdict": "false" },
-    { "item": "gold:mwaskom__seaborn-3187", "requirement": "R4", "verdict": "false" },
+    {
+      "item": "gold:astropy__astropy-13236",
+      "requirement": "R1",
+      "verdict": "undecidable",
+      "text": "Add a FutureWarning telling the user to wrap the structured ndarray in Column, indicating that in a future version (5.2) it will be added as a Column instead of being auto-converted to NdarrayMixin."
+    },
+    {
+      "item": "gold:django__django-10097",
+      "requirement": "R2",
+      "verdict": "false",
+      "text": "An example URL that should be invalid, http://foo/bar@example.com, must now fail validation"
+    },
+    {
+      "item": "gold:django__django-10097",
+      "requirement": "R3",
+      "verdict": "false",
+      "text": "Test cases in tests/validators/invalid_urls.txt that would incorrectly become valid by appending a query string like ?m=foo@example.com should remain invalid, implying test coverage should be added/updated"
+    },
+    {
+      "item": "gold:mwaskom__seaborn-3187",
+      "requirement": "R3",
+      "verdict": "false",
+      "text": "The offset value can be retrieved from the formatter and used to construct the legend title and/or labels so the legend correctly represents scaled values."
+    },
+    {
+      "item": "gold:mwaskom__seaborn-3187",
+      "requirement": "R4",
+      "verdict": "false",
+      "text": "Behavior may depend on rcParam settings `axes.formatter.useoffset` and `axes.formatter.offset_threshold`, implying these should be respected or accounted for."
+    },
     {
       "item": "gold:pydata__xarray-3095",
       "file": "xarray/core/indexing.py",
       "line": 1246,
       "verdict": "false"
     },
-    { "item": "gold:pylint-dev__pylint-4551", "requirement": "R3", "verdict": "false" },
+    {
+      "item": "gold:pylint-dev__pylint-4551",
+      "requirement": "R3",
+      "verdict": "false",
+      "text": "UML output should display attribute/parameter type annotations, e.g. showing 'a : String' style labels instead of no type or incorrect type."
+    },
     {
       "item": "gold:pylint-dev__pylint-4551",
       "file": "pylint/pyreverse/inspector.py",
@@ -33,8 +63,18 @@
       "line": 140,
       "verdict": "false"
     },
-    { "item": "gold:pylint-dev__pylint-4661", "requirement": "R1", "verdict": "type-mismatched" },
-    { "item": "gold:pylint-dev__pylint-4661", "requirement": "R2", "verdict": "false" },
+    {
+      "item": "gold:pylint-dev__pylint-4661",
+      "requirement": "R1",
+      "verdict": "type-mismatched",
+      "text": "Change the location where pylint stores its data files from ~/.pylint.d to the XDG Base Directory Specification compliant location ($HOME/.local/share/<PROGRAM_NAME>)."
+    },
+    {
+      "item": "gold:pylint-dev__pylint-4661",
+      "requirement": "R2",
+      "verdict": "false",
+      "text": "Simply change the variables/constants for where these files are made and stored to the appropriate directory."
+    },
     {
       "item": "gold:pylint-dev__pylint-4661",
       "file": "pylint/config/__init__.py",
@@ -47,16 +87,129 @@
       "line": 855,
       "verdict": "false"
     },
-    { "item": "gold:scikit-learn__scikit-learn-11578", "requirement": "R1", "verdict": "false" },
-    { "item": "gold:scikit-learn__scikit-learn-11578", "requirement": "R2", "verdict": "false" },
-    { "item": "gold:scikit-learn__scikit-learn-11578", "requirement": "R3", "verdict": "false" },
+    {
+      "item": "gold:scikit-learn__scikit-learn-11578",
+      "requirement": "R1",
+      "verdict": "false",
+      "text": "Fix _log_reg_scoring_path so that the LogisticRegression instance used for scoring inherits the multi_class option of LogisticRegressionCV (e.g. LogisticRegression(fit_intercept=fit_intercept, multi_class=multi_class)), so scores for multinomial models use the softmax/multinomial predict_proba, not the OvR default."
+    },
+    {
+      "item": "gold:scikit-learn__scikit-learn-11578",
+      "requirement": "R2",
+      "verdict": "false",
+      "text": "The fix should not silently drop or alter other constructor parameters (e.g. fit_intercept) that were previously passed to LogisticRegression, since this changes behavior beyond what the issue requested."
+    },
+    {
+      "item": "gold:scikit-learn__scikit-learn-11578",
+      "requirement": "R3",
+      "verdict": "false",
+      "text": "PR author notes that other similar parameters (e.g. intercept_scaling) should also be passed to the LogisticRegression constructor for consistency."
+    },
     {
       "item": "gold:scikit-learn__scikit-learn-11578",
       "file": "sklearn/linear_model/logistic.py",
       "line": 925,
       "verdict": "undecidable"
     },
-    { "item": "gold:sphinx-doc__sphinx-10323", "requirement": "R1", "verdict": "undecidable" }
+    {
+      "item": "gold:sphinx-doc__sphinx-10323",
+      "requirement": "R1",
+      "verdict": "undecidable",
+      "text": "Leading whitespace in :prepend:/:append: content should be preserved in output (not stripped)."
+    },
+    {
+      "item": "gold:pylint-dev__pylint-4661",
+      "text": "Data storage should go to the XDG data directory: $HOME/.local/share/<PROGRAM_NAME>",
+      "verdict": "valid",
+      "note": "caveat: the reporter only guessed the files are data; label review",
+      "source": "E5 (sp-0.3.0) adjudication, training/laya/audit/swebench-gold-e5-adjudication-2026-09-28.md"
+    },
+    {
+      "item": "gold:scikit-learn__scikit-learn-11578",
+      "text": "The LogisticRegression instance created inside _log_reg_scoring_path should be initialized with multi_class=multi_class",
+      "verdict": "false",
+      "source": "E5 (sp-0.3.0) adjudication, training/laya/audit/swebench-gold-e5-adjudication-2026-09-28.md"
+    },
+    {
+      "item": "gold:scikit-learn__scikit-learn-11578",
+      "text": "The LogisticRegression instance should also retain fit_intercept=fit_intercept",
+      "verdict": "false",
+      "source": "E5 (sp-0.3.0) adjudication, training/laya/audit/swebench-gold-e5-adjudication-2026-09-28.md"
+    },
+    {
+      "item": "gold:sphinx-doc__sphinx-10323",
+      "text": "Leading whitespace in code examples should be preserved when using :prepend:/:append: options with literalinclude.",
+      "verdict": "undecidable",
+      "source": "E5 (sp-0.3.0) adjudication, training/laya/audit/swebench-gold-e5-adjudication-2026-09-28.md"
+    },
+    {
+      "item": "gold:matplotlib__matplotlib-14623",
+      "file": "lib/mpl_toolkits/mplot3d/axes3d.py",
+      "line": 623,
+      "verdict": "false",
+      "source": "E5 (sp-0.3.0) adjudication, training/laya/audit/swebench-gold-e5-adjudication-2026-09-28.md"
+    },
+    {
+      "item": "gold:matplotlib__matplotlib-14623",
+      "file": "lib/mpl_toolkits/mplot3d/axes3d.py",
+      "line": 684,
+      "verdict": "false",
+      "source": "E5 (sp-0.3.0) adjudication, training/laya/audit/swebench-gold-e5-adjudication-2026-09-28.md"
+    },
+    {
+      "item": "gold:matplotlib__matplotlib-14623",
+      "file": "lib/mpl_toolkits/mplot3d/axes3d.py",
+      "line": 745,
+      "verdict": "false",
+      "source": "E5 (sp-0.3.0) adjudication, training/laya/audit/swebench-gold-e5-adjudication-2026-09-28.md"
+    },
+    {
+      "item": "gold:matplotlib__matplotlib-14623",
+      "file": "lib/matplotlib/axes/_base.py",
+      "line": 3262,
+      "verdict": "false",
+      "source": "E5 (sp-0.3.0) adjudication, training/laya/audit/swebench-gold-e5-adjudication-2026-09-28.md"
+    },
+    {
+      "item": "gold:astropy__astropy-13236",
+      "text": "Add a FutureWarning telling the user to wrap data in Column",
+      "verdict": "undecidable",
+      "source": "E5 (sp-0.3.0) adjudication, training/laya/audit/swebench-gold-e5-adjudication-2026-09-28.md"
+    },
+    {
+      "item": "gold:psf__requests-1142",
+      "file": "requests/models.py",
+      "line": 395,
+      "verdict": "false",
+      "source": "E5 (sp-0.3.0) adjudication, training/laya/audit/swebench-gold-e5-adjudication-2026-09-28.md"
+    },
+    {
+      "item": "gold:pydata__xarray-3095",
+      "file": "xarray/core/indexing.py",
+      "line": 1243,
+      "verdict": "false",
+      "source": "E5 (sp-0.3.0) adjudication, training/laya/audit/swebench-gold-e5-adjudication-2026-09-28.md"
+    },
+    {
+      "item": "gold:pylint-dev__pylint-4551",
+      "file": "pylint/pyreverse/utils.py",
+      "line": 250,
+      "verdict": "false",
+      "source": "E5 (sp-0.3.0) adjudication, training/laya/audit/swebench-gold-e5-adjudication-2026-09-28.md"
+    },
+    {
+      "item": "gold:pylint-dev__pylint-4661",
+      "text": "Change the variables/constants for where these files (PYLINT_HOME) are stored to the appropriate XDG directory instead of $HOME/.pylint.d",
+      "verdict": "false",
+      "source": "E5 (sp-0.3.0) adjudication, training/laya/audit/swebench-gold-e5-adjudication-2026-09-28.md"
+    },
+    {
+      "item": "gold:pylint-dev__pylint-4661",
+      "file": "pylint/config/__init__.py",
+      "line": 68,
+      "verdict": "valid",
+      "source": "E5 (sp-0.3.0) adjudication, training/laya/audit/swebench-gold-e5-adjudication-2026-09-28.md"
+    }
   ],
   "prs": {
     "gold:astropy__astropy-12907": "clean",
@@ -74,5 +227,6 @@
     "gold:astropy__astropy-13236": "undecidable",
     "gold:scikit-learn__scikit-learn-11578": "undecidable",
     "gold:sphinx-doc__sphinx-10323": "undecidable"
-  }
+  },
+  "matching": "Requirement verdicts match findings by requirement text (word overlap >= 0.5), not by id: ids are renumbered when prompts change."
 }

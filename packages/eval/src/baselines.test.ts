@@ -9,6 +9,7 @@ import {
   singlePassFlags,
   singlePassMessage,
   reconcileSinglePass,
+  SINGLE_PASS_SYSTEM_V3,
 } from './baselines.js';
 import { SEEDS_ROOT, seedItems } from './mutations/generate.js';
 import { loadSeed } from './mutations/seed.js';
@@ -96,5 +97,11 @@ describe('single_pass baseline', () => {
     expect(r.unexplained).toEqual([{ file: 'a.py', lines: { start: 40, end: 44 }, behavioral: true }]);
     expect(singlePassFlags(out)).toBe(true);
     expect(singlePassFlags({ ...out, unexplained: [out.unexplained[0] as never] })).toBe(false);
+  });
+
+  it('E5: the product prompt changes only the extraction instruction; B.2 stays verbatim', () => {
+    expect(SINGLE_PASS_SYSTEM_V3).not.toBe(SINGLE_PASS_SYSTEM);
+    expect(SINGLE_PASS_SYSTEM_V3).toContain('only behavior the issue asks for');
+    expect(SINGLE_PASS_SYSTEM_V3.replace(/: only behavior[^\n]*?one option"\)/, '')).toBe(SINGLE_PASS_SYSTEM);
   });
 });

@@ -53,6 +53,7 @@ export async function evalCommand(argv: string[], io: Io, loadItems?: ItemLoader
       config: { type: 'string' },
       seeds: { type: 'string' },
       'baseline-variant': { type: 'string' },
+      'single-pass-prompt': { type: 'string' },
       ids: { type: 'string' },
       'no-log': { type: 'boolean', default: false },
     },
@@ -178,7 +179,9 @@ export async function evalCommand(argv: string[], io: Io, loadItems?: ItemLoader
         baselineOutcomes[variant] = outs;
         for (const it of run) {
           if (liveSpend() >= maxUsd) break;
-          outs.push(await runSinglePass(it, llm, variant));
+          outs.push(
+            await runSinglePass(it, llm, variant, values['single-pass-prompt'] === 'v3' ? 'v3' : 'b2'),
+          );
         }
         variants.push(baselineMetrics(outs, variant));
         const failed = outs.filter((o) => o.error);
