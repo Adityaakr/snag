@@ -356,9 +356,9 @@ export function writeReport(
     join(dir, 'metrics.json'),
     `${JSON.stringify({ info, metrics: m, realMeasurement: isRealMeasurement(info.mode) }, null, 2)}\n`,
   );
-  const dumps = new Set(worstItems(outcomes, outcomes.length).map((w) => w.outcome.item.id));
+  // Every item is dumped. Dumping only failures for large runs dropped passing items from re-scoring, which biased
+  // any comparison built from the dumps (found 2026-09-28: 15 of 128 C items were missing).
   for (const o of outcomes) {
-    if (!dumps.has(o.item.id) && outcomes.length > 50) continue;
     writeFileSync(
       join(dir, 'items', dumpName(o.item.id)),
       `${JSON.stringify({ id: o.item.id, labels: o.item.labels, comparison: o.comparison, result: o.result }, null, 2)}\n`,

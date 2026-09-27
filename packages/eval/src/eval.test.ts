@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -125,6 +125,35 @@ describe('calibration (11.5)', () => {
 });
 
 describe('reports (11.9) and stored corpora', () => {
+  it('dumps every item, passing or failing, even in runs over 50 items', async () => {
+    const base = goldenItems();
+    const { outcomes } = await runItems(base, { mode: 'scripted' });
+    // 54 outcomes, all passing (scripted golden): none may be dropped from the dumps.
+    const many = [0, 1, 2].flatMap((k) =>
+      outcomes.map((o) => ({ ...o, item: { ...o.item, id: `${o.item.id}#${k}` } })),
+    );
+    const root = mkdtempSync(join(tmpdir(), 'remit-dumps-'));
+    try {
+      const dir = writeReport(
+        root,
+        {
+          corpus: 'golden',
+          split: 'all',
+          mode: 'scripted',
+          gitSha: 'x',
+          startedAt: '2026-09-28T00:00:00.000Z',
+          jevModel: 'j',
+        },
+        computeMetrics(many),
+        many,
+      );
+      expect(many.length).toBeGreaterThan(50);
+      expect(readdirSync(join(dir, 'items'))).toHaveLength(many.length);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   it('writes markdown, HTML with Satoshi and reliability diagrams, metrics and dumps', async () => {
     const items = goldenItems().slice(0, 3);
     const { outcomes } = await runItems(items, { mode: 'scripted' });

@@ -67,6 +67,7 @@ export interface BaselineOutcome {
   predictedProblem: boolean;
   costUsd: number;
   latencyMs?: number;
+  cached?: boolean;
 }
 
 /** A PR is flagged when any requirement is a problem, or a behavioral change serves no requirement. */
@@ -117,6 +118,7 @@ export async function runSinglePass(
       predictedProblem: singlePassFlags(res.data),
       costUsd: res.costUsd,
       latencyMs: Date.now() - started,
+      cached: res.cached,
     };
   } catch (e) {
     return {
@@ -127,6 +129,8 @@ export async function runSinglePass(
       statuses: {},
       predictedProblem: false,
       costUsd: 0,
+      latencyMs: Date.now() - started,
+      cached: false,
     };
   }
 }

@@ -218,6 +218,7 @@ export async function evalCommand(argv: string[], io: Io, loadItems?: ItemLoader
             error: o.error ?? null,
             costUsd: o.costUsd,
             latencyMs: o.latencyMs ?? null,
+            cached: o.cached ?? null,
           }),
         )
         .join('\n') + '\n',
