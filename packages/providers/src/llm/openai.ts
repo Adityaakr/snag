@@ -174,7 +174,22 @@ export class OpenAiCompatibleLlm implements LlmProvider {
         },
         'llm call',
       );
-      return res.choices[0]?.message?.content ?? '';
+      const choice = res.choices[0];
+      const content = choice?.message?.content ?? '';
+      // Name the real cause instead of a JSON parse error on a cut-off body.
+      if (choice?.finish_reason === 'length')
+        throw new ProviderError(
+          'openai_compatible',
+          'overflow',
+          `the output hit max_tokens (${outT} output tokens) before the JSON was complete`,
+        );
+      if (!content.trim())
+        throw new ProviderError(
+          'openai_compatible',
+          'validation',
+          `empty completion (finish_reason ${choice?.finish_reason ?? 'none'}, ${outT} output tokens)`,
+        );
+      return content;
     };
     const { data, repairs } = await withRepair('openai_compatible', schema, messages, call);
     return {

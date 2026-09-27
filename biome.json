@@ -14,6 +14,7 @@
       "!schemas",
       "!eval/cassettes",
       "!eval/corpora",
+      "!eval/results",
       "!fixtures/cassettes",
       "!**/__tests__/fixtures",
       "!.claude/settings.json",

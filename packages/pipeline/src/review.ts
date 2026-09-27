@@ -155,9 +155,13 @@ export function reverseSignal(answers: AnyAnswers): ReverseSignal {
       bestId = k;
     }
   }
+  // A unit can implement several requirements at once; `serves` is single-choice, so a correct answer splits the
+  // mass between them (e.g. R3 0.45, R4 0.45, none 0.03). The evidence that the unit serves the requested work is
+  // P(some requirement) = 1 - P(none), not the top option alone (DECISIONS D37).
+  const anyRequirement = 'none' in probs ? 1 - (probs.none ?? 0) : best;
   return {
     servesTop: serves?.choice ?? 'none',
-    servesRequirementProbability: best,
+    servesRequirementProbability: anyRequirement,
     servesRequirementId: bestId,
     plumbing: answers.plumbing?.noul ?? 0,
     behaviorChange: answers.behavior_change?.noul ?? 0,

@@ -51,7 +51,7 @@ export interface ClaimSignal {
 export interface ReverseSignal {
   /** Top `serves` option: a requirement id or `none`. */
   servesTop: string;
-  /** Probability of the most likely requirement option (not `none`). */
+  /** Probability that the unit serves some requirement: 1 - P(none) (the most likely requirement is `servesRequirementId`). */
   servesRequirementProbability: number;
   servesRequirementId: string | null;
   plumbing: number;

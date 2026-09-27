@@ -4,7 +4,7 @@
  * else on the simulated Jev and are marked "not a real measurement". The test split runs only with --gate.
  */
 import { execFileSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { parseArgs } from 'node:util';
 import { BRAND } from '@remit/core';
@@ -52,6 +52,7 @@ export async function evalCommand(argv: string[], io: Io, loadItems?: ItemLoader
       mode: { type: 'string' },
       config: { type: 'string' },
       seeds: { type: 'string' },
+      'baseline-variant': { type: 'string' },
       ids: { type: 'string' },
       'no-log': { type: 'boolean', default: false },
     },
@@ -155,15 +156,26 @@ export async function evalCommand(argv: string[], io: Io, loadItems?: ItemLoader
       uncachedProviders?.llm ?? p?.llm,
     );
   const baselines: NonNullable<RunInfo['baselines']> = {};
+  const baselineOutcomes: Record<string, Awaited<ReturnType<typeof runSinglePass>>[]> = {};
   if (values.baseline) {
     const note = await baselineNote(values.baseline, io.env);
     const llm =
-      values.baseline === 'single_pass' ? (p?.llm ?? buildProviders(config, io.env).llm) : undefined;
+      values.baseline === 'single_pass'
+        ? (p?.llm ?? buildProviders(config, io.env, { budgetUsd: maxUsd }).llm)
+        : undefined;
     if (llm && note === 'available') {
       const run = items.slice(0, limit ?? items.length);
       const variants = [];
-      for (const variant of ['remit_requirements', 'own_requirements'] as const) {
-        const outs = [];
+      const wanted = values['baseline-variant'];
+      const all = ['remit_requirements', 'own_requirements'] as const;
+      if (wanted && !(all as readonly string[]).includes(wanted))
+        throw new CliError(
+          `--baseline-variant ${wanted} is not ${all.join(' or ')}.`,
+          'Omit it to run both.',
+        );
+      for (const variant of all.filter((v) => !wanted || v === wanted)) {
+        const outs: Awaited<ReturnType<typeof runSinglePass>>[] = [];
+        baselineOutcomes[variant] = outs;
         for (const it of run) {
           if (liveSpend() >= maxUsd) break;
           outs.push(await runSinglePass(it, llm, variant));
@@ -191,6 +203,26 @@ export async function evalCommand(argv: string[], io: Io, loadItems?: ItemLoader
     ...(mode === 'live' ? { liveSpendUsd: Number(liveSpend().toFixed(4)) } : {}),
   };
   const dir = writeReport(join(io.cwd, 'eval', 'reports'), info, metrics, outcomes);
+  // Per-item baseline predictions, so baseline metrics can be re-scored and audited (not only aggregated).
+  for (const [variant, outs] of Object.entries(baselineOutcomes)) {
+    mkdirSync(join(dir, 'baselines'), { recursive: true });
+    writeFileSync(
+      join(dir, 'baselines', `${values.baseline}.${variant}.jsonl`),
+      outs
+        .map((o) =>
+          JSON.stringify({
+            id: o.item.id,
+            labels: o.item.labels,
+            statuses: o.statuses,
+            output: o.output,
+            error: o.error ?? null,
+            costUsd: o.costUsd,
+            latencyMs: o.latencyMs ?? null,
+          }),
+        )
+        .join('\n') + '\n',
+    );
+  }
   const line = summaryLine(info, metrics, dir.replace(`${io.cwd}/`, ''));
   const experiments = join(io.cwd, '.agent', 'EXPERIMENTS.md');
   if (!values['no-log'] && existsSync(experiments)) appendEvalRun(experiments, line);

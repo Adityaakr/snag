@@ -66,6 +66,7 @@ export interface BaselineOutcome {
   statuses: Record<string, string>;
   predictedProblem: boolean;
   costUsd: number;
+  latencyMs?: number;
 }
 
 /** A PR is flagged when any requirement is a problem, or a behavioral change serves no requirement. */
@@ -83,6 +84,7 @@ export async function runSinglePass(
   variant: SinglePassVariant,
 ): Promise<BaselineOutcome> {
   let requirements: Requirement[] | undefined;
+  const started = Date.now();
   try {
     if (variant === 'remit_requirements') {
       const ex = await extractRequirements(item.input.issues, {
@@ -114,6 +116,7 @@ export async function runSinglePass(
       statuses,
       predictedProblem: singlePassFlags(res.data),
       costUsd: res.costUsd,
+      latencyMs: Date.now() - started,
     };
   } catch (e) {
     return {

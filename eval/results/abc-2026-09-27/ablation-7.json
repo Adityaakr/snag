@@ -1,0 +1,283 @@
+{
+ "ids": [
+  "py-retry-backoff.drop_requirement.R2",
+  "py-retry-backoff.flip_condition.R1",
+  "py-retry-backoff.partial_requirement.R2",
+  "rs-semver-compare.clean",
+  "rs-semver-compare.drop_requirement.R1",
+  "rs-semver-compare.drop_requirement.R3",
+  "rs-semver-compare.flip_condition.R3"
+ ],
+ "results": {
+  "A": {
+   "items": 7,
+   "seeds": 2,
+   "tStrict": 5,
+   "tAny": 6,
+   "tN": 6,
+   "fCorrect": 6,
+   "fAll": 6,
+   "falseOnDefective": 0,
+   "defective": 6,
+   "cleanFp": 0,
+   "clean": 1,
+   "entire": 6,
+   "abst": 0,
+   "reqs": 28,
+   "failed": 0,
+   "reqRight": 27,
+   "cost": 0.13205,
+   "lat": [
+    10246,
+    14276,
+    18771,
+    16041,
+    7,
+    15982,
+    12271
+   ],
+   "byOp": {
+    "drop_requirement": {
+     "n": 3,
+     "strict": 3,
+     "any": 3
+    },
+    "flip_condition": {
+     "n": 2,
+     "strict": 2,
+     "any": 2
+    },
+    "partial_requirement": {
+     "n": 1,
+     "strict": 0,
+     "any": 1
+    }
+   }
+  },
+  "A+facts": {
+   "items": 7,
+   "seeds": 2,
+   "tStrict": 5,
+   "tAny": 6,
+   "tN": 6,
+   "fCorrect": 6,
+   "fAll": 6,
+   "falseOnDefective": 0,
+   "defective": 6,
+   "cleanFp": 0,
+   "clean": 1,
+   "entire": 6,
+   "abst": 0,
+   "reqs": 28,
+   "failed": 0,
+   "reqRight": 27,
+   "cost": 0.13205,
+   "lat": [
+    10246,
+    14276,
+    18771,
+    16041,
+    7,
+    15982,
+    12271
+   ],
+   "byOp": {
+    "drop_requirement": {
+     "n": 3,
+     "strict": 3,
+     "any": 3
+    },
+    "flip_condition": {
+     "n": 2,
+     "strict": 2,
+     "any": 2
+    },
+    "partial_requirement": {
+     "n": 1,
+     "strict": 0,
+     "any": 1
+    }
+   }
+  },
+  "+units": {
+   "items": 7,
+   "seeds": 2,
+   "tStrict": 5,
+   "tAny": 6,
+   "tN": 6,
+   "fCorrect": 6,
+   "fAll": 6,
+   "falseOnDefective": 0,
+   "defective": 6,
+   "cleanFp": 0,
+   "clean": 1,
+   "entire": 6,
+   "abst": 0,
+   "reqs": 28,
+   "failed": 0,
+   "reqRight": 27,
+   "cost": 0.13205,
+   "lat": [
+    10246,
+    14276,
+    18771,
+    16041,
+    7,
+    15982,
+    12271
+   ],
+   "byOp": {
+    "drop_requirement": {
+     "n": 3,
+     "strict": 3,
+     "any": 3
+    },
+    "flip_condition": {
+     "n": 2,
+     "strict": 2,
+     "any": 2
+    },
+    "partial_requirement": {
+     "n": 1,
+     "strict": 0,
+     "any": 1
+    }
+   }
+  },
+  "+model_tests": {
+   "items": 7,
+   "seeds": 2,
+   "tStrict": 5,
+   "tAny": 6,
+   "tN": 6,
+   "fCorrect": 6,
+   "fAll": 6,
+   "falseOnDefective": 0,
+   "defective": 6,
+   "cleanFp": 0,
+   "clean": 1,
+   "entire": 6,
+   "abst": 0,
+   "reqs": 28,
+   "failed": 0,
+   "reqRight": 27,
+   "cost": 0.13205,
+   "lat": [
+    10246,
+    14276,
+    18771,
+    16041,
+    7,
+    15982,
+    12271
+   ],
+   "byOp": {
+    "drop_requirement": {
+     "n": 3,
+     "strict": 3,
+     "any": 3
+    },
+    "flip_condition": {
+     "n": 2,
+     "strict": 2,
+     "any": 2
+    },
+    "partial_requirement": {
+     "n": 1,
+     "strict": 0,
+     "any": 1
+    }
+   }
+  },
+  "B_full": {
+   "items": 7,
+   "seeds": 2,
+   "tStrict": 4,
+   "tAny": 6,
+   "tN": 6,
+   "fCorrect": 6,
+   "fAll": 6,
+   "falseOnDefective": 0,
+   "defective": 6,
+   "cleanFp": 0,
+   "clean": 1,
+   "entire": 4,
+   "abst": 1,
+   "reqs": 28,
+   "failed": 0,
+   "reqRight": 25,
+   "cost": 0,
+   "lat": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "byOp": {
+    "drop_requirement": {
+     "n": 3,
+     "strict": 2,
+     "any": 3
+    },
+    "flip_condition": {
+     "n": 2,
+     "strict": 2,
+     "any": 2
+    },
+    "partial_requirement": {
+     "n": 1,
+     "strict": 0,
+     "any": 1
+    }
+   }
+  },
+  "C_laya_v1": {
+   "items": 7,
+   "seeds": 2,
+   "tStrict": 0,
+   "tAny": 0,
+   "tN": 6,
+   "fCorrect": 0,
+   "fAll": 2,
+   "falseOnDefective": 2,
+   "defective": 6,
+   "cleanFp": 0,
+   "clean": 1,
+   "entire": 0,
+   "abst": 5,
+   "reqs": 28,
+   "failed": 0,
+   "reqRight": 17,
+   "cost": 0,
+   "lat": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "byOp": {
+    "drop_requirement": {
+     "n": 3,
+     "strict": 0,
+     "any": 0
+    },
+    "flip_condition": {
+     "n": 2,
+     "strict": 0,
+     "any": 0
+    },
+    "partial_requirement": {
+     "n": 1,
+     "strict": 0,
+     "any": 0
+    }
+   }
+  }
+ }
+}

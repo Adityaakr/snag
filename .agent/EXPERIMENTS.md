@@ -172,3 +172,37 @@ No keys: task-list extraction (9 requirements), no Jev verdicts; 175 units. Code
 - **Resumable training:** atomic latest.pt (trainable weights, optimizer, scheduler, RNG, epoch, next batch, batch order, step, best) every --ckpt-every steps, plus best.pt. Earlier experiments are never overwritten.
   - Tested: a run was killed (kill -9) at step 6, batch 12 of 95, then resumed with an identical dataset hash, continuing from batch 12 to step 48.
 - **Measured throughput** (focused keys, short inputs, accum 2): about 3.5 s per optimizer step on the Apple M5 GPU.
+
+## 2026-09-27 E2 Stage A Laya diagnostic (fixed, adjudicated data; 4 core questions; short inputs; 2 epochs)
+- **Hypothesis:** with the leakage removed and labels adjudicated, the verified recipe learns to discriminate on held-out seeds.
+- **Budget:** local only, 74 optimizer steps (about 25 min under contention).
+- **Result (held-out val, natural frequencies), as shipped then epoch 1 (best):**
+  - balanced accuracy 0.447 to 0.478;
+  - missing recall (coverage=0) 0/43 to 0/43;
+  - conflict=no recall 0.00 to 0.08, so conflict false positives on 92% of negatives;
+  - asserts_as_stated=no 0/45 to 0/45;
+  - coverage twins 0/39 to 0/39, original coverage 0.76 to 0.88.
+  - NLL 1.31 to 0.87: only per-question priors were learned.
+- **Decision:** FAILED the gate (useful discrimination on original held-out cases, acceptable false positives). Nothing suggests more training would help. Laya training is PAUSED; the run is preserved in .laya/runs/remit-laya-stageA (manifest, best.pt, latest.pt) and .laya/remit-laya-stageA.
+
+## 2026-09-27 E3 A vs B vs C on identical items (scripts/eval/compare.mjs, eval/results/abc-2026-09-27)
+- Held-out mutation seeds, 27 items (2 seeds). A single_pass (Sonnet 5) vs C Laya v1:
+  - target flagged 21/23 vs 3/23; strict type 16/23 vs 3/23;
+  - finding precision 21/23 vs 3/11; clean FP 0/4 vs 1/4;
+  - status correctness 101/108 vs 64/108; entire review 19/27 vs 1/27.
+- A cost $0.029 per review; latency p50 17.2 s, p95 47.5 s. First-attempt truncated-output failures 10/29, all recovered on one retry; the adapter now names the finish reason.
+- **7-item subset** (the only items with B answers; B on all 27 would cost about $3.50, over budget):
+  - A: strict 5/6, precision 6/6, entire 6/7;
+  - B after D37: strict 4/6, precision 6/6, entire 4/7;
+  - B before D37: precision 6/9 (3 false unit findings on client/retry.py);
+  - C: 0/6.
+- **Ablation on the 27 items:**
+  - A plus deterministic facts adds 2 strict catches (skip_test, weaken_assertion) and 0 false findings, at $0. KEEP.
+  - B's unit-role and model test-integrity components added 0 findings on the 7-item subset. They are not exercised there (no inject or weaken items); not measured on the 27 (budget).
+  - Requirement decomposition (A own vs remit requirements) has aggregate PR-level results only (both perfect on 7 items); not separable with the saved predictions.
+- **A on 30 SWE-bench Verified gold patches** (label clean; 11 repos, at most 3 per repo): flagged 9/30 (12 requirement findings, 7 unexplained-unit findings). Unadjudicated: PAIChecker reports 13.6% of gold patches misaligned, so some flags may be real.
+- **A's errors cluster on one seed** (py-retry-backoff, 8 of 8 imperfect reviews):
+  - missing reported as contradicted (4);
+  - partial and unwire reported as contradicted (2, both audit-disputed);
+  - "unexplained" on weakened test files (2; a real defect but the wrong finding type);
+  - false contradicted and partial on done requirements (2).

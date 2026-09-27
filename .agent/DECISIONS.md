@@ -334,3 +334,8 @@ Append-only. Each entry: date, decision, alternatives, why. Deviations from BUIL
 ## 2026-09-27 D36 single_pass line ranges as objects
 - The `single_pass` baseline schema used a two-element tuple for line ranges. zod renders that as JSON Schema `prefixItems`, which the OpenAI-compatible structured-output path rejects (HTTP 400), so every baseline call failed (7/7 errors).
 - Line ranges are now `{start, end}` objects, and the prompt version is bumped to `sp-0.2.0`. The Appendix B.2 prompt text is unchanged.
+
+## 2026-09-27 D37 A unit serves the requested work with P = 1 - P(none)
+- Found on client/retry.py (py-retry-backoff). One hunk implements R1, R3 and R4. The single-choice `serves` answer correctly split (R3 0.45, R4 0.45, none 0.03). The role rule read only the top option (0.45 < 0.55), so the unit became "unexplained behavioral" (behavior_change 0.97), a false P1 finding on every defective PR of that seed.
+- `servesRequirementProbability` is now 1 - P(none) when a `none` option exists; `servesRequirementId` stays the top requirement. The guard "top answer is none means not implements" is unchanged, so the 6.7 threshold-edge tests hold.
+- Effect on the 7-item held-out subset, with answers replayed from cache and only the verdict logic changed: B finding precision 6/9 to 6/6, false findings on defective PRs 3 to 0, target recall unchanged. Regression test: packages/pipeline/src/reverse-signal.test.ts.

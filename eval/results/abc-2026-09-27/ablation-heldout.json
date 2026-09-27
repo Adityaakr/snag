@@ -1,0 +1,303 @@
+{
+ "ids": [
+  "py-retry-backoff.claim_all_done.R1",
+  "py-retry-backoff.clean",
+  "py-retry-backoff.drop_requirement.R1",
+  "py-retry-backoff.drop_requirement.R2",
+  "py-retry-backoff.drop_requirement.R3",
+  "py-retry-backoff.drop_requirement.R4",
+  "py-retry-backoff.flip_condition.R1",
+  "py-retry-backoff.flip_condition.R2",
+  "py-retry-backoff.inject_config.client_config.py",
+  "py-retry-backoff.inject_refactor.client_urls.py",
+  "py-retry-backoff.partial_requirement.R2",
+  "py-retry-backoff.unwire.R1",
+  "rs-semver-compare.claim_all_done.R1",
+  "rs-semver-compare.clean",
+  "rs-semver-compare.drop_requirement.R1",
+  "rs-semver-compare.drop_requirement.R2",
+  "rs-semver-compare.drop_requirement.R3",
+  "rs-semver-compare.drop_requirement.R4",
+  "rs-semver-compare.flip_condition.R2",
+  "rs-semver-compare.flip_condition.R3",
+  "rs-semver-compare.flip_condition.R4",
+  "rs-semver-compare.inject_config.src_policy.rs",
+  "rs-semver-compare.inject_refactor.src_policy.rs",
+  "rs-semver-compare.partial_requirement.R2",
+  "rs-semver-compare.skip_test.src_version.rs",
+  "rs-semver-compare.unwire.R1",
+  "rs-semver-compare.weaken_assertion.src_version.rs"
+ ],
+ "results": {
+  "A": {
+   "items": 27,
+   "seeds": 2,
+   "tStrict": 16,
+   "tAny": 21,
+   "tN": 23,
+   "fCorrect": 21,
+   "fAll": 23,
+   "falseOnDefective": 2,
+   "defective": 23,
+   "cleanFp": 0,
+   "clean": 4,
+   "entire": 19,
+   "abst": 0,
+   "reqs": 108,
+   "failed": 0,
+   "reqRight": 101,
+   "cost": 0.7873880000000001,
+   "lat": [
+    14585,
+    9702,
+    1,
+    10246,
+    18221,
+    11696,
+    14276,
+    15504,
+    21039,
+    27670,
+    18771,
+    59143,
+    17241,
+    16041,
+    7,
+    17454,
+    15982,
+    33495,
+    18695,
+    12271,
+    37138,
+    17215,
+    14569,
+    20648,
+    47533,
+    51073,
+    44689
+   ],
+   "byOp": {
+    "claim_all_done": {
+     "n": 2,
+     "strict": 1,
+     "any": 2
+    },
+    "drop_requirement": {
+     "n": 8,
+     "strict": 6,
+     "any": 8
+    },
+    "flip_condition": {
+     "n": 5,
+     "strict": 5,
+     "any": 5
+    },
+    "inject_config": {
+     "n": 2,
+     "strict": 2,
+     "any": 2
+    },
+    "partial_requirement": {
+     "n": 2,
+     "strict": 1,
+     "any": 2
+    },
+    "unwire": {
+     "n": 2,
+     "strict": 1,
+     "any": 2
+    },
+    "skip_test": {
+     "n": 1,
+     "strict": 0,
+     "any": 0
+    },
+    "weaken_assertion": {
+     "n": 1,
+     "strict": 0,
+     "any": 0
+    }
+   }
+  },
+  "A+deterministic_facts": {
+   "items": 27,
+   "seeds": 2,
+   "tStrict": 18,
+   "tAny": 23,
+   "tN": 23,
+   "fCorrect": 23,
+   "fAll": 25,
+   "falseOnDefective": 2,
+   "defective": 23,
+   "cleanFp": 0,
+   "clean": 4,
+   "entire": 21,
+   "abst": 0,
+   "reqs": 108,
+   "failed": 0,
+   "reqRight": 101,
+   "cost": 0.7873880000000001,
+   "lat": [
+    14585,
+    9702,
+    1,
+    10246,
+    18221,
+    11696,
+    14276,
+    15504,
+    21039,
+    27670,
+    18771,
+    59143,
+    17241,
+    16041,
+    7,
+    17454,
+    15982,
+    33495,
+    18695,
+    12271,
+    37138,
+    17215,
+    14569,
+    20648,
+    47533,
+    51073,
+    44689
+   ],
+   "byOp": {
+    "claim_all_done": {
+     "n": 2,
+     "strict": 1,
+     "any": 2
+    },
+    "drop_requirement": {
+     "n": 8,
+     "strict": 6,
+     "any": 8
+    },
+    "flip_condition": {
+     "n": 5,
+     "strict": 5,
+     "any": 5
+    },
+    "inject_config": {
+     "n": 2,
+     "strict": 2,
+     "any": 2
+    },
+    "partial_requirement": {
+     "n": 2,
+     "strict": 1,
+     "any": 2
+    },
+    "unwire": {
+     "n": 2,
+     "strict": 1,
+     "any": 2
+    },
+    "skip_test": {
+     "n": 1,
+     "strict": 1,
+     "any": 1
+    },
+    "weaken_assertion": {
+     "n": 1,
+     "strict": 1,
+     "any": 1
+    }
+   }
+  },
+  "C_laya_v1": {
+   "items": 27,
+   "seeds": 2,
+   "tStrict": 3,
+   "tAny": 3,
+   "tN": 23,
+   "fCorrect": 3,
+   "fAll": 11,
+   "falseOnDefective": 7,
+   "defective": 23,
+   "cleanFp": 1,
+   "clean": 4,
+   "entire": 1,
+   "abst": 26,
+   "reqs": 108,
+   "failed": 2,
+   "reqRight": 64,
+   "cost": 0,
+   "lat": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "byOp": {
+    "claim_all_done": {
+     "n": 2,
+     "strict": 0,
+     "any": 0
+    },
+    "drop_requirement": {
+     "n": 8,
+     "strict": 0,
+     "any": 0
+    },
+    "flip_condition": {
+     "n": 5,
+     "strict": 0,
+     "any": 0
+    },
+    "inject_config": {
+     "n": 2,
+     "strict": 0,
+     "any": 0
+    },
+    "partial_requirement": {
+     "n": 2,
+     "strict": 0,
+     "any": 0
+    },
+    "unwire": {
+     "n": 2,
+     "strict": 1,
+     "any": 1
+    },
+    "skip_test": {
+     "n": 1,
+     "strict": 1,
+     "any": 1
+    },
+    "weaken_assertion": {
+     "n": 1,
+     "strict": 1,
+     "any": 1
+    }
+   }
+  }
+ }
+}
