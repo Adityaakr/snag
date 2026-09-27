@@ -20,6 +20,9 @@ export interface RunInfo {
   jevModel: string;
   stoppedForBudget?: boolean;
   baselines?: Record<string, { note: string; variants?: BaselineMetrics[] }>;
+  /** Reviews with provider, budget or overflow failures; their verdicts are not a complete measurement. */
+  incompleteItems?: number;
+  liveSpendUsd?: number;
 }
 
 const f2 = (x: number) => x.toFixed(2);
@@ -367,7 +370,7 @@ export function writeReport(
 /** The one-line summary appended to .agent/EXPERIMENTS.md after each run. */
 export function summaryLine(info: RunInfo, m: Metrics, dir: string): string {
   const tag = isRealMeasurement(info.mode) ? '' : ' (not a real measurement)';
-  return `- ${info.startedAt} ${info.corpus}/${info.split} ${info.mode}${tag}: ${m.passed}/${m.items} items correct, requirement F1 ${f2(m.requirement.f1)}, PR recall ${f2(m.pr.recall)}, false alarms ${f2(m.pr.falseAlarmRate)}, P0 precision ${f2(m.p0Precision.value)}, cost $${m.ops.costTotal.toFixed(4)}. Report: ${dir}`;
+  return `- ${info.startedAt} ${info.corpus}/${info.split} ${info.mode}${tag}: ${m.passed}/${m.items} items correct, requirement F1 ${f2(m.requirement.f1)}, PR recall ${f2(m.pr.recall)}, false alarms ${f2(m.pr.falseAlarmRate)}, P0 precision ${f2(m.p0Precision.value)}, cost $${(info.liveSpendUsd ?? m.ops.costTotal).toFixed(4)}${info.incompleteItems ? `, INCOMPLETE ${info.incompleteItems}/${m.items} (provider or budget failures)` : ''}. Report: ${dir}`;
 }
 
 /** Re-renders report.md and report.html for a saved run from metrics.json and its item dumps (`remit report`). */

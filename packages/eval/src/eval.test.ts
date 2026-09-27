@@ -7,7 +7,7 @@ import { goldenItems } from './corpora/golden.js';
 import { loadCorpus, saveItem } from './corpora/files.js';
 import { computeMetrics } from './metrics.js';
 import { renderReportHtml, renderReportMarkdown, summaryLine, worstItems, writeReport } from './report.js';
-import { runItem, runItems } from './runner.js';
+import { failureWarnings, runItem, runItems } from './runner.js';
 
 describe('golden corpus (corpus D)', () => {
   it('loads all 18 scenarios with labels and scripts, and every one passes', async () => {
@@ -38,6 +38,20 @@ describe('golden corpus (corpus D)', () => {
     // Checks happen before each batch of 2: 0.4 and 0.8 pass, 1.2 stops.
     expect(outcomes).toHaveLength(4);
     expect(stoppedForBudget).toBe(true);
+  });
+
+  it('marks reviews with provider or budget failures as incomplete, and ordinary notes as complete', async () => {
+    const [item] = goldenItems();
+    if (!item) throw new Error('no golden items');
+    const out = await runItem(item, { mode: 'scripted' });
+    expect(out.incomplete).toBeUndefined();
+    const warnings = [
+      'forward R1: openai_compatible: budget of $0.50 reached ($0.51 spent); stopping further calls',
+      'Budget reached: openai_compatible: budget of $0.50 reached',
+      'reverse U2: jev: circuit open after 5 consecutive failures; failing fast',
+      'This PR edits .remit.yml; the change applies after it is merged into the default branch.',
+    ];
+    expect(failureWarnings({ ...out.result, warnings })).toHaveLength(3);
   });
 
   it('labels PRs with expected problems, including high-severity facts, as problem', () => {

@@ -47,6 +47,16 @@ export interface ItemOutcome {
   comparison: Comparison;
   latencyMs: number;
   costUsd: number;
+  /** Provider, budget or overflow failures during the review: its verdicts are not a complete measurement. */
+  incomplete?: string[];
+}
+
+/** Warnings that mean a provider call failed (provider errors are prefixed with the provider name) or a budget cut it. */
+const FAILURE = /\b(?:jev|openai_compatible|anthropic):|Budget reached|could not shrink/;
+
+/** The warnings of a review that make it incomplete. */
+export function failureWarnings(r: ReviewResult): string[] {
+  return r.warnings.filter((w) => FAILURE.test(w));
 }
 
 function unitOf(r: ReviewResult, file: string, symbol?: string) {
@@ -151,12 +161,14 @@ export async function runItem(item: EvalItem, opts: RunOptions): Promise<ItemOut
       : {}),
     now: () => 0,
   });
+  const failures = failureWarnings(result);
   return {
     item,
     result,
     comparison: compare(item, result),
     latencyMs: Date.now() - started,
     costUsd: costs.usage.costUsd,
+    ...(failures.length ? { incomplete: failures } : {}),
   };
 }
 

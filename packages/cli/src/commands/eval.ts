@@ -115,11 +115,16 @@ export async function evalCommand(argv: string[], io: Io, loadItems?: ItemLoader
   const maxUsd = Number(io.env.EVAL_MAX_USD ?? 20);
   const p =
     mode === 'live'
-      ? buildProviders(config, {
-          ...io.env,
-          REMIT_CACHE_MODE: io.env.REMIT_CACHE_MODE ?? 'replay_or_live',
-          REMIT_CACHE_DIR: io.env.REMIT_CACHE_DIR ?? join(io.cwd, 'eval', 'cassettes'),
-        })
+      ? buildProviders(
+          config,
+          {
+            ...io.env,
+            REMIT_CACHE_MODE: io.env.REMIT_CACHE_MODE ?? 'replay_or_live',
+            REMIT_CACHE_DIR: io.env.REMIT_CACHE_DIR ?? join(io.cwd, 'eval', 'cassettes'),
+          },
+          // One run-wide provider tracker: its limit is the run's cap, not the per-review budget from the config.
+          { budgetUsd: maxUsd },
+        )
       : undefined;
   if (mode === 'live' && !p?.jev)
     throw new CliError(
@@ -138,7 +143,9 @@ export async function evalCommand(argv: string[], io: Io, loadItems?: ItemLoader
   const metrics = computeMetrics(outcomes);
   // Stability (11.4): the second extraction must not come from the cassette the first one wrote.
   const uncachedProviders =
-    mode === 'live' ? buildProviders(config, { ...io.env, REMIT_CACHE_MODE: 'live' }) : undefined;
+    mode === 'live'
+      ? buildProviders(config, { ...io.env, REMIT_CACHE_MODE: 'live' }, { budgetUsd: maxUsd })
+      : undefined;
   const liveSpend = () => (p?.costs.usage.costUsd ?? 0) + (uncachedProviders?.costs.usage.costUsd ?? 0);
   // The stability re-extraction spends too; it runs only while the cap has room.
   if (liveSpend() < maxUsd)
@@ -162,6 +169,11 @@ export async function evalCommand(argv: string[], io: Io, loadItems?: ItemLoader
           outs.push(await runSinglePass(it, llm, variant));
         }
         variants.push(baselineMetrics(outs, variant));
+        const failed = outs.filter((o) => o.error);
+        if (failed.length)
+          io.out(
+            `${values.baseline} ${variant}: ${failed.length}/${outs.length} errors (first: ${failed[0]?.error})\n`,
+          );
       }
       baselines[values.baseline] = { note: `live (${llm.model})`, variants };
     } else baselines[values.baseline] = { note };
@@ -174,6 +186,7 @@ export async function evalCommand(argv: string[], io: Io, loadItems?: ItemLoader
     startedAt: new Date().toISOString(),
     jevModel: mode === 'simulated' ? 'simulated-jev' : config.jev.model,
     stoppedForBudget: stoppedForBudget || liveSpend() >= maxUsd,
+    incompleteItems: outcomes.filter((o) => o.incomplete).length,
     baselines,
     ...(mode === 'live' ? { liveSpendUsd: Number(liveSpend().toFixed(4)) } : {}),
   };
