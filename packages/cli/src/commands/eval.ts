@@ -51,6 +51,8 @@ export async function evalCommand(argv: string[], io: Io, loadItems?: ItemLoader
       gate: { type: 'boolean', default: false },
       mode: { type: 'string' },
       config: { type: 'string' },
+      seeds: { type: 'string' },
+      ids: { type: 'string' },
       'no-log': { type: 'boolean', default: false },
     },
   });
@@ -90,10 +92,16 @@ export async function evalCommand(argv: string[], io: Io, loadItems?: ItemLoader
       `--mode ${mode} is not scripted, simulated or live.`,
       'Omit --mode to pick automatically.',
     );
-  const items =
+  const loaded =
     corpus === 'golden'
       ? goldenItems()
       : (loadItems ?? (await import('@remit/eval')).loadCorpus)(corpus, split);
+  const items = selectItems(loaded, values.seeds, values.ids);
+  if (loaded.length && !items.length)
+    throw new CliError(
+      `No ${corpus} (${split}) items match --seeds ${values.seeds ?? '(any)'} --ids ${values.ids ?? '(any)'}.`,
+      'Check the seed ids (eval/corpora/mutations/seeds) and item id suffixes.',
+    );
   if (!items.length)
     throw new CliError(
       `Corpus ${corpus} (${split}) has no items.`,
@@ -186,4 +194,34 @@ export async function evalCommand(argv: string[], io: Io, loadItems?: ItemLoader
     return failed.length ? EXIT.gateFailure : EXIT.ok;
   }
   return stoppedForBudget ? EXIT.budget : EXIT.ok;
+}
+
+/**
+ * Explicit item selection: `--seeds a,b` keeps items whose seed is listed, `--ids x,y` keeps items whose id ends with
+ * one of the given suffixes. Both together must match. An empty result is an error, never a silent empty run.
+ */
+export function selectItems<T extends { id: string; seedId?: string }>(
+  items: readonly T[],
+  seeds?: string,
+  ids?: string,
+): T[] {
+  const seedSet = seeds
+    ? new Set(
+        seeds
+          .split(',')
+          .map((x) => x.trim())
+          .filter(Boolean),
+      )
+    : null;
+  const idList = ids
+    ? ids
+        .split(',')
+        .map((x) => x.trim())
+        .filter(Boolean)
+    : null;
+  return items.filter(
+    (it) =>
+      (!seedSet || (it.seedId !== undefined && seedSet.has(it.seedId))) &&
+      (!idList || idList.some((suffix) => it.id.endsWith(suffix))),
+  );
 }
