@@ -162,3 +162,13 @@ No keys: task-list extraction (9 requirements), no Jev verdicts; 175 units. Code
 - **`refMatches` substring bug** (`get` matches `get_bool`).
 - **Evidence targets** spread over every implementing unit although the question asks for the most direct one.
 - **Benchmark registry:** no public benchmark scores requirement status. PAIChecker (PR-issue misalignment, manual labels, MIT) is the closest fit and contradicts corpus A's "gold is clean" on 52 of 500 gold patches. SWE-bench scores cannot be claimed for a reviewer.
+
+## 2026-09-27 Trainer repairs (evaluation semantics, manifests, resumable training)
+
+- **Evidence-style questions** (forward.evidence, tests.test_evidence, reverse.serves) are scored as "any one positive-weight unit is correct"; the loss stays distributional.
+- **Encoding writes an immutable manifest** (.laya/runs/<name>/manifest.json(l)): per-example source, seed, kind (original, twin, padded), input and target hashes, length, and class, plus tokenizer sha1, laya version, records sha1, config, rejection reasons and per-class counts. The dataset sha1 guards resumes.
+- **Nothing is truncated.** Rejections are counted by reason. The trainer refuses records from test-split seeds.
+- **Validation is reported by kind** (original, twin, padded) next to per-class recall.
+- **Resumable training:** atomic latest.pt (trainable weights, optimizer, scheduler, RNG, epoch, next batch, batch order, step, best) every --ckpt-every steps, plus best.pt. Earlier experiments are never overwritten.
+  - Tested: a run was killed (kill -9) at step 6, batch 12 of 95, then resumed with an identical dataset hash, continuing from batch 12 to step 48.
+- **Measured throughput** (focused keys, short inputs, accum 2): about 3.5 s per optimizer step on the Apple M5 GPU.

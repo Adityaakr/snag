@@ -60,6 +60,8 @@ p.add_argument("--overfit", type=int, default=0, help="mechanics check: train an
 p.add_argument("--init", default="", help="start from this checkpoint directory instead of the shipped one")
 p.add_argument("--eval-only", action="store_true", help="evaluate the (--init) checkpoint on validation and exit")
 p.add_argument("--export", default="", help="write the final train/val examples (after twins, balancing and long-context padding) to this directory and exit")
+p.add_argument("--ckpt-every", type=int, default=25, help="optimizer steps between resumable checkpoints")
+p.add_argument("--resume", action="store_true", help="resume from .laya/runs/<name>/latest.pt")
 p.add_argument("--name", default="remit-laya-v1")
 p.add_argument("--seed", type=int, default=7)
 args = p.parse_args()
@@ -73,6 +75,15 @@ model = agent.model.float()
 
 # ---------------------------------------------------------------- data
 raw = [json.loads(l) for l in open(os.path.join(ROOT, ".laya/data/records.jsonl")) if l.strip()]
+# Frozen final test: refuse any record from a test-split seed (they must never reach training or validation).
+TEST_SEEDS = {
+    json.load(open(os.path.join(dp, "seed.json")))["id"]
+    for dp in (os.path.join(ROOT, "eval/corpora/mutations/seeds", x) for x in os.listdir(os.path.join(ROOT, "eval/corpora/mutations/seeds")))
+    if os.path.exists(os.path.join(dp, "seed.json")) and json.load(open(os.path.join(dp, "seed.json"))).get("split") == "test"
+}
+leaked = sorted({r["seedId"] for r in raw} & TEST_SEEDS)
+if leaked:
+    raise SystemExit(f"refusing to train: records from test seeds {leaked}")
 seen, recs = set(), []
 for r in raw:
     k = hashlib.sha1(
@@ -283,6 +294,7 @@ def with_distractors(r, split, target_tokens):
             r2["target"]["probabilities"][d["id"]] = 0.0
     if not n:
         return None
+    r2["padded"] = True
     if q["type"] == "choice" and "none" in q["criteria"]:
         # Keep existing option text for original units; renumber() rebuilds labels for all of them.
         pass
@@ -306,12 +318,18 @@ def expand(rows, split):
     return out
 
 
+REJECTED = defaultdict(int)
+ANY_OF = {"forward.evidence", "tests.test_evidence", "reverse.serves"}
+
+
 def encode(r):
+    """One encoded example, or None with the reason counted in REJECTED. Nothing is ever truncated."""
     q = Agent._to_internal(r["question"])
     ids = build_sequence(tok, r["state"], q, args.max_len, args.head_max_len)
     seq, markers = ids
     st = state_tokens(r["state"])
     if st + (markers[-1] if markers else 0) + 8 > args.max_len:
+        REJECTED["state would be truncated"] += 1
         return None  # would be truncated: never train on cut states
     t = r["target"]
     if q["t"] == "noul":
@@ -320,10 +338,24 @@ def encode(r):
         target = [t["probabilities"].get(k, 0.0) for k in q["crit"].keys()]
     else:
         target = [t["probabilities"].get(str(i), 0.0) for i in range(len(q["crit"]))]
-    if len(markers) != len(target) or sum(target) <= 0:
+    if len(markers) != len(target):
+        REJECTED["options exceed the head budget"] += 1
+        return None
+    if sum(target) <= 0:
+        REJECTED["empty target"] += 1
         return None
     s = sum(target)
+    key = f"{r['call']}.{r['qid']}"
+    kind = "twin" if r.get("twin") else ("padded" if r.get("padded") else "original")
     return {
+        "src": r["itemId"],
+        "seed": r["seedId"],
+        "kind": kind,
+        # Evidence-style questions: any one unit with positive target weight is a correct pick (the oracle spreads
+        # weight over interchangeable implementing units); correctness is scored as membership, loss stays distributional.
+        "anyof": key in ANY_OF,
+        "ihash": hashlib.sha1(json.dumps(seq).encode()).hexdigest()[:16],
+        "thash": hashlib.sha1(json.dumps([round(x / s, 6) for x in target]).encode()).hexdigest()[:16],
         "ids": seq,
         "markers": markers,
         "qtype": QTYPES[q["t"]],
@@ -363,6 +395,35 @@ if args.overfit:
     val_items = list(train_items)  # mechanics only: this measures memorization, never generalization
 print(f"records {len(raw)} unique {len(recs)} capped {len(data)} | train {len(train_items)} val {len(val_items)} "
       f"| encode {time.time() - t0:.0f}s", flush=True)
+RUN_DIR = os.path.join(ROOT, ".laya", "runs", args.name)
+os.makedirs(RUN_DIR, exist_ok=True)
+tok_file = os.path.join(SNAP, "tokenizer", "tokenizer.json")
+import laya as _laya
+
+MANIFEST = {
+    "name": args.name,
+    "tokenizer_sha1": hashlib.sha1(open(tok_file, "rb").read()).hexdigest() if os.path.exists(tok_file) else None,
+    "laya_version": getattr(_laya, "__version__", "unknown"),
+    "records_sha1": hashlib.sha1(open(os.path.join(ROOT, ".laya/data/records.jsonl"), "rb").read()).hexdigest(),
+    "config": {k: v for k, v in vars(args).items()},
+    "rejected": dict(REJECTED),
+    "counts": {
+        split: {
+            f"{e['key']}={e['cls']}|{e['kind']}": sum(1 for x in items if (x["key"], x["cls"], x["kind"]) == (e["key"], e["cls"], e["kind"]))
+            for e in items
+        }
+        for split, items in (("train", train_items), ("val", val_items))
+    },
+}
+MANIFEST["dataset_sha1"] = hashlib.sha1(
+    json.dumps([(e["ihash"], e["thash"]) for e in train_items + val_items]).encode()
+).hexdigest()
+with open(os.path.join(RUN_DIR, "manifest.jsonl"), "w") as fh:
+    for split, items in (("train", train_items), ("val", val_items)):
+        for e in items:
+            fh.write(json.dumps({k: e[k] for k in ("src", "seed", "kind", "key", "cls", "len", "ihash", "thash")} | {"split": split}) + "\n")
+json.dump(MANIFEST, open(os.path.join(RUN_DIR, "manifest.json"), "w"), indent=1)
+print(f"manifest {RUN_DIR}/manifest.json dataset {MANIFEST['dataset_sha1'][:12]} rejected {dict(REJECTED)}", flush=True)
 for name, items in [("train", train_items), ("val", val_items)]:
     lens = sorted(e["len"] for e in items)
     q = lambda f: lens[int(f * (len(lens) - 1))]
@@ -413,6 +474,7 @@ def logits_for(b):
 
 
 LAST_PER_CLASS = {}
+LAST_PER_KIND = {}
 
 
 @torch.no_grad()
@@ -420,6 +482,7 @@ def evaluate(items, temps=(1.0, 1.0, 1.0)):
     model.eval()
     stats = defaultdict(lambda: [0, 0, 0.0])  # n, correct, nll
     per_class = defaultdict(lambda: [0, 0])  # (key, true class) -> n, correct
+    kind_stats = defaultdict(lambda: [0, 0])  # (key, original|twin|padded) -> n, correct
     rows = []
     for batch in batches(items, shuffle=False):
         b = collate(batch)
@@ -431,7 +494,10 @@ def evaluate(items, temps=(1.0, 1.0, 1.0)):
             t = torch.tensor(e["target"])
             s = stats[e["key"]]
             s[0] += 1
-            ok = int(lp.argmax().item() == t.argmax().item())
+            pick = lp.argmax().item()
+            ok = int(t[pick].item() > 0) if e["anyof"] else int(pick == t.argmax().item())
+            kind_stats[(e["key"], e["kind"])][0] += 1
+            kind_stats[(e["key"], e["kind"])][1] += ok
             s[1] += ok
             pc = per_class[(e["key"], e["cls"])]
             pc[0] += 1
@@ -450,8 +516,9 @@ def evaluate(items, temps=(1.0, 1.0, 1.0)):
     multi = [b for b, n in ba.values() if n >= 2]
     macro = sum(multi) / max(1, len(multi))
     per = {k: (s[0], s[1] / s[0], s[2] / s[0], ba[k][0], ba[k][1]) for k, s in sorted(stats.items())}
-    global LAST_PER_CLASS
+    global LAST_PER_CLASS, LAST_PER_KIND
     LAST_PER_CLASS = {f"{k}={c}": (v[1] / v[0], v[0]) for (k, c), v in sorted(per_class.items()) if v[0]}
+    LAST_PER_KIND = {f"{k}|{c}": (v[1] / v[0], v[0]) for (k, c), v in sorted(kind_stats.items()) if v[0]}
     return acc, nll, per, rows, macro
 
 
@@ -482,6 +549,7 @@ def report(tag, res):
     for k, (n, a, l, b, nc) in per.items():
         print(f"    {k:28s} n={n:4d} acc {a:.3f} balanced {b:.3f} ({nc} classes) nll {l:.3f}", flush=True)
     print("    recall by class: " + ", ".join(f"{k} {r:.2f} (n={n})" for k, (r, n) in LAST_PER_CLASS.items()), flush=True)
+    print("    accuracy by kind: " + ", ".join(f"{k} {r:.2f} (n={n})" for k, (r, n) in LAST_PER_KIND.items()), flush=True)
 
 
 # ---------------------------------------------------------------- model
@@ -514,43 +582,113 @@ sched = torch.optim.lr_scheduler.LambdaLR(
     opt, lambda s: min(1.0, (s + 1) / max(1, total // 20)) * 0.5 * (1 + math.cos(math.pi * min(1.0, s / max(1, total))))
 )
 
-best = (float("inf"), None, None)
-step = 0
+TRAINABLE = [n for n, p_ in model.named_parameters() if p_.requires_grad]
+
+
+def trainable_state():
+    sd = dict(model.named_parameters())
+    return {n: sd[n].detach().cpu().clone() for n in TRAINABLE}
+
+
+def atomic_save(obj, path):
+    tmp = path + ".tmp"
+    torch.save(obj, tmp)
+    os.replace(tmp, path)
+
+
+def save_checkpoint(epoch, bi, order, step, best_score, best_epoch):
+    atomic_save(
+        {
+            "weights": trainable_state(),
+            "opt": opt.state_dict(),
+            "sched": sched.state_dict(),
+            "rng": {"python": random.getstate(), "torch": torch.get_rng_state()},
+            "epoch": epoch,
+            "next_batch": bi,
+            "order": order,
+            "step": step,
+            "best": (best_score, best_epoch),
+            "dataset_sha1": MANIFEST["dataset_sha1"],
+            "config": MANIFEST["config"],
+        },
+        os.path.join(RUN_DIR, "latest.pt"),
+    )
+
+
+def batch_order(items):
+    """Batches as lists of item indices, so an epoch's order can be saved and replayed exactly."""
+    idx = {id(e): i for i, e in enumerate(items)}
+    return [[idx[id(e)] for e in b] for b in batches(items)]
+
+
+best_score, best_epoch, step, start_epoch, start_batch, order = float("inf"), None, 0, 0, 0, None
+if args.resume:
+    ck = torch.load(os.path.join(RUN_DIR, "latest.pt"), map_location="cpu", weights_only=False)
+    if ck["dataset_sha1"] != MANIFEST["dataset_sha1"]:
+        raise SystemExit("refusing to resume: the encoded dataset differs from the checkpoint's")
+    params = dict(model.named_parameters())
+    with torch.no_grad():
+        for n, v in ck["weights"].items():
+            params[n].copy_(v.to(params[n].device))
+    opt.load_state_dict(ck["opt"])
+    sched.load_state_dict(ck["sched"])
+    random.setstate(ck["rng"]["python"])
+    torch.set_rng_state(ck["rng"]["torch"])
+    step, start_epoch, start_batch, order = ck["step"], ck["epoch"], ck["next_batch"], ck["order"]
+    best_score, best_epoch = ck["best"]
+    print(f"resumed at epoch {start_epoch} batch {start_batch} step {step}", flush=True)
+
 model.train()
 t0 = time.time()
-for epoch in range(args.epochs):
-    bl = batches(train_items)
-    running = 0.0
-    for bi, batch in enumerate(bl):
-        b = collate(batch)
+steps_done_here = 0
+stop = False
+for epoch in range(start_epoch, args.epochs):
+    if order is None or epoch != start_epoch:
+        order = batch_order(train_items)
+        start_batch = 0
+    running, seen_batches = 0.0, 0
+    for bi in range(start_batch, len(order)):
+        b = collate([train_items[i] for i in order[bi]])
         lg = logits_for(b)
         tgt = b[5].to(device)
         loss = (-(tgt * F.log_softmax(lg, -1)).sum(-1)).mean() / args.accum
         loss.backward()
         running += loss.item() * args.accum
-        if (bi + 1) % args.accum == 0 or bi == len(bl) - 1:
+        seen_batches += 1
+        if (bi + 1) % args.accum == 0 or bi == len(order) - 1:
             torch.nn.utils.clip_grad_norm_([*enc_params, *head_params], 1.0)
             opt.step()
             sched.step()
             opt.zero_grad(set_to_none=True)
             step += 1
+            steps_done_here += 1
             if device.type == "mps":
                 torch.mps.empty_cache()
             if step % 5 == 0:
                 el = time.time() - t0
-                print(f"epoch {epoch} step {step}/{total} loss {running / (bi + 1):.4f} "
-                      f"{el / step:.1f}s/step eta {(total - step) * el / step / 60:.0f} min", flush=True)
+                print(f"epoch {epoch} step {step}/{total} loss {running / seen_batches:.4f} "
+                      f"{el / steps_done_here:.1f}s/step eta {(total - step) * el / steps_done_here / 60:.0f} min", flush=True)
+            if step % args.ckpt_every == 0:
+                save_checkpoint(epoch, bi + 1, order, step, best_score, best_epoch)
             if args.max_steps and step >= args.max_steps:
+                stop = True
                 break
     res = evaluate(val_items)
     report(f"epoch {epoch}", res)
     # Select on balanced accuracy (higher is better); stored negated so smaller is better.
-    if -res[4] < best[0]:
-        best = (-res[4], {k: v.detach().cpu().clone() for k, v in model.state_dict().items()}, epoch)
-    if args.max_steps and step >= args.max_steps:
+    if -res[4] < best_score:
+        best_score, best_epoch = -res[4], epoch
+        atomic_save(trainable_state(), os.path.join(RUN_DIR, "best.pt"))
+    save_checkpoint(epoch + 1, 0, None, step, best_score, best_epoch)
+    if stop:
         break
 
-model.load_state_dict(best[1])
+best = (best_score, None, best_epoch)
+if os.path.exists(os.path.join(RUN_DIR, "best.pt")):
+    params = dict(model.named_parameters())
+    with torch.no_grad():
+        for n, v in torch.load(os.path.join(RUN_DIR, "best.pt"), map_location="cpu").items():
+            params[n].copy_(v.to(params[n].device))
 res = evaluate(val_items)
 temps = fit_temperatures(res[3])
 report(f"best epoch {best[2]} with temperatures {[round(t, 3) for t in temps]}", evaluate(val_items, temps))
@@ -558,7 +696,7 @@ report(f"best epoch {best[2]} with temperatures {[round(t, 3) for t in temps]}",
 # ---------------------------------------------------------------- save
 out = os.path.join(ROOT, ".laya", args.name)
 if os.path.exists(out):
-    shutil.rmtree(out)
+    raise SystemExit(f"{out} exists: earlier experiments are never overwritten; choose another --name")
 os.makedirs(out)
 save_file({k: v.half().contiguous() for k, v in model.state_dict().items()}, os.path.join(out, "model.safetensors"))
 shutil.copytree(os.path.join(SNAP, "encoder"), os.path.join(out, "encoder"))
@@ -576,7 +714,8 @@ cfg.update(
             "base": "convaiinnovations/laya typed-decisions@55cf4c4e",
             "data": "mutation corpus dev split via OracleJev (D35)",
             "val_seeds": sorted(VAL_SEEDS),
-            "epochs_run": best[2] + 1,
+            "best_epoch": best[2],
+            "dataset_sha1": MANIFEST["dataset_sha1"],
             "train_items": len(train_items),
             "val_items": len(val_items),
         },
