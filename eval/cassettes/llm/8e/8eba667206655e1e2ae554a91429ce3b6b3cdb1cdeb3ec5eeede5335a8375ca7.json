@@ -1,0 +1,30 @@
+{
+  "key": "8eba667206655e1e2ae554a91429ce3b6b3cdb1cdeb3ec5eeede5335a8375ca7",
+  "response": {
+    "data": {
+      "coverage": {
+        "0": 0.1,
+        "1": 0.55,
+        "2": 0.3,
+        "3": 0.05
+      },
+      "conflict": {
+        "yes": 0.75
+      },
+      "evidence": {
+        "U1": 0.02,
+        "U2": 0.02,
+        "U3": 0.06,
+        "U4": 0.85,
+        "none": 0.05
+      }
+    },
+    "model": "anthropic/claude-sonnet-5",
+    "usage": {
+      "inputTokens": 2774,
+      "outputTokens": 508
+    },
+    "repairs": 0
+  },
+  "recordedAt": "2026-09-27T15:46:33.773Z"
+}

@@ -55,6 +55,11 @@ p.add_argument("--cap", type=int, default=250, help="max unique examples per que
 p.add_argument("--val-cap", type=int, default=80, help="max unique examples per question (validation side)")
 p.add_argument("--checkpointing", action="store_true", help="gradient checkpointing (slower, less memory)")
 p.add_argument("--dry-run", action="store_true", help="print the data balance and exit")
+p.add_argument("--keys", default="", help="only these questions, e.g. forward.coverage,forward.conflict")
+p.add_argument("--overfit", type=int, default=0, help="mechanics check: train and evaluate on the first N train items")
+p.add_argument("--init", default="", help="start from this checkpoint directory instead of the shipped one")
+p.add_argument("--eval-only", action="store_true", help="evaluate the (--init) checkpoint on validation and exit")
+p.add_argument("--export", default="", help="write the final train/val examples (after twins, balancing and long-context padding) to this directory and exit")
 p.add_argument("--name", default="remit-laya-v1")
 p.add_argument("--seed", type=int, default=7)
 args = p.parse_args()
@@ -62,7 +67,7 @@ random.seed(args.seed)
 torch.manual_seed(args.seed)
 
 device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
-agent = Agent(SNAP, device="cpu")
+agent = Agent(os.path.abspath(args.init) if args.init else SNAP, device="cpu")
 tok = agent.tok
 model = agent.model.float()
 
@@ -189,6 +194,9 @@ def cls(r):
 by_q = defaultdict(list)
 for r in recs:
     by_q[(r["call"], r["qid"])].append(r)
+KEYS = {tuple(k.split(".", 1)) for k in args.keys.split(",") if k}
+if KEYS:
+    by_q = {k: v for k, v in by_q.items() if k in KEYS}
 train, val = [], []
 for k, lst in by_q.items():
     random.shuffle(lst)
@@ -314,8 +322,32 @@ def encode(r):
 
 
 t0 = time.time()
+if args.export:
+    os.makedirs(args.export, exist_ok=True)
+    for split, rows in (("train", expand(train, "train")), ("val", expand(val, "val"))):
+        with open(os.path.join(args.export, f"{split}.jsonl"), "w") as fh:
+            for r in rows:
+                fh.write(json.dumps({
+                    "split": split,
+                    "seedId": r["seedId"],
+                    "itemId": r["itemId"],
+                    "operator": r["operator"],
+                    "question_key": f"{r['call']}.{r['qid']}",
+                    "answer_class": cls(r),
+                    "kind": "twin" if r.get("twin") else "original",
+                    "state_tokens": state_tokens(r["state"]),
+                    "question": r["question"],
+                    "state": r["state"],
+                    "target": r["target"],
+                }) + "\n")
+    print(f"exported to {args.export}")
+    raise SystemExit(0)
 train_items = [e for e in (encode(r) for r in expand(train, "train")) if e]
 val_items = [e for e in (encode(r) for r in expand(val, "val")) if e]
+if args.overfit:
+    random.shuffle(train_items)
+    train_items = train_items[: args.overfit]
+    val_items = list(train_items)  # mechanics only: this measures memorization, never generalization
 print(f"records {len(raw)} unique {len(recs)} capped {len(data)} | train {len(train_items)} val {len(val_items)} "
       f"| encode {time.time() - t0:.0f}s", flush=True)
 for name, items in [("train", train_items), ("val", val_items)]:
@@ -367,6 +399,9 @@ def logits_for(b):
     return logits.float().masked_fill(~mmask.to(device), -1e4)
 
 
+LAST_PER_CLASS = {}
+
+
 @torch.no_grad()
 def evaluate(items, temps=(1.0, 1.0, 1.0)):
     model.eval()
@@ -402,6 +437,8 @@ def evaluate(items, temps=(1.0, 1.0, 1.0)):
     multi = [b for b, n in ba.values() if n >= 2]
     macro = sum(multi) / max(1, len(multi))
     per = {k: (s[0], s[1] / s[0], s[2] / s[0], ba[k][0], ba[k][1]) for k, s in sorted(stats.items())}
+    global LAST_PER_CLASS
+    LAST_PER_CLASS = {f"{k}={c}": (v[1] / v[0], v[0]) for (k, c), v in sorted(per_class.items()) if v[0]}
     return acc, nll, per, rows, macro
 
 
@@ -431,6 +468,7 @@ def report(tag, res):
     print(f"[{tag}] val acc {acc:.3f} nll {nll:.3f} balanced {macro:.3f}", flush=True)
     for k, (n, a, l, b, nc) in per.items():
         print(f"    {k:28s} n={n:4d} acc {a:.3f} balanced {b:.3f} ({nc} classes) nll {l:.3f}", flush=True)
+    print("    recall by class: " + ", ".join(f"{k} {r:.2f} (n={n})" for k, (r, n) in LAST_PER_CLASS.items()), flush=True)
 
 
 # ---------------------------------------------------------------- model
@@ -446,7 +484,9 @@ if args.checkpointing:
     if hasattr(model, "head_checkpointing"):
         model.head_checkpointing = True
 
-report("base (as shipped, T=1)", evaluate(val_items))
+report("base (as shipped, T=1)" if not args.init else f"start ({args.init}, T=1)", evaluate(val_items))
+if args.eval_only:
+    raise SystemExit(0)
 if device.type == "mps":
     torch.mps.empty_cache()
 
