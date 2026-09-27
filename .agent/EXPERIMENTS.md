@@ -135,3 +135,30 @@ No keys: task-list extraction (9 requirements), no Jev verdicts; 175 units. Code
 - **Strategy A (`single_pass`):** unmeasured. OpenRouter rejects its schema (HTTP 400, the JSON tuple for line ranges). Still open.
 - **Mechanics check FAILED:** 16 examples, 15 passes, accuracy flat at 0.562; only a shared bias moved (val NLL 0.954 to 0.839). The recipe (22 of 28 layers frozen, lr head 1e-4 and encoder 2e-5) cannot separate inputs.
 - **Paused for the user's review** of the strategy and data: `training/laya/README.md`. OpenRouter spend is $1.81 of $5.
+
+## 2026-09-27 E1 Trainer mechanics diagnosis (scripts/laya/mechanics.py)
+
+- **Observed failure:** the train.py `--overfit 16` check kept accuracy flat (0.562) while val NLL fell.
+- **Hypothesis:** broken training mechanics (gradient flow, optimizer membership, masks, precision, checkpointing, bucketing) versus insufficient learning signal.
+- **Setup:** 27 hand-written, unambiguous examples in matched pairs (training/laya/mechanics/examples.jsonl). No augmentation, no dropout, no weight decay, full-batch steps.
+- **Instrumentation (all passed):**
+  - every marker lands on a [MASK] token;
+  - noul option order is [false, true], matching the targets;
+  - all trainable tensors are in the optimizer;
+  - gradients and updates reach the top 6 layers, the head and the scorer.
+- **Results (fit at 60 steps, bf16, 22 of 28 layers frozen, lr head 1e-4 and encoder 2e-5):**
+  - plain: 27/27 by step 40;
+  - with checkpointing: 26/27;
+  - with bucketing: 26/27;
+  - with dropout: 27/27.
+  - The 5 matched contradiction pairs flip correctly (e.g. P(conflict) 0.017 for the 404 case versus 0.641 for the 400 case). Before training, the model's sensitivity to the defect was about -0.04. Decisions are identical after save and reload.
+- **Conclusion:** the mechanics are sound. The earlier "shared bias" was a per-option, input-independent offset in the scorer (a lean toward one option's text across all examples of a question type). It lowered NLL without flipping any argmax. On 16 long, subtle oracle examples, 90 small steps were too few to learn more. Decision: keep the recipe; the bottleneck is the data (E2).
+
+## 2026-09-27 Label audit (training/laya/audit/label-audit.md) and benchmark registry (docs/benchmark-registry.md)
+
+- **Twin shortcut remains.** Unpadded originals never contain other-seed units, and twins always do. Every val twin mixes Python and Rust. "Any foreign unit means missing" scores 0.875 to 0.95. Missing is taught almost only by twins.
+- **About 28% of train `asserts_differently=yes` are doubtful** (the flipped test still agrees with the requirement, or stops checking it).
+- **Conflict=no on some partial and unwire cases** that produce the opposite outcome, inconsistent with the flips.
+- **`refMatches` substring bug** (`get` matches `get_bool`).
+- **Evidence targets** spread over every implementing unit although the question asks for the most direct one.
+- **Benchmark registry:** no public benchmark scores requirement status. PAIChecker (PR-issue misalignment, manual labels, MIT) is the closest fit and contradicts corpus A's "gold is clean" on 52 of 500 gold patches. SWE-bench scores cannot be claimed for a reviewer.
