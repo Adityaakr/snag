@@ -5,7 +5,7 @@ import { loadSeed, SEEDS_ROOT, seedItems } from '@remit/eval';
 import { describe, expect, it } from 'vitest';
 import { CliError } from '../errors.js';
 import { memoryIo } from '../testing.js';
-import { evalCommand } from './eval.js';
+import { evalCommand, selectItems } from './eval.js';
 
 const tmp = () => {
   const dir = mkdtempSync(join(tmpdir(), 'remit-eval-'));
@@ -65,6 +65,34 @@ describe('remit eval', () => {
     await expect(
       evalCommand(['mutations', '--mode', 'live'], memoryIo(dir).sink, () => items),
     ).rejects.toThrow(/TYPESAFE_API_KEY/);
+  });
+});
+
+describe('explicit item selection', () => {
+  const items = [
+    { id: 'mutations/a.drop_requirement.R1', seedId: 'a' },
+    { id: 'mutations/a.clean', seedId: 'a' },
+    { id: 'mutations/b.flip_condition.R2', seedId: 'b' },
+    { id: 'golden/x' },
+  ];
+  it('filters by seed and by id suffix, together', () => {
+    expect(selectItems(items, 'a').map((i) => i.id)).toEqual([
+      'mutations/a.drop_requirement.R1',
+      'mutations/a.clean',
+    ]);
+    expect(selectItems(items, undefined, 'clean,R2').map((i) => i.id)).toEqual([
+      'mutations/a.clean',
+      'mutations/b.flip_condition.R2',
+    ]);
+    expect(selectItems(items, 'b', 'clean')).toEqual([]);
+    expect(selectItems(items)).toHaveLength(4);
+  });
+
+  it('rejects an empty selection instead of running nothing', async () => {
+    const io = memoryIo('/tmp');
+    await expect(evalCommand(['golden', '--seeds', 'nope'], io.sink, () => [])).rejects.toThrow(
+      /No golden \(all\) items match --seeds nope/,
+    );
   });
 });
 

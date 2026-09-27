@@ -1,0 +1,125 @@
+{
+ "leakage": [
+  {
+   "split": "train",
+   "examples": 2938,
+   "D_or_x_ids": 0,
+   "all_ids_U_n": true,
+   "seeds": [
+    "py-blog-slugs",
+    "py-csv-import",
+    "rs-cli-args",
+    "rs-config-parser",
+    "ts-flag-rules",
+    "ts-job-intervals",
+    "ts-money-format"
+   ]
+  },
+  {
+   "split": "val",
+   "examples": 1036,
+   "D_or_x_ids": 0,
+   "all_ids_U_n": true,
+   "seeds": [
+    "py-retry-backoff",
+    "rs-semver-compare"
+   ]
+  }
+ ],
+ "twin_candidate_count_parity": {
+  "same count": 292,
+  "different count": 0,
+  "note": "compared unpadded twins with their unpadded originals"
+ },
+ "class_balance": {
+  "train": {
+   "forward.conflict": {
+    "no": 237,
+    "yes": 115
+   },
+   "forward.coverage": {
+    "0": 158,
+    "3": 159,
+    "2": 54
+   },
+   "forward.evidence": {
+    "none": 239,
+    "some": 235
+   },
+   "reverse.behavior_change": {
+    "yes": 28,
+    "no": 28
+   },
+   "reverse.plumbing": {
+    "no": 56,
+    "yes": 32
+   },
+   "reverse.serves": {
+    "some": 125,
+    "none": 125
+   },
+   "tests.asserts_as_stated": {
+    "yes": 246,
+    "no": 247
+   },
+   "tests.asserts_differently": {
+    "no": 244,
+    "yes": 117
+   },
+   "tests.test_evidence": {
+    "some": 246,
+    "none": 247
+   }
+  },
+  "val": {
+   "claims.about": {
+    "some": 8
+   },
+   "claims.claims_deferred": {
+    "no": 8
+   },
+   "claims.claims_done": {
+    "yes": 8
+   },
+   "forward.conflict": {
+    "no": 136,
+    "yes": 8
+   },
+   "forward.coverage": {
+    "0": 75,
+    "3": 77,
+    "2": 2
+   },
+   "forward.evidence": {
+    "none": 80,
+    "some": 74
+   },
+   "reverse.behavior_change": {
+    "yes": 2,
+    "no": 2
+   },
+   "reverse.loosens_test": {
+    "yes": 4
+   },
+   "reverse.plumbing": {
+    "no": 4
+   },
+   "reverse.serves": {
+    "some": 76,
+    "none": 4
+   },
+   "tests.asserts_as_stated": {
+    "no": 86,
+    "yes": 68
+   },
+   "tests.asserts_differently": {
+    "no": 148,
+    "yes": 9
+   },
+   "tests.test_evidence": {
+    "some": 59,
+    "none": 98
+   }
+  }
+ }
+}

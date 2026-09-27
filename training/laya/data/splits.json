@@ -1,0 +1,200 @@
+{
+ "unit_of_split": "seed family (a seed and all its mutations, twins and padding stay on one side)",
+ "seeds": {
+  "py-blog-slugs": {
+   "split_in_corpus": "dev",
+   "language": "py",
+   "annotated_by": "claude-code",
+   "role": "training",
+   "dev_items": 14,
+   "operators": {
+    "weaken_assertion": 1,
+    "drop_requirement": 4,
+    "unwire": 1,
+    "claim_all_done": 1,
+    "flip_condition": 2,
+    "partial_requirement": 1,
+    "clean": 1,
+    "inject_config": 1,
+    "inject_refactor": 1,
+    "skip_test": 1
+   }
+  },
+  "py-csv-import": {
+   "split_in_corpus": "dev",
+   "language": "py",
+   "annotated_by": "claude-code",
+   "role": "training",
+   "dev_items": 14,
+   "operators": {
+    "flip_condition": 2,
+    "clean": 1,
+    "drop_requirement": 4,
+    "inject_refactor": 1,
+    "unwire": 1,
+    "skip_test": 1,
+    "partial_requirement": 1,
+    "claim_all_done": 1,
+    "weaken_assertion": 1,
+    "inject_config": 1
+   }
+  },
+  "py-order-date-ranges": {
+   "split_in_corpus": "test",
+   "language": "py",
+   "annotated_by": "claude-code",
+   "role": "final test (never used for training, validation or tuning)",
+   "dev_items": 0,
+   "operators": {}
+  },
+  "py-retry-backoff": {
+   "split_in_corpus": "dev",
+   "language": "py",
+   "annotated_by": "claude-code",
+   "role": "validation (checkpoint selection and calibration only)",
+   "dev_items": 14,
+   "operators": {
+    "skip_test": 1,
+    "clean": 1,
+    "weaken_assertion": 1,
+    "drop_requirement": 4,
+    "flip_condition": 2,
+    "partial_requirement": 1,
+    "inject_refactor": 1,
+    "claim_all_done": 1,
+    "inject_config": 1,
+    "unwire": 1
+   }
+  },
+  "rs-cli-args": {
+   "split_in_corpus": "dev",
+   "language": "rs",
+   "annotated_by": "claude-code",
+   "role": "training",
+   "dev_items": 14,
+   "operators": {
+    "flip_condition": 2,
+    "drop_requirement": 4,
+    "claim_all_done": 1,
+    "skip_test": 1,
+    "inject_config": 1,
+    "partial_requirement": 1,
+    "clean": 1,
+    "inject_refactor": 1,
+    "weaken_assertion": 1,
+    "unwire": 1
+   }
+  },
+  "rs-config-parser": {
+   "split_in_corpus": "dev",
+   "language": "rs",
+   "annotated_by": "claude-code",
+   "role": "training",
+   "dev_items": 14,
+   "operators": {
+    "weaken_assertion": 1,
+    "unwire": 1,
+    "flip_condition": 2,
+    "drop_requirement": 4,
+    "inject_config": 1,
+    "clean": 1,
+    "skip_test": 1,
+    "inject_refactor": 1,
+    "partial_requirement": 1,
+    "claim_all_done": 1
+   }
+  },
+  "rs-lru-cache": {
+   "split_in_corpus": "test",
+   "language": "rs",
+   "annotated_by": "claude-code",
+   "role": "final test (never used for training, validation or tuning)",
+   "dev_items": 0,
+   "operators": {}
+  },
+  "rs-semver-compare": {
+   "split_in_corpus": "dev",
+   "language": "rs",
+   "annotated_by": "claude-code",
+   "role": "validation (checkpoint selection and calibration only)",
+   "dev_items": 15,
+   "operators": {
+    "drop_requirement": 4,
+    "flip_condition": 3,
+    "inject_refactor": 1,
+    "inject_config": 1,
+    "partial_requirement": 1,
+    "weaken_assertion": 1,
+    "claim_all_done": 1,
+    "clean": 1,
+    "skip_test": 1,
+    "unwire": 1
+   }
+  },
+  "ts-flag-rules": {
+   "split_in_corpus": "dev",
+   "language": "ts",
+   "annotated_by": "claude-code",
+   "role": "training",
+   "dev_items": 14,
+   "operators": {
+    "drop_requirement": 4,
+    "partial_requirement": 1,
+    "weaken_assertion": 1,
+    "skip_test": 1,
+    "inject_refactor": 1,
+    "claim_all_done": 1,
+    "unwire": 1,
+    "flip_condition": 2,
+    "clean": 1,
+    "inject_config": 1
+   }
+  },
+  "ts-job-intervals": {
+   "split_in_corpus": "dev",
+   "language": "ts",
+   "annotated_by": "claude-code",
+   "role": "training",
+   "dev_items": 15,
+   "operators": {
+    "drop_requirement": 4,
+    "weaken_assertion": 1,
+    "clean": 1,
+    "flip_condition": 3,
+    "unwire": 1,
+    "inject_config": 1,
+    "claim_all_done": 1,
+    "partial_requirement": 1,
+    "inject_refactor": 1,
+    "skip_test": 1
+   }
+  },
+  "ts-list-pagination": {
+   "split_in_corpus": "test",
+   "language": "ts",
+   "annotated_by": "claude-code",
+   "role": "final test (never used for training, validation or tuning)",
+   "dev_items": 0,
+   "operators": {}
+  },
+  "ts-money-format": {
+   "split_in_corpus": "dev",
+   "language": "ts",
+   "annotated_by": "claude-code",
+   "role": "training",
+   "dev_items": 14,
+   "operators": {
+    "skip_test": 1,
+    "drop_requirement": 4,
+    "flip_condition": 2,
+    "inject_config": 1,
+    "claim_all_done": 1,
+    "partial_requirement": 1,
+    "weaken_assertion": 1,
+    "clean": 1,
+    "unwire": 1,
+    "inject_refactor": 1
+   }
+  }
+ }
+}

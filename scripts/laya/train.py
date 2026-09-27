@@ -54,6 +54,12 @@ p.add_argument("--long-variants", type=int, default=1, help="long-context copies
 p.add_argument("--cap", type=int, default=250, help="max unique examples per question (train side)")
 p.add_argument("--val-cap", type=int, default=80, help="max unique examples per question (validation side)")
 p.add_argument("--checkpointing", action="store_true", help="gradient checkpointing (slower, less memory)")
+p.add_argument("--dry-run", action="store_true", help="print the data balance and exit")
+p.add_argument("--keys", default="", help="only these questions, e.g. forward.coverage,forward.conflict")
+p.add_argument("--overfit", type=int, default=0, help="mechanics check: train and evaluate on the first N train items")
+p.add_argument("--init", default="", help="start from this checkpoint directory instead of the shipped one")
+p.add_argument("--eval-only", action="store_true", help="evaluate the (--init) checkpoint on validation and exit")
+p.add_argument("--export", default="", help="write the final train/val examples (after twins, balancing and long-context padding) to this directory and exit")
 p.add_argument("--name", default="remit-laya-v1")
 p.add_argument("--seed", type=int, default=7)
 args = p.parse_args()
@@ -61,7 +67,7 @@ random.seed(args.seed)
 torch.manual_seed(args.seed)
 
 device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
-agent = Agent(SNAP, device="cpu")
+agent = Agent(os.path.abspath(args.init) if args.init else SNAP, device="cpu")
 tok = agent.tok
 model = agent.model.float()
 
@@ -75,17 +81,151 @@ for r in raw:
     if k not in seen:
         seen.add(k)
         recs.append(r)
+FIELD = {"forward": "candidates", "tests": "tests"}
+# Positive examples whose counterfactual twin (implementing or testing units removed) has a known answer.
+TWIN_TARGETS = {
+    ("forward", "coverage"): {"probabilities": {"0": 1.0}},
+    ("forward", "evidence"): {"probabilities": {"none": 1.0}},
+    ("tests", "asserts_as_stated"): {"noul": 0.0},
+    ("tests", "test_evidence"): {"probabilities": {"none": 1.0}},
+}
+
+
+def unit_label(field, it):
+    """The option text Remit's question builders use for a unit (packages/core/src/questions/{forward,tests}.ts)."""
+    if field == "tests":
+        return f"`tests` entry {it['id']} ({it.get('file', '')})"
+    return f"`candidates` entry {it['id']} ({it.get('file', '')}, {it.get('symbol') or '(file)'})"
+
+
+def renumber(r):
+    """Shuffles the units and renames them U1..Un, rebuilding choice options, targets and support to match.
+
+    Without this, augmented units would carry tell-tale ids (distractors as D*, gaps where twins removed units), and
+    the model could learn the id pattern instead of reading the code.
+    """
+    if r["call"] not in FIELD:
+        return r
+    field = FIELD[r["call"]]
+    items = r["state"][field]
+    random.shuffle(items)
+    mapping = {}
+    for i, it in enumerate(items, 1):
+        if it.get("id") is not None:
+            mapping[it["id"]] = f"U{i}"
+        it["id"] = f"U{i}"
+    q = r["question"]
+    if q["type"] == "choice" and "none" in q["criteria"]:
+        none = q["criteria"]["none"]
+        q["criteria"] = {**{it["id"]: unit_label(field, it) for it in items}, "none": none}
+        probs = r["target"]["probabilities"]
+        r["target"]["probabilities"] = {
+            ("none" if k == "none" else mapping[k]): v for k, v in probs.items() if k == "none" or k in mapping
+        }
+    if r.get("support"):
+        r["support"] = [mapping[x] for x in r["support"] if x in mapping]
+    return r
+
+
+RAW_POOLS = defaultdict(lambda: defaultdict(list))  # call -> seed -> units
+for _r in recs:
+    if _r["call"] in FIELD:
+        RAW_POOLS[_r["call"]][_r["seedId"]].extend(_r["state"].get(FIELD[_r["call"]], []))
+
+
+def backfill_pool(r):
+    """Units from other seeds on the same side of the split, to keep a twin's candidate count unchanged."""
+    same_val = r["seedId"] in VAL_SEEDS
+    return [
+        u
+        for seed, units in RAW_POOLS[r["call"]].items()
+        if seed != r["seedId"] and (seed in VAL_SEEDS) == same_val
+        for u in units
+    ]
+
+
+def is_positive(r):
+    t = r["target"]
+    k = (r["call"], r["qid"])
+    if k == ("forward", "coverage"):
+        return t["probabilities"].get("3", 0) + t["probabilities"].get("2", 0) >= 0.99
+    if k == ("tests", "asserts_as_stated"):
+        return t.get("noul") == 1
+    if k in (("forward", "evidence"), ("tests", "test_evidence")):
+        return t["probabilities"].get("none", 0) == 0
+    return False
+
+
+def twin(r):
+    """The same example with the units that implement (or test) the requirement removed: the answer becomes missing."""
+    k = (r["call"], r["qid"])
+    if k not in TWIN_TARGETS or not r.get("support") or not is_positive(r):
+        return None
+    field = FIELD[r["call"]]
+    sup = set(r["support"])
+    kept = [c for c in r["state"].get(field, []) if c.get("id") not in sup]
+    if not kept or len(kept) == len(r["state"].get(field, [])):
+        return None
+    r2 = copy.deepcopy(r)
+    pool = backfill_pool(r)
+    # Replace each removed unit with a realistic unit from another seed, so the count does not reveal the answer.
+    fill = [dict(u) for u in random.sample(pool, min(len(sup), len(pool)))]
+    r2["state"][field] = kept + fill
+    r2["support"] = []
+    r2["twin"] = True
+    r2["target"] = copy.deepcopy(TWIN_TARGETS[k])
+    q = r2["question"]
+    if q["type"] == "choice":
+        q["criteria"] = {"none": q["criteria"]["none"]}  # rebuilt by renumber()
+    return renumber(r2)
+
+
+recs += [t for t in (twin(r) for r in recs) if t]
+
+
+def cls(r):
+    t = r["target"]
+    if "noul" in t:
+        return "yes" if t["noul"] >= 0.5 else "no"
+    top = max(t["probabilities"], key=t["probabilities"].get)
+    return ("none" if top == "none" else "some") if r["question"]["type"] == "choice" else top
+
+
 by_q = defaultdict(list)
 for r in recs:
     by_q[(r["call"], r["qid"])].append(r)
+KEYS = {tuple(k.split(".", 1)) for k in args.keys.split(",") if k}
+if KEYS:
+    by_q = {k: v for k, v in by_q.items() if k in KEYS}
 train, val = [], []
 for k, lst in by_q.items():
     random.shuffle(lst)
-    tr = [r for r in lst if r["seedId"] not in VAL_SEEDS]
     va = [r for r in lst if r["seedId"] in VAL_SEEDS]
-    train.extend(tr[: min(args.cap, CAPS.get(k, len(tr)))])
     val.extend(va[: args.val_cap])
+    # Class-balanced training sample: equal share per answer class, oversampling rare classes up to 4x.
+    by_c = defaultdict(list)
+    for r in lst:
+        if r["seedId"] not in VAL_SEEDS:
+            by_c[cls(r)].append(r)
+    # A question with one answer class in the data would only teach a constant: leave it to the base model.
+    if len(by_c) < 2:
+        continue
+    per = max(1, min(args.cap, CAPS.get(k, args.cap)) // len(by_c))
+    for c, rows in by_c.items():
+        take = rows[:per]
+        while len(take) < min(per, 4 * len(rows)):
+            take.append(random.choice(rows))
+        train.extend(take)
 data = train + val
+if args.dry_run:
+    for split, rows in (("train", train), ("val", val)):
+        bal = defaultdict(lambda: defaultdict(int))
+        for r in rows:
+            bal[f"{r['call']}.{r['qid']}"][cls(r)] += 1
+        print(split, sum(1 for r in rows if r.get("twin")), "twins")
+        for k in sorted(bal):
+            print(f"  {k:28s} {dict(bal[k])}")
+    raise SystemExit(0)
 
 
 def pool_for(rows, call, field):
@@ -101,7 +241,6 @@ POOLS = {
     "train": {"forward": pool_for(train, "forward", "candidates"), "tests": pool_for(train, "tests", "tests")},
     "val": {"forward": pool_for(val, "forward", "candidates"), "tests": pool_for(val, "tests", "tests")},
 }
-FIELD = {"forward": "candidates", "tests": "tests"}
 
 
 def state_tokens(state) -> int:
@@ -125,16 +264,16 @@ def with_distractors(r, split, target_tokens):
             break
         d = dict(c)
         n += 1
-        d["id"] = f"D{n}"
-        items.insert(random.randint(0, len(items)), d)
+        d["id"] = f"x{n}"  # temporary; renumber() assigns the final U ids
+        items.append(d)
         if q["type"] == "choice" and "none" in q["criteria"]:
-            crit = {k: v for k, v in q["criteria"].items() if k != "none"}
-            label = f"`{field}` entry D{n} ({d.get('file', '')}{', ' + d['symbol'] if d.get('symbol') else ''})"
-            crit[f"D{n}"] = label
-            crit["none"] = q["criteria"]["none"]
-            q["criteria"] = crit
-            r2["target"]["probabilities"][f"D{n}"] = 0.0
-    return r2 if n else None
+            r2["target"]["probabilities"][d["id"]] = 0.0
+    if not n:
+        return None
+    if q["type"] == "choice" and "none" in q["criteria"]:
+        # Keep existing option text for original units; renumber() rebuilds labels for all of them.
+        pass
+    return renumber(r2)
 
 
 def expand(rows, split):
@@ -177,13 +316,38 @@ def encode(r):
         "qtype": QTYPES[q["t"]],
         "target": [x / s for x in target],
         "key": f"{r['call']}.{r['qid']}",
+        "cls": cls(r),
         "len": len(seq),
     }
 
 
 t0 = time.time()
+if args.export:
+    os.makedirs(args.export, exist_ok=True)
+    for split, rows in (("train", expand(train, "train")), ("val", expand(val, "val"))):
+        with open(os.path.join(args.export, f"{split}.jsonl"), "w") as fh:
+            for r in rows:
+                fh.write(json.dumps({
+                    "split": split,
+                    "seedId": r["seedId"],
+                    "itemId": r["itemId"],
+                    "operator": r["operator"],
+                    "question_key": f"{r['call']}.{r['qid']}",
+                    "answer_class": cls(r),
+                    "kind": "twin" if r.get("twin") else "original",
+                    "state_tokens": state_tokens(r["state"]),
+                    "question": r["question"],
+                    "state": r["state"],
+                    "target": r["target"],
+                }) + "\n")
+    print(f"exported to {args.export}")
+    raise SystemExit(0)
 train_items = [e for e in (encode(r) for r in expand(train, "train")) if e]
 val_items = [e for e in (encode(r) for r in expand(val, "val")) if e]
+if args.overfit:
+    random.shuffle(train_items)
+    train_items = train_items[: args.overfit]
+    val_items = list(train_items)  # mechanics only: this measures memorization, never generalization
 print(f"records {len(raw)} unique {len(recs)} capped {len(data)} | train {len(train_items)} val {len(val_items)} "
       f"| encode {time.time() - t0:.0f}s", flush=True)
 for name, items in [("train", train_items), ("val", val_items)]:
@@ -235,10 +399,14 @@ def logits_for(b):
     return logits.float().masked_fill(~mmask.to(device), -1e4)
 
 
+LAST_PER_CLASS = {}
+
+
 @torch.no_grad()
 def evaluate(items, temps=(1.0, 1.0, 1.0)):
     model.eval()
     stats = defaultdict(lambda: [0, 0, 0.0])  # n, correct, nll
+    per_class = defaultdict(lambda: [0, 0])  # (key, true class) -> n, correct
     rows = []
     for batch in batches(items, shuffle=False):
         b = collate(batch)
@@ -250,14 +418,28 @@ def evaluate(items, temps=(1.0, 1.0, 1.0)):
             t = torch.tensor(e["target"])
             s = stats[e["key"]]
             s[0] += 1
-            s[1] += int(lp.argmax().item() == t.argmax().item())
+            ok = int(lp.argmax().item() == t.argmax().item())
+            s[1] += ok
+            pc = per_class[(e["key"], e["cls"])]
+            pc[0] += 1
+            pc[1] += ok
             s[2] += float(-(t * lp).sum())
             rows.append((e["qtype"], lg[i, :m], t))
     model.train()
     total_n = sum(s[0] for s in stats.values())
     acc = sum(s[1] for s in stats.values()) / max(1, total_n)
     nll = sum(s[2] for s in stats.values()) / max(1, total_n)
-    return acc, nll, {k: (s[0], s[1] / s[0], s[2] / s[0]) for k, s in sorted(stats.items())}, rows
+    # Balanced accuracy: mean recall over answer classes, so a majority-class model cannot look good.
+    ba = {}
+    for key in stats:
+        recalls = [c[1] / c[0] for (k, _), c in per_class.items() if k == key and c[0]]
+        ba[key] = (sum(recalls) / len(recalls), len(recalls))
+    multi = [b for b, n in ba.values() if n >= 2]
+    macro = sum(multi) / max(1, len(multi))
+    per = {k: (s[0], s[1] / s[0], s[2] / s[0], ba[k][0], ba[k][1]) for k, s in sorted(stats.items())}
+    global LAST_PER_CLASS
+    LAST_PER_CLASS = {f"{k}={c}": (v[1] / v[0], v[0]) for (k, c), v in sorted(per_class.items()) if v[0]}
+    return acc, nll, per, rows, macro
 
 
 def fit_temperatures(rows):
@@ -282,10 +464,11 @@ def fit_temperatures(rows):
 
 
 def report(tag, res):
-    acc, nll, per, _ = res
-    print(f"[{tag}] val acc {acc:.3f} nll {nll:.3f}", flush=True)
-    for k, (n, a, l) in per.items():
-        print(f"    {k:28s} n={n:4d} acc {a:.3f} nll {l:.3f}", flush=True)
+    acc, nll, per, _, macro = res
+    print(f"[{tag}] val acc {acc:.3f} nll {nll:.3f} balanced {macro:.3f}", flush=True)
+    for k, (n, a, l, b, nc) in per.items():
+        print(f"    {k:28s} n={n:4d} acc {a:.3f} balanced {b:.3f} ({nc} classes) nll {l:.3f}", flush=True)
+    print("    recall by class: " + ", ".join(f"{k} {r:.2f} (n={n})" for k, (r, n) in LAST_PER_CLASS.items()), flush=True)
 
 
 # ---------------------------------------------------------------- model
@@ -301,7 +484,9 @@ if args.checkpointing:
     if hasattr(model, "head_checkpointing"):
         model.head_checkpointing = True
 
-report("base (as shipped, T=1)", evaluate(val_items))
+report("base (as shipped, T=1)" if not args.init else f"start ({args.init}, T=1)", evaluate(val_items))
+if args.eval_only:
+    raise SystemExit(0)
 if device.type == "mps":
     torch.mps.empty_cache()
 
@@ -346,8 +531,9 @@ for epoch in range(args.epochs):
                 break
     res = evaluate(val_items)
     report(f"epoch {epoch}", res)
-    if res[1] < best[0]:
-        best = (res[1], {k: v.detach().cpu().clone() for k, v in model.state_dict().items()}, epoch)
+    # Select on balanced accuracy (higher is better); stored negated so smaller is better.
+    if -res[4] < best[0]:
+        best = (-res[4], {k: v.detach().cpu().clone() for k, v in model.state_dict().items()}, epoch)
     if args.max_steps and step >= args.max_steps:
         break
 

@@ -66,7 +66,7 @@ Exit codes: 0 ok, 1 gate failure, 2 usage or config error, 3 provider or network
   eval: {
     run: (argv, io) => evalCommand(argv, io),
     summary: 'Run an evaluation corpus and write a report',
-    help: `${s} eval <golden|mutations|swebench|shadow> [--split dev|test] [--gate] [--limit n] [--baseline single_pass|pr_agent] [--mode scripted|simulated|live]\n\nThe test split runs only with --gate. Reports go to eval/reports/<timestamp>/.`,
+    help: `${s} eval <golden|mutations|swebench|shadow> [--split dev|test] [--gate] [--limit n] [--seeds a,b] [--ids x,y] [--baseline single_pass|pr_agent] [--mode scripted|simulated|live]\n\nThe test split runs only with --gate. Reports go to eval/reports/<timestamp>/.`,
   },
   calibrate: {
     run: (argv, io) => calibrateCommand(argv, io),

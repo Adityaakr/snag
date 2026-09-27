@@ -29,6 +29,11 @@ export interface TrainingRecord {
   question: Question;
   state: EntryType;
   target: Target;
+  /**
+   * For forward and tests calls: the candidate ids that implement (forward) or test (tests) the requirement, per the
+   * seed. The trainer removes them to build counterfactual "missing" twins.
+   */
+  support?: string[];
 }
 
 interface UnitLike {
@@ -111,6 +116,21 @@ export class OracleJev implements JevProvider {
     const op = this.item.operator;
     if (op !== 'weaken_assertion' && op !== 'skip_test') return false;
     return refMatches(unit, this.seed.unrelatedTest);
+  }
+
+  /** Candidate ids implementing (forward) or testing (tests) the call's requirement, when the seed names any. */
+  private support(meta: CallMeta, state: Record<string, unknown>): string[] | undefined {
+    const req = this.seedReq(meta.targetId);
+    if (!req) return undefined;
+    if (meta.kind === 'forward')
+      return ((state.candidates ?? []) as UnitLike[])
+        .filter((c) => c.id && req.implementing.some((ref) => refMatches(c, ref)))
+        .map((c) => c.id as string);
+    if (meta.kind === 'tests')
+      return ((state.tests ?? []) as UnitLike[])
+        .filter((t) => t.id && req.tests.some((ref) => refMatches(t, ref)))
+        .map((t) => t.id as string);
+    return undefined;
   }
 
   /** Target for one question, or null when the labels do not decide it. */
@@ -236,7 +256,9 @@ export class OracleJev implements JevProvider {
     for (const [qid, q] of Object.entries(questions)) {
       const t = this.target(meta, qid, q, s);
       if (t) {
+        const support = this.support(meta, s);
         this.records.push({
+          ...(support ? { support } : {}),
           itemId: this.item.id,
           seedId: this.seed.id,
           operator: this.item.operator ?? 'clean',

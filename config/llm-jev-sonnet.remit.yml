@@ -1,0 +1,19 @@
+# Verdicts from a generative LLM answering Remit's typed questions (jev.engine: llm, DECISIONS D34), and extraction,
+# both through OpenRouter. Needs OPENAI_COMPATIBLE_API_KEY and OPENAI_COMPATIBLE_BASE_URL in .env.
+# Use with --config config/llm-jev.remit.yml.
+extraction:
+  mode: auto
+  provider: openai_compatible
+  model: anthropic/claude-sonnet-5
+llm_prices:
+  anthropic/claude-opus-5.5:
+    input: 4
+    output: 20
+  anthropic/claude-sonnet-5:
+    input: 2
+    output: 10
+jev:
+  engine: llm
+  llm_model: anthropic/claude-sonnet-5
+  max_state_tokens: 24000
+  concurrency: 8

@@ -20,7 +20,8 @@
       "!.claude/settings.local.json",
       "!fixtures/golden",
       "!fixtures/extraction",
-      "!fixtures/snapshots"
+      "!fixtures/snapshots",
+      "!training/laya/data"
     ]
   },
   "formatter": {
