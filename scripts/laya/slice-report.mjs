@@ -26,7 +26,8 @@ let prFp = 0;
 let clean = 0;
 for (const d of items) {
   const op = d.id.split('/').pop().split('.')[1] ?? 'clean';
-  const r = (rows[op] ??= { n: 0, passed: 0, detected: 0, targeted: 0 });
+  if (!rows[op]) rows[op] = { n: 0, passed: 0, detected: 0, targeted: 0 };
+  const r = rows[op];
   r.n++;
   if (d.comparison.passed) {
     r.passed++;
