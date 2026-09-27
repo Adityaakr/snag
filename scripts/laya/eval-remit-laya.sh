@@ -24,7 +24,7 @@ curl -sf http://127.0.0.1:8765/health | tee -a "$LOG"; echo | tee -a "$LOG"
 echo "openrouter usage before: $(spend)" | tee -a "$LOG"
 
 echo "== golden (scripted extraction)" | tee -a "$LOG"
-OPENAI_COMPATIBLE_API_KEY= REMIT_CACHE_MODE=live pnpm -s remit eval golden --mode live --config "$CFG" 2>&1 | grep -v '^\$' | tail -25 | tee -a "$LOG" || true
+OPENAI_COMPATIBLE_API_KEY="" REMIT_CACHE_MODE=live pnpm -s remit eval golden --mode live --config "$CFG" 2>&1 | grep -v '^\$' | tail -25 | tee -a "$LOG" || true
 
 echo "== mutations dev" | tee -a "$LOG"
 REMIT_CACHE_MODE=live pnpm -s remit eval mutations --split dev --mode live --config "$CFG" 2>&1 | grep -v '^\$' | tail -3 | tee -a "$LOG" || true
