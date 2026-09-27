@@ -106,3 +106,14 @@ No keys: task-list extraction (9 requirements), no Jev verdicts; 175 units. Code
 - A single probe (404 required, 400 returned) through Sonnet 5 gave conflict `0.95` and coverage "partly" `0.90`: correct.
 - Golden three_reqs_one_missing (single review): R2 done (`0.80`), R3 missing (`1.0`, P0), R1 uncertain. R1 is the extra user-need requirement from live extraction ("Add an export to the reports page."), a known over-extraction. Cost `$0.10`, 16 calls.
 - The full golden run was invalid: the OpenRouter account ran out of credits mid-run (HTTP 402). Retries opened the circuit breaker, and most items got no answers. The 402 handling is fixed (D34). Needs credits to rerun (B9).
+
+## 2026-09-27 remit-laya-v1 fine-tune (D35), epoch 0
+
+- Data: OracleJev over the mutation dev split, 3,325 unique examples; val = held-out seeds rs-semver-compare and py-retry-backoff (never trained on). Lengths up to 4,096 tokens (p90 about 3,400).
+- Training: top 6 encoder layers plus head, soft cross-entropy, bf16 on MPS, about 65 s per optimizer step (8 batches).
+- Held-out val, as shipped then after epoch 0:
+  - overall accuracy `0.436` to `0.751`, NLL `1.316` to `0.890`;
+  - forward.conflict `0.055` to `0.940`, forward.coverage `0.674` to `0.878`;
+  - tests.asserts_differently `0.050` to `0.943`, tests.test_evidence `0.446` to `0.906`.
+- Weak: tests.asserts_as_stated `0.418` and reverse.serves `0.400`. Claims are too few to judge (n=8).
+- Caveat: conflict and asserts_differently are mostly negative. The discrimination on contradicted items is measured by the mutation eval, not by this accuracy.
