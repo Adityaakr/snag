@@ -9,7 +9,14 @@
 // Prints two views: SHARED (items every system has) and ALL (each system on every item it attempted).
 import { readdirSync, readFileSync, statSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { aggregate, type Prediction, type SurfacedFinding, scoreItem, type UnitIndex } from '@remit/eval';
+import {
+  aggregate,
+  type Prediction,
+  reconcileSinglePass,
+  type SurfacedFinding,
+  scoreItem,
+  type UnitIndex,
+} from '@remit/eval';
 
 const FAILURE = /\b(?:jev|openai_compatible|anthropic):|Budget reached|could not shrink/;
 const PROBLEM = new Set(['missing', 'partial', 'contradicted', 'interpretation_mismatch']);
@@ -91,12 +98,13 @@ function fromReport(dir: string): Map<string, Prediction> {
   return out;
 }
 
-function fromSinglePass(file: string, factsDir?: string): Map<string, Prediction> {
+function fromSinglePass(file: string, factsDir?: string, e4 = false): Map<string, Prediction> {
   const facts = factsDir ? fromReport(factsDir) : undefined;
   const out = new Map<string, Prediction>();
   for (const line of readFileSync(file, 'utf8').split('\n').filter(Boolean)) {
     const d = JSON.parse(line);
     const surfaced: SurfacedFinding[] = [];
+    if (d.output && e4) d.output = reconcileSinglePass(d.output);
     if (d.output) {
       for (const r of d.output.requirements)
         if (r.id && PROBLEM.has(r.status) && r.confidence >= 0.5)
@@ -136,8 +144,11 @@ function fromSinglePass(file: string, factsDir?: string): Map<string, Prediction
 function load(spec: string): Map<string, Prediction> {
   if (spec.startsWith('report:')) return fromReport(spec.slice(7));
   if (spec.startsWith('single:')) {
-    const [file, facts] = spec.slice(7).split('+facts:');
-    return fromSinglePass(file as string, facts);
+    // single:<file>[+facts:<dir>][+e4]
+    const e4 = spec.endsWith('+e4');
+    const body = e4 ? spec.slice(7, -3) : spec.slice(7);
+    const [file, facts] = body.split('+facts:');
+    return fromSinglePass(file as string, facts, e4);
   }
   throw new Error(`unknown source ${spec}`);
 }
@@ -147,6 +158,27 @@ const opt = (k: string) => (args.includes(k) ? args[args.indexOf(k) + 1] : undef
 const unitsDir = opt('--units');
 if (!unitsDir) throw new Error('--units <report dir> is required');
 const units = unitIndex(unitsDir);
+// Adjudicated label overlay (eval/labels/*.json): corrected statuses per item. Ambiguous items are excluded from
+// scoring with --strict-ambiguous, otherwise scored with the adjudicated reading.
+const overlayFile = opt('--labels');
+const overlay: Record<
+  string,
+  { requirements?: Record<string, string>; accept?: Record<string, string[]>; ambiguous?: boolean }
+> = overlayFile ? JSON.parse(readFileSync(overlayFile, 'utf8')).items : {};
+const dropAmbiguous = args.includes('--strict-ambiguous');
+function applyOverlay(p: Prediction): Prediction | null {
+  const o = overlay[p.id];
+  if (!o) return p;
+  if (o.ambiguous && dropAmbiguous) return null;
+  const requirements = {
+    ...p.labels.requirements,
+    ...(o.requirements ?? {}),
+  } as Prediction['labels']['requirements'];
+  const requirementsAccept = { ...p.labels.requirementsAccept };
+  for (const r of Object.keys(o.requirements ?? {})) delete requirementsAccept[r];
+  Object.assign(requirementsAccept, o.accept ?? {});
+  return { ...p, labels: { ...p.labels, requirements, requirementsAccept } };
+}
 const idsFile = opt('--ids');
 const seedFilter = opt('--seeds')?.split(',').filter(Boolean) ?? null;
 const want = idsFile
@@ -159,7 +191,12 @@ const systems = args
   .filter((a, i) => a.includes('=') && !args[i - 1]?.startsWith('--'))
   .map((a) => {
     const name = a.slice(0, a.indexOf('='));
-    const preds = load(a.slice(a.indexOf('=') + 1));
+    const loaded = load(a.slice(a.indexOf('=') + 1));
+    const preds = new Map<string, Prediction>();
+    for (const [id, p] of loaded) {
+      const q = applyOverlay(p);
+      if (q) preds.set(id, q);
+    }
     if (want) for (const id of [...preds.keys()]) if (!want.some((w) => id.endsWith(w))) preds.delete(id);
     if (seedFilter)
       for (const id of [...preds.keys()])

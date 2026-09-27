@@ -1,0 +1,41 @@
+{
+  "rubric": "docs/status-rubric.md",
+  "source": "training/laya/audit/mutation-adjudication-2026-09-28.md",
+  "note": "Adjudicated against the written rubric from the head code, not from any prediction. Applied as an overlay; the corpus files are unchanged.",
+  "items": {
+    "mutations/py-retry-backoff.drop_requirement.R1": {
+      "requirements": { "R1": "contradicted" },
+      "why": "fallback to a fixed base_delay handles the retry-delay situation with an outcome the requirement rules out (retry.py:43)"
+    },
+    "mutations/py-retry-backoff.drop_requirement.R2": {
+      "requirements": { "R2": "contradicted" },
+      "why": "every status is retried again, which the requirement rules out"
+    },
+    "mutations/py-retry-backoff.drop_requirement.R3": {
+      "requirements": { "R3": "contradicted" },
+      "why": "bare raise re-raises HttpError instead of RetryExhausted (retry.py:40)"
+    },
+    "mutations/py-retry-backoff.claim_all_done.R1": {
+      "requirements": { "R1": "contradicted" },
+      "why": "same code as drop R1; the claim mismatch label stays"
+    },
+    "mutations/py-retry-backoff.partial_requirement.R2": {
+      "requirements": { "R2": "contradicted" },
+      "why": "429 is now raised on the first failure (retry.py:24, 41-42)"
+    },
+    "mutations/py-retry-backoff.unwire.R1": {
+      "requirements": { "R1": "contradicted" },
+      "accept": {},
+      "why": "delay = attempt gives 1, 2, 3 s instead of doubling from base_delay (retry.py:47)"
+    },
+    "mutations/rs-semver-compare.drop_requirement.R1": {
+      "requirements": { "R1": "contradicted" },
+      "ambiguous": true,
+      "why": "parse(\"v1.2.3\") returns Err(Malformed); competing reading: generic rejection is outside what the requirement speaks about (missing)"
+    },
+    "mutations/rs-semver-compare.drop_requirement.R2": {
+      "requirements": { "R2": "contradicted" },
+      "why": "the catch-all arm _ => Err(...) handles 1.4 and 2 with an error"
+    }
+  }
+}

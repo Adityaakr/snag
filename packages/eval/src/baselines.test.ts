@@ -8,6 +8,7 @@ import {
   SINGLE_PASS_SYSTEM,
   singlePassFlags,
   singlePassMessage,
+  reconcileSinglePass,
 } from './baselines.js';
 import { SEEDS_ROOT, seedItems } from './mutations/generate.js';
 import { loadSeed } from './mutations/seed.js';
@@ -73,5 +74,27 @@ describe('single_pass baseline', () => {
     expect(await baselineNote('single_pass', { ANTHROPIC_API_KEY: ['sk', 'x'].join('-') })).toBe('available');
     expect(await baselineNote('pr_agent', { PATH: '/nonexistent' })).toMatch(/skipped/);
     expect(await baselineNote('other', {})).toMatch(/unknown/);
+  });
+
+  it('E4: a region cited as evidence for a done requirement is not also unexplained', () => {
+    const out = {
+      requirements: [
+        {
+          id: 'R1',
+          text: 'a',
+          status: 'done' as const,
+          confidence: 0.9,
+          evidence: [{ file: 'a.py', lines: { start: 10, end: 20 } }],
+        },
+      ],
+      unexplained: [
+        { file: 'a.py', lines: { start: 12, end: 14 }, behavioral: true },
+        { file: 'a.py', lines: { start: 40, end: 44 }, behavioral: true },
+      ],
+    };
+    const r = reconcileSinglePass(out);
+    expect(r.unexplained).toEqual([{ file: 'a.py', lines: { start: 40, end: 44 }, behavioral: true }]);
+    expect(singlePassFlags(out)).toBe(true);
+    expect(singlePassFlags({ ...out, unexplained: [out.unexplained[0] as never] })).toBe(false);
   });
 });

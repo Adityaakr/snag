@@ -1,0 +1,78 @@
+{
+  "rubric": "docs/status-rubric.md",
+  "source": "training/laya/audit/swebench-gold-adjudication-2026-09-28.md",
+  "note": "Finding-level verdicts for system A's findings on 9 flagged SWE-bench Verified gold patches (issue + diff only), and PR-level verdicts for 6 unflagged ones. Development data once inspected.",
+  "findings": [
+    { "item": "gold:astropy__astropy-13236", "requirement": "R1", "verdict": "undecidable" },
+    { "item": "gold:django__django-10097", "requirement": "R2", "verdict": "false" },
+    { "item": "gold:django__django-10097", "requirement": "R3", "verdict": "false" },
+    { "item": "gold:mwaskom__seaborn-3187", "requirement": "R3", "verdict": "false" },
+    { "item": "gold:mwaskom__seaborn-3187", "requirement": "R4", "verdict": "false" },
+    {
+      "item": "gold:pydata__xarray-3095",
+      "file": "xarray/core/indexing.py",
+      "line": 1246,
+      "verdict": "false"
+    },
+    { "item": "gold:pylint-dev__pylint-4551", "requirement": "R3", "verdict": "false" },
+    {
+      "item": "gold:pylint-dev__pylint-4551",
+      "file": "pylint/pyreverse/inspector.py",
+      "line": 205,
+      "verdict": "false"
+    },
+    {
+      "item": "gold:pylint-dev__pylint-4551",
+      "file": "pylint/pyreverse/diagrams.py",
+      "line": 122,
+      "verdict": "false"
+    },
+    {
+      "item": "gold:pylint-dev__pylint-4551",
+      "file": "pylint/pyreverse/writer.py",
+      "line": 140,
+      "verdict": "false"
+    },
+    { "item": "gold:pylint-dev__pylint-4661", "requirement": "R1", "verdict": "type-mismatched" },
+    { "item": "gold:pylint-dev__pylint-4661", "requirement": "R2", "verdict": "false" },
+    {
+      "item": "gold:pylint-dev__pylint-4661",
+      "file": "pylint/config/__init__.py",
+      "line": 70,
+      "verdict": "valid"
+    },
+    {
+      "item": "gold:scikit-learn__scikit-learn-10844",
+      "file": "sklearn/metrics/cluster/supervised.py",
+      "line": 855,
+      "verdict": "false"
+    },
+    { "item": "gold:scikit-learn__scikit-learn-11578", "requirement": "R1", "verdict": "false" },
+    { "item": "gold:scikit-learn__scikit-learn-11578", "requirement": "R2", "verdict": "false" },
+    { "item": "gold:scikit-learn__scikit-learn-11578", "requirement": "R3", "verdict": "false" },
+    {
+      "item": "gold:scikit-learn__scikit-learn-11578",
+      "file": "sklearn/linear_model/logistic.py",
+      "line": 925,
+      "verdict": "undecidable"
+    },
+    { "item": "gold:sphinx-doc__sphinx-10323", "requirement": "R1", "verdict": "undecidable" }
+  ],
+  "prs": {
+    "gold:astropy__astropy-12907": "clean",
+    "gold:django__django-10914": "clean",
+    "gold:matplotlib__matplotlib-14623": "clean",
+    "gold:psf__requests-1921": "clean",
+    "gold:pytest-dev__pytest-5262": "clean",
+    "gold:sympy__sympy-12419": "undecidable",
+    "gold:django__django-10097": "clean",
+    "gold:mwaskom__seaborn-3187": "clean",
+    "gold:pydata__xarray-3095": "clean",
+    "gold:pylint-dev__pylint-4551": "clean",
+    "gold:scikit-learn__scikit-learn-10844": "clean",
+    "gold:pylint-dev__pylint-4661": "problem",
+    "gold:astropy__astropy-13236": "undecidable",
+    "gold:scikit-learn__scikit-learn-11578": "undecidable",
+    "gold:sphinx-doc__sphinx-10323": "undecidable"
+  }
+}

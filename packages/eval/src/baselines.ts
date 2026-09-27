@@ -70,8 +70,23 @@ export interface BaselineOutcome {
   cached?: boolean;
 }
 
+/**
+ * Consistency rule (E4, 2026-09-28): a changed region the review itself cites as evidence for a requirement it judges
+ * done is not also "unexplained". Adjudication of real SWE-bench gold patches found such self-contradicting unit
+ * findings (pylint-4551: three regions cited as evidence for R1 were also flagged unexplained).
+ */
+export function reconcileSinglePass(out: SinglePassOutput): SinglePassOutput {
+  const evidence = out.requirements
+    .filter((r) => r.status === 'done')
+    .flatMap((r) => r.evidence.map((e) => ({ file: e.file, start: e.lines.start, end: e.lines.end })));
+  const cited = (u: SinglePassOutput['unexplained'][number]) =>
+    evidence.some((e) => e.file === u.file && e.start <= u.lines.end && u.lines.start <= e.end);
+  return { ...out, unexplained: out.unexplained.filter((u) => !cited(u)) };
+}
+
 /** A PR is flagged when any requirement is a problem, or a behavioral change serves no requirement. */
-export function singlePassFlags(out: SinglePassOutput, minConfidence = 0.5): boolean {
+export function singlePassFlags(raw: SinglePassOutput, minConfidence = 0.5): boolean {
+  const out = reconcileSinglePass(raw);
   return (
     out.requirements.some(
       (r) => r.status !== 'done' && r.status !== 'uncertain' && r.confidence >= minConfidence,
