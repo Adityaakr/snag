@@ -295,6 +295,8 @@ if args.checkpointing:
         model.head_checkpointing = True
 
 report("base (as shipped, T=1)", evaluate(val_items))
+if device.type == "mps":
+    torch.mps.empty_cache()
 
 enc_params = [p_ for n, p_ in model.named_parameters() if p_.requires_grad and n.startswith("encoder.")]
 head_params = [p_ for n, p_ in model.named_parameters() if p_.requires_grad and not n.startswith("encoder.")]
