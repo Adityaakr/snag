@@ -1,0 +1,49 @@
+{
+  "train stage A conflict": {
+    "done": 53,
+    "missing": 24,
+    "partial": 1
+  },
+  "train stage A coverage": {
+    "done": 24,
+    "missing": 24
+  },
+  "train stage B conflict": {
+    "done": 33,
+    "contradicted": 33
+  },
+  "train stage B coverage": {
+    "done": 29,
+    "partial": 1
+  },
+  "val stage A conflict": {
+    "done": 11,
+    "missing": 3
+  },
+  "val stage A coverage": {
+    "done": 3,
+    "missing": 3
+  },
+  "val stage B conflict": {
+    "done": 16,
+    "contradicted": 16
+  },
+  "val stage B coverage": {
+    "done": 8
+  },
+  "excluded": {
+    "ambiguous": 6
+  },
+  "pairs": 141,
+  "seeds": [
+    "py-blog-slugs",
+    "py-csv-import",
+    "py-retry-backoff",
+    "rs-cli-args",
+    "rs-config-parser",
+    "rs-semver-compare",
+    "ts-flag-rules",
+    "ts-job-intervals",
+    "ts-money-format"
+  ]
+}

@@ -215,3 +215,13 @@ No keys: task-list extraction (9 requirements), no Jev verdicts; 175 units. Code
 - **E4 (evidence-consistency rule):** real-patch false findings 14 to 10, valid unchanged, no mutation change. KEEP.
 - **E5 (sp-0.3.0 extraction rule):** removed invented requirements but added 6 false fix-path findings. False 14 to 14, valid 1 to 2; with E4, 2/9. Untested on mutations (budget). NOT ADOPTED.
 - **Spend:** $4.07 of $5.
+
+## 2026-09-28 Training-label audit (all 9 dev seeds, rubric) and E7 controlled pair experiment
+- **Audit (training/laya/audit/label-audit-all.*):** 83 targeted labels: 41 agree, 36 disagree, 6 ambiguous. 18 clean done spot-checks all agree.
+  - partial_requirement 7/9 wrong (really contradicted);
+  - drop_requirement 15/36 and claim_all_done 6/9 missing labels are contradicted;
+  - unwire is never partial (5 missing, 3 contradicted);
+  - flip_condition 18/20 agree, 2 ambiguous.
+  - So v1 and Stage A trained on "missing" and "partial" labels that were wrong about half the time for those operators. This is a supported cause of the training failures, independent of model capacity.
+- **Checked pair set (training/laya/pairs/, scripts/laya/build_pairs.py):** natural matched pairs (clean vs targeted item, same requirement), rubric labels, ambiguous excluded, no twins or padding. Stage A coverage (implemented vs missing) has 27 pairs, 3 of them in the held-out seeds.
+- **Protocol (E7):** 3-fold cross-validation grouped by seed, so every pair is scored on a codebase its model never saw. Every fold starts from the shipped checkpoint. Fixed 60 full-batch steps, no selection on validation. Training duplicates are removed. Base and fine-tuned models are compared on the same pairs. The frozen test seeds are excluded.

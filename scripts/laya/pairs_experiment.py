@@ -38,6 +38,7 @@ p.add_argument("--lr-enc", type=float, default=2e-5)
 p.add_argument("--max-len", type=int, default=4096)
 p.add_argument("--seed", type=int, default=0)
 p.add_argument("--tag", default="")
+p.add_argument("--folds", type=int, default=0, help="k-fold cross-validation grouped by seed (0 = fixed train/val split)")
 args = p.parse_args()
 torch.manual_seed(args.seed)
 random.seed(args.seed)
@@ -61,14 +62,6 @@ def encode(r):
     if len(markers) != len(target):
         return None
     return {**r, "ids": seq, "markers": markers, "qtype": QTYPES[q["t"]], "tvec": target}
-
-
-items = [e for e in (encode(r) for r in rows) if e]
-train = [e for e in items if e["split"] == "train"]
-val = [e for e in items if e["split"] == "val"]
-print(f"examples: train {len(train)} val {len(val)} (dropped {len(rows) - len(items)} over the option budget)", flush=True)
-if not train or not val:
-    raise SystemExit("empty split: nothing to measure")
 
 
 def collate(batch):
@@ -142,42 +135,87 @@ def measure(examples, preds):
     }
 
 
-model.to(device)
-for prm in model.encoder.embeddings.parameters():
-    prm.requires_grad = False
-for i, layer in enumerate(model.encoder.layers):
-    for prm in layer.parameters():
-        prm.requires_grad = i >= args.freeze
-model.encoder.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})
-model.head_checkpointing = True
+items = [e for e in (encode(r) for r in rows) if e]
+print(f"examples {len(items)} (dropped {len(rows) - len(items)} over the option budget)", flush=True)
 
-results = {"config": vars(args), "train_examples": len(train), "val_examples": len(val)}
-results["base"] = {"train": measure(train, predict(train)), "val": measure(val, predict(val))}
-print("BASE val:", json.dumps(results["base"]["val"]), flush=True)
-enc = [q for n, q in model.named_parameters() if q.requires_grad and n.startswith("encoder.")]
-head = [q for n, q in model.named_parameters() if q.requires_grad and not n.startswith("encoder.")]
-opt = torch.optim.AdamW([{"params": enc, "lr": args.lr_enc}, {"params": head, "lr": args.lr_head}], weight_decay=0.0)
-curve = []
-for step in range(1, args.steps + 1):
-    random.shuffle(train)
-    opt.zero_grad(set_to_none=True)
-    total = 0.0
-    for i in range(0, len(train), 4):
-        b = collate(train[i : i + 4])
-        loss = (-(b[5] * F.log_softmax(logits(b), -1)).sum(-1)).sum() / len(train)
-        loss.backward()
-        total += loss.item()
-    torch.nn.utils.clip_grad_norm_([*enc, *head], 1.0)
-    opt.step()
-    if device.type == "mps":
-        torch.mps.empty_cache()
-    if step % 20 == 0 or step == args.steps:
-        v = measure(val, predict(val))
-        t = measure(train, predict(train))
-        curve.append({"step": step, "loss": round(total, 4), "train": t, "val": v})
-        print(f"step {step} loss {total:.4f} train pairs {t['pair_accuracy']} val {json.dumps(v)}", flush=True)
-results["curve"] = curve
-results["final"] = curve[-1]
-name = args.tag or f"stage{args.stages.replace(',', '')}-{args.qids.replace(',', '+')}-s{args.seed}"
+
+def dedupe(examples):
+    """Training examples with identical input and target (one clean state paired with several defects) count once."""
+    seen, out = set(), []
+    for e in examples:
+        key = (json.dumps(e["state"], sort_keys=True), e["qid"], json.dumps(e["tvec"]))
+        if key not in seen:
+            seen.add(key)
+            out.append(e)
+    return out
+
+
+BASE_STATE = {k: v.detach().clone() for k, v in agent.model.state_dict().items()}
+
+
+def fresh_model():
+    """The shipped checkpoint, with the declared freezing: every fold starts from the same weights."""
+    model.load_state_dict(BASE_STATE)
+    model.to(device)
+    for prm in model.parameters():
+        prm.requires_grad = True
+    for prm in model.encoder.embeddings.parameters():
+        prm.requires_grad = False
+    for i, layer in enumerate(model.encoder.layers):
+        for prm in layer.parameters():
+            prm.requires_grad = i >= args.freeze
+    model.encoder.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})
+    model.head_checkpointing = True
+
+
+def train_on(train):
+    fresh_model()
+    train = dedupe(train)
+    enc = [q for n, q in model.named_parameters() if q.requires_grad and n.startswith("encoder.")]
+    head = [q for n, q in model.named_parameters() if q.requires_grad and not n.startswith("encoder.")]
+    opt = torch.optim.AdamW([{"params": enc, "lr": args.lr_enc}, {"params": head, "lr": args.lr_head}], weight_decay=0.0)
+    for step in range(1, args.steps + 1):
+        random.shuffle(train)
+        opt.zero_grad(set_to_none=True)
+        total = 0.0
+        for i in range(0, len(train), 4):
+            b = collate(train[i : i + 4])
+            loss = (-(b[5] * F.log_softmax(logits(b), -1)).sum(-1)).sum() / len(train)
+            loss.backward()
+            total += loss.item()
+        torch.nn.utils.clip_grad_norm_([*enc, *head], 1.0)
+        opt.step()
+        if device.type == "mps":
+            torch.mps.empty_cache()
+        if step % 20 == 0 or step == args.steps:
+            print(f"  step {step} loss {total:.4f} train fit {measure(train, predict(train))['pair_accuracy']}", flush=True)
+    return measure(train, predict(train))
+
+
+results = {"config": vars(args)}
+fresh_model()
+seeds = sorted({e["seed"] for e in items})
+if args.folds:
+    folds = [seeds[i :: args.folds] for i in range(args.folds)]
+else:
+    folds = [sorted({e["seed"] for e in items if e["split"] == "val"})]
+base_preds, tuned_preds, fold_info = {}, {}, []
+base_preds.update(predict(items))
+for f, held in enumerate(folds):
+    tr = [e for e in items if e["seed"] not in held]
+    te = [e for e in items if e["seed"] in held]
+    if not tr or not te:
+        raise SystemExit(f"fold {f}: empty split")
+    print(f"fold {f}: held-out seeds {held}; train {len(tr)} test {len(te)}", flush=True)
+    fit = train_on(tr)
+    tuned_preds.update(predict(te))
+    fold_info.append({"held_out_seeds": held, "train_examples": len(tr), "test_examples": len(te), "train_fit": fit})
+evaluated = [e for e in items if any(e["seed"] in h for h in folds)]
+results["folds"] = fold_info
+results["base"] = measure(evaluated, base_preds)
+results["fine_tuned"] = measure(evaluated, tuned_preds)
+print("BASE (unseen codebases):", json.dumps(results["base"]), flush=True)
+print("FINE-TUNED (unseen codebases):", json.dumps(results["fine_tuned"]), flush=True)
+name = args.tag or f"stage{args.stages.replace(',', '')}-{args.qids.replace(',', '+')}-k{args.folds}-s{args.seed}"
 json.dump(results, open(os.path.join(ROOT, "training/laya/pairs", f"results-{name}.json"), "w"), indent=1)
 print(f"saved training/laya/pairs/results-{name}.json", flush=True)
