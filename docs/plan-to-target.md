@@ -56,7 +56,7 @@ Build on A, the single strong-model review, with deterministic checks. Each chan
 
 ### Phase 3: Laya as the free, private engine (weeks 2-5, in parallel)
 
-1. **E7 (running now):** can Laya learn implemented versus missing on unseen codebases from clean, rubric-labelled pairs?
+1. **E7 (done, 2026-09-28): FAILED.** On 27 implemented-versus-missing pairs from unseen codebases, fine-tuning moved Laya's bias but not its discrimination: pair ordering 12/27 after, 15/27 before (chance). It fits its training codebases (38 of 42 pairs) and does not transfer.
 2. **If yes:** add contradictions, then scale with Phase 1's larger clean data. Use distillation from the reference engine on verified cases only, with teacher labels checked against the rubric.
 3. **If no after clean data:** stop fine-tuning the typed-question model. Use Laya only as a cheap pre-filter (routing obvious "done" cases away from the paid model), and measure the routing error.
 
@@ -89,7 +89,7 @@ Freeze the checkpoint, prompts, rules, thresholds and scope. Run the untouched f
 
 ## What I will do without waiting
 
-- Finish E7 and report it (running locally).
+- E7 is finished and failed its gate; Laya fine-tuning stays paused (see Phase 3).
 - Relabel the mutation corpus by the rubric, fix the generator's labelling, and add tests (local, $0).
 - Integrate the PAIChecker labels, if its data downloads without credentials (local, $0).
 - Build the planted-defect test for the fix-path hypothesis (local, $0).

@@ -225,3 +225,10 @@ No keys: task-list extraction (9 requirements), no Jev verdicts; 175 units. Code
   - So v1 and Stage A trained on "missing" and "partial" labels that were wrong about half the time for those operators. This is a supported cause of the training failures, independent of model capacity.
 - **Checked pair set (training/laya/pairs/, scripts/laya/build_pairs.py):** natural matched pairs (clean vs targeted item, same requirement), rubric labels, ambiguous excluded, no twins or padding. Stage A coverage (implemented vs missing) has 27 pairs, 3 of them in the held-out seeds.
 - **Protocol (E7):** 3-fold cross-validation grouped by seed, so every pair is scored on a codebase its model never saw. Every fold starts from the shipped checkpoint. Fixed 60 full-batch steps, no selection on validation. Training duplicates are removed. Base and fine-tuned models are compared on the same pairs. The frozen test seeds are excluded.
+- **E7 result (training/laya/pairs/results-stageA-coverage-k3-s0.json):** Stage A coverage, implemented vs missing, 27 pairs each scored on an unseen codebase.
+  - Base: done 25/27, missing 0/27, pair accuracy 0/27, pair ordering 15/27.
+  - Fine-tuned: done 14/27, missing 13/27, pair accuracy 4/27, pair ordering 12/27.
+  - Training fit per fold: 13/13, 11/12, 14/17 pairs.
+  - Fine-tuning moved the bias (from always "Full" to roughly half "None") but did not add discrimination on new code; pair ordering is at chance.
+  - **Decision:** gate FAILED; do not expand. Laya fine-tuning stays paused. Per docs/plan-to-target.md Phase 3, Laya is at most a pre-filter candidate (to be measured) unless the Phase 1 data (many more independent codebases) gives a new, specific reason to retry.
+  - Caveat: 32-44 training examples per fold, so data quantity is a plausible cause, but no improvement signal justifies scaling now.

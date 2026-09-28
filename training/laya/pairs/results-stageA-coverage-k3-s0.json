@@ -1,0 +1,117 @@
+{
+  "config": {
+    "stages": "A",
+    "qids": "coverage",
+    "steps": 60,
+    "freeze": 22,
+    "lr_head": 0.0001,
+    "lr_enc": 2e-5,
+    "max_len": 4096,
+    "seed": 0,
+    "tag": "",
+    "folds": 3
+  },
+  "folds": [
+    {
+      "held_out_seeds": ["py-blog-slugs", "rs-cli-args", "ts-flag-rules"],
+      "train_examples": 32,
+      "test_examples": 22,
+      "train_fit": {
+        "per_class_accuracy": {
+          "coverage=done": "13/13",
+          "coverage=missing": "15/15"
+        },
+        "pair_accuracy": "13/13",
+        "pair_ordering": "13/13",
+        "ordering_by_seed": {
+          "py-csv-import": "3/3",
+          "py-retry-backoff": "1/1",
+          "rs-config-parser": "3/3",
+          "rs-semver-compare": "2/2",
+          "ts-job-intervals": "3/3",
+          "ts-money-format": "1/1"
+        }
+      }
+    },
+    {
+      "held_out_seeds": ["py-csv-import", "rs-config-parser", "ts-job-intervals"],
+      "train_examples": 32,
+      "test_examples": 22,
+      "train_fit": {
+        "per_class_accuracy": {
+          "coverage=done": "11/12",
+          "coverage=missing": "15/15"
+        },
+        "pair_accuracy": "11/12",
+        "pair_ordering": "12/12",
+        "ordering_by_seed": {
+          "py-blog-slugs": "2/2",
+          "py-retry-backoff": "1/1",
+          "rs-cli-args": "2/2",
+          "rs-semver-compare": "2/2",
+          "ts-flag-rules": "4/4",
+          "ts-money-format": "1/1"
+        }
+      }
+    },
+    {
+      "held_out_seeds": ["py-retry-backoff", "rs-semver-compare", "ts-money-format"],
+      "train_examples": 44,
+      "test_examples": 10,
+      "train_fit": {
+        "per_class_accuracy": {
+          "coverage=done": "16/17",
+          "coverage=missing": "17/20"
+        },
+        "pair_accuracy": "14/17",
+        "pair_ordering": "17/17",
+        "ordering_by_seed": {
+          "py-blog-slugs": "2/2",
+          "py-csv-import": "3/3",
+          "rs-cli-args": "2/2",
+          "rs-config-parser": "3/3",
+          "ts-flag-rules": "4/4",
+          "ts-job-intervals": "3/3"
+        }
+      }
+    }
+  ],
+  "base": {
+    "per_class_accuracy": {
+      "coverage=done": "25/27",
+      "coverage=missing": "0/27"
+    },
+    "pair_accuracy": "0/27",
+    "pair_ordering": "15/27",
+    "ordering_by_seed": {
+      "py-blog-slugs": "0/3",
+      "py-csv-import": "3/3",
+      "py-retry-backoff": "1/1",
+      "rs-cli-args": "2/2",
+      "rs-config-parser": "1/5",
+      "rs-semver-compare": "1/2",
+      "ts-flag-rules": "3/6",
+      "ts-job-intervals": "2/3",
+      "ts-money-format": "2/2"
+    }
+  },
+  "fine_tuned": {
+    "per_class_accuracy": {
+      "coverage=done": "14/27",
+      "coverage=missing": "13/27"
+    },
+    "pair_accuracy": "4/27",
+    "pair_ordering": "12/27",
+    "ordering_by_seed": {
+      "py-blog-slugs": "0/3",
+      "py-csv-import": "2/3",
+      "py-retry-backoff": "1/1",
+      "rs-cli-args": "1/2",
+      "rs-config-parser": "2/5",
+      "rs-semver-compare": "1/2",
+      "ts-flag-rules": "2/6",
+      "ts-job-intervals": "1/3",
+      "ts-money-format": "2/2"
+    }
+  }
+}
