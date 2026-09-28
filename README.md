@@ -78,3 +78,7 @@ pnpm test:live  # live provider smoke tests; skipped without keys
 ```
 
 License and final name are still to be chosen.
+
+## Fine-tuning research
+
+The local verdict-engine experiments (Laya fine-tuning, audited training data and results) are published separately at [Adityaakr/laya-snag-finetune](https://github.com/Adityaakr/laya-snag-finetune).
